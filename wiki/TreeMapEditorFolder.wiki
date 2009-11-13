@@ -1,6 +1,17 @@
 #summary Contents of the TreeMapEditor folder.
 
-= Files =
+== Files ==
 
 *`TreeMapEditor.java` (original file)*: displays the output of 'DFT/main.c' (in 'out.txt')<br>
-See *main.c* in [DFTFolder DFTFolder] for format of 'out.txt'
+See *main.c* in [DFTFolder DFTFolder] for format of 'out.txt'<br>
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
