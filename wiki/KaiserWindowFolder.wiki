@@ -1,0 +1,5 @@
+#summary Contents of the KaiserWindow folder.
+
+= Files =
+
+*filter.c (original file)*: creates and tests Kaiser-Bessel Windowed FIR filters<br>
