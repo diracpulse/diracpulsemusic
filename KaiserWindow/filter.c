@@ -174,7 +174,7 @@ void BlockDFT(double LowTest, double HighTest, const char *TestName) {
 	return;
 }
 
-int main(int argc, char** argv) {
+int testFilter() {
 	int order;
 	double dorder;
 	double freq;
