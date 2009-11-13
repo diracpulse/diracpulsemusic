@@ -3,7 +3,7 @@
 = Files =
 
 *main.c (original file):* takes a file input.wav and produces a TFA output.<br>
-Output is space delimited (three numbers per line) and terminated with a \n
-Time = (token[0] / 5ms)
-Frequency = 2.0 ^ (token[1] / 31.0) 
-Amplitude = 2.0 ^ (token[2])
+Output is space delimited (three numbers per line) and terminated with a \n:<br>
+`Time = (token[0] / 5ms)`<br>
+`Frequency = 2.0 ^ (token[1] / 31.0)`<br> 
+`Amplitude = 2.0 ^ (token[2])`<br>
