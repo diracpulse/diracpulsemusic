@@ -2,4 +2,5 @@
 
 = Files =
 
-*`TreeMapEditor.java` (original file)*: displays the output of DFT/main.c<br>
+*`TreeMapEditor.java` (original file)*: displays the output of 'DFT/main.c' (in 'out.txt')<br>
+See *main.c* in [DFTFolder DFTFolder] for format of 'out.txt'
