@@ -1,7 +1,0 @@
-#summary Contents of the KaiserWindow Folder
-
-= Files =
-
-*filter.c (original file)*:<br>
-<br>
-creates and tests Kaiser Windowed FIR filters<br>
