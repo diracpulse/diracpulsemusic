@@ -1,4 +1,5 @@
 #summary Global Project Specifications
+#labels Featured
 
 == Technical Parameters ==
 
