@@ -14,16 +14,18 @@ public class DFTEditor extends JFrame {
 	public static boolean fileDataRead = false; 
 	
 	public static TreeMap<Integer, TreeMap<Integer, Float>> timeToFreqToAmp;
+	public static TreeMap<Integer, Float> timeToAmpSum;
 	public static int xStep = 6;
 	public static int yStep = 9; // one digit;
 	public static int topYStep = 8; // used by DrawUpperTimes
 	public static int leftOffset = xStep * 5; // start of first data cell
-	public static int upperOffset = topYStep * 4; // start of first data cell
+	public static int upperOffset = topYStep * 5; // start of first data cell
 	public static int leftX = 0; // index of freq in leftmost data cell
 	public static int upperY = 0; // index of time in uppermost data cell
-	public static float timeStep = 0.01f;
+	public static float timeStep = 0.005f;
 	public static float maxAmplitude;
 	public static float minAmplitude;
+	public static float maxAmplitudeSum;
 	public static int freqsPerOctave = 31;
 	public static int minFreq;
 	public static int maxFreq;
@@ -90,10 +92,29 @@ public class DFTEditor extends JFrame {
 		}
 		dataXDim = maxTime;
 		dataYDim = maxFreq - minFreq;
+		calculateAmpSum();
 		fileDataRead = true;
 	}
 	
-
+	public void calculateAmpSum() {
+		maxAmplitudeSum = 0.0f;
+		timeToAmpSum = new TreeMap<Integer, Float>();
+		for(int time = 0; time < dataXDim; time++) {
+			double dsum = 0.0;
+			double dexponent = 1.0;
+			if(timeToFreqToAmp.get(new Integer(time)) == null) {
+				timeToAmpSum.put(new Integer(time), new Float(0.0f));
+				continue;
+			}
+			for(Float f: timeToFreqToAmp.get(new Integer(time)).values()) {
+				dexponent = f.doubleValue();
+				dsum += Math.pow(2.0, dexponent);
+			}
+			dsum = Math.log(dsum) / Math.log(2.0);
+			if (maxAmplitudeSum < dsum) maxAmplitudeSum = (float) dsum;
+			timeToAmpSum.put(new Integer(time), new Float(dsum));
+		}
+	}
 
 	public JMenuBar createMenuBar() {
 	    JMenuBar menuBar;
