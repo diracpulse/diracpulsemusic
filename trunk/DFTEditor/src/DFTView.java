@@ -23,6 +23,27 @@ public class DFTView extends JComponent {
 			drawAmplitude(g, screenX, 0, ampSumVal, 0.0f, DFTEditor.maxAmplitudeSum);
 		}
 	}
+	public void DrawMaxAmpAtFreq(Graphics g) {
+		int startY = DFTEditor.upperY;
+		int endY = startY + getHeight() - DFTEditor.upperOffset / DFTEditor.yStep;
+		int iFreq;
+		int screenY;
+		float amp;
+		for(int freqIndex = startY; freqIndex < endY; freqIndex++) {
+			if(freqIndex < DFTEditor.dataYDim) {			
+				iFreq = DFTEditor.maxFreq - freqIndex;
+			} else {
+				iFreq = 1; // dummy value
+			}
+			if(DFTEditor.freqToMaxAmp.get(iFreq) == null) {
+				amp = 0.0f;
+			} else {
+				amp = DFTEditor.freqToMaxAmp.get(iFreq).floatValue();
+			}
+			screenY = DFTEditor.upperOffset + ((freqIndex - startY) * DFTEditor.yStep);
+			drawAmplitude(g, 0, screenY, amp, 0.0f, DFTEditor.maxAmplitude);
+		}
+	}
 
 	public void DrawUpperTimes(Graphics g) {
 		int timeIndex;
@@ -91,10 +112,13 @@ public class DFTView extends JComponent {
 			} else {
 				iFreq = 1; // dummy value
 			}
-			int xOffset = 0;
+			int xOffset = 1;
+			double freqsPerOctave = (double) DFTEditor.freqsPerOctave;
+			double dFreq = (double) iFreq;
+			float freqInHz = (float) Math.pow(2.0, dFreq / freqsPerOctave);			
 			for(digitPlace = 10000; digitPlace >= 1; digitPlace /= 10) {
-				digitVal = iFreq / digitPlace;
-				iFreq -= digitVal * digitPlace;
+				digitVal = (int) Math.floor(freqInHz / digitPlace);
+				freqInHz -= digitVal * digitPlace;
 				f = new Color(1.0f, 1.0f, 1.0f);
 				b = new Color(0.0f, 0.0f, 0.0f);
 				if(freqIndex >= DFTEditor.dataYDim) {
@@ -121,6 +145,7 @@ public class DFTView extends JComponent {
 		DrawLeftFreqs(g);
 		DrawUpperTimes(g);
 		DrawAmpSums(g);
+		DrawMaxAmpAtFreq(g);
 		// clear old data
 		g.setColor(new Color(0.0f, 0.0f, 0.0f));
 		g.fillRect(DFTEditor.leftOffset, DFTEditor.upperOffset, getWidth(), getHeight());
