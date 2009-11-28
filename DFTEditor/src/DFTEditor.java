@@ -15,10 +15,11 @@ public class DFTEditor extends JFrame {
 	
 	public static TreeMap<Integer, TreeMap<Integer, Float>> timeToFreqToAmp;
 	public static TreeMap<Integer, Float> timeToAmpSum;
+	public static TreeMap<Integer, Float> freqToMaxAmp;
 	public static int xStep = 6;
 	public static int yStep = 9; // one digit;
 	public static int topYStep = 8; // used by DrawUpperTimes
-	public static int leftOffset = xStep * 5; // start of first data cell
+	public static int leftOffset = xStep * 6; // start of first data cell
 	public static int upperOffset = topYStep * 5; // start of first data cell
 	public static int leftX = 0; // index of freq in leftmost data cell
 	public static int upperY = 0; // index of time in uppermost data cell
@@ -93,6 +94,7 @@ public class DFTEditor extends JFrame {
 		dataXDim = maxTime;
 		dataYDim = maxFreq - minFreq;
 		calculateAmpSum();
+		calculateMaxAmpAtFreq();
 		fileDataRead = true;
 	}
 	
@@ -115,6 +117,23 @@ public class DFTEditor extends JFrame {
 			timeToAmpSum.put(new Integer(time), new Float(dsum));
 		}
 	}
+	
+	public void calculateMaxAmpAtFreq() {
+		freqToMaxAmp = new TreeMap<Integer, Float>();
+		for(int iFreq = minFreq; iFreq <= maxFreq; iFreq++) {
+			freqToMaxAmp.put(new Integer(iFreq), new Float(0.0f));
+		}
+		TreeMap<Integer, Float> freqToAmp;
+		for(int time = 0; time < dataXDim; time++) {
+			freqToAmp = timeToFreqToAmp.get(new Integer(time));
+			if(freqToAmp == null) continue;
+			for(Integer IFreq: freqToAmp.keySet()) {
+				if(freqToMaxAmp.get(IFreq) < freqToAmp.get(IFreq)) {
+					freqToMaxAmp.put(IFreq, freqToAmp.get(IFreq));
+				}
+			}
+		}
+	}	
 
 	public JMenuBar createMenuBar() {
 	    JMenuBar menuBar;
