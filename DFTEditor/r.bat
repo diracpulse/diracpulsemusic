@@ -1,1 +1,1 @@
-java -jar DFTEditor.jar
+java -jar DFTEditor.jar > out.txt

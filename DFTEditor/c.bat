@@ -1,5 +1,5 @@
 cd bin
-del *.*
+del *.class
 cd ..
 del DFTEditor.jar
 ant

@@ -1,14 +1,15 @@
 
 import javax.swing.*;
-import javax.swing.event.*;
 import java.awt.*;
-import java.awt.event.*;
 import java.util.*;
-import java.lang.*;
 import java.io.*;
 
 public class DFTEditor extends JFrame {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2291799595853726615L;
 	public static DFTView view;
 	public static DFTController controller;
 	public static boolean fileDataRead = false; 
@@ -210,6 +211,7 @@ public class DFTEditor extends JFrame {
     
     public static void main(String[] args)
     {
+       GenerateWavelets.printParams();
        DFTEditor frame = new DFTEditor();
        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
        frame.setVisible(true);
