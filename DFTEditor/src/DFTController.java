@@ -89,6 +89,9 @@ public class DFTController implements MouseListener, ActionListener {
     }
     if ("T-100".equals(e.getActionCommand())) {
                     if((DFTEditor.leftX - 100) >= 0) DFTEditor.leftX -= 100; 
+    }
+    if ("Print Params".equals(e.getActionCommand())) {
+        GenerateWavelets.printParams(); 
     }        
     if((apOldUpperY != DFTEditor.upperY) || (apOldLeftX != DFTEditor.leftX)) {
            DFTEditor.view.DrawFileData(true);

@@ -22,7 +22,8 @@ public class GenerateWavelets {
 		}
 		
 		public String toString() {
-			return new String(radianFreq + " " + lengthInSamples);
+			double freqInHz = (radianFreq / (Math.PI * 2.0)) * 44100.0;
+			return new String(freqInHz + " " + radianFreq + " " + lengthInSamples);
 		}
 		
 	}
@@ -45,6 +46,7 @@ public class GenerateWavelets {
 	
     public static void printParams()
     {
+    	System.out.println("PARAMS");
     	for(WaveletParam wp: InitFrequencies(18322.012048779428, 1000.0, 20.0)) {
     		System.out.println(wp);
     	}

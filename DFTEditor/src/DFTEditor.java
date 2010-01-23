@@ -153,6 +153,10 @@ public class DFTEditor extends JFrame {
         menuItem.addActionListener(controller);
         menu.add(menuItem);
         
+        menuItem = new JMenuItem("Print Params");
+        menuItem.addActionListener(controller);
+        menu.add(menuItem);        
+        
         menuItem = new JMenuItem("Exit");
         menuItem.addActionListener(controller);
         menu.add(menuItem);
@@ -211,7 +215,7 @@ public class DFTEditor extends JFrame {
     
     public static void main(String[] args)
     {
-       GenerateWavelets.printParams();
+       //GenerateWavelets.printParams();
        DFTEditor frame = new DFTEditor();
        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
        frame.setVisible(true);
