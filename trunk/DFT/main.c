@@ -30,6 +30,13 @@ int maxCenterIndex = 0;
 int calcDFT = 0;
 int stepIndex = 0;
 
+double WaveletSinData[31 * 10 * 10000];
+double WaveletCosData[31 * 10 * 10000];
+double RadianFreqs[MAXFREQUENCIES];
+int windowLengths[MAXFREQUENCIES];
+int waveletIndex;
+// int numFrequencies
+
 int globalNote;
 double globalLogAmp;
 
@@ -76,20 +83,113 @@ void LoadSamplesFromFile(FILE *stream, int centerIndex) {
 }
 
 void SingleDFT(double radianFreq, int startIndex, int endIndex) {
+        // int printInteger;
+        // int printDecimal;
+        int index;
+        double dIndex;
+        int lowerIndex;
+        int upperIndex;
+        double dLowerIndex;
+        double dUpperIndex;
+        double lowerLeftVal;
+        double lowerRightVal;
+        double upperLeftVal;
+        double upperRightVal;
+        double lowerMonoVal;
+        double upperMonoVal;
+        double sinVal = 0.0;
+        double cosVal = 0.0;
+        double ampVal = 0.0;
+        double freqInHz = samplingRate * (radianFreq / twoPI);
+        double logAmp = 0.0;
+        double logFreq = 0.0;
+        int fullWindow = endIndex - startIndex;
+        int halfWindow = fullWindow / 2;
+        double dHalfWindow = (double) halfWindow;
+        double dFullWindow = (double) fullWindow;
+        double z;
+        double FullDFTWindowGain = 0.0;
+        double windowVal;
+        double windowRatio;
+        double a0 = 0.35875;
+        double a1 = -0.48829;
+        double a2 = 0.14128;
+        double a3 = -0.01168;
+        for(index = 0; index < halfWindow; index++) {
+                dIndex = (double) index;
+                /* START: Gaussian Window
+                z = (0.5 + dHalfWindow - 1.0 - dIndex) * (onePI / dFullWindow);
+                windowVal = exp(-1.0 * gaussianConstant * z * z);
+                   END: Gaussian Window */
+                windowRatio = dIndex / dFullWindow;
+                windowVal = 0.0;
+                windowVal += a0;
+                windowVal += a1 * cos(2.0 * onePI * windowRatio);
+                windowVal += a2 * cos(4.0 * onePI * windowRatio);
+                windowVal += a3 * cos(6.0 * onePI * windowRatio);
+                FullDFTWindowGain += 2.0 * windowVal;
+                lowerIndex = index;
+                upperIndex = (fullWindow - 1 - index);
+                dLowerIndex = (double) lowerIndex;
+                dUpperIndex = (double) upperIndex;
+                lowerLeftVal = (double) LeftRight[(startIndex + lowerIndex) * 2];
+                lowerRightVal = (double) LeftRight[(startIndex + lowerIndex) * 2 + 1];
+                upperLeftVal = (double) LeftRight[(startIndex + upperIndex) * 2];
+                upperRightVal = (double) LeftRight[(startIndex + upperIndex) * 2 + 1];
+                // lowerMonoVal = Mono[startIndex + lowerIndex]; // lowerLeftVal + lowerRightVal;
+                // upperMonoVal = Mono[startIndex + upperIndex]; // upperLeftVal + upperRightVal;
+                lowerMonoVal = lowerLeftVal + lowerRightVal;
+                upperMonoVal = upperLeftVal + upperRightVal;
+                sinVal += sin(radianFreq * dLowerIndex) * lowerMonoVal * windowVal;
+                sinVal += sin(radianFreq * dUpperIndex) * upperMonoVal * windowVal;
+                cosVal += cos(radianFreq * dLowerIndex) * lowerMonoVal * windowVal;
+                cosVal += cos(radianFreq * dUpperIndex) * upperMonoVal * windowVal;
+
+                /* printf("fullWindow: %i lower: %i upper: %i windowVal: %f windowGain: %f\n",
+                                fullWindow, lowerIndex, upperIndex, windowVal, FullDFTWindowGain); */
+        }
+        if((upperIndex - lowerIndex) == 2) {
+                lowerIndex++;
+                dLowerIndex = (double) lowerIndex;
+                windowVal = 1.0;
+                FullDFTWindowGain += windowVal;
+                lowerLeftVal = (double) LeftRight[(startIndex + lowerIndex) * 2];
+                lowerRightVal = (double) LeftRight[(startIndex + lowerIndex) * 2 + 1];
+                // lowerMonoVal = Mono[startIndex + lowerIndex]; // lowerLeftVal + lowerRightVal;
+                lowerMonoVal = lowerLeftVal + lowerRightVal;
+                sinVal += sin(radianFreq * dLowerIndex) * lowerMonoVal * windowVal;
+                cosVal += cos(radianFreq * dLowerIndex) * lowerMonoVal * windowVal;
+                /* printf("fullWindow: %i center: %i windowVal: %f windowGain: %f\n",
+                                fullWindow, lowerIndex, windowVal, FullDFTWindowGain); */
+        }
+        ampVal = sinVal * sinVal;
+        ampVal += cosVal * cosVal;
+        ampVal = sqrt(ampVal) / FullDFTWindowGain;
+        ampVal *= 2.0; // integral of sin, cos over time approaches 0.5
+        if(ampVal < 4.0) {
+                logAmp = 0.0;
+        } else {
+                logAmp = log(ampVal) / log(2.0);
+        }
+        logFreq = log(freqInHz) / log(2.0);
+        globalNote = (int) round(logFreq * notesPerOctave);
+        globalLogAmp = logAmp;
+        // printf("%i %f %f\n", stepIndex, logFreq, logAmp); // full printout
+        // printf("%f\n", logFreq);
+        // printInteger = (int) floor(logAmp);
+        // printDecimal = (int) 100.0 * (logAmp - floor(logAmp));
+        // printf("%d.%d\n", printInteger, printDecimal);
+        // printf("%f\n", logAmp);
+}
+
+void SingleDFTWithWavelet(double radianFreq, int startIndex, int endIndex) {
 	// int printInteger;
 	// int printDecimal;
 	int index;
 	double dIndex;
-	int lowerIndex;
-	int upperIndex;
-	double dLowerIndex;
-	double dUpperIndex;
-	double lowerLeftVal;
-	double lowerRightVal;
-	double upperLeftVal;
-	double upperRightVal;
-	double lowerMonoVal;
-	double upperMonoVal;
+	double leftVal;
+	double rightVal;
+	double monoVal;
 	double sinVal = 0.0;
 	double cosVal = 0.0;
 	double ampVal = 0.0;
@@ -110,7 +210,7 @@ void SingleDFT(double radianFreq, int startIndex, int endIndex) {
 	double a3 = -0.01168;
 	for(index = 0; index < halfWindow; index++) {
 		dIndex = (double) index;
-		/* START: Gaussian Window   
+		/* START: Gaussian Window
 		z = (0.5 + dHalfWindow - 1.0 - dIndex) * (onePI / dFullWindow);
 		windowVal = exp(-1.0 * gaussianConstant * z * z);
 		   END: Gaussian Window */
@@ -121,39 +221,17 @@ void SingleDFT(double radianFreq, int startIndex, int endIndex) {
 		windowVal += a2 * cos(4.0 * onePI * windowRatio);
 		windowVal += a3 * cos(6.0 * onePI * windowRatio);
 		FullDFTWindowGain += 2.0 * windowVal;
-		lowerIndex = index;
-		upperIndex = (fullWindow - 1 - index);
-		dLowerIndex = (double) lowerIndex;
-		dUpperIndex = (double) upperIndex;
-		lowerLeftVal = (double) LeftRight[(startIndex + lowerIndex) * 2];
-		lowerRightVal = (double) LeftRight[(startIndex + lowerIndex) * 2 + 1];
-		upperLeftVal = (double) LeftRight[(startIndex + upperIndex) * 2];
-		upperRightVal = (double) LeftRight[(startIndex + upperIndex) * 2 + 1];
+		dIndex = (double) index;
+		leftVal = (double) LeftRight[(startIndex + index) * 2];
+		rightVal = (double) LeftRight[(startIndex + index) * 2 + 1];
 		// lowerMonoVal = Mono[startIndex + lowerIndex]; // lowerLeftVal + lowerRightVal;
 		// upperMonoVal = Mono[startIndex + upperIndex]; // upperLeftVal + upperRightVal;
-		lowerMonoVal = lowerLeftVal + lowerRightVal;
-		upperMonoVal = upperLeftVal + upperRightVal;
-		sinVal += sin(radianFreq * dLowerIndex) * lowerMonoVal * windowVal;
-		sinVal += sin(radianFreq * dUpperIndex) * upperMonoVal * windowVal;
-		cosVal += cos(radianFreq * dLowerIndex) * lowerMonoVal * windowVal;
-		cosVal += cos(radianFreq * dUpperIndex) * upperMonoVal * windowVal;
+		monoVal = leftVal + rightVal;
+		sinVal += sin(radianFreq * dIndex) * monoVal * windowVal;
+		cosVal += cos(radianFreq * dIndex) * monoVal * windowVal;
 
-		/* printf("fullWindow: %i lower: %i upper: %i windowVal: %f windowGain: %f\n", 
+		/* printf("fullWindow: %i lower: %i upper: %i windowVal: %f windowGain: %f\n",
 				fullWindow, lowerIndex, upperIndex, windowVal, FullDFTWindowGain); */
-	}
-	if((upperIndex - lowerIndex) == 2) {
-		lowerIndex++;
-		dLowerIndex = (double) lowerIndex;
-		windowVal = 1.0;
-		FullDFTWindowGain += windowVal;
-		lowerLeftVal = (double) LeftRight[(startIndex + lowerIndex) * 2];
-		lowerRightVal = (double) LeftRight[(startIndex + lowerIndex) * 2 + 1];
-		// lowerMonoVal = Mono[startIndex + lowerIndex]; // lowerLeftVal + lowerRightVal;
-		lowerMonoVal = lowerLeftVal + lowerRightVal;
-		sinVal += sin(radianFreq * dLowerIndex) * lowerMonoVal * windowVal;
-		cosVal += cos(radianFreq * dLowerIndex) * lowerMonoVal * windowVal;
-		/* printf("fullWindow: %i center: %i windowVal: %f windowGain: %f\n", 
-				fullWindow, lowerIndex, windowVal, FullDFTWindowGain); */
 	}
 	ampVal = sinVal * sinVal;
 	ampVal += cosVal * cosVal;
