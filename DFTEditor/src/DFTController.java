@@ -1,10 +1,5 @@
-import javax.swing.*;
-import javax.swing.event.*;
-import java.awt.*;
+
 import java.awt.event.*;
-import java.util.*;
-import java.lang.*;
-import java.io.*;
 
 public class DFTController implements MouseListener, ActionListener {
 	
@@ -92,6 +87,9 @@ public class DFTController implements MouseListener, ActionListener {
     }
     if ("Print Params".equals(e.getActionCommand())) {
         GenerateWavelets.printParams(); 
+    }
+    if ("Save Params".equals(e.getActionCommand())) {
+        GenerateWavelets.writeParamsToFile(); 
     }        
     if((apOldUpperY != DFTEditor.upperY) || (apOldLeftX != DFTEditor.leftX)) {
            DFTEditor.view.DrawFileData(true);
