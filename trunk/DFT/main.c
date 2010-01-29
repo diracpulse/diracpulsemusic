@@ -233,7 +233,7 @@ void FreqDFT() {
 		lowerLogAmp = globalLogAmp;
 		lowerNote = globalNote;
 		if((upperLogAmp < middleLogAmp) && (lowerLogAmp < middleLogAmp)) {
-			printf("%i %i %f\n", stepIndex, middleNote, middleLogAmp); // full printout
+			//printf("%i %i %f\n", stepIndex, middleNote, middleLogAmp); // full printout
 		}
 		upperLogAmp = middleLogAmp;
 		upperNote = middleNote;
@@ -242,7 +242,7 @@ void FreqDFT() {
 	}
 	// test lowest freq
 	if(upperLogAmp < middleLogAmp) {
-		printf("%i %i %f\n", stepIndex, middleNote, middleLogAmp); // full printout
+		//printf("%i %i %f\n", stepIndex, middleNote, middleLogAmp); // full printout
 	}
 }
 
