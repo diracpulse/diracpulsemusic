@@ -258,7 +258,7 @@ void copy(int seconds) {
 	}
 }
 
-int main(int argc, char** argv) {
+void WAVFileMain(int argc, char** argv) {
 	stereoShorts = malloc(CHARS);
 	leftFloats = malloc(CHARS);
 	rightFloats = malloc(CHARS);
