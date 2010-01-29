@@ -155,6 +155,10 @@ public class DFTEditor extends JFrame {
         
         menuItem = new JMenuItem("Print Params");
         menuItem.addActionListener(controller);
+        menu.add(menuItem);
+        
+        menuItem = new JMenuItem("Save Params");
+        menuItem.addActionListener(controller);
         menu.add(menuItem);        
         
         menuItem = new JMenuItem("Exit");
@@ -202,7 +206,7 @@ public class DFTEditor extends JFrame {
     }
 	
     public DFTEditor() {
-        ReadFileData("out.txt");
+        //ReadFileData("out.txt");
         setSize(1500, 600);
         view = new DFTView();
         controller = new DFTController();
