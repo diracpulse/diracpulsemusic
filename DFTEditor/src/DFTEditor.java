@@ -17,6 +17,8 @@ public class DFTEditor extends JFrame {
 	public static TreeMap<Integer, TreeMap<Integer, Float>> timeToFreqToAmp;
 	public static TreeMap<Integer, Float> timeToAmpSum;
 	public static TreeMap<Integer, Float> freqToMaxAmp;
+	public static TreeMap<Integer, Boolean> isFreqCollapsed;
+	public static TreeMap<Integer, Boolean> isTimeCollapsed;
 	public static int xStep = 6;
 	public static int yStep = 9; // one digit;
 	public static int topYStep = 8; // used by DrawUpperTimes
@@ -34,6 +36,8 @@ public class DFTEditor extends JFrame {
 	public static int maxTime;
 	public static int dataXDim;
 	public static int dataYDim;
+	public static int timeCollapse = 4;
+	public static int freqCollapse = 4;
 	
 	public void ReadFileData(String inputFile) {
 		timeToFreqToAmp = new TreeMap<Integer, TreeMap<Integer, Float>>();
@@ -96,6 +100,7 @@ public class DFTEditor extends JFrame {
 		dataYDim = maxFreq - minFreq;
 		calculateAmpSum();
 		calculateMaxAmpAtFreq();
+		setAllCollapsed();
 		fileDataRead = true;
 	}
 	
@@ -134,7 +139,18 @@ public class DFTEditor extends JFrame {
 				}
 			}
 		}
-	}	
+	}
+	
+	public void setAllCollapsed() {
+		isFreqCollapsed = new TreeMap<Integer, Boolean>();
+		isTimeCollapsed = new TreeMap<Integer, Boolean>();
+		for(int time = 0; time < dataXDim; time += timeCollapse) {
+			isTimeCollapsed.put(new Integer(time / timeCollapse), new Boolean(true));
+		}
+		for(int freq = 0; freq < dataYDim; freq += freqCollapse) {
+			isFreqCollapsed.put(new Integer(freq / freqCollapse), new Boolean(true));
+		}
+	}
 
 	public JMenuBar createMenuBar() {
 	    JMenuBar menuBar;
