@@ -1,10 +1,6 @@
 import javax.swing.*;
-import javax.swing.event.*;
 import java.awt.*;
-import java.awt.event.*;
 import java.util.*;
-import java.lang.*;
-import java.io.*;
 
 public class DFTView extends JComponent {
 	
@@ -16,35 +12,86 @@ public class DFTView extends JComponent {
 	public void DrawAmpSums(Graphics g) {
 		int startX = DFTEditor.leftX;
 		int endX = DFTEditor.leftX + (getWidth() - DFTEditor.leftOffset) / DFTEditor.xStep;
-		for(int time = startX; time < endX; time++) {
-			int screenX = DFTEditor.leftOffset + ((time - startX) * DFTEditor.xStep);
-			if(DFTEditor.timeToAmpSum.get(new Integer(time)) == null) continue;
-			float ampSumVal = DFTEditor.timeToAmpSum.get(new Integer(time)).floatValue();
+		int screenIndex = startX;
+		int screenEnd = endX;
+		for(int time = startX; screenIndex < screenEnd; time += getTimeIncrement(time)) {
+			int screenX = DFTEditor.leftOffset + ((screenIndex - startX) * DFTEditor.xStep);
+			float ampSumVal = getMaxValue(DFTEditor.timeToAmpSum, time, getTimeIncrement(time));
+			// draw amp even if 0.0f, to overwrite previous value
 			drawAmplitude(g, screenX, 0, ampSumVal, 0.0f, DFTEditor.maxAmplitudeSum);
+			screenIndex++;
 		}
 	}
+	
 	public void DrawMaxAmpAtFreq(Graphics g) {
 		int startY = DFTEditor.upperY;
 		int endY = startY + getHeight() - DFTEditor.upperOffset / DFTEditor.yStep;
 		int iFreq;
 		int screenY;
 		float amp;
-		for(int freqIndex = startY; freqIndex < endY; freqIndex++) {
+		int screenIndex = startY;
+		int screenEnd = endY;
+		for(int freqIndex = startY; screenIndex < screenEnd; freqIndex += getFreqIncrement(freqIndex)) {
 			if(freqIndex < DFTEditor.dataYDim) {			
 				iFreq = DFTEditor.maxFreq - freqIndex;
 			} else {
 				iFreq = 1; // dummy value
 			}
-			if(DFTEditor.freqToMaxAmp.get(iFreq) == null) {
-				amp = 0.0f;
-			} else {
-				amp = DFTEditor.freqToMaxAmp.get(iFreq).floatValue();
-			}
-			screenY = DFTEditor.upperOffset + ((freqIndex - startY) * DFTEditor.yStep);
+			amp = getMaxValue(DFTEditor.freqToMaxAmp, iFreq, getFreqIncrement(freqIndex));
+			// draw amp even if 0.0f, to overwrite previous value
+			screenY = DFTEditor.upperOffset + ((screenIndex - startY) * DFTEditor.yStep);
 			drawAmplitude(g, 0, screenY, amp, 0.0f, DFTEditor.maxAmplitude);
+			screenIndex++;
 		}
 	}
-
+	
+	public float getMaxValue(TreeMap<Integer, Float> values, int startVal, int step) {
+		float maxValue = 0.0f;
+		int endVal = startVal + step;
+		for(int val = startVal; val < endVal; val++) {
+			if (values.containsKey(val)) {
+				if(values.get(val) > maxValue) maxValue = values.get(val);
+			}
+		}
+		return maxValue;
+	}
+	
+	public float getMaxValue(int time, int freq) {
+		TreeMap<Integer, Float> freqToAmp;
+		float maxValue = 0.0f;
+		freq = DFTEditor.maxFreq - freq;
+		int endTime = time + getTimeIncrement(time);
+		int endFreq = freq + getFreqIncrement(freq);
+		for(int timeIndex = time; timeIndex < endTime; timeIndex++) {
+			for(int freqIndex = freq; freqIndex < endFreq; freqIndex++) {
+				if(DFTEditor.timeToFreqToAmp.containsKey(timeIndex)) {
+					freqToAmp = DFTEditor.timeToFreqToAmp.get(timeIndex);
+					if(freqToAmp.containsKey(freqIndex)) {
+						if(freqToAmp.get(freqIndex) > maxValue) maxValue = freqToAmp.get(freqIndex);
+					}
+				}
+			}
+		}
+		return maxValue;
+	}
+	
+	public int getTimeIncrement(int time) {
+		return getIncrement(DFTEditor.isTimeCollapsed, time, DFTEditor.timeCollapse);
+	}
+	
+	public int getFreqIncrement(int freq) {
+		return getIncrement(DFTEditor.isFreqCollapsed, freq, DFTEditor.freqCollapse);
+	}	
+	
+	public int getIncrement(TreeMap<Integer, Boolean> isCollapsed, int value, int step) {
+		int key = value / step;
+		if (!isCollapsed.containsKey(key)) return 1;
+		if (isCollapsed.get(key).booleanValue() == true) {
+			return step;
+		}
+		return 1;
+	}
+	
 	public void DrawUpperTimes(Graphics g) {
 		int timeIndex;
 		int iTime;
@@ -58,7 +105,8 @@ public class DFTView extends JComponent {
 		int screenY;
 		int startX = DFTEditor.leftX;
 		int endX = DFTEditor.leftX + (getWidth() - DFTEditor.leftOffset) / DFTEditor.xStep;
-		for(timeIndex = startX; timeIndex < endX; timeIndex++) {
+		int screenIndex = startX; // controls actual position on the screen
+		for(timeIndex = startX; screenIndex < endX; timeIndex += getTimeIncrement(timeIndex)) {
 			iTime = timeIndex;
 			leading0 = true;
 			int yOffset = 1;
@@ -81,7 +129,7 @@ public class DFTView extends JComponent {
 					f = blank;
 					b = blank;
 				}
-				screenX = DFTEditor.leftOffset + ((timeIndex - startX) * DFTEditor.xStep);
+				screenX = DFTEditor.leftOffset + ((screenIndex - startX) * DFTEditor.xStep);
 				screenY = yOffset * DFTEditor.topYStep;
 				g.setColor(b);
 				g.fillRect(screenX, screenY, 6, 8);				
@@ -90,6 +138,7 @@ public class DFTView extends JComponent {
 				                           digitVal);
 				yOffset++;
 			}
+			screenIndex++;
 		}
 	}
 
@@ -106,7 +155,8 @@ public class DFTView extends JComponent {
 		int endY = startY + getHeight() - DFTEditor.upperOffset / DFTEditor.yStep;
 		int screenX;
 		int screenY;
-		for(freqIndex = startY; freqIndex < endY; freqIndex++) {
+		int screenIndex = startY; // controls actual position on the screen
+		for(freqIndex = startY; screenIndex < endY; freqIndex += getFreqIncrement(freqIndex)) {
 			if(freqIndex < DFTEditor.dataYDim) {			
 				iFreq = DFTEditor.maxFreq - freqIndex;
 			} else {
@@ -126,7 +176,7 @@ public class DFTView extends JComponent {
 					b = blank;
 				}
 				screenX = xOffset * DFTEditor.xStep;
-				screenY = DFTEditor.upperOffset + ((freqIndex - startY) * DFTEditor.yStep);
+				screenY = DFTEditor.upperOffset + ((screenIndex - startY) * DFTEditor.yStep);
 				g.setColor(b);
 				g.fillRect(screenX, screenY, 6, 8);
 				DFTUtils.SevenSegmentSmall(g, f, b, screenX, 
@@ -134,9 +184,10 @@ public class DFTView extends JComponent {
 				                           digitVal);
 				xOffset++;
 			}
+			screenIndex++;
 		}
 	}
-			
+
 	public void DrawFileData(boolean scaleLines) {
 		DrawFileData(getGraphics(), scaleLines);
 	}
@@ -149,23 +200,25 @@ public class DFTView extends JComponent {
 		// clear old data
 		g.setColor(new Color(0.0f, 0.0f, 0.0f));
 		g.fillRect(DFTEditor.leftOffset, DFTEditor.upperOffset, getWidth(), getHeight());
-		TreeMap<Integer, Float> currentMap;
 		int startX = DFTEditor.leftX;
 		int endX = startX + ((getWidth() - DFTEditor.leftOffset) / DFTEditor.xStep);
 		int startY = DFTEditor.upperY;
 		int endY = startY + ((getHeight() - DFTEditor.upperOffset) / DFTEditor.yStep);
-		for(int x = startX; x < endX; x++) {
-            if(x >= DFTEditor.dataXDim) continue;
-            if(!DFTEditor.timeToFreqToAmp.containsKey(new Integer(x))) continue;
-            currentMap = DFTEditor.timeToFreqToAmp.get(new Integer(x));
-            for(int y = startY; y < endY; y++) {
-                if(y >= DFTEditor.dataYDim) continue;
-                if(!currentMap.containsKey(new Integer(DFTEditor.maxFreq - y))) continue;
-        		int screenX = DFTEditor.leftOffset + ((x - DFTEditor.leftX) * DFTEditor.xStep);
-        		int screenY = DFTEditor.upperOffset + ((y - DFTEditor.upperY) * DFTEditor.yStep);
-                float currentVal = currentMap.get(new Integer(DFTEditor.maxFreq - y)).floatValue();
-				drawAmplitude(g, screenX, screenY, currentVal, DFTEditor.minAmplitude, DFTEditor.maxAmplitude);
+		int screenXIndex = startX;
+		for(int x = startX; screenXIndex < endX; x += getTimeIncrement(x)) {
+            if(x >= DFTEditor.dataXDim) break;
+    		int screenYIndex = startY;
+            for(int y = startY; screenYIndex < endY; y += getFreqIncrement(y)) {
+                if(y >= DFTEditor.dataYDim) break;
+        		int screenX = DFTEditor.leftOffset + ((screenXIndex - DFTEditor.leftX) * DFTEditor.xStep);
+        		int screenY = DFTEditor.upperOffset + ((screenYIndex - DFTEditor.upperY) * DFTEditor.yStep);
+                float currentVal = getMaxValue(x, y);
+                if(currentVal > 0.0f) {
+                	drawAmplitude(g, screenX, screenY, currentVal, DFTEditor.minAmplitude, DFTEditor.maxAmplitude);
+                }
+				screenYIndex++;
 			}
+            screenXIndex++;
 		}
 	}
 	
@@ -185,6 +238,8 @@ public class DFTView extends JComponent {
 		fractionVal = (int) Math.floor((currentVal - Math.floor(currentVal)) * 10.0f);
 		currentVal -= minVal;
 		currentVal /= ampRange;
+		if(currentVal < 0.0f) currentVal = 0.0f;
+		if(currentVal > 1.0f) currentVal = 1.0f;
 		blue = 1.0f - currentVal;
 		red = currentVal;
 		if(red >= 0.5f) {

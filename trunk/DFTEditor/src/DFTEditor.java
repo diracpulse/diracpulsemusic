@@ -222,7 +222,7 @@ public class DFTEditor extends JFrame {
     }
 	
     public DFTEditor() {
-        //ReadFileData("out.txt");
+        ReadFileData("out.txt");
         setSize(1500, 600);
         view = new DFTView();
         controller = new DFTController();
