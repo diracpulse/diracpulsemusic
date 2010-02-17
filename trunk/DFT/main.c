@@ -32,9 +32,10 @@ int stepIndex = 0;
 
 double WaveletSinData[31 * 10 * 10000];
 double WaveletCosData[31 * 10 * 10000];
-double RadianFreqs[MAXFREQUENCIES];
-int windowLengths[MAXFREQUENCIES];
-int waveletIndex;
+double FreqsInHz[MAXFREQUENCIES];
+int WaveletStartIndices[MAXFREQUENCIES];
+int numWavelets = 0;
+int waveletIndex = 0;
 // int numFrequencies
 
 int globalNote;
@@ -324,9 +325,59 @@ void FreqDFT() {
 	}
 }
 
+void InitWavelets() {
+	double upperFreq = 20000.0;
+	double centerFreq = 1000.0;
+	double lowerFreq = 20.0;
+	double freqInHz = 0.0;
+    double startLogFreq = 0.0;
+    double currentLogFreq = 0.0;
+	double noteBase = 31.0;
+	double maxCyclesPerWindow = 45.22540955090449;
+	double taperPerOctave = sqrt(2.0);
+    double samplingRate = 44100.0;
+    int note = 0;
+    int index = 0;
+    int windowLength = 0;
+    int windowStartIndex = 0;
+	int maxNote = (int) round(log(upperFreq) / log(2.0) * noteBase);
+	int centerNote = (int) round(log(centerFreq) / log(2.0) * noteBase);
+	int minNote = (int) round(log(lowerFreq) / log(2.0) * noteBase);
+    double cyclesPerWindow = 1.0;
+    double taperValue = 1.0;
+    double ratio = (maxCyclesPerWindow - 1.0) / maxCyclesPerWindow;
+    if((ratio >= 1.0) || (ratio <= 0.0)) {
+    	printf("Error: InitFrequencies: invalid ratio: %f", ratio);
+    	return;
+    }
+    for(note = maxNote; note > centerNote; note--) {
+    	freqInHz = pow(2.0, note / noteBase);
+    	FreqsInHz[index] = freqInHz;
+    	windowLength = (int) maxCyclesPerWindow * samplingRate / freqInHz;
+    	WindowLengths[index] = windowLength;
+    	WaveletStartIndices[index] = windowStartIndex;
+    	windowStartIndex += windowLength;
+    	index++;
+    }
+    // start tapering window length
+    startLogFreq = log(freqInHz) / log(2.0);
+    for(note = centerNote; note >= minNote; note--) {
+    	freqInHz = pow(2.0, note / noteBase);
+    	currentLogFreq =  log(freqInHz) / log(2.0);
+    	taperValue = pow(taperPerOctave, startLogFreq - currentLogFreq);
+    	cyclesPerWindow = maxCyclesPerWindow / taperValue;
+    	windowLength = (int) (cyclesPerWindow * samplingRate / freqInHz);
+    	WindowLengths[index] = windowLength;
+    	WaveletStartIndices[index] = windowStartIndex;
+    	windowStartIndex += windowLength;
+    	index++;
+    }
+}
+
 int InitFrequencies(double upperFreq, double centerFreq, double lowerFreq) {
 	int freqIndex = 0;
-	int freqIndexIncrement = 2;
+	int freqIndexIncrement = 1;
+	int waveletStartIndex = 0;
 	double freq;
 	double logFreq;
 	double radianFreq;
@@ -371,7 +422,7 @@ int InitFrequencies(double upperFreq, double centerFreq, double lowerFreq) {
 		}
 	}
 	// Perform Interpolation
-	numFrequencies = freqIndex - freqIndexIncrement + 1;
+	// numFrequencies = freqIndex - freqIndexIncrement + 1;
 	for(freqIndex = 1; freqIndex < numFrequencies; freqIndex += freqIndexIncrement) {
 		RadianFreqs[freqIndex] = (RadianFreqs[freqIndex - 1] + RadianFreqs[freqIndex + 1]) / 2.0;
 		WindowLengths[freqIndex] = (WindowLengths[freqIndex - 1] + WindowLengths[freqIndex + 1]) / 2.0;
