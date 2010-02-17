@@ -26,7 +26,7 @@ public class DFTEditor extends JFrame {
 	public static int upperOffset = topYStep * 5; // start of first data cell
 	public static int leftX = 0; // index of freq in leftmost data cell
 	public static int upperY = 0; // index of time in uppermost data cell
-	public static float timeStep = 0.005f;
+	public static double timeStep = 0.005f;
 	public static float maxAmplitude;
 	public static float minAmplitude;
 	public static float maxAmplitudeSum;
@@ -39,11 +39,77 @@ public class DFTEditor extends JFrame {
 	public static int timeCollapse = 4;
 	public static int freqCollapse = 4;
 	
-	public void ReadFileData(String inputFile) {
+	public void ReadFileData(String fileName) {
+		timeToFreqToAmp = new TreeMap<Integer, TreeMap<Integer, Float>>();
+		TreeMap<Integer, Float> freqToAmp;
+		DataInputStream in = null;
+		String linein = "";
+		maxAmplitude = 0.0f;
+		minAmplitude = 15.0f;
+		minFreq = freqsPerOctave * 100;
+		maxFreq = 0;
+		maxTime = 0;
+		int time;
+		short freq;
+		float amp;
+	    try {
+	    	in = new DataInputStream(new
+	                BufferedInputStream(new FileInputStream(new String(fileName + ".mono5ms"))));
+		} catch (FileNotFoundException nf) {
+			System.out.println("DFTEditor: " + fileName + ".[suffix] not found");
+			System.out.println("Attemping to load from text file");
+			ReadTextFileData(fileName);
+			return;
+		}
+		try {
+			while(true) {
+				time = in.readInt();
+				freq = in.readShort();
+				amp = in.readFloat();
+				if(amp > maxAmplitude) {
+					maxAmplitude = amp;
+				}
+				if(amp < minAmplitude) {
+					minAmplitude = amp;
+				}
+				if(freq > maxFreq) {
+					maxFreq = freq;
+				}
+				if(freq < minFreq) {
+					minFreq = freq;
+				}				
+				if(time > maxTime) {
+					maxTime = time;
+				}				
+				if (timeToFreqToAmp.containsKey(time)) {
+					freqToAmp = timeToFreqToAmp.get(time);
+				} else {
+					timeToFreqToAmp.put(time, new TreeMap<Integer, Float>());
+					freqToAmp = timeToFreqToAmp.get(time);
+				}
+				freqToAmp.put((int) freq, amp);
+			}
+		} catch (IOException e) {
+			if(e instanceof EOFException) {
+				System.out.println("Finished reading from: " + fileName);
+			} else {
+				System.out.println("DFTEditor: error reading from: " + fileName);
+			}
+		}
+		dataXDim = maxTime;
+		dataYDim = maxFreq - minFreq;
+		calculateAmpSum();
+		calculateMaxAmpAtFreq();
+		setAllCollapsed();
+		fileDataRead = true;
+	}
+	
+	public void ReadTextFileData(String fileName) {
 		timeToFreqToAmp = new TreeMap<Integer, TreeMap<Integer, Float>>();
 		TreeMap<Integer, Float> freqToAmp;
 		String[] tokens;
 		RandomAccessFile file = null;
+		DataOutputStream binaryOut = null;
 		String linein = "";
 		maxAmplitude = 0.0f;
 		minAmplitude = 15.0f;
@@ -54,9 +120,11 @@ public class DFTEditor extends JFrame {
 		Integer freq;
 		Float amp;
 	    try {
-			file = new RandomAccessFile("out.txt", "r");
+			file = new RandomAccessFile(new String(fileName + ".txt"), "r");
+			binaryOut = new DataOutputStream(new
+		            BufferedOutputStream(new FileOutputStream(new String(fileName + ".mono5ms"))));
 		} catch (FileNotFoundException nf) {
-			System.out.println("DFTEditor: " + inputFile + " not found");
+			System.out.println("DFTEditor: " + fileName + ".[suffix] not found");
 			System.exit(0);
 		}
 		try {
@@ -66,6 +134,9 @@ public class DFTEditor extends JFrame {
 				time = new Integer(tokens[0]);
 				freq = new Integer(tokens[1]);
 				amp = new Float(tokens[2]);
+				binaryOut.writeInt(time);
+				binaryOut.writeShort(freq);
+				binaryOut.writeFloat(amp);
 				if(amp.floatValue() > maxAmplitude) {
 					maxAmplitude = amp.floatValue();
 				}
@@ -89,11 +160,11 @@ public class DFTEditor extends JFrame {
 				}
 				freqToAmp.put(freq, amp);
 				linein = file.readLine();
-				if(maxTime > 10000) break;
 			}
 			file.close();
+			binaryOut.close();
 		} catch (IOException ie) {
-			System.out.println("DFTEditor: error reading from: " + inputFile);
+			System.out.println("DFTEditor: error reading from: " + fileName);
 			System.exit(0);
 		}
 		dataXDim = maxTime;
@@ -222,7 +293,7 @@ public class DFTEditor extends JFrame {
     }
 	
     public DFTEditor() {
-        ReadFileData("out.txt");
+        ReadFileData("out");
         setSize(1500, 600);
         view = new DFTView();
         controller = new DFTController();
