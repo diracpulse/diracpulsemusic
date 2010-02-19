@@ -2,44 +2,55 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "main.h"
 
 #define MAXDFTWINDOW 44100
-#define MAXFREQUENCIES 1000
+#define MAXWAVELETS 31 * 16
+#define MAXWAVELETDATA 31 * 16 * 10000
 
-double WindowLengths[MAXFREQUENCIES];
-double RadianFreqs[MAXFREQUENCIES];
+void CalculateWavelets();
+
+// File Variables
 short LeftRight[MAXDFTWINDOW * 2];
 short Mono[MAXDFTWINDOW];
-int numFrequencies = 0;
-int stereo = 2;
-int headerLengthInBytes = 56; // changed from 44 to accomodate newer .wav files
-int sampleLengthInBytes = 4; 
+const int stereo = 2;
+const int headerLengthInBytes = 56; // changed from 44 to accomodate newer .wav files
+const int sampleLengthInBytes = 4;
 int Header[16];
+int stepIndex = 0;
+int maxDFTLength = 0;
+int inputFileLength = 0;
+int maxCenterIndex = 0;
 
-const double gaussianConstant = 8.0;
+// Wavelet Variables
 const double onePI = 3.1415926535897932384626433832795;
 const double twoPI = 6.283185307179586476925286766559;
-
-double samplingRate = 44100.0;
-double cyclesPerBin = 45.22540955090449;
-double samplesPerStep = 220.5; // 5ms
-double notesPerOctave = 31.0;
-int maxDFTLength = 0;
-int inputFileLength = 0; 
-int maxCenterIndex = 0;
-int calcDFT = 0;
-int stepIndex = 0;
-
-double WaveletSinData[31 * 10 * 10000];
-double WaveletCosData[31 * 10 * 10000];
-double FreqsInHz[MAXFREQUENCIES];
-int WaveletStartIndices[MAXFREQUENCIES];
+const double samplingRate = 44100.0;
+const double maxCyclesPerWindow = 45.22540955090449;
+const double samplesPerStep = 220.5; // 5ms
+const double notesPerOctave = 31.0;
+const double upperFreq = 20000.0;
+const double centerFreq = 1000.0;
+const double lowerFreq = 20.0;
+const double taperPerOctave = 1.4142135623730950488016887242097; // sqrt(2.0)
+const double alpha = 6.5;
 int numWavelets = 0;
-int waveletIndex = 0;
-// int numFrequencies
+double KaiserWindow[MAXDFTWINDOW];
 
-int globalNote;
-double globalLogAmp;
+struct WaveletInfo {
+	double radianFreq;
+	double gain;
+	int length;
+	int note;
+	int startIndex; // index into WaveletData
+} WaveletInfoArray[MAXWAVELETS];
+
+struct WaveletData {
+	double sinVal;
+	double cosVal;
+} WaveletDataArray[MAXWAVELETDATA];
+
+double logAmps[MAXWAVELETS];
 
 void LoadSamplesFromFile(FILE *stream, int centerIndex) {
 	if(centerIndex >= (inputFileLength - headerLengthInBytes) / sampleLengthInBytes) {
@@ -50,10 +61,8 @@ void LoadSamplesFromFile(FILE *stream, int centerIndex) {
 	int fileReadEnd = 0;
 	int fileReadLength = 0;
 	int startIndex = centerIndex - maxDFTLength / 2;
-	int endIndex = centerIndex + (maxDFTLength / 2) + (maxDFTLength % 2);
 	int index = startIndex;
 	int arrayIndex = 0;
-	int readLength = 0;
 	// printf("\nindex: %i arrayIndex: %i\n", index, arrayIndex);
 	while(index < 0) {
 		LeftRight[arrayIndex * 2] = (short) 0;
@@ -83,361 +92,185 @@ void LoadSamplesFromFile(FILE *stream, int centerIndex) {
 	// printf("index: %i arrayIndex: %i\n", index, arrayIndex);
 }
 
-void SingleDFT(double radianFreq, int startIndex, int endIndex) {
-        // int printInteger;
-        // int printDecimal;
-        int index;
-        double dIndex;
-        int lowerIndex;
-        int upperIndex;
-        double dLowerIndex;
-        double dUpperIndex;
-        double lowerLeftVal;
-        double lowerRightVal;
-        double upperLeftVal;
-        double upperRightVal;
-        double lowerMonoVal;
-        double upperMonoVal;
-        double sinVal = 0.0;
-        double cosVal = 0.0;
-        double ampVal = 0.0;
-        double freqInHz = samplingRate * (radianFreq / twoPI);
-        double logAmp = 0.0;
-        double logFreq = 0.0;
-        int fullWindow = endIndex - startIndex;
-        int halfWindow = fullWindow / 2;
-        double dHalfWindow = (double) halfWindow;
-        double dFullWindow = (double) fullWindow;
-        double z;
-        double FullDFTWindowGain = 0.0;
-        double windowVal;
-        double windowRatio;
-        double a0 = 0.35875;
-        double a1 = -0.48829;
-        double a2 = 0.14128;
-        double a3 = -0.01168;
-        for(index = 0; index < halfWindow; index++) {
-                dIndex = (double) index;
-                /* START: Gaussian Window
-                z = (0.5 + dHalfWindow - 1.0 - dIndex) * (onePI / dFullWindow);
-                windowVal = exp(-1.0 * gaussianConstant * z * z);
-                   END: Gaussian Window */
-                windowRatio = dIndex / dFullWindow;
-                windowVal = 0.0;
-                windowVal += a0;
-                windowVal += a1 * cos(2.0 * onePI * windowRatio);
-                windowVal += a2 * cos(4.0 * onePI * windowRatio);
-                windowVal += a3 * cos(6.0 * onePI * windowRatio);
-                FullDFTWindowGain += 2.0 * windowVal;
-                lowerIndex = index;
-                upperIndex = (fullWindow - 1 - index);
-                dLowerIndex = (double) lowerIndex;
-                dUpperIndex = (double) upperIndex;
-                lowerLeftVal = (double) LeftRight[(startIndex + lowerIndex) * 2];
-                lowerRightVal = (double) LeftRight[(startIndex + lowerIndex) * 2 + 1];
-                upperLeftVal = (double) LeftRight[(startIndex + upperIndex) * 2];
-                upperRightVal = (double) LeftRight[(startIndex + upperIndex) * 2 + 1];
-                // lowerMonoVal = Mono[startIndex + lowerIndex]; // lowerLeftVal + lowerRightVal;
-                // upperMonoVal = Mono[startIndex + upperIndex]; // upperLeftVal + upperRightVal;
-                lowerMonoVal = lowerLeftVal + lowerRightVal;
-                upperMonoVal = upperLeftVal + upperRightVal;
-                sinVal += sin(radianFreq * dLowerIndex) * lowerMonoVal * windowVal;
-                sinVal += sin(radianFreq * dUpperIndex) * upperMonoVal * windowVal;
-                cosVal += cos(radianFreq * dLowerIndex) * lowerMonoVal * windowVal;
-                cosVal += cos(radianFreq * dUpperIndex) * upperMonoVal * windowVal;
-
-                /* printf("fullWindow: %i lower: %i upper: %i windowVal: %f windowGain: %f\n",
-                                fullWindow, lowerIndex, upperIndex, windowVal, FullDFTWindowGain); */
-        }
-        if((upperIndex - lowerIndex) == 2) {
-                lowerIndex++;
-                dLowerIndex = (double) lowerIndex;
-                windowVal = 1.0;
-                FullDFTWindowGain += windowVal;
-                lowerLeftVal = (double) LeftRight[(startIndex + lowerIndex) * 2];
-                lowerRightVal = (double) LeftRight[(startIndex + lowerIndex) * 2 + 1];
-                // lowerMonoVal = Mono[startIndex + lowerIndex]; // lowerLeftVal + lowerRightVal;
-                lowerMonoVal = lowerLeftVal + lowerRightVal;
-                sinVal += sin(radianFreq * dLowerIndex) * lowerMonoVal * windowVal;
-                cosVal += cos(radianFreq * dLowerIndex) * lowerMonoVal * windowVal;
-                /* printf("fullWindow: %i center: %i windowVal: %f windowGain: %f\n",
-                                fullWindow, lowerIndex, windowVal, FullDFTWindowGain); */
-        }
-        ampVal = sinVal * sinVal;
-        ampVal += cosVal * cosVal;
-        ampVal = sqrt(ampVal) / FullDFTWindowGain;
-        ampVal *= 2.0; // integral of sin, cos over time approaches 0.5
-        if(ampVal < 4.0) {
-                logAmp = 0.0;
-        } else {
-                logAmp = log(ampVal) / log(2.0);
-        }
-        logFreq = log(freqInHz) / log(2.0);
-        globalNote = (int) round(logFreq * notesPerOctave);
-        globalLogAmp = logAmp;
-        // printf("%i %f %f\n", stepIndex, logFreq, logAmp); // full printout
-        // printf("%f\n", logFreq);
-        // printInteger = (int) floor(logAmp);
-        // printDecimal = (int) 100.0 * (logAmp - floor(logAmp));
-        // printf("%d.%d\n", printInteger, printDecimal);
-        // printf("%f\n", logAmp);
-}
-
-void SingleDFTWithWavelet(double radianFreq, int startIndex, int endIndex) {
-	// int printInteger;
-	// int printDecimal;
-	int index;
-	double dIndex;
-	double leftVal;
-	double rightVal;
-	double monoVal;
+void SingleDFT(int waveletIndex, int startIndex, int endIndex) {
+	int index = 0;
+	int waveletStartIndex = WaveletInfoArray[waveletIndex].startIndex;
+	int maxIndex = endIndex - startIndex;
+	int maxIndexWavelet = WaveletInfoArray[waveletIndex].length;
+	if(maxIndex != maxIndexWavelet) {
+		//printf("SingleDFT: maxIndex: %d maxIndexWavelet %d\n", maxIndex, maxIndexWavelet);
+		if(maxIndexWavelet < maxIndex) {
+			maxIndex = maxIndexWavelet;
+		}
+	}
+	double leftVal = 0.0;
+	double rightVal = 0.0;
+	double monoVal = 0.0;
 	double sinVal = 0.0;
 	double cosVal = 0.0;
 	double ampVal = 0.0;
-	double freqInHz = samplingRate * (radianFreq / twoPI);
 	double logAmp = 0.0;
-	double logFreq = 0.0;
-	int fullWindow = endIndex - startIndex;
-	int halfWindow = fullWindow / 2;
-	double dHalfWindow = (double) halfWindow;
-	double dFullWindow = (double) fullWindow;
-	double z;
-	double FullDFTWindowGain = 0.0;
-	double windowVal;
-	double windowRatio;
-	double a0 = 0.35875;
-	double a1 = -0.48829;
-	double a2 = 0.14128;
-	double a3 = -0.01168;
-	for(index = 0; index < halfWindow; index++) {
-		dIndex = (double) index;
-		/* START: Gaussian Window
-		z = (0.5 + dHalfWindow - 1.0 - dIndex) * (onePI / dFullWindow);
-		windowVal = exp(-1.0 * gaussianConstant * z * z);
-		   END: Gaussian Window */
-		windowRatio = dIndex / dFullWindow;
-		windowVal = 0.0;
-		windowVal += a0;
-		windowVal += a1 * cos(2.0 * onePI * windowRatio);
-		windowVal += a2 * cos(4.0 * onePI * windowRatio);
-		windowVal += a3 * cos(6.0 * onePI * windowRatio);
-		FullDFTWindowGain += 2.0 * windowVal;
-		dIndex = (double) index;
+	for(index = 0; index < maxIndex; index++) {
 		leftVal = (double) LeftRight[(startIndex + index) * 2];
 		rightVal = (double) LeftRight[(startIndex + index) * 2 + 1];
-		// lowerMonoVal = Mono[startIndex + lowerIndex]; // lowerLeftVal + lowerRightVal;
-		// upperMonoVal = Mono[startIndex + upperIndex]; // upperLeftVal + upperRightVal;
 		monoVal = leftVal + rightVal;
-		sinVal += sin(radianFreq * dIndex) * monoVal * windowVal;
-		cosVal += cos(radianFreq * dIndex) * monoVal * windowVal;
-
-		/* printf("fullWindow: %i lower: %i upper: %i windowVal: %f windowGain: %f\n",
-				fullWindow, lowerIndex, upperIndex, windowVal, FullDFTWindowGain); */
+		sinVal += WaveletDataArray[waveletStartIndex + index].sinVal * monoVal;
+		cosVal += WaveletDataArray[waveletStartIndex + index].cosVal * monoVal;
 	}
 	ampVal = sinVal * sinVal;
 	ampVal += cosVal * cosVal;
-	ampVal = sqrt(ampVal) / FullDFTWindowGain;
+	ampVal = sqrt(ampVal);
 	ampVal *= 2.0; // integral of sin, cos over time approaches 0.5
-	if(ampVal < 4.0) {
-		logAmp = 0.0;
-	} else {
+	if(ampVal > 4.0) {
 		logAmp = log(ampVal) / log(2.0);
+	} else {
+		logAmp = 0.0;
 	}
-	logFreq = log(freqInHz) / log(2.0);
-	globalNote = (int) round(logFreq * notesPerOctave);
-	globalLogAmp = logAmp;
-	// printf("%i %f %f\n", stepIndex, logFreq, logAmp); // full printout
-	// printf("%f\n", logFreq);
-	// printInteger = (int) floor(logAmp);
-	// printDecimal = (int) 100.0 * (logAmp - floor(logAmp));
-	// printf("%d.%d\n", printInteger, printDecimal);
-	// printf("%f\n", logAmp);
+	logAmps[waveletIndex] = logAmp;
+	//printf("%f ", ampVal);
 }
 
-void SampleArrayIndex(double radianFreq, double dDFTLength) {
+void SampleArrayIndex(int waveletIndex) {
 	if (maxDFTLength == 0) return;
-	int iDFTLength = (int) dDFTLength;
+	int DFTLength = WaveletInfoArray[waveletIndex].length;
 	int startIndex;
 	int centerIndex;
 	int endIndex;
 	int index;
 	int length;
-	if(iDFTLength > MAXDFTWINDOW) {
-		printf("Error: SampleArrayIndex: iDFTLength %i > MAXDFTWINDOW: %i\n", iDFTLength, MAXDFTWINDOW);
+	if(DFTLength > MAXDFTWINDOW) {
+		printf("Error: SampleArrayIndex: DFTLength %i > MAXDFTWINDOW: %i\n", DFTLength, MAXDFTWINDOW);
 		exit(0);
 	}
-	if(iDFTLength > maxDFTLength) {
-		printf("Error: SampleArrayIndex: iDFTLength %i > maxDFTLength: %i\n", iDFTLength, MAXDFTWINDOW);
+	if(DFTLength > maxDFTLength) {
+		printf("Error: SampleArrayIndex: DFTLength %i > maxDFTLength: %i\n", DFTLength, MAXDFTWINDOW);
 		exit(0);
 	}
-	if(iDFTLength == maxDFTLength) {
+	if(DFTLength == maxDFTLength) {
 		centerIndex = maxDFTLength / 2;
 		startIndex = 0;
 		endIndex = maxDFTLength;
 	} else {
 		centerIndex = maxDFTLength / 2;
-		startIndex = centerIndex - (iDFTLength / 2);
-		endIndex = centerIndex + (iDFTLength / 2);
+		startIndex = centerIndex - (DFTLength / 2);
+		endIndex = centerIndex + (DFTLength / 2);
 	}
-	endIndex += iDFTLength % 2; 
+	endIndex += DFTLength % 2;
 	length = 0;
 	for(index = startIndex; index < endIndex; index++) {
 		length++;
 	}
     // printf("start: %i center: %i end: %i length: %i inputLength: %i computedLength: %i\n", 
-	//		startIndex, centerIndex, endIndex, length, iDFTLength, (endIndex - startIndex));
-	SingleDFT(radianFreq, startIndex, endIndex);
+	//		startIndex, centerIndex, endIndex, length, DFTLength, (endIndex - startIndex));
+	SingleDFT(waveletIndex, startIndex, endIndex);
 }
 
 
 void FreqDFT() {
-	int freqIndex;
-	double radianFreq;
-	double windowLength;
-	double upperLogAmp;
-	int upperNote;
-	double middleLogAmp;
-	int middleNote;
-	double lowerLogAmp;
-	int lowerNote;
-	upperLogAmp = 0.0;
-	// test highest freq
-	SampleArrayIndex(RadianFreqs[0], WindowLengths[0]);
-	middleLogAmp = globalLogAmp;
-	middleNote = globalNote;
-	for(freqIndex = 1; freqIndex < (numFrequencies - 1); freqIndex++) {
-		radianFreq = RadianFreqs[freqIndex];
-		windowLength = WindowLengths[freqIndex];
-		SampleArrayIndex(radianFreq, windowLength);
-		lowerLogAmp = globalLogAmp;
-		lowerNote = globalNote;
-		if((upperLogAmp < middleLogAmp) && (lowerLogAmp < middleLogAmp)) {
-			//printf("%i %i %f\n", stepIndex, middleNote, middleLogAmp); // full printout
-		}
-		upperLogAmp = middleLogAmp;
-		upperNote = middleNote;
-		middleLogAmp = lowerLogAmp;
-		middleNote = lowerNote;
+	int waveletIndex = 0;
+	double upperAmp = 0.0;
+	double centerAmp = 0.0;
+	double lowerAmp = 0.0;
+	for(waveletIndex = 0; waveletIndex < numWavelets; waveletIndex++) {
+		SampleArrayIndex(waveletIndex);
 	}
-	// test lowest freq
-	if(upperLogAmp < middleLogAmp) {
-		//printf("%i %i %f\n", stepIndex, middleNote, middleLogAmp); // full printout
+	upperAmp = logAmps[0];
+	centerAmp = logAmps[1];
+	for(waveletIndex = 2; waveletIndex < numWavelets; waveletIndex++) {
+		lowerAmp = logAmps[waveletIndex];
+		if((centerAmp >= upperAmp) && (centerAmp >= lowerAmp)) {
+			if(centerAmp != 0.0) printf("%d %d %f\n", stepIndex, WaveletInfoArray[waveletIndex - 1].note, centerAmp);
+		}
+		upperAmp = centerAmp;
+		centerAmp = lowerAmp;
 	}
 }
 
 void InitWavelets() {
-	double upperFreq = 20000.0;
-	double centerFreq = 1000.0;
-	double lowerFreq = 20.0;
 	double freqInHz = 0.0;
     double startLogFreq = 0.0;
     double currentLogFreq = 0.0;
-	double noteBase = 31.0;
-	double maxCyclesPerWindow = 45.22540955090449;
-	double taperPerOctave = sqrt(2.0);
-    double samplingRate = 44100.0;
     int note = 0;
     int index = 0;
     int windowLength = 0;
     int windowStartIndex = 0;
-	int maxNote = (int) round(log(upperFreq) / log(2.0) * noteBase);
-	int centerNote = (int) round(log(centerFreq) / log(2.0) * noteBase);
-	int minNote = (int) round(log(lowerFreq) / log(2.0) * noteBase);
+	int maxNote = (int) round(log(upperFreq) / log(2.0) * notesPerOctave);
+	int centerNote = (int) round(log(centerFreq) / log(2.0) * notesPerOctave);
+	int minNote = (int) round(log(lowerFreq) / log(2.0) * notesPerOctave);
     double cyclesPerWindow = 1.0;
     double taperValue = 1.0;
     double ratio = (maxCyclesPerWindow - 1.0) / maxCyclesPerWindow;
+    double samplesPerCycle = 0.0;
+    double radianFreq = 0.0;
     if((ratio >= 1.0) || (ratio <= 0.0)) {
     	printf("Error: InitFrequencies: invalid ratio: %f", ratio);
     	return;
     }
     for(note = maxNote; note > centerNote; note--) {
-    	freqInHz = pow(2.0, note / noteBase);
-    	FreqsInHz[index] = freqInHz;
+    	freqInHz = pow(2.0, note / notesPerOctave);
+    	samplesPerCycle = samplingRate / freqInHz;
+    	radianFreq = twoPI / samplesPerCycle;
     	windowLength = (int) maxCyclesPerWindow * samplingRate / freqInHz;
-    	WindowLengths[index] = windowLength;
-    	WaveletStartIndices[index] = windowStartIndex;
+    	WaveletInfoArray[index].radianFreq = radianFreq;
+    	WaveletInfoArray[index].length = windowLength;
+    	WaveletInfoArray[index].startIndex = windowStartIndex;
+    	WaveletInfoArray[index].note = note;
     	windowStartIndex += windowLength;
     	index++;
     }
     // start tapering window length
     startLogFreq = log(freqInHz) / log(2.0);
     for(note = centerNote; note >= minNote; note--) {
-    	freqInHz = pow(2.0, note / noteBase);
+    	freqInHz = pow(2.0, note / notesPerOctave);
+    	samplesPerCycle = samplingRate / freqInHz;
+    	radianFreq = twoPI / samplesPerCycle;
     	currentLogFreq =  log(freqInHz) / log(2.0);
     	taperValue = pow(taperPerOctave, startLogFreq - currentLogFreq);
     	cyclesPerWindow = maxCyclesPerWindow / taperValue;
     	windowLength = (int) (cyclesPerWindow * samplingRate / freqInHz);
-    	WindowLengths[index] = windowLength;
-    	WaveletStartIndices[index] = windowStartIndex;
+    	WaveletInfoArray[index].radianFreq = radianFreq;
+    	WaveletInfoArray[index].length = windowLength;
+    	WaveletInfoArray[index].startIndex = windowStartIndex;
+    	WaveletInfoArray[index].note = note;
     	windowStartIndex += windowLength;
     	index++;
     }
+    numWavelets = index;
+    maxDFTLength = windowLength;
+    printf("%d\n", numWavelets, maxDFTLength);
+    CalculateWavelets();
 }
 
-int InitFrequencies(double upperFreq, double centerFreq, double lowerFreq) {
-	int freqIndex = 0;
-	int freqIndexIncrement = 1;
-	int waveletStartIndex = 0;
-	double freq;
-	double logFreq;
-	double radianFreq;
-	double samplesPerCycle;
-	double windowLength;
-	double tempCyclesPerBin;
-	double cyclesPerWindow;
-	double ratio = (cyclesPerBin - 1.0) / cyclesPerBin;
-	if((ratio >= 1.0) || (ratio <= 0.0)) {
-		printf("Error: InitFrequencies: invalid ratio: %f\n", ratio);
-		return;
-	}
-	for(freq = upperFreq; freq > centerFreq; freq *= ratio) {
-		samplesPerCycle = samplingRate / freq;
-		windowLength = samplesPerCycle * cyclesPerBin;
-		cyclesPerWindow = windowLength / samplesPerCycle;
-		radianFreq = twoPI / samplesPerCycle;
-		RadianFreqs[freqIndex] = radianFreq;
-		WindowLengths[freqIndex] = windowLength;
-		freqIndex += freqIndexIncrement;
-		if(freqIndex >= MAXFREQUENCIES) {
-			printf("Error: InitFrequencies: MAXFREQUENCIES exceeded, freq: %f , index %i\n", freq, freqIndex);
-			exit(0);
+void CalculateWavelets() {
+	int waveletIndex = 0;
+	int index = 0;
+	double dIndex = 0.0;
+	double radianFreq = 0.0;
+	int length = 0;
+	int startIndex = 0;
+	int note = 0;
+	double gain = 0.0;
+	for(waveletIndex = 0; waveletIndex < numWavelets; waveletIndex++) {
+		gain = 0.0;
+		int length = WaveletInfoArray[waveletIndex].length;
+		radianFreq = WaveletInfoArray[waveletIndex].radianFreq;
+		CreateWindow(KaiserWindow, length, alpha);
+		for(index = 0; index < WaveletInfoArray[waveletIndex].length; index++) {
+			dIndex = (double) index;
+			gain += KaiserWindow[index];
+			WaveletDataArray[waveletIndex].sinVal = sin(dIndex * radianFreq);// * KaiserWindow[index];
+			WaveletDataArray[waveletIndex].cosVal = sin(dIndex * radianFreq);// * KaiserWindow[index];
 		}
+		WaveletInfoArray[waveletIndex].gain = gain;
 	}
-	maxDFTLength = (int) windowLength;
-	if(maxDFTLength > MAXDFTWINDOW) {
-		printf("Error: InitFrequencies: maxDFTLength %i > MAXDFTWINDOW %i\n", maxDFTLength, MAXDFTWINDOW);
-		exit(0);
-	}	
-	for(tempCyclesPerBin = (cyclesPerBin - 1.0); tempCyclesPerBin > 0.0; tempCyclesPerBin -= 1.0) {
-		samplesPerCycle = windowLength / tempCyclesPerBin;
-		radianFreq = twoPI / samplesPerCycle;
-		freq = samplingRate / samplesPerCycle;
-		if(freq < lowerFreq) break;
-		RadianFreqs[freqIndex] = radianFreq;
-		WindowLengths[freqIndex] = windowLength;
-		freqIndex += freqIndexIncrement;
-		if(freqIndex >= MAXFREQUENCIES) {
-			printf("Error: InitFrequencies: MAXFREQUENCIES exceeded, freq: %f , index %i\n", freq, freqIndex);
-			exit(0);
-		}
+	for(index = 0; index < numWavelets; index++) {
+		radianFreq = WaveletInfoArray[index].radianFreq;
+		length = WaveletInfoArray[index].length;
+		startIndex = WaveletInfoArray[index].startIndex;
+		note = WaveletInfoArray[index].note;
+		gain = WaveletInfoArray[index].gain;
+		printf("Wavelet: %d: %f %d %d %d %f\n", index, radianFreq, length, startIndex, note, gain);
 	}
-	// Perform Interpolation
-	// numFrequencies = freqIndex - freqIndexIncrement + 1;
-	for(freqIndex = 1; freqIndex < numFrequencies; freqIndex += freqIndexIncrement) {
-		RadianFreqs[freqIndex] = (RadianFreqs[freqIndex - 1] + RadianFreqs[freqIndex + 1]) / 2.0;
-		WindowLengths[freqIndex] = (WindowLengths[freqIndex - 1] + WindowLengths[freqIndex + 1]) / 2.0;
-	}
-	/* Commented out for TreeMap, uncomment for grid view */
-	/*
-	printf("FREQS:");
-	for(freqIndex = 0; freqIndex < numFrequencies; freqIndex++) {
-		freq = (RadianFreqs[freqIndex] / twoPI) * samplingRate;
-		windowLength = WindowLengths[freqIndex];
-		logFreq = log(freq) / log(2.0);
-		printf(" %f", logFreq);
-	}
-	printf("\n");
-	*/
 }
 
 void LRSynth() {
@@ -448,7 +281,7 @@ void LRSynth() {
 	double arg = twoPI / samplingRate;
 	double freqStart = 18000.0;
 	double freqEnd = 18.0;
-	double freqStep = (cyclesPerBin - 1.0) / cyclesPerBin;
+	double freqStep = (maxCyclesPerWindow - 1.0) / maxCyclesPerWindow;
 	freqStep = pow(freqStep, 6.0);
 	int printed = 0;
 	for(index = 0; index < maxDFTLength; index++) {
@@ -473,14 +306,13 @@ int InitFileRead(FILE *stream) {
 	return 0;
 }
 
-void FileDFT(FILE *stream, int startCenterIndex, int maxCenterIndex, 
-			 double upperFreq, double centerFreq, double lowerFreq) {
+void FileDFT(FILE *stream, int startCenterIndex, int maxCenterIndex) {
 	int centerIndex;
 	double dStepIndex;
 	stepIndex = 0;
 	dStepIndex = (double) stepIndex;
 	InitFileRead(stream);
-	InitFrequencies(upperFreq, centerFreq, lowerFreq);
+	InitWavelets();
 	// LRSynth();
 	// FreqDFT(upperFreq, centerFreq);
 	// return;
@@ -489,6 +321,7 @@ void FileDFT(FILE *stream, int startCenterIndex, int maxCenterIndex,
 		FreqDFT();
 		stepIndex++;
 		dStepIndex = (double) stepIndex;
+		//if((stepIndex % 200) == 0) printf("%d\n", stepIndex);
 	}
 }
 
@@ -499,7 +332,7 @@ int main(int argc, char *argv[])
 		printf("Unable to open input file\n");
 		return 0;
 	}
-	FileDFT(input, 0, 44100 * 600, 18322.012048779428, 1000.0, 20.0);
+	FileDFT(input, 0, 44100 * 600);
 	fclose(input);
 	return 0;
 }
