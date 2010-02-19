@@ -43,12 +43,9 @@ struct WaveletInfo {
 	int length;
 	int note;
 	int startIndex; // index into WaveletData
+	float *sinArray;
+	float *cosArray;
 } WaveletInfoArray[MAXWAVELETS];
-
-struct WaveletData {
-	double sinVal;
-	double cosVal;
-} WaveletDataArray[MAXWAVELETDATA];
 
 double logAmps[MAXWAVELETS];
 
@@ -94,7 +91,6 @@ void LoadSamplesFromFile(FILE *stream, int centerIndex) {
 
 void SingleDFT(int waveletIndex, int startIndex, int endIndex) {
 	int index = 0;
-	int waveletStartIndex = WaveletInfoArray[waveletIndex].startIndex;
 	int maxIndex = endIndex - startIndex;
 	int maxIndexWavelet = WaveletInfoArray[waveletIndex].length;
 	if(maxIndex != maxIndexWavelet) {
@@ -114,12 +110,12 @@ void SingleDFT(int waveletIndex, int startIndex, int endIndex) {
 		leftVal = (double) LeftRight[(startIndex + index) * 2];
 		rightVal = (double) LeftRight[(startIndex + index) * 2 + 1];
 		monoVal = leftVal + rightVal;
-		sinVal += WaveletDataArray[waveletStartIndex + index].sinVal * monoVal;
-		cosVal += WaveletDataArray[waveletStartIndex + index].cosVal * monoVal;
+		sinVal += WaveletInfoArray[waveletIndex].sinArray[index] * monoVal;
+		cosVal += WaveletInfoArray[waveletIndex].cosArray[index] * monoVal;
 	}
 	ampVal = sinVal * sinVal;
 	ampVal += cosVal * cosVal;
-	ampVal = sqrt(ampVal);
+	ampVal = sqrt(ampVal) / WaveletInfoArray[waveletIndex].gain;
 	ampVal *= 2.0; // integral of sin, cos over time approaches 0.5
 	if(ampVal > 4.0) {
 		logAmp = log(ampVal) / log(2.0);
@@ -237,7 +233,7 @@ void InitWavelets() {
     }
     numWavelets = index;
     maxDFTLength = windowLength;
-    printf("%d\n", numWavelets, maxDFTLength);
+    //printf("%d\n", numWavelets, maxDFTLength);
     CalculateWavelets();
 }
 
@@ -254,12 +250,14 @@ void CalculateWavelets() {
 		gain = 0.0;
 		int length = WaveletInfoArray[waveletIndex].length;
 		radianFreq = WaveletInfoArray[waveletIndex].radianFreq;
+		WaveletInfoArray[waveletIndex].sinArray = (float *) malloc(length * sizeof(float));
+		WaveletInfoArray[waveletIndex].cosArray = (float *) malloc(length * sizeof(float));
 		CreateWindow(KaiserWindow, length, alpha);
-		for(index = 0; index < WaveletInfoArray[waveletIndex].length; index++) {
+		for(index = 0; index < length; index++) {
 			dIndex = (double) index;
 			gain += KaiserWindow[index];
-			WaveletDataArray[waveletIndex].sinVal = sin(dIndex * radianFreq);// * KaiserWindow[index];
-			WaveletDataArray[waveletIndex].cosVal = sin(dIndex * radianFreq);// * KaiserWindow[index];
+			WaveletInfoArray[waveletIndex].sinArray[index] = sin(dIndex * radianFreq) * KaiserWindow[index];
+			WaveletInfoArray[waveletIndex].cosArray[index] = sin(dIndex * radianFreq) * KaiserWindow[index];
 		}
 		WaveletInfoArray[waveletIndex].gain = gain;
 	}
@@ -269,7 +267,7 @@ void CalculateWavelets() {
 		startIndex = WaveletInfoArray[index].startIndex;
 		note = WaveletInfoArray[index].note;
 		gain = WaveletInfoArray[index].gain;
-		printf("Wavelet: %d: %f %d %d %d %f\n", index, radianFreq, length, startIndex, note, gain);
+		//printf("Wavelet: %d: %f %d %d %d %f\n", index, radianFreq, length, startIndex, note, gain);
 	}
 }
 
