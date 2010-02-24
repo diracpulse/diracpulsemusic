@@ -13,7 +13,7 @@
 	</target>
 		
     <target name="compile" description="Compiles the code" depends="clean,init">
-    	    <javac srcdir="${src.dir}" destdir="${build.dir}"/>
+    	    <javac srcdir="${src.dir}" destdir="${build.dir}" debug="on"/>
     </target>
 
 	<target name="jarfile" depends="compile" description="Makes jar file">
