@@ -23,10 +23,10 @@ public class DFTEditor extends JFrame {
 	public static int yStep = 9; // one digit;
 	public static int topYStep = 8; // used by DrawUpperTimes
 	public static int leftOffset = xStep * 6; // start of first data cell
-	public static int upperOffset = topYStep * 5; // start of first data cell
+	public static int upperOffset = topYStep * 8; // start of first data cell
 	public static int leftX = 0; // index of freq in leftmost data cell
 	public static int upperY = 0; // index of time in uppermost data cell
-	public static double timeStep = 0.005f;
+	public static int timeStepInMillis = 5;
 	public static float maxAmplitude;
 	public static float minAmplitude;
 	public static float maxAmplitudeSum;
@@ -294,14 +294,14 @@ public class DFTEditor extends JFrame {
 	
     public DFTEditor() {
         ReadFileData("out");
-        setSize(1500, 600);
         view = new DFTView();
-        controller = new DFTController();
         view.setBackground(Color.black);
-        setPreferredSize(new Dimension(928, 762));
-        add(view);
-        addMouseListener(controller);
+        controller = new DFTController();
         setJMenuBar(createMenuBar());
+        view.addMouseListener(controller);
+        controller.setView(view);
+        add(view);
+        setSize(1500, 800);
     }
     
     public static void main(String[] args)
