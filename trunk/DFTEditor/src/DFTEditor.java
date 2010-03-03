@@ -12,11 +12,13 @@ public class DFTEditor extends JFrame {
 	private static final long serialVersionUID = -2291799595853726615L;
 	public static DFTView view;
 	public static DFTController controller;
+	// used by view.paintComponent
 	public static boolean fileDataRead = false; 
 	
 	public static TreeMap<Integer, TreeMap<Integer, Float>> timeToFreqToAmp;
 	public static TreeMap<Integer, Float> timeToAmpSum;
 	public static TreeMap<Integer, Float> freqToMaxAmp;
+	// see DFTUtils.getMaxValue for how these are used
 	public static TreeMap<Integer, Boolean> isFreqCollapsed;
 	public static TreeMap<Integer, Boolean> isTimeCollapsed;
 	public static int xStep = 6;
@@ -26,28 +28,37 @@ public class DFTEditor extends JFrame {
 	public static int upperOffset = topYStep * 8; // start of first data cell
 	public static int leftX = 0; // index of freq in leftmost data cell
 	public static int upperY = 0; // index of time in uppermost data cell
-	public static int timeStepInMillis = 5;
+	public static int timeStepInMillis = 5; // time in ms = time * timeStepInMillis
+	// these are the max/min valued amplitude for the whole file
+	// they are used to calculate the color of amplitude values
 	public static float maxAmplitude;
 	public static float minAmplitude;
+	// the maximum summed value at any given time
 	public static float maxAmplitudeSum;
+	//Freq ranges from minRealFreq to maxRealFreq, it does not start at 0 (Direct Current)
+	//minRealFreq = log(minRealFreqInHz) * freqsPerOctave
+	//maxRealFreq = log(maxRealFreqInHz) * freqsPerOctave
+	//maxScreenFreq = maxRealFreq - minRealFreq
+	//(where log is base 2, of course)
 	public static int freqsPerOctave = 31;
-	public static int minFreq;
-	public static int maxFreq;
-	public static int maxTime;
-	public static int dataXDim;
-	public static int dataYDim;
+	public static int minRealFreq;
+	public static int maxRealFreq;
+	public static int maxScreenFreq;
+	// maxTime = length of file in ms / timeStepInMillis
+	public static int maxTime; 
+	//these determine how many values per (collapsed) segement
 	public static int timeCollapse = 4;
 	public static int freqCollapse = 4;
 	
+	// This function reads from a binary file
 	public void ReadFileData(String fileName) {
 		timeToFreqToAmp = new TreeMap<Integer, TreeMap<Integer, Float>>();
 		TreeMap<Integer, Float> freqToAmp;
 		DataInputStream in = null;
-		String linein = "";
 		maxAmplitude = 0.0f;
 		minAmplitude = 15.0f;
-		minFreq = freqsPerOctave * 100;
-		maxFreq = 0;
+		minRealFreq = freqsPerOctave * 100;
+		maxRealFreq = 0;
 		maxTime = 0;
 		int time;
 		short freq;
@@ -72,11 +83,11 @@ public class DFTEditor extends JFrame {
 				if(amp < minAmplitude) {
 					minAmplitude = amp;
 				}
-				if(freq > maxFreq) {
-					maxFreq = freq;
+				if(freq > maxRealFreq) {
+					maxRealFreq = freq;
 				}
-				if(freq < minFreq) {
-					minFreq = freq;
+				if(freq < minRealFreq) {
+					minRealFreq = freq;
 				}				
 				if(time > maxTime) {
 					maxTime = time;
@@ -96,14 +107,15 @@ public class DFTEditor extends JFrame {
 				System.out.println("DFTEditor: error reading from: " + fileName);
 			}
 		}
-		dataXDim = maxTime;
-		dataYDim = maxFreq - minFreq;
+		maxScreenFreq = maxRealFreq - minRealFreq;
 		calculateAmpSum();
 		calculateMaxAmpAtFreq();
 		setAllCollapsed();
 		fileDataRead = true;
 	}
 	
+	// This function reads from a (newly created) text file
+	// It also creates a binary clone for future use
 	public void ReadTextFileData(String fileName) {
 		timeToFreqToAmp = new TreeMap<Integer, TreeMap<Integer, Float>>();
 		TreeMap<Integer, Float> freqToAmp;
@@ -113,8 +125,8 @@ public class DFTEditor extends JFrame {
 		String linein = "";
 		maxAmplitude = 0.0f;
 		minAmplitude = 15.0f;
-		minFreq = freqsPerOctave * 100;
-		maxFreq = 0;
+		minRealFreq = freqsPerOctave * 100;
+		maxRealFreq = 0;
 		maxTime = 0;
 		Integer time;
 		Integer freq;
@@ -143,11 +155,11 @@ public class DFTEditor extends JFrame {
 				if(amp.floatValue() < minAmplitude) {
 					minAmplitude = amp.floatValue();
 				}
-				if(freq.intValue() > maxFreq) {
-					maxFreq = freq.intValue();
+				if(freq.intValue() > maxRealFreq) {
+					maxRealFreq = freq.intValue();
 				}
-				if(freq.intValue() < minFreq) {
-					minFreq = freq.intValue();
+				if(freq.intValue() < minRealFreq) {
+					minRealFreq = freq.intValue();
 				}				
 				if(time.intValue() > maxTime) {
 					maxTime = time.intValue();
@@ -167,18 +179,18 @@ public class DFTEditor extends JFrame {
 			System.out.println("DFTEditor: error reading from: " + fileName);
 			System.exit(0);
 		}
-		dataXDim = maxTime;
-		dataYDim = maxFreq - minFreq;
+		maxScreenFreq = maxRealFreq - minRealFreq;
 		calculateAmpSum();
 		calculateMaxAmpAtFreq();
 		setAllCollapsed();
 		fileDataRead = true;
 	}
 	
+	// This calculates the sum of all amplitudes at a given time
 	public void calculateAmpSum() {
 		maxAmplitudeSum = 0.0f;
 		timeToAmpSum = new TreeMap<Integer, Float>();
-		for(int time = 0; time < dataXDim; time++) {
+		for(int time = 0; time < maxTime; time++) {
 			double dsum = 0.0;
 			double dexponent = 1.0;
 			if(timeToFreqToAmp.get(new Integer(time)) == null) {
@@ -195,13 +207,14 @@ public class DFTEditor extends JFrame {
 		}
 	}
 	
+	// This calculates the maximum amplitude at a particular frequency
 	public void calculateMaxAmpAtFreq() {
 		freqToMaxAmp = new TreeMap<Integer, Float>();
-		for(int iFreq = minFreq; iFreq <= maxFreq; iFreq++) {
+		for(int iFreq = minRealFreq; iFreq <= maxRealFreq; iFreq++) {
 			freqToMaxAmp.put(new Integer(iFreq), new Float(0.0f));
 		}
 		TreeMap<Integer, Float> freqToAmp;
-		for(int time = 0; time < dataXDim; time++) {
+		for(int time = 0; time < maxTime; time++) {
 			freqToAmp = timeToFreqToAmp.get(new Integer(time));
 			if(freqToAmp == null) continue;
 			for(Integer IFreq: freqToAmp.keySet()) {
@@ -212,14 +225,18 @@ public class DFTEditor extends JFrame {
 		}
 	}
 	
+	// initializes the TreeMaps controlling if displayed data is collapsed
 	public void setAllCollapsed() {
 		isFreqCollapsed = new TreeMap<Integer, Boolean>();
 		isTimeCollapsed = new TreeMap<Integer, Boolean>();
-		for(int time = 0; time < dataXDim; time += timeCollapse) {
+		// make sure we don't run out at the end
+		int endTime = maxTime + timeCollapse + 1;
+		int endScreenFreq = maxScreenFreq + freqCollapse + 1;
+		for(int time = 0; time < endTime; time += timeCollapse) {
 			isTimeCollapsed.put(new Integer(time / timeCollapse), new Boolean(true));
 		}
-		for(int freq = 0; freq < dataYDim; freq += freqCollapse) {
-			isFreqCollapsed.put(new Integer(freq / freqCollapse), new Boolean(true));
+		for(int screenFreq = 0; screenFreq <= endScreenFreq; screenFreq += freqCollapse) {
+			isFreqCollapsed.put(new Integer(screenFreq / freqCollapse), new Boolean(true));
 		}
 	}
 

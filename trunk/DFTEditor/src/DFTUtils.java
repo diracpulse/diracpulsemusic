@@ -1,8 +1,5 @@
 import java.awt.*;
-import java.awt.event.*;
 import java.util.*;
-import java.lang.*;
-import java.io.*;
 
 public class DFTUtils {
 
@@ -21,7 +18,7 @@ public class DFTUtils {
 	public static DFTModel.TFA getMaxValue(int time, int freq) {
 		TreeMap<Integer, Float> freqToAmp;
 		DFTModel.TFA returnVal = new DFTModel.TFA(0, 0, 0.0f);
-		freq = DFTEditor.maxFreq - freq;
+		freq = DFTEditor.maxRealFreq - freq;
 		int endTime = time + getTimeIncrement(time);
 		int endFreq = freq + getFreqIncrement(freq);
 		for(int timeIndex = time; timeIndex < endTime; timeIndex++) {
@@ -40,23 +37,39 @@ public class DFTUtils {
 		return returnVal;
 	}
 	
-	public static int getTimeIncrement(int time) {
-		return getIncrement(DFTEditor.isTimeCollapsed, time, DFTEditor.timeCollapse);
+	public static int getTimeIncrement(int x) {
+		return getIncrement(DFTEditor.isTimeCollapsed, x, DFTEditor.timeCollapse);
 	}
 	
-	public static int getFreqIncrement(int freq) {
-		return getIncrement(DFTEditor.isFreqCollapsed, freq, DFTEditor.freqCollapse);
-	}	
+	public static int getFreqIncrement(int y) {
+		return getIncrement(DFTEditor.isFreqCollapsed, y, DFTEditor.freqCollapse);
+	}
 	
 	public static int getIncrement(TreeMap<Integer, Boolean> isCollapsed, int value, int step) {
 		int key = value / step;
-		if (!isCollapsed.containsKey(key)) return 1;
-		if (isCollapsed.get(key).booleanValue() == true) {
+		if(isCollapsed == null) return step;
+		// key may be too large if bottom of screen extends beyond data
+		if(!isCollapsed.containsKey(key)) {
+			return step;
+		}
+		if(isCollapsed.get(key).booleanValue() == true) {
 			return step;
 		}
 		return 1;
 	}
 	
+	public static void setTimeCollapsed(int x, boolean collapsed) {
+		int key = x / DFTEditor.timeCollapse;
+		System.out.println("TIME:" + key);
+		DFTEditor.isTimeCollapsed.put(key, collapsed);
+	}
+	
+	public static void setFreqCollapsed(int y, boolean collapsed) {
+		int key = y / DFTEditor.freqCollapse;
+		System.out.println("FREQ:" + key);
+		DFTEditor.isFreqCollapsed.put(key, collapsed);
+	}
+
 	public static void DrawSegmentData(Graphics g, Color b, int screenX, int screenY, int digitVal, int fractionVal) {
 		Color black = new Color(0.0f, 0.0f, 0.0f);
 		// int lowerScreenY = screenY + topYStep;				
