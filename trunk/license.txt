@@ -1,0 +1,25 @@
+/* Licensing and Authorship Information
+
+diracpulsemusic - 
+Audio analyzer based on a modified discrete short-time Fourier transform
+Audio synthesizer based on frequency- and amplitude-modulated pure sine waves
+Copyright (C)2010 Glenn C Thelen
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or (at
+your option) any later version.
+
+    This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details. 
+
+	A copy of the GNU General Public License should be included with all
+distributions of this software as GPL.txt. If this file is not found,
+see <http://www.gnu.org/licenses/>.
+
+The code was written by Glenn C Thelen
+Program is maintained by Glenn C Thelen
+
+End of Licensing/Authorship Information */
