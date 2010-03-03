@@ -1,6 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 
 public class DFTView extends JComponent {
 	
@@ -32,8 +31,8 @@ public class DFTView extends JComponent {
 		int screenIndex = startY;
 		int screenEnd = endY;
 		for(int freqIndex = startY; screenIndex < screenEnd; freqIndex += DFTUtils.getFreqIncrement(freqIndex)) {
-			if(freqIndex < DFTEditor.dataYDim) {			
-				iFreq = DFTEditor.maxFreq - freqIndex;
+			if(freqIndex < (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) {			
+				iFreq = DFTEditor.maxRealFreq - freqIndex;
 			} else {
 				iFreq = 1; // dummy value
 			}
@@ -80,7 +79,7 @@ public class DFTView extends JComponent {
 					f = new Color(1.0f, 1.0f, 1.0f);
 					b = new Color(0.0f, 0.0f, 0.0f);					
 				}
-				if(timeIndex >= DFTEditor.dataXDim) {
+				if(timeIndex >= DFTEditor.maxTime) {
 					f = blank;
 					b = blank;
 				}
@@ -112,8 +111,8 @@ public class DFTView extends JComponent {
 		int screenY;
 		int screenIndex = startY; // controls actual position on the screen
 		for(freqIndex = startY; screenIndex < endY; freqIndex += DFTUtils.getFreqIncrement(freqIndex)) {
-			if(freqIndex < DFTEditor.dataYDim) {			
-				iFreq = DFTEditor.maxFreq - freqIndex;
+			if(freqIndex < (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) {			
+				iFreq = DFTEditor.maxRealFreq - freqIndex;
 			} else {
 				iFreq = 1; // dummy value
 			}
@@ -126,7 +125,7 @@ public class DFTView extends JComponent {
 				freqInHz -= digitVal * digitPlace;
 				f = new Color(1.0f, 1.0f, 1.0f);
 				b = new Color(0.0f, 0.0f, 0.0f);
-				if(freqIndex >= DFTEditor.dataYDim) {
+				if(freqIndex >= (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) {
 					f = blank;
 					b = blank;
 				}
@@ -161,10 +160,10 @@ public class DFTView extends JComponent {
 		int endY = startY + ((getHeight() - DFTEditor.upperOffset) / DFTEditor.yStep);
 		int screenXIndex = startX;
 		for(int x = startX; screenXIndex < endX; x += DFTUtils.getTimeIncrement(x)) {
-            if(x >= DFTEditor.dataXDim) break;
+            if(x >= DFTEditor.maxTime) break;
     		int screenYIndex = startY;
             for(int y = startY; screenYIndex < endY; y += DFTUtils.getFreqIncrement(y)) {
-                if(y >= DFTEditor.dataYDim) break;
+                if(y >= (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) break;
         		int screenX = DFTEditor.leftOffset + ((screenXIndex - DFTEditor.leftX) * DFTEditor.xStep);
         		int screenY = DFTEditor.upperOffset + ((screenYIndex - DFTEditor.upperY) * DFTEditor.yStep);
                 float currentVal = DFTUtils.getMaxValue(x, y).getAmplitude();

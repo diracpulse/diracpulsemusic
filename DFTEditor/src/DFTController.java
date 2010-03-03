@@ -1,6 +1,4 @@
 
-import java.awt.Color;
-import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.event.*;
 
@@ -74,10 +72,10 @@ public class DFTController implements MouseListener, ActionListener {
 		int endY = startY + ((view.getHeight() - DFTEditor.upperOffset) / DFTEditor.yStep);
 		int screenXIndex = startX;
 		for(int x = startX; screenXIndex < endX; x += DFTUtils.getTimeIncrement(x)) {
-            if(x >= DFTEditor.dataXDim) break;
+            if(x >= DFTEditor.maxTime) break;
     		int screenYIndex = startY;
             for(int y = startY; screenYIndex < endY; y += DFTUtils.getFreqIncrement(y)) {
-                if(y >= DFTEditor.dataYDim) break;
+                if(y >= (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) break;
         		int screenX = DFTEditor.leftOffset + ((screenXIndex - DFTEditor.leftX) * DFTEditor.xStep);
         		int screenY = DFTEditor.upperOffset + ((screenYIndex - DFTEditor.upperY) * DFTEditor.yStep);
                 DFTModel.TFA currentVal = DFTUtils.getMaxValue(x, y);
@@ -85,6 +83,9 @@ public class DFTController implements MouseListener, ActionListener {
                 	Rectangle currentRect = new Rectangle(screenX, screenY, DFTEditor.xStep, DFTEditor.yStep);
                 	if (currentRect.contains(mouseX, mouseY)) {
                 		System.out.println("SCREEN: " + screenX + " " + screenY);
+                		DFTUtils.setTimeCollapsed(x, false);
+                		DFTUtils.setFreqCollapsed(y, false);
+                		view.repaint();
                 		return currentVal;
                 	}
                 }
@@ -99,22 +100,22 @@ public class DFTController implements MouseListener, ActionListener {
         int apOldUpperY = DFTEditor.upperY;
         int apOldLeftX = DFTEditor.leftX;
     if ("F+1".equals(e.getActionCommand())) {
-                    if((DFTEditor.upperY + 1) < DFTEditor.dataYDim) DFTEditor.upperY += 1; 
+                    if((DFTEditor.upperY + 1) < (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) DFTEditor.upperY += 1; 
     }
     if ("F+6".equals(e.getActionCommand())) {
-                    if((DFTEditor.upperY + 6) < DFTEditor.dataYDim) DFTEditor.upperY += 6; 
+                    if((DFTEditor.upperY + 6) < (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) DFTEditor.upperY += 6; 
     }
     if ("F+31".equals(e.getActionCommand())) {
-                    if((DFTEditor.upperY + 31) < DFTEditor.dataYDim) DFTEditor.upperY += 31; 
+                    if((DFTEditor.upperY + 31) < (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) DFTEditor.upperY += 31; 
     }         
     if ("T+1".equals(e.getActionCommand())) {
-                    if((DFTEditor.leftX + 1) < DFTEditor.dataXDim) DFTEditor.leftX += 1; 
+                    if((DFTEditor.leftX + 1) < DFTEditor.maxTime) DFTEditor.leftX += 1; 
     }
     if ("T+10".equals(e.getActionCommand())) {
-                    if((DFTEditor.leftX + 10) < DFTEditor.dataXDim) DFTEditor.leftX += 10; 
+                    if((DFTEditor.leftX + 10) < DFTEditor.maxTime) DFTEditor.leftX += 10; 
     }
     if ("T+100".equals(e.getActionCommand())) {
-                    if((DFTEditor.leftX + 100) < DFTEditor.dataXDim) DFTEditor.leftX += 100; 
+                    if((DFTEditor.leftX + 100) < DFTEditor.maxTime) DFTEditor.leftX += 100; 
     }        
     if ("F-1".equals(e.getActionCommand())) {
                     if((DFTEditor.upperY - 1) >= 0) DFTEditor.upperY -= 1; 

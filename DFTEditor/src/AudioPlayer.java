@@ -1,7 +1,4 @@
 
-import java.lang.*;
-import java.util.*;
-import java.io.*;
 import javax.sound.sampled.*;
 
 class AudioPlayer {
@@ -13,7 +10,7 @@ class AudioPlayer {
 	final int channels = 2;
 	final boolean signed = true;
 	final boolean bigEndian = false;
-	final double fullScale = 32000.0;
+	final double fullScale = Short.MAX_VALUE - 1;
 
 	
 	AudioPlayer () {

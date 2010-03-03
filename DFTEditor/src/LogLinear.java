@@ -1,9 +1,4 @@
 
-import java.lang.*;
-import java.util.*;
-import java.io.*;
-import javax.sound.sampled.*;
-
 class LogLinear {
 
 	boolean logInterpolate = true;
@@ -122,7 +117,6 @@ class SynthTools {
 		int endIndex = env.getEndIndex();
 		double currentPhase = 0.0;
 		double deltaPhase = twoPI * (freq / sampleRate);
-		double[] returnVal = new double[endIndex];
 		for(sampleIndex = startIndex; sampleIndex < endIndex; sampleIndex++) {
 			inputArray[sampleIndex] += gain * env.getSample(sampleIndex) * Math.sin(currentPhase);
 			currentPhase += deltaPhase;
