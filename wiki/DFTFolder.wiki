@@ -2,13 +2,14 @@
 
 == Overview ==
 
-Conversion from PCM into the frequency domain (Time -> Frequency -> Amplitude)
+Note: This algorithm differs from a standard DFT.  However, if you understand how a standard DFT works, you will understand how this algorithm works.
+
+Conversion from PCM into TFA data (Time->Frequency->Amplitude)
 is done in C for performance reasons.<br>
 The algorithm resembles a DFT, but unlike the DFT, the length of the window
 used is increased as the frequency decreased.<br>
 Also, the number of frequencies analyzed per octave is constant (31)<br>
-The frequency and amplitude at a particular time are calculated by a wavelet
-centered about the sample at that particular time.<br>
+The frequencies and corresponding amplitudes at a particular time are calculated by multiplying sampled data by wavelets centered around that particular time.<br>
 Each wavelet has a maximum response to a particular frequency that decreases
 as the input frequency is increased or decreased.<br>
 If response(freq + 1) <= response(freq) >= response(freq - 1)
