@@ -1,4 +1,3 @@
   * Source Code Folders
     * [DFTFolder DFT]
-    * [KaiserWindowFolder KaiserWindow]
     * [DFTEditorFolder DFTEditor]
