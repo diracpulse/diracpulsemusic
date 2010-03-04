@@ -1,20 +1,23 @@
 #summary Contents of the DFT folder
 
+== Overview ==
+
+Conversion from PCM into the frequency domain (Time -> Frequency -> Amplitude)
+is done in C for performance reasons.<br>
+The algorithm resembles a DFT, but unlike the DFT, the length of the window
+used is increased as the frequency decreased.<br>
+The frequency and amplitude at a particular time are calculated by a wavelet
+centered about the sample at that particular time.<br>
+Each wavelet has a maximum response to a particular frequency that decreases
+as the input frequency is increased or decreased.<br>
+If response(freq + 1) <= response(freq) >= response(freq - 1)
+and response is above a particular minimum threshold,<br>
+it is assumed that freq exists at that particular time and that amplitude == response<br>
+
 == Files ==
 
 *main.c (original file):* takes a file input.wav and produces a TFA output.<br>
 Output is space delimited (three numbers per line) and terminated with a \n:<br>
-`Time = (token[0] / 5ms)`<br>
-`Frequency = 2.0 ^ (token[1] / 31.0)`<br> 
-`Amplitude = 2.0 ^ (token[2])`<br>
-
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
+`int Time = (token[0] / 5ms)`<br>
+`int Frequency = 2.0 ^ (token[1] / 31.0)`<br> 
+`float Amplitude = 2.0 ^ (token[2])`<br>
