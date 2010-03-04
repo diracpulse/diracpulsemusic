@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "main.h"
+//#include "main.h"
 
 #define MAXDFTWINDOW 44100
 #define MAXWAVELETS 31 * 16

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "main.h"
+//#include "main.h"
 
 /* used by DFTBinStep */
 #define MAXORDER 64
