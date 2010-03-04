@@ -1,17 +1,40 @@
 #summary Contents of the DFTEditor folder.
 
+== Overview ==
+
+Displays the output of "out.txt" created by a.exe<br>
+See *main.c* in [DFTFolder DFTFolder] for format of 'out.txt'<br>
+Creates a binary clone "out.mono5ms" from out.txt if this file does not already exist.<br>
+Binary file only takes a few seconds to load (out.txt takes at least a minute)<br>
+
+== Building ==
+
+From DOS Prompt:<br>
+>*c*<br>
+c.bat deletes existing class files and runs ANT<br>
+Output: DFTEditor.jar<br>
+
+== Running ==
+From DOS Prompt:<br>
+>*r*<br>
+(r.bat is simply "java -jar DFTEditor.java")
+
 == Files ==
 
-*`DFTEditor.java` (original file)*: displays the output of 'DFT/main.c' (in 'out.txt')<br>
-See *main.c* in [DFTFolder DFTFolder] for format of 'out.txt'<br>
-
+_Main Class:_<br>
+*DFTEditor.java*: Loads out.txt, initializes main data structures, creates GUI components<br>
 <br>
+_MVC Classes:_<br>
+*DFTController.java*: Handles mouse events, menu events<br>
+*DFTView*: Handles matrix display of file data<br>
+*DFTModel.java*: Defines common data structures<br>
 <br>
+_Main Helper Class_<br>
+*DFTUtils.java*: Contains helper functions used by multiple classes<br>
 <br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
+_Classes with specific functions_<br>
+*AudioPlayer.java*: Plays PCM data at run time<br>
+*CreateWavelets.java*: Mirrors wavelet generation code in main.c<br>
+*FileTools.java:* Displays open/save prompts<br>
+*LogLinear.java*: Code for frequency domain to PCM conversion<br>
 <br>
