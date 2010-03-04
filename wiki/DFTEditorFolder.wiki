@@ -1,4 +1,5 @@
 #summary Contents of the DFTEditor folder.
+#labels Featured
 
 == Overview ==
 
