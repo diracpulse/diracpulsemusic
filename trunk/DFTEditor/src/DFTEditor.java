@@ -110,7 +110,7 @@ public class DFTEditor extends JFrame {
 		maxScreenFreq = maxRealFreq - minRealFreq;
 		calculateAmpSum();
 		calculateMaxAmpAtFreq();
-		setAllCollapsed();
+		setAllCollapsed(true);
 		fileDataRead = true;
 	}
 	
@@ -182,7 +182,7 @@ public class DFTEditor extends JFrame {
 		maxScreenFreq = maxRealFreq - minRealFreq;
 		calculateAmpSum();
 		calculateMaxAmpAtFreq();
-		setAllCollapsed();
+		setAllCollapsed(true);
 		fileDataRead = true;
 	}
 	
@@ -226,17 +226,17 @@ public class DFTEditor extends JFrame {
 	}
 	
 	// initializes the TreeMaps controlling if displayed data is collapsed
-	public void setAllCollapsed() {
+	public void setAllCollapsed(boolean value) {
 		isFreqCollapsed = new TreeMap<Integer, Boolean>();
 		isTimeCollapsed = new TreeMap<Integer, Boolean>();
 		// make sure we don't run out at the end
 		int endTime = maxTime + timeCollapse + 1;
 		int endScreenFreq = maxScreenFreq + freqCollapse + 1;
 		for(int time = 0; time < endTime; time += timeCollapse) {
-			isTimeCollapsed.put(new Integer(time / timeCollapse), new Boolean(true));
+			isTimeCollapsed.put(new Integer(time / timeCollapse), new Boolean(value));
 		}
 		for(int screenFreq = 0; screenFreq <= endScreenFreq; screenFreq += freqCollapse) {
-			isFreqCollapsed.put(new Integer(screenFreq / freqCollapse), new Boolean(true));
+			isFreqCollapsed.put(new Integer(screenFreq / freqCollapse), new Boolean(value));
 		}
 	}
 
@@ -310,6 +310,7 @@ public class DFTEditor extends JFrame {
     }
 	
     public DFTEditor() {
+    	FileConvert.wavImport();
         ReadFileData("out");
         view = new DFTView();
         view.setBackground(Color.black);
