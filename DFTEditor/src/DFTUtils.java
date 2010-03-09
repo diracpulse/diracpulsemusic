@@ -47,10 +47,10 @@ public class DFTUtils {
 	
 	public static int getIncrement(TreeMap<Integer, Boolean> isCollapsed, int value, int step) {
 		int key = value / step;
-		if(isCollapsed == null) return step;
+		if(isCollapsed == null) return 1;
 		// key may be too large if bottom of screen extends beyond data
 		if(!isCollapsed.containsKey(key)) {
-			return step;
+			return 1;
 		}
 		if(isCollapsed.get(key).booleanValue() == true) {
 			return step;
