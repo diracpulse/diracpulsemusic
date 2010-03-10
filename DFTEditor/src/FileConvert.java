@@ -20,7 +20,6 @@ public class FileConvert {
 		//runProcess();
 			TreeSet<String> wavFileNames = new TreeSet<String>();
 			TreeSet<String> mono5msFileNames = new TreeSet<String>();
-			String currentDir = new File(".").getAbsolutePath();
 			File dataDir = new File("data\\");
 			File[] dataFiles = dataDir.listFiles();
 			for(File dataFile: dataFiles) {
