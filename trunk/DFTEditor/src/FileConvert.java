@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 
 public class FileConvert {
@@ -16,73 +17,31 @@ public class FileConvert {
 	// It also creates a binary clone for future use
 	public static void wavImport() {
 		try {
-		runProcess();
-		String currentDir = new File(".").getAbsolutePath();
-		System.out.println("!" + currentDir);
-		/*
-		timeToFreqToAmp = new TreeMap<Integer, TreeMap<Integer, Float>>();
-		TreeMap<Integer, Float> freqToAmp;
-		String[] tokens;
-		RandomAccessFile file = null;
-		DataOutputStream binaryOut = null;
-		String linein = "";
-		maxAmplitude = 0.0f;
-		minAmplitude = 15.0f;
-		minRealFreq = freqsPerOctave * 100;
-		maxRealFreq = 0;
-		maxTime = 0;
-		Integer time;
-		Integer freq;
-		Float amp;
-	    try {
-			file = new RandomAccessFile(new String(fileName + ".txt"), "r");
-			binaryOut = new DataOutputStream(new
-		            BufferedOutputStream(new FileOutputStream(new String(fileName + ".mono5ms"))));
-		} catch (FileNotFoundException nf) {
-			System.out.println("DFTEditor: " + fileName + ".[suffix] not found");
-			System.exit(0);
-		}
-		try {
-			linein = file.readLine();
-			while(linein != null) {
-				tokens = linein.split(" ");
-				time = new Integer(tokens[0]);
-				freq = new Integer(tokens[1]);
-				amp = new Float(tokens[2]);
-				binaryOut.writeInt(time);
-				binaryOut.writeShort(freq);
-				binaryOut.writeFloat(amp);
-				if(amp.floatValue() > maxAmplitude) {
-					maxAmplitude = amp.floatValue();
+		//runProcess();
+			TreeSet<String> wavFileNames = new TreeSet<String>();
+			TreeSet<String> mono5msFileNames = new TreeSet<String>();
+			String currentDir = new File(".").getAbsolutePath();
+			File dataDir = new File("data\\");
+			File[] dataFiles = dataDir.listFiles();
+			for(File dataFile: dataFiles) {
+				String fileName = dataFile.getName();
+				if(fileName.endsWith(".wav")) {
+					String fileNameTrimmed = fileName.substring(0, fileName.length() - 4);
+					wavFileNames.add(fileNameTrimmed);
 				}
-				if(amp.floatValue() < minAmplitude) {
-					minAmplitude = amp.floatValue();
+				if(fileName.endsWith(".mono5ms")) {
+					String fileNameTrimmed = fileName.substring(0, fileName.length() - 8);
+					mono5msFileNames.add(fileNameTrimmed);
 				}
-				if(freq.intValue() > maxRealFreq) {
-					maxRealFreq = freq.intValue();
-				}
-				if(freq.intValue() < minRealFreq) {
-					minRealFreq = freq.intValue();
-				}				
-				if(time.intValue() > maxTime) {
-					maxTime = time.intValue();
-				}				
-				if (timeToFreqToAmp.containsKey(time)) {
-					freqToAmp = timeToFreqToAmp.get(time);
-				} else {
-					timeToFreqToAmp.put(time, new TreeMap<Integer, Float>());
-					freqToAmp = timeToFreqToAmp.get(time);
-				}
-				freqToAmp.put(freq, amp);
-				linein = file.readLine();
 			}
-			file.close();
-			binaryOut.close();
-		*/
+			for(String wavFileName: wavFileNames) {
+				System.out.println("WAV: " + wavFileName);
+			}
+			for(String mono5msFileName: mono5msFileNames) {
+				System.out.println("OUT5MS: " + mono5msFileName);
+			}
 		} catch (Exception e) {
-			System.out.println("FileConvert: Exception:");
 			e.printStackTrace();
-			System.exit(0);
 		}
 		System.exit(0);
 	}
