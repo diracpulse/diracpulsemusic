@@ -20,6 +20,7 @@ public class FileConvert {
 		//runProcess();
 			TreeSet<String> wavFileNames = new TreeSet<String>();
 			TreeSet<String> mono5msFileNames = new TreeSet<String>();
+			TreeSet<String> convertFileNames = new TreeSet<String>();
 			File dataDir = new File("data\\");
 			File[] dataFiles = dataDir.listFiles();
 			for(File dataFile: dataFiles) {
@@ -34,10 +35,17 @@ public class FileConvert {
 				}
 			}
 			for(String wavFileName: wavFileNames) {
-				System.out.println("WAV: " + wavFileName);
+				//System.out.println("WAV: " + wavFileName);
+				if(!mono5msFileNames.contains(wavFileName)) {
+					convertFileNames.add(wavFileName);
+				}
 			}
 			for(String mono5msFileName: mono5msFileNames) {
-				System.out.println("OUT5MS: " + mono5msFileName);
+				//System.out.println("OUT5MS: " + mono5msFileName);
+			}
+			for(String convertFileName: convertFileNames) {
+				ConvertWAVToMono5ms(convertFileName);
+				break;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -69,5 +77,42 @@ public class FileConvert {
             e.printStackTrace();
         }
     }
-
+	
+	public static void ConvertWAVToMono5ms(String fileName) {
+		System.out.println("Starting conversion of \"" + fileName + ".wav\" to \"" + fileName + ".mono5ms\"");
+		String[] tokens;
+		String linein = "";
+		Integer time;
+		Integer freq;
+		Float amp;
+	    try {
+			File startFile = new File(new String(fileName + ".wav"));
+			File endFile = new File(new String(fileName + ".wav"));
+			File inputFile = new File(new String("input.wav"));
+			startFile.renameTo(inputFile);
+	    	DataOutputStream binaryOut = new DataOutputStream(new
+		            BufferedOutputStream(new FileOutputStream(new String(fileName + ".mono5ms"))));
+            Process p = Runtime.getRuntime().exec("a");
+            BufferedReader stdInput = new BufferedReader(new 
+                 InputStreamReader(p.getInputStream()));
+            // BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+            while ((linein = stdInput.readLine()) != null) {
+				tokens = linein.split(" ");
+				time = new Integer(tokens[0]);
+				freq = new Integer(tokens[1]);
+				amp = new Float(tokens[2]);
+				binaryOut.writeInt(time);
+				binaryOut.writeShort(freq);
+				binaryOut.writeFloat(amp);
+            }
+            binaryOut.close();
+            inputFile.renameTo(endFile);
+		} catch (Exception e) {
+			System.out.println("Exception in FileConvert.ConvertWAVToMono5ms()");
+			e.printStackTrace();
+			System.exit(0);
+		}
+		System.out.println("Finished conversion of \"" + fileName + ".wav\" to \"" + fileName + ".mono5ms\"");
+	}
+	
 }
