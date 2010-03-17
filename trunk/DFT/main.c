@@ -189,6 +189,7 @@ void InitWavelets() {
     int note = 0;
     int index = 0;
     int windowLength = 0;
+    double dWindowLength = 0.0;
     int windowStartIndex = 0;
 	int maxNote = (int) round(log(upperFreq) / log(2.0) * notesPerOctave);
 	int centerNote = (int) round(log(centerFreq) / log(2.0) * notesPerOctave);
@@ -206,7 +207,8 @@ void InitWavelets() {
     	freqInHz = pow(2.0, note / notesPerOctave);
     	samplesPerCycle = samplingRate / freqInHz;
     	radianFreq = twoPI / samplesPerCycle;
-    	windowLength = (int) maxCyclesPerWindow * samplingRate / freqInHz;
+    	dWindowLength = samplingRate / freqInHz;
+    	windowLength = (int) round(maxCyclesPerWindow * dWindowLength);
     	WaveletInfoArray[index].radianFreq = radianFreq;
     	WaveletInfoArray[index].length = windowLength;
     	WaveletInfoArray[index].startIndex = windowStartIndex;
