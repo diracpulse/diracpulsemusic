@@ -225,7 +225,8 @@ void InitWavelets() {
     	currentLogFreq =  log(freqInHz) / log(2.0);
     	taperValue = pow(taperPerOctave, startLogFreq - currentLogFreq);
     	cyclesPerWindow = maxCyclesPerWindow / taperValue;
-    	windowLength = (int) (cyclesPerWindow * samplingRate / freqInHz);
+    	dWindowLength = samplingRate / freqInHz;
+    	windowLength = (int) round(maxCyclesPerWindow * dWindowLength);
     	WaveletInfoArray[index].radianFreq = radianFreq;
     	WaveletInfoArray[index].length = windowLength;
     	WaveletInfoArray[index].startIndex = windowStartIndex;
