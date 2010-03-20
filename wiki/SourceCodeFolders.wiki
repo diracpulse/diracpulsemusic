@@ -1,0 +1,12 @@
+#summary Directory of source code folders
+
+== C Files ==
+
+*Folder:*<br>
+[DFTFolder DFT]<br>
+
+== Java Files ==
+
+*Folders:*<br>
+[DFTEditorFolder DFTEditor]<br>
+[SimpleSynthFolder SimpleSynth]<br>
