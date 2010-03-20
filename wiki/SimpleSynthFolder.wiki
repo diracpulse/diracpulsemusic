@@ -1,0 +1,23 @@
+#summary Contents of the SimpleSynth Folder
+
+== Overview ==
+
+Plays short buffers of audio in Java.<br>
+Also can be used to test functions (such as trig functions) from main.<br>
+
+== Building ==
+From DOS Prompt:<br>
+>*c*<br>
+(c.bat is simply `"javac -d classes *.java"`)<br>
+*Output*: `classes/[class files]`<br>
+
+== Running ==
+From DOS Prompt:<br>
+>*r*<br>
+(r.bat is simply `"java -classpath classes Test"`)<br>
+
+== Files ==
+
+*Test.java*: Contains main()<br>
+*!AudioBuffer.java*: Creates buffer for !AudioPlayer.java to play<br>
+*!AudioPlayer.java*: Plays PCM data at run time<br>
