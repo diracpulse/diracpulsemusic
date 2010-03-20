@@ -1,0 +1,62 @@
+##summary Data Formats and Constants
+
+== Data Formats and Constants ==
+
+=== Note Base: 31.0 ===
+
+*Chords (approximate):*<br>
+{{{
+8 / 7 : 2^(6  / 31) = 1.1435729397159466122478700246292
+7 / 6 : 2^(7  / 31) = 1.1694307655976869631504835045488
+6 / 5 : 2^(8  / 31) = 1.1958732740441410980456504839717
+5 / 4 : 2^(10 / 31) = 1.2505655196145868643324917034825
+4 / 3 : 2^(13 / 31) = 1.3373293784088169669400800895429
+7 / 5 : 2^(15 / 31) = 1.3984909984232524335317336725024
+3 / 2 : 2^(18 / 31) = 1.4955178823482085468205080002383
+8 / 5 : 2^(21 / 31) = 1.5992764622331680439330557456596
+5 / 3 : 2^(23 / 31) = 1.6724180090056746536934221518869
+7 / 4 : 2^(25 / 31) = 1.7489046221194970587257878352982
+}}}
+*Harmonics (approximate):*<br>
+{{{
+2 : 2^(31  / 31) = 2.0000000000000000000000000000000
+3 : 2^(49  / 31) = 2.9910357646964170936410160004765
+4 : 2^(62  / 31) = 4.0000000000000000000000000000000
+5 : 2^(72  / 31) = 5.0022620784583474573299668139302
+6 : 2^(80  / 31) = 5.9820715293928341872820320009530
+7 : 2^(87  / 31) = 6.9956184884779882349031513411927
+8 : 2^(93  / 31) = 8.0000000000000000000000000000000
+10: 2^(103 / 31) = 10.004524156916694914659933627860
+12: 2^(111 / 31) = 11.964143058785668374564064001906
+14: 2^(118 / 31) = 13.991236976955976469806302682385
+16: 2^(124 / 31) = 16.000000000000000000000000000000
+20: 2^(134 / 31) = 20.009048313833389829319867255721
+24: 2^(142 / 31) = 23.928286117571336749128128003812
+28: 2^(149 / 31) = 27.982473953911952939612605364771
+32: 2^(155 / 31) = 32.000000000000000000000000000000
+}}}
+
+=== DFT Input ===
+
+*Sampling Rate*: 44.1kHz<br>
+*Bit Depth*: 16 bit<br>
+*Input File*: input.wav<br>
+*WAV File Header Clip*: 56 bytes (simply skip over wav file header)<br>
+*Number of Channels*: 2 (combined into a mono channel for analysis)<br>
+
+=== DFT Output ===
+
+*Time Step*: 5ms<br>
+*Frequency Step _(ratio upper/lower)_:* 2 ^ 31.0<br>
+*Frequency Range*: about 20Hz - 20kHz (see function _!InitWavelets_ in main.c)<br>
+*Minimum Output Amplitude*: 4.0 (see function _SingleDFT_ in main.c)<br>
+*Theoretical Maximum Output Amplitude*: 2 ^ 17.0<br>
+*Output Specification:*<br>
+_As ASCII to stdout: quantities delimited by a space and terminated by a newline_<br>
+Time `(int) /5ms` Frequency `(int) log2(Hz)*31` Amplitude `(float) log2(amplitude)`<br>
+
+_*DFTEditor Binary Conversion of DFT Output:*_<br>
+
+*Output Specification:*<br>
+_Binary, Big Endian (from DFT Output):_<br>
+Int : Short : Float<br>
