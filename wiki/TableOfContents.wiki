@@ -1,4 +1,5 @@
-  * Source Code Folders
+  * [SourceCodeFolders Source Code Folders]
     * [DFTFolder DFT]
     * [DFTEditorFolder DFTEditor]
+    * [SimpleSynthFolder SimpleSynth]
   * [DataFormatsAndConstants Data Formats and Constants]
