@@ -47,8 +47,9 @@
 === DFT Output ===
 
 *Time Step*: 5ms<br>
-*Frequency Step _(ratio upper/lower)_:* 2 ^ 31.0<br>
+*Frequency Step _(ratio upper/lower)_:* 2 ^ (1.0 / 31.0)<br>
 *Frequency Range*: about 20Hz - 20kHz (see function _!InitWavelets_ in main.c)<br>
+*Frequency Constraint*: for all freqInHz: `log2(freqInHz) * 31.0` is an integer<br>
 *Minimum Output Amplitude*: 4.0 (see function _SingleDFT_ in main.c)<br>
 *Theoretical Maximum Output Amplitude*: 2 ^ 17.0<br>
 *Output Specification:*<br>
