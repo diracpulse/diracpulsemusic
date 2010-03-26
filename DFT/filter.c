@@ -6,7 +6,7 @@
 
 /* used by DFTBinStep */
 #define MAXORDER 64
-#define WINDOWSIZE 100
+#define WINDOWSIZE 88200
 
 double Filter[MAXORDER + 1];
 double KaiserWindow[WINDOWSIZE];

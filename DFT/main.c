@@ -21,6 +21,8 @@ int stepIndex = 0;
 int maxDFTLength = 0;
 int inputFileLength = 0;
 int maxCenterIndex = 0;
+int debug = 0;
+char str[80];
 
 // Wavelet Variables
 const double onePI = 3.1415926535897932384626433832795;
@@ -31,7 +33,7 @@ const double samplesPerStep = 220.5; // 5ms
 const double notesPerOctave = 31.0;
 const double upperFreq = 20000.0;
 const double centerFreq = 1000.0;
-const double lowerFreq = 20.0;
+const double lowerFreq = 40.0;
 const double taperPerOctave = 1.4142135623730950488016887242097; // sqrt(2.0)
 const double alpha = 6.5;
 int numWavelets = 0;
@@ -43,13 +45,14 @@ struct WaveletInfo {
 	int length;
 	int note;
 	int startIndex; // index into WaveletData
-	float *sinArray;
-	float *cosArray;
+	float *sinArray;//[44100];
+	float *cosArray;//[44100];
 } WaveletInfoArray[MAXWAVELETS];
 
 double logAmps[MAXWAVELETS];
 
 void LoadSamplesFromFile(FILE *stream, int centerIndex) {
+	//if(debug) printf("LoadSamplesFromFile\n");
 	if(centerIndex >= (inputFileLength - headerLengthInBytes) / sampleLengthInBytes) {
 		// printf("End of file reached at sample %i\n", centerIndex);
 		exit(0);
@@ -90,6 +93,7 @@ void LoadSamplesFromFile(FILE *stream, int centerIndex) {
 }
 
 void SingleDFT(int waveletIndex, int startIndex, int endIndex) {
+	//if(debug) printf("SingleDFT\n");
 	int index = 0;
 	int maxIndex = endIndex - startIndex;
 	int maxIndexWavelet = WaveletInfoArray[waveletIndex].length;
@@ -127,6 +131,7 @@ void SingleDFT(int waveletIndex, int startIndex, int endIndex) {
 }
 
 void SampleArrayIndex(int waveletIndex) {
+	//if(debug) printf("SampleArrayIndex\n");
 	if (maxDFTLength == 0) return;
 	int DFTLength = WaveletInfoArray[waveletIndex].length;
 	int startIndex;
@@ -163,6 +168,7 @@ void SampleArrayIndex(int waveletIndex) {
 
 
 void FreqDFT() {
+	//if(debug) printf("FreqDFT\n");
 	int waveletIndex = 0;
 	double upperAmp = 0.0;
 	double centerAmp = 0.0;
@@ -183,6 +189,7 @@ void FreqDFT() {
 }
 
 void InitWavelets() {
+	//if(debug) printf("InitWavelets\n");
 	double freqInHz = 0.0;
     double startLogFreq = 0.0;
     double currentLogFreq = 0.0;
@@ -226,7 +233,11 @@ void InitWavelets() {
     	taperValue = pow(taperPerOctave, startLogFreq - currentLogFreq);
     	cyclesPerWindow = maxCyclesPerWindow / taperValue;
     	dWindowLength = samplingRate / freqInHz;
-    	windowLength = (int) round(maxCyclesPerWindow * dWindowLength);
+    	windowLength = (int) round(cyclesPerWindow * dWindowLength);
+    	if(windowLength > MAXDFTWINDOW) {
+    		printf("InitWavelets: Max DFT window length exceeded\n");
+    		break;
+    	}
     	WaveletInfoArray[index].radianFreq = radianFreq;
     	WaveletInfoArray[index].length = windowLength;
     	WaveletInfoArray[index].startIndex = windowStartIndex;
@@ -241,6 +252,7 @@ void InitWavelets() {
 }
 
 void CalculateWavelets() {
+	//if(debug) printf("CalculateWavelets\n");
 	int waveletIndex = 0;
 	int index = 0;
 	double dIndex = 0.0;
@@ -253,6 +265,7 @@ void CalculateWavelets() {
 		gain = 0.0;
 		int length = WaveletInfoArray[waveletIndex].length;
 		radianFreq = WaveletInfoArray[waveletIndex].radianFreq;
+		//printf("malloc %d %d %d\n", waveletIndex, numWavelets, length);
 		WaveletInfoArray[waveletIndex].sinArray = (float *) malloc(length * sizeof(float));
 		WaveletInfoArray[waveletIndex].cosArray = (float *) malloc(length * sizeof(float));
 		CreateWindow(KaiserWindow, length, alpha);
@@ -300,6 +313,7 @@ void LRSynth() {
 }
 
 int InitFileRead(FILE *stream) {
+	//if(debug) printf("InitFileRead\n");
 	fread((void *) Header, 1, headerLengthInBytes, stream);
 	fseek(stream, 0, SEEK_END);
 	inputFileLength = (int) ftell(stream);
@@ -308,6 +322,7 @@ int InitFileRead(FILE *stream) {
 }
 
 void FileDFT(FILE *stream, int startCenterIndex, int maxCenterIndex) {
+	//if(debug) printf("FileDFT\n");
 	int centerIndex;
 	double dStepIndex;
 	stepIndex = 0;
@@ -328,7 +343,9 @@ void FileDFT(FILE *stream, int startCenterIndex, int maxCenterIndex) {
 
 int main(int argc, char *argv[])
 {
+	//if(debug) printf("main\n");
 	FILE *input = fopen("input.wav", "rb");
+	//if(debug) printf("fopen\n");
 	if (input == NULL) {
 		printf("Unable to open input file\n");
 		return 0;
