@@ -5,8 +5,10 @@ import java.awt.event.*;
 public class DFTController implements MouseListener, ActionListener {
 	
 	private DFTView view;
+	private DFTEditor parent;
 	
-	DFTController() {
+	DFTController(DFTEditor parent) {
+		this.parent = parent;
 	}
 	
 	public void setView(DFTView view) {
@@ -134,6 +136,12 @@ public class DFTController implements MouseListener, ActionListener {
     }
     if ("T-100".equals(e.getActionCommand())) {
                     if((DFTEditor.leftX - 100) >= 0) DFTEditor.leftX -= 100; 
+    }
+    if ("Open".equals(e.getActionCommand())) {
+        parent.openFileInDFTEditor();
+    }
+    if ("Exit".equals(e.getActionCommand())) {
+        System.exit(0);
     }
     if ("Print Params".equals(e.getActionCommand())) {
         GenerateWavelets.printParams(); 

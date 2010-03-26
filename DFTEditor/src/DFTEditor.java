@@ -51,7 +51,11 @@ public class DFTEditor extends JFrame {
 	public static int freqCollapse = 4;
 	
 	// This function reads from a binary file
-	public void ReadFileData(String fileName) {
+	public void ReadBinaryFileData(String fileName, String type) {
+		if(!type.equals("mono5ms")) {
+			System.out.println("DFTEditor.ReadBinaryFileData: unsupported format");
+			System.exit(0);
+		}
 		timeToFreqToAmp = new TreeMap<Integer, TreeMap<Integer, Float>>();
 		TreeMap<Integer, Float> freqToAmp;
 		DataInputStream in = null;
@@ -65,7 +69,7 @@ public class DFTEditor extends JFrame {
 		float amp;
 	    try {
 	    	in = new DataInputStream(new
-	                BufferedInputStream(new FileInputStream(new String(fileName + ".mono5ms"))));
+	                BufferedInputStream(new FileInputStream(new String(fileName))));
 		} catch (FileNotFoundException nf) {
 			System.out.println("DFTEditor: " + fileName + ".[suffix] not found");
 			System.out.println("Attemping to load from text file");
@@ -309,17 +313,23 @@ public class DFTEditor extends JFrame {
 
     }
 	
+	public void openFileInDFTEditor() {
+        String fileName = FileTools.PromptForFileOpen(view);
+        ReadBinaryFileData(fileName, "mono5ms");
+        view.repaint();
+	}
+	
     public DFTEditor() {
     	FileConvert.wavImport();
-        ReadFileData("out");
         view = new DFTView();
         view.setBackground(Color.black);
-        controller = new DFTController();
+        controller = new DFTController(this);
         setJMenuBar(createMenuBar());
         view.addMouseListener(controller);
         controller.setView(view);
         add(view);
         setSize(1500, 800);
+        openFileInDFTEditor();
     }
     
     public static void main(String[] args)

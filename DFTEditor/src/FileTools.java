@@ -1,12 +1,16 @@
 import java.awt.Component;
 import java.io.File;
 import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileFilter;
 
 public class FileTools {
 
 	public static String PromptForFileOpen(Component c) {
 	   	JFileChooser fc = new JFileChooser();
+	   	FileTools.Mono5msFilter filter = new FileTools.Mono5msFilter();
 		fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		fc.setCurrentDirectory(new File("."));
+		fc.setFileFilter(filter);
         int returnVal = fc.showOpenDialog(c);
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
         	File file = fc.getSelectedFile();
@@ -28,6 +32,20 @@ public class FileTools {
 	    	System.exit(0);
     	}
     	return "";
+	}
+	
+	public static class Mono5msFilter extends FileFilter {
+		
+		public Mono5msFilter() {};
+		
+		public boolean accept(File f) {
+			if(f.getName().contains(".mono5ms")) return true;
+			return false;
+		}
+		
+		public String getDescription() {
+			return new String(".mono5ms files");
+		}
 	}
 
 }
