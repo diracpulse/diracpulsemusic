@@ -21,7 +21,7 @@ public class FileConvert {
 			TreeSet<String> wavFileNames = new TreeSet<String>();
 			TreeSet<String> mono5msFileNames = new TreeSet<String>();
 			TreeSet<String> convertFileNames = new TreeSet<String>();
-			File dataDir = new File("data\\");
+			File dataDir = new File(".");
 			File[] dataFiles = dataDir.listFiles();
 			for(File dataFile: dataFiles) {
 				String fileName = dataFile.getName();
@@ -45,7 +45,6 @@ public class FileConvert {
 			}
 			for(String convertFileName: convertFileNames) {
 				ConvertWAVToMono5ms(convertFileName);
-				break;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -86,13 +85,28 @@ public class FileConvert {
 		Integer freq;
 		Float amp;
 	    try {
-			File startFile = new File(new String(fileName + ".wav"));
-			File endFile = new File(new String(fileName + ".wav"));
-			File inputFile = new File(new String("input.wav"));
-			startFile.renameTo(inputFile);
+	    	String[] del = new String[4];
+	    	del[0] = "cmd";
+	    	del[1] = "/C";
+	    	del[2] = "del";
+	    	del[3] = "input.wav";
+	    	printToConsole("Starting: ", del);
+	    	Process p = Runtime.getRuntime().exec(del);
+	    	p.waitFor();
+	    	printToConsole("Finished: ", del);
+	    	String[] copy = new String[5];
+	    	copy[0] = "cmd";
+	    	copy[1] = "/C";
+	    	copy[2] = "copy";
+	    	copy[3] = "\"" + fileName + ".wav\"";
+	    	copy[4] = "input.wav";
+	    	printToConsole("Starting: ", copy);
+	    	p = Runtime.getRuntime().exec(copy);
+	    	p.waitFor();
+	    	printToConsole("Finished: ", copy);
 	    	DataOutputStream binaryOut = new DataOutputStream(new
 		            BufferedOutputStream(new FileOutputStream(new String(fileName + ".mono5ms"))));
-            Process p = Runtime.getRuntime().exec("a");
+            p = Runtime.getRuntime().exec("a");
             BufferedReader stdInput = new BufferedReader(new 
                  InputStreamReader(p.getInputStream()));
             // BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
@@ -106,13 +120,19 @@ public class FileConvert {
 				binaryOut.writeFloat(amp);
             }
             binaryOut.close();
-            inputFile.renameTo(endFile);
+            p.waitFor();
 		} catch (Exception e) {
 			System.out.println("Exception in FileConvert.ConvertWAVToMono5ms()");
 			e.printStackTrace();
 			System.exit(0);
 		}
 		System.out.println("Finished conversion of \"" + fileName + ".wav\" to \"" + fileName + ".mono5ms\"");
+	}
+	
+	private static void printToConsole(String first, String[] command) {
+    	System.out.print(first + " ");
+    	for(String s: command) System.out.print(s + " ");
+    	System.out.println();
 	}
 	
 }
