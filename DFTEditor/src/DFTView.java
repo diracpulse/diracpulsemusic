@@ -141,10 +141,6 @@ public class DFTView extends JComponent {
 			screenIndex++;
 		}
 	}
-
-	public void DrawFileData(boolean scaleLines) {
-		DrawFileData(getGraphics(), scaleLines);
-	}
 		
 	public void DrawFileData(Graphics g, boolean scaleLines) {
 		DrawLeftFreqs(g);
@@ -174,6 +170,11 @@ public class DFTView extends JComponent {
 			}
             screenXIndex++;
 		}
+		Graphics2D g2 = (Graphics2D) g;
+        g2.setColor(new Color(1.0f, 0.0f, 0.0f, 0.5f));
+        g2.setStroke(new BasicStroke(4));
+        g2.drawLine(100, 400, 1500, 400);
+		
 	}
 	
 	public void drawAmplitude(Graphics g, int screenX, int screenY, float currentVal, float minVal, float maxVal) {
