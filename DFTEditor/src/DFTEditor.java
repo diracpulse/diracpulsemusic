@@ -19,9 +19,6 @@ public class DFTEditor extends JFrame {
 	public static TreeMap<Integer, Float> timeToAmpSum;
 	public static TreeMap<Integer, Float> freqToMaxAmp;
 	public static TreeMap<Integer, Integer> floorAmpToCount;
-	// see DFTUtils.getMaxValue for how these are used
-	public static TreeMap<Integer, Boolean> isFreqCollapsed;
-	public static TreeMap<Integer, Boolean> isTimeCollapsed;
 	public static int xStep = 6;
 	public static int yStep = 9; // one digit;
 	public static int topYStep = 8; // used by DrawUpperTimes
@@ -48,8 +45,8 @@ public class DFTEditor extends JFrame {
 	// maxTime = length of file in ms / timeStepInMillis
 	public static int maxTime; 
 	//these determine how many values per (collapsed) segement
-	public static int timeCollapse = 4;
-	public static int freqCollapse = 4;
+	public static int timeCollapse = 1;
+	public static int freqCollapse = 1;
 	
 	// This function reads from a binary file
 	public void ReadBinaryFileData(String fileName, String type) {
@@ -123,7 +120,6 @@ public class DFTEditor extends JFrame {
 		maxScreenFreq = maxRealFreq - minRealFreq;
 		calculateAmpSum();
 		calculateMaxAmpAtFreq();
-		setAllCollapsed(false);
 		fileDataRead = true;
 		printFloorAmpCount();
 	}
@@ -178,21 +174,6 @@ public class DFTEditor extends JFrame {
 		}
 	}
 	
-	// initializes the TreeMaps controlling if displayed data is collapsed
-	public void setAllCollapsed(boolean value) {
-		isFreqCollapsed = new TreeMap<Integer, Boolean>();
-		isTimeCollapsed = new TreeMap<Integer, Boolean>();
-		// make sure we don't run out at the end
-		int endTime = maxTime + timeCollapse + 1;
-		int endScreenFreq = maxScreenFreq + freqCollapse + 1;
-		for(int time = 0; time < endTime; time += timeCollapse) {
-			isTimeCollapsed.put(new Integer(time / timeCollapse), new Boolean(value));
-		}
-		for(int screenFreq = 0; screenFreq <= endScreenFreq; screenFreq += freqCollapse) {
-			isFreqCollapsed.put(new Integer(screenFreq / freqCollapse), new Boolean(value));
-		}
-	}
-
 	public JMenuBar createMenuBar() {
 	    JMenuBar menuBar;
         JMenu menu;
