@@ -150,7 +150,7 @@ public class DFTController implements MouseListener, ActionListener {
         GenerateWavelets.writeParamsToFile(); 
     }        
     if((apOldUpperY != DFTEditor.upperY) || (apOldLeftX != DFTEditor.leftX)) {
-           DFTEditor.view.DrawFileData(true);
+           DFTEditor.view.repaint();
     }
 }
 

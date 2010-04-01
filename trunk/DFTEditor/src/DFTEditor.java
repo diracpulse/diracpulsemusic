@@ -18,6 +18,7 @@ public class DFTEditor extends JFrame {
 	public static TreeMap<Integer, TreeMap<Integer, Float>> timeToFreqToAmp;
 	public static TreeMap<Integer, Float> timeToAmpSum;
 	public static TreeMap<Integer, Float> freqToMaxAmp;
+	public static TreeMap<Integer, Integer> floorAmpToCount;
 	// see DFTUtils.getMaxValue for how these are used
 	public static TreeMap<Integer, Boolean> isFreqCollapsed;
 	public static TreeMap<Integer, Boolean> isTimeCollapsed;
@@ -57,6 +58,7 @@ public class DFTEditor extends JFrame {
 			System.exit(0);
 		}
 		timeToFreqToAmp = new TreeMap<Integer, TreeMap<Integer, Float>>();
+		floorAmpToCount = new TreeMap<Integer, Integer>();
 		TreeMap<Integer, Float> freqToAmp;
 		DataInputStream in = null;
 		maxAmplitude = 0.0f;
@@ -72,8 +74,6 @@ public class DFTEditor extends JFrame {
 	                BufferedInputStream(new FileInputStream(new String(fileName))));
 		} catch (FileNotFoundException nf) {
 			System.out.println("DFTEditor: " + fileName + ".[suffix] not found");
-			System.out.println("Attemping to load from text file");
-			ReadTextFileData(fileName);
 			return;
 		}
 		try {
@@ -103,6 +103,15 @@ public class DFTEditor extends JFrame {
 					freqToAmp = timeToFreqToAmp.get(time);
 				}
 				freqToAmp.put((int) freq, amp);
+				// Start floorAmp count
+				int floorAmp = (int) Math.floor(amp);
+				int number = 0;
+				if(floorAmpToCount.containsKey(floorAmp)) {
+					number = floorAmpToCount.get(floorAmp);
+				}
+				number++;
+				floorAmpToCount.put(floorAmp, number);
+				// End floopAmp count
 			}
 		} catch (IOException e) {
 			if(e instanceof EOFException) {
@@ -114,81 +123,21 @@ public class DFTEditor extends JFrame {
 		maxScreenFreq = maxRealFreq - minRealFreq;
 		calculateAmpSum();
 		calculateMaxAmpAtFreq();
-		setAllCollapsed(true);
+		setAllCollapsed(false);
 		fileDataRead = true;
+		printFloorAmpCount();
 	}
 	
-	// This function reads from a (newly created) text file
-	// It also creates a binary clone for future use
-	public void ReadTextFileData(String fileName) {
-		timeToFreqToAmp = new TreeMap<Integer, TreeMap<Integer, Float>>();
-		TreeMap<Integer, Float> freqToAmp;
-		String[] tokens;
-		RandomAccessFile file = null;
-		DataOutputStream binaryOut = null;
-		String linein = "";
-		maxAmplitude = 0.0f;
-		minAmplitude = 15.0f;
-		minRealFreq = freqsPerOctave * 100;
-		maxRealFreq = 0;
-		maxTime = 0;
-		Integer time;
-		Integer freq;
-		Float amp;
-	    try {
-			file = new RandomAccessFile(new String(fileName + ".txt"), "r");
-			binaryOut = new DataOutputStream(new
-		            BufferedOutputStream(new FileOutputStream(new String(fileName + ".mono5ms"))));
-		} catch (FileNotFoundException nf) {
-			System.out.println("DFTEditor: " + fileName + ".[suffix] not found");
-			System.exit(0);
+	public void printFloorAmpCount() {
+		int total = 0;
+		for(int i: floorAmpToCount.keySet()) {
+			int count = floorAmpToCount.get(i);
+			System.out.println("floor(amp) =  " + i + ": count = " + count);
+			total += count;
 		}
-		try {
-			linein = file.readLine();
-			while(linein != null) {
-				tokens = linein.split(" ");
-				time = new Integer(tokens[0]);
-				freq = new Integer(tokens[1]);
-				amp = new Float(tokens[2]);
-				binaryOut.writeInt(time);
-				binaryOut.writeShort(freq);
-				binaryOut.writeFloat(amp);
-				if(amp.floatValue() > maxAmplitude) {
-					maxAmplitude = amp.floatValue();
-				}
-				if(amp.floatValue() < minAmplitude) {
-					minAmplitude = amp.floatValue();
-				}
-				if(freq.intValue() > maxRealFreq) {
-					maxRealFreq = freq.intValue();
-				}
-				if(freq.intValue() < minRealFreq) {
-					minRealFreq = freq.intValue();
-				}				
-				if(time.intValue() > maxTime) {
-					maxTime = time.intValue();
-				}				
-				if (timeToFreqToAmp.containsKey(time)) {
-					freqToAmp = timeToFreqToAmp.get(time);
-				} else {
-					timeToFreqToAmp.put(time, new TreeMap<Integer, Float>());
-					freqToAmp = timeToFreqToAmp.get(time);
-				}
-				freqToAmp.put(freq, amp);
-				linein = file.readLine();
-			}
-			file.close();
-			binaryOut.close();
-		} catch (IOException ie) {
-			System.out.println("DFTEditor: error reading from: " + fileName);
-			System.exit(0);
-		}
-		maxScreenFreq = maxRealFreq - minRealFreq;
-		calculateAmpSum();
-		calculateMaxAmpAtFreq();
-		setAllCollapsed(true);
-		fileDataRead = true;
+		System.out.println("total count: " + total);
 	}
+	
 	
 	// This calculates the sum of all amplitudes at a given time
 	public void calculateAmpSum() {
