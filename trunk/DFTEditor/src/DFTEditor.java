@@ -17,6 +17,9 @@ public class DFTEditor extends JFrame {
 	
 	public static TreeMap<Integer, TreeMap<Integer, Float>> timeToFreqToAmp;
 	public static TreeMap<Integer, Float> timeToAmpSum;
+	public static TreeSet<Integer> ampMaximaTimes;
+	public static ArrayList<Integer> timeAtAmpMaximas;
+	public static ArrayList<Integer> timeAtAmpMinimas;
 	public static TreeMap<Integer, Float> freqToMaxAmp;
 	public static TreeMap<Integer, Integer> floorAmpToCount;
 	public static int xStep = 6;
@@ -45,8 +48,8 @@ public class DFTEditor extends JFrame {
 	// maxTime = length of file in ms / timeStepInMillis
 	public static int maxTime; 
 	//these determine how many values per (collapsed) segement
-	public static int timeCollapse = 1;
-	public static int freqCollapse = 1;
+	public static int timeIncrement = 1;
+	public static int freqIncrement = 1;
 	
 	// This function reads from a binary file
 	public void ReadBinaryFileData(String fileName, String type) {
@@ -153,6 +156,51 @@ public class DFTEditor extends JFrame {
 			dsum = Math.log(dsum) / Math.log(2.0);
 			if (maxAmplitudeSum < dsum) maxAmplitudeSum = (float) dsum;
 			timeToAmpSum.put(new Integer(time), new Float(dsum));
+		}
+		calculateMinMaxTimes();
+	}
+	
+	public void calculateMinMaxTimes() {
+		timeAtAmpMaximas = new ArrayList<Integer>();
+		timeAtAmpMinimas = new ArrayList<Integer>();
+		float startAmp = 0;
+		float middleAmp = timeToAmpSum.get(0);
+		float endAmp = 0;
+		int time;
+		for(time = 1; time < maxTime; time++) {
+			endAmp = timeToAmpSum.get(time);
+			if((middleAmp > startAmp) && (middleAmp > endAmp)) {
+				timeAtAmpMaximas.add(time - 1);
+			}
+			if((middleAmp < startAmp) && (middleAmp < endAmp)) {
+				timeAtAmpMinimas.add(time - 1);
+			}
+			startAmp = middleAmp;
+			middleAmp = endAmp;
+		}
+		startAmp = middleAmp;
+		middleAmp = endAmp;
+		endAmp = 0;
+		if((middleAmp >= startAmp) && (middleAmp >= endAmp)) {
+			timeAtAmpMaximas.add(maxTime);
+		}
+		if((middleAmp <= startAmp) && (middleAmp <= endAmp)) {
+			timeAtAmpMinimas.add(maxTime);
+		}
+		//printMinMaxTimes();
+	}
+	
+	public void printMinMaxTimes() {
+		int numMaximas = timeAtAmpMaximas.size();
+		int numMinimas = timeAtAmpMinimas.size();
+		System.out.println("num maximas: " + numMaximas + "num minimas: " + numMinimas);
+		int minMaxPairs = Math.min(numMaximas, numMinimas);
+		for(int pairIndex = 0; pairIndex < minMaxPairs; pairIndex++) {
+			int maxTime = timeAtAmpMaximas.get(pairIndex);
+			int minTime = timeAtAmpMinimas.get(pairIndex);
+			float maxAmp = timeToAmpSum.get(maxTime);
+			float minAmp = timeToAmpSum.get(minTime);	
+			System.out.println(maxTime + " " + maxAmp + " " + minTime + " " + minAmp);
 		}
 	}
 	

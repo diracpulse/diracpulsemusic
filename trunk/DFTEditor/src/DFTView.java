@@ -17,7 +17,7 @@ public class DFTView extends JComponent {
 			int screenX = DFTEditor.leftOffset + ((screenIndex - startX) * DFTEditor.xStep);
 			float ampSumVal = DFTUtils.getMaxValue(DFTEditor.timeToAmpSum, time, DFTUtils.getTimeIncrement());
 			// draw amp even if 0.0f, to overwrite previous value
-			drawAmplitude(g, screenX, 0, ampSumVal, 0.0f, DFTEditor.maxAmplitudeSum);
+			drawAmplitude(g, screenX, 0, ampSumVal, 0.0f, DFTEditor.maxAmplitudeSum, 2);
 			screenIndex++;
 		}
 	}
@@ -39,7 +39,7 @@ public class DFTView extends JComponent {
 			amp = DFTUtils.getMaxValue(DFTEditor.freqToMaxAmp, iFreq, DFTUtils.getFreqIncrement());
 			// draw amp even if 0.0f, to overwrite previous value
 			screenY = DFTEditor.upperOffset + ((screenIndex - startY) * DFTEditor.yStep);
-			drawAmplitude(g, 0, screenY, amp, 0.0f, DFTEditor.maxAmplitude);
+			drawAmplitude(g, 0, screenY, amp, 0.0f, DFTEditor.maxAmplitude, 1);
 			screenIndex++;
 		}
 	}
@@ -164,7 +164,7 @@ public class DFTView extends JComponent {
         		int screenY = DFTEditor.upperOffset + ((screenYIndex - DFTEditor.upperY) * DFTEditor.yStep);
                 float currentVal = DFTUtils.getMaxValue(x, y).getAmplitude();
                 if(currentVal > 0.0f) {
-                	drawAmplitude(g, screenX, screenY, currentVal, DFTEditor.minAmplitude, DFTEditor.maxAmplitude);
+                	drawAmplitude(g, screenX, screenY, currentVal, DFTEditor.minAmplitude, DFTEditor.maxAmplitude, 1);
                 }
 				screenYIndex++;
 			}
@@ -177,7 +177,7 @@ public class DFTView extends JComponent {
 		
 	}
 	
-	public void drawAmplitude(Graphics g, int screenX, int screenY, float currentVal, float minVal, float maxVal) {
+	public void drawAmplitude(Graphics g, int screenX, int screenY, float currentVal, float minVal, float maxVal, int digits) {
 		int digitVal;
 		int fractionVal;
 		float red;
@@ -205,9 +205,17 @@ public class DFTView extends JComponent {
 		// g.setColor(new Color(red, green, blue));
 		// g.fillRect(x * xStep, y * yStep, xStep, yStep);
 		Color b = new Color(red, green, blue);
-		DFTUtils.DrawSegmentData(g, b, screenX, screenY, digitVal, fractionVal); 
+		if(digits == 1) {
+			DFTUtils.DrawSegmentData(g, b, screenX, screenY, digitVal);
+			return;
+		}
+		if(digits == 2) {
+			DFTUtils.DrawSegmentData(g, b, screenX, screenY, digitVal, fractionVal);
+			return;
+		}
+		System.out.println("DFTView.drawAmplitude() invalid number of digits: " + digits);
 	}
-	
+		
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         if(DFTEditor.fileDataRead) DrawFileData(g, true);
