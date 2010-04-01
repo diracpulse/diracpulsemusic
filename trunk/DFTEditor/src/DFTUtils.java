@@ -19,8 +19,8 @@ public class DFTUtils {
 		TreeMap<Integer, Float> freqToAmp;
 		DFTModel.TFA returnVal = new DFTModel.TFA(0, 0, 0.0f);
 		freq = DFTEditor.maxRealFreq - freq;
-		int endTime = time + getTimeIncrement(time);
-		int endFreq = freq + getFreqIncrement(freq);
+		int endTime = time + getTimeIncrement();
+		int endFreq = freq + getFreqIncrement();
 		for(int timeIndex = time; timeIndex < endTime; timeIndex++) {
 			for(int freqIndex = freq; freqIndex < endFreq; freqIndex++) {
 				if(DFTEditor.timeToFreqToAmp.containsKey(timeIndex)) {
@@ -37,12 +37,12 @@ public class DFTUtils {
 		return returnVal;
 	}
 	
-	public static int getTimeIncrement(int x) {
-		return getIncrement(DFTEditor.isTimeCollapsed, x, DFTEditor.timeCollapse);
+	public static int getTimeIncrement() {
+		return DFTEditor.timeCollapse;
 	}
 	
-	public static int getFreqIncrement(int y) {
-		return getIncrement(DFTEditor.isFreqCollapsed, y, DFTEditor.freqCollapse);
+	public static int getFreqIncrement() {
+		return DFTEditor.freqCollapse;
 	}
 	
 	public static int getIncrement(TreeMap<Integer, Boolean> isCollapsed, int value, int step) {
@@ -58,18 +58,6 @@ public class DFTUtils {
 		return 1;
 	}
 	
-	public static void setTimeCollapsed(int x, boolean collapsed) {
-		int key = x / DFTEditor.timeCollapse;
-		System.out.println("TIME:" + key);
-		DFTEditor.isTimeCollapsed.put(key, collapsed);
-	}
-	
-	public static void setFreqCollapsed(int y, boolean collapsed) {
-		int key = y / DFTEditor.freqCollapse;
-		System.out.println("FREQ:" + key);
-		DFTEditor.isFreqCollapsed.put(key, collapsed);
-	}
-
 	public static void DrawSegmentData(Graphics g, Color b, int screenX, int screenY, int digitVal, int fractionVal) {
 		Color black = new Color(0.0f, 0.0f, 0.0f);
 		// int lowerScreenY = screenY + topYStep;				

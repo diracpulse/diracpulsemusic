@@ -13,9 +13,9 @@ public class DFTView extends JComponent {
 		int endX = DFTEditor.leftX + (getWidth() - DFTEditor.leftOffset) / DFTEditor.xStep;
 		int screenIndex = startX;
 		int screenEnd = endX;
-		for(int time = startX; screenIndex < screenEnd; time += DFTUtils.getTimeIncrement(time)) {
+		for(int time = startX; screenIndex < screenEnd; time += DFTUtils.getTimeIncrement()) {
 			int screenX = DFTEditor.leftOffset + ((screenIndex - startX) * DFTEditor.xStep);
-			float ampSumVal = DFTUtils.getMaxValue(DFTEditor.timeToAmpSum, time, DFTUtils.getTimeIncrement(time));
+			float ampSumVal = DFTUtils.getMaxValue(DFTEditor.timeToAmpSum, time, DFTUtils.getTimeIncrement());
 			// draw amp even if 0.0f, to overwrite previous value
 			drawAmplitude(g, screenX, 0, ampSumVal, 0.0f, DFTEditor.maxAmplitudeSum);
 			screenIndex++;
@@ -30,13 +30,13 @@ public class DFTView extends JComponent {
 		float amp;
 		int screenIndex = startY;
 		int screenEnd = endY;
-		for(int freqIndex = startY; screenIndex < screenEnd; freqIndex += DFTUtils.getFreqIncrement(freqIndex)) {
+		for(int freqIndex = startY; screenIndex < screenEnd; freqIndex += DFTUtils.getFreqIncrement()) {
 			if(freqIndex < (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) {			
 				iFreq = DFTEditor.maxRealFreq - freqIndex;
 			} else {
 				iFreq = 1; // dummy value
 			}
-			amp = DFTUtils.getMaxValue(DFTEditor.freqToMaxAmp, iFreq, DFTUtils.getFreqIncrement(freqIndex));
+			amp = DFTUtils.getMaxValue(DFTEditor.freqToMaxAmp, iFreq, DFTUtils.getFreqIncrement());
 			// draw amp even if 0.0f, to overwrite previous value
 			screenY = DFTEditor.upperOffset + ((screenIndex - startY) * DFTEditor.yStep);
 			drawAmplitude(g, 0, screenY, amp, 0.0f, DFTEditor.maxAmplitude);
@@ -60,7 +60,7 @@ public class DFTView extends JComponent {
 		int startX = DFTEditor.leftX;
 		int endX = DFTEditor.leftX + (getWidth() - DFTEditor.leftOffset) / DFTEditor.xStep;
 		int screenIndex = startX; // controls actual position on the screen
-		for(timeIndex = startX; screenIndex < endX; timeIndex += DFTUtils.getTimeIncrement(timeIndex)) {
+		for(timeIndex = startX; screenIndex < endX; timeIndex += DFTUtils.getTimeIncrement()) {
 			iTime = timeIndex * DFTEditor.timeStepInMillis;;
 			leading0 = true;
 			int yOffset = 1;
@@ -110,7 +110,7 @@ public class DFTView extends JComponent {
 		int screenX;
 		int screenY;
 		int screenIndex = startY; // controls actual position on the screen
-		for(freqIndex = startY; screenIndex < endY; freqIndex += DFTUtils.getFreqIncrement(freqIndex)) {
+		for(freqIndex = startY; screenIndex < endY; freqIndex += DFTUtils.getFreqIncrement()) {
 			if(freqIndex < (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) {			
 				iFreq = DFTEditor.maxRealFreq - freqIndex;
 			} else {
@@ -155,10 +155,10 @@ public class DFTView extends JComponent {
 		int startY = DFTEditor.upperY;
 		int endY = startY + ((getHeight() - DFTEditor.upperOffset) / DFTEditor.yStep);
 		int screenXIndex = startX;
-		for(int x = startX; screenXIndex < endX; x += DFTUtils.getTimeIncrement(x)) {
+		for(int x = startX; screenXIndex < endX; x += DFTUtils.getTimeIncrement()) {
             if(x >= DFTEditor.maxTime) break;
     		int screenYIndex = startY;
-            for(int y = startY; screenYIndex < endY; y += DFTUtils.getFreqIncrement(y)) {
+            for(int y = startY; screenYIndex < endY; y += DFTUtils.getFreqIncrement()) {
                 if(y >= (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) break;
         		int screenX = DFTEditor.leftOffset + ((screenXIndex - DFTEditor.leftX) * DFTEditor.xStep);
         		int screenY = DFTEditor.upperOffset + ((screenYIndex - DFTEditor.upperY) * DFTEditor.yStep);

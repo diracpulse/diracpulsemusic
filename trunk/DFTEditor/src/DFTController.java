@@ -73,10 +73,10 @@ public class DFTController implements MouseListener, ActionListener {
 		int startY = DFTEditor.upperY;
 		int endY = startY + ((view.getHeight() - DFTEditor.upperOffset) / DFTEditor.yStep);
 		int screenXIndex = startX;
-		for(int x = startX; screenXIndex < endX; x += DFTUtils.getTimeIncrement(x)) {
+		for(int x = startX; screenXIndex < endX; x += DFTUtils.getTimeIncrement()) {
             if(x >= DFTEditor.maxTime) break;
     		int screenYIndex = startY;
-            for(int y = startY; screenYIndex < endY; y += DFTUtils.getFreqIncrement(y)) {
+            for(int y = startY; screenYIndex < endY; y += DFTUtils.getFreqIncrement()) {
                 if(y >= (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) break;
         		int screenX = DFTEditor.leftOffset + ((screenXIndex - DFTEditor.leftX) * DFTEditor.xStep);
         		int screenY = DFTEditor.upperOffset + ((screenYIndex - DFTEditor.upperY) * DFTEditor.yStep);
@@ -85,8 +85,6 @@ public class DFTController implements MouseListener, ActionListener {
                 	Rectangle currentRect = new Rectangle(screenX, screenY, DFTEditor.xStep, DFTEditor.yStep);
                 	if (currentRect.contains(mouseX, mouseY)) {
                 		System.out.println("SCREEN: " + screenX + " " + screenY);
-                		DFTUtils.setTimeCollapsed(x, false);
-                		DFTUtils.setFreqCollapsed(y, false);
                 		view.repaint();
                 		return currentVal;
                 	}
