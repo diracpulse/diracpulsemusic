@@ -38,11 +38,11 @@ public class DFTUtils {
 	}
 	
 	public static int getTimeIncrement() {
-		return DFTEditor.timeCollapse;
+		return DFTEditor.timeIncrement;
 	}
 	
 	public static int getFreqIncrement() {
-		return DFTEditor.freqCollapse;
+		return DFTEditor.freqIncrement;
 	}
 	
 	public static int getIncrement(TreeMap<Integer, Boolean> isCollapsed, int value, int step) {
@@ -58,13 +58,25 @@ public class DFTUtils {
 		return 1;
 	}
 	
-	public static void DrawSegmentData(Graphics g, Color b, int screenX, int screenY, int digitVal, int fractionVal) {
+	public static void DrawSegmentData(Graphics g, Color b, int screenX, int screenY, int digitVal) {
 		Color black = new Color(0.0f, 0.0f, 0.0f);
 		// int lowerScreenY = screenY + topYStep;				
 		g.setColor(b);
 		g.fillRect(screenX, screenY, DFTEditor.xStep, DFTEditor.yStep);;
 		SevenSegmentSmall(g, black, b, screenX, screenY, digitVal);
 		// SevenSegmentSmall(g, black, b, screenX, lowerScreenY, fractionVal);
+		// g.setColor(black);
+		// int bottomScreenY = screenY + yStep - 1;
+		// g.drawLine(screenX, bottomScreenY, screenX + xStep, bottomScreenY);
+	}
+	
+	public static void DrawSegmentData(Graphics g, Color b, int screenX, int screenY, int digitVal, int fractionVal) {
+		Color black = new Color(0.0f, 0.0f, 0.0f);
+		int lowerScreenY = screenY + DFTEditor.yStep;			
+		g.setColor(b);
+		g.fillRect(screenX, screenY, DFTEditor.xStep, DFTEditor.yStep * 2);;
+		SevenSegmentSmall(g, black, b, screenX, screenY, digitVal);
+		SevenSegmentSmall(g, black, b, screenX, lowerScreenY, fractionVal);
 		// g.setColor(black);
 		// int bottomScreenY = screenY + yStep - 1;
 		// g.drawLine(screenX, bottomScreenY, screenX + xStep, bottomScreenY);
