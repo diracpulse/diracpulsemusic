@@ -99,58 +99,72 @@ public class DFTController implements MouseListener, ActionListener {
     public void actionPerformed(ActionEvent e) {
         int apOldUpperY = DFTEditor.upperY;
         int apOldLeftX = DFTEditor.leftX;
-    if ("F+1".equals(e.getActionCommand())) {
-                    if((DFTEditor.upperY + 1) < (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) DFTEditor.upperY += 1; 
+        if ("Higher".equals(e.getActionCommand())) adjustY(-DFTEditor.freqsPerOctave);
+        if ("Lower".equals(e.getActionCommand())) adjustY(DFTEditor.freqsPerOctave);
+        if ("+500ms".equals(e.getActionCommand())) adjustX(500 / DFTEditor.timeStepInMillis);
+        if ("+1s".equals(e.getActionCommand())) adjustX(1000 / DFTEditor.timeStepInMillis);
+        if ("+2s".equals(e.getActionCommand())) adjustX(2000 / DFTEditor.timeStepInMillis);
+        if ("+5s".equals(e.getActionCommand())) adjustX(5000 / DFTEditor.timeStepInMillis);
+        if ("+10s".equals(e.getActionCommand())) adjustX(10000 / DFTEditor.timeStepInMillis);
+        if ("+30s".equals(e.getActionCommand())) adjustX(30000 / DFTEditor.timeStepInMillis);
+    	if ("+1min".equals(e.getActionCommand())) adjustX(60000 / DFTEditor.timeStepInMillis);
+        if ("-500ms".equals(e.getActionCommand())) adjustX(-500 / DFTEditor.timeStepInMillis);
+        if ("-1s".equals(e.getActionCommand())) adjustX(-1000 / DFTEditor.timeStepInMillis);
+        if ("-2s".equals(e.getActionCommand())) adjustX(-2000 / DFTEditor.timeStepInMillis);
+        if ("-5s".equals(e.getActionCommand())) adjustX(-5000 / DFTEditor.timeStepInMillis);
+        if ("-10s".equals(e.getActionCommand())) adjustX(-10000 / DFTEditor.timeStepInMillis);
+        if ("-30s".equals(e.getActionCommand())) adjustX(-30000 / DFTEditor.timeStepInMillis);
+    	if ("-1min".equals(e.getActionCommand())) adjustX(-60000 / DFTEditor.timeStepInMillis);
+        if ("Open".equals(e.getActionCommand())) {
+            parent.openFileInDFTEditor();
+        }
+        if ("Exit".equals(e.getActionCommand())) {
+            System.exit(0);
+        }
+        if ("Print Params".equals(e.getActionCommand())) {
+            GenerateWavelets.printParams(); 
+        }
+        if ("Save Params".equals(e.getActionCommand())) {
+            GenerateWavelets.writeParamsToFile(); 
+        }        
+        if((apOldUpperY != DFTEditor.upperY) || (apOldLeftX != DFTEditor.leftX)) {
+        	DFTEditor.view.repaint();
+        }
     }
-    if ("F+6".equals(e.getActionCommand())) {
-                    if((DFTEditor.upperY + 6) < (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) DFTEditor.upperY += 6; 
+    
+    private void adjustY(int deltaY) {
+    	if(deltaY > 0) {
+    		int maxY = (DFTEditor.maxRealFreq - DFTEditor.minRealFreq);
+    		if((DFTEditor.upperY + deltaY) < maxY) {
+    			DFTEditor.upperY += deltaY;
+    		} else {
+    			DFTEditor.upperY = maxY;
+    		}
+    	} else {
+    		if((DFTEditor.upperY + deltaY) > 0) {
+    			DFTEditor.upperY += deltaY;
+    		} else {
+    			DFTEditor.upperY = 0;
+    		}
+    	}
     }
-    if ("F+31".equals(e.getActionCommand())) {
-                    if((DFTEditor.upperY + 31) < (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) DFTEditor.upperY += 31; 
-    }         
-    if ("T+1".equals(e.getActionCommand())) {
-                    if((DFTEditor.leftX + 1) < DFTEditor.maxTime) DFTEditor.leftX += 1; 
+    
+    private void adjustX(int deltaX) {
+    	if(deltaX > 0) {
+    		int maxX = DFTEditor.maxTime;
+    		if((DFTEditor.leftX + deltaX) < maxX) {
+    			DFTEditor.leftX += deltaX;
+    		} else {
+    			DFTEditor.leftX = maxX;
+    		}
+    	} else {
+    		if((DFTEditor.leftX + deltaX) > 0) {
+    			DFTEditor.leftX += deltaX;
+    		} else {
+    			DFTEditor.leftX = 0;
+    		}
+    	}
     }
-    if ("T+10".equals(e.getActionCommand())) {
-                    if((DFTEditor.leftX + 10) < DFTEditor.maxTime) DFTEditor.leftX += 10; 
-    }
-    if ("T+100".equals(e.getActionCommand())) {
-                    if((DFTEditor.leftX + 100) < DFTEditor.maxTime) DFTEditor.leftX += 100; 
-    }        
-    if ("F-1".equals(e.getActionCommand())) {
-                    if((DFTEditor.upperY - 1) >= 0) DFTEditor.upperY -= 1; 
-    }
-    if ("F-6".equals(e.getActionCommand())) {
-                    if((DFTEditor.upperY - 6) >= 0) DFTEditor.upperY -= 6; 
-    }
-    if ("F-31".equals(e.getActionCommand())) {
-                    if((DFTEditor.upperY - 31) >= 0) DFTEditor.upperY -= 31; 
-    }  
-    if ("T-1".equals(e.getActionCommand())) {
-                    if((DFTEditor.leftX - 1) >= 0) DFTEditor.leftX -= 1; 
-    }
-    if ("T-10".equals(e.getActionCommand())) {
-                    if((DFTEditor.leftX - 10) >= 0) DFTEditor.leftX -= 10; 
-    }
-    if ("T-100".equals(e.getActionCommand())) {
-                    if((DFTEditor.leftX - 100) >= 0) DFTEditor.leftX -= 100; 
-    }
-    if ("Open".equals(e.getActionCommand())) {
-        parent.openFileInDFTEditor();
-    }
-    if ("Exit".equals(e.getActionCommand())) {
-        System.exit(0);
-    }
-    if ("Print Params".equals(e.getActionCommand())) {
-        GenerateWavelets.printParams(); 
-    }
-    if ("Save Params".equals(e.getActionCommand())) {
-        GenerateWavelets.writeParamsToFile(); 
-    }        
-    if((apOldUpperY != DFTEditor.upperY) || (apOldLeftX != DFTEditor.leftX)) {
-           DFTEditor.view.repaint();
-    }
+    
 }
 
-    	
-}

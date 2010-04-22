@@ -12,8 +12,8 @@ public class DFTEditor extends JFrame {
 	private static final long serialVersionUID = -2291799595853726615L;
 	public static DFTView view;
 	public static DFTController controller;
-	// used by view.paintComponent
-	public static boolean fileDataRead = false; 
+	// Swing components
+	public static JMenuBar menuBar = null;
 	
 	public static TreeMap<Integer, TreeMap<Integer, Float>> timeToFreqToAmp;
 	public static TreeMap<Integer, Float> timeToAmpSum;
@@ -123,7 +123,6 @@ public class DFTEditor extends JFrame {
 		maxScreenFreq = maxRealFreq - minRealFreq;
 		calculateAmpSum();
 		calculateMaxAmpAtFreq();
-		fileDataRead = true;
 		printFloorAmpCount();
 	}
 	
@@ -223,73 +222,56 @@ public class DFTEditor extends JFrame {
 	}
 	
 	public JMenuBar createMenuBar() {
-	    JMenuBar menuBar;
         JMenu menu;
         JMenuItem menuItem;
         JButton button;
-        
         //Create the menu bar.
         menuBar = new JMenuBar();
-
-        //Build the first menu.
+        //Create the file menu
         menu = new JMenu("File");
         menuBar.add(menu);
-        
         menuItem = new JMenuItem("Open");
         menuItem.addActionListener(controller);
         menu.add(menuItem);
-        
         menuItem = new JMenuItem("Print Params");
         menuItem.addActionListener(controller);
         menu.add(menuItem);
-        
         menuItem = new JMenuItem("Save Params");
         menuItem.addActionListener(controller);
-        menu.add(menuItem);        
-        
+        menu.add(menuItem);          
         menuItem = new JMenuItem("Exit");
         menuItem.addActionListener(controller);
         menu.add(menuItem);
- 
-        button = new JButton("F+1");
+        // Create Play Button
+        button = new JButton("Play");
         button.addActionListener(controller);
         menuBar.add(button);
-        button = new JButton("F+6");
-        button.addActionListener(controller);
-        menuBar.add(button);
-        button = new JButton("F+31");
-        button.addActionListener(controller);
-        menuBar.add(button);       
-        button = new JButton("T+1");
-        button.addActionListener(controller);
-        menuBar.add(button);
-        button = new JButton("T+10");
-        button.addActionListener(controller);
-        menuBar.add(button);
-        button = new JButton("T+100");
-        button.addActionListener(controller);
-        menuBar.add(button);        
-        button = new JButton("F-1");
-        button.addActionListener(controller);
-        menuBar.add(button);
-        button = new JButton("F-6");
-        button.addActionListener(controller);
-        menuBar.add(button);
-        button = new JButton("F-31");
-        button.addActionListener(controller);
-        menuBar.add(button);
-        button = new JButton("T-1");
-        button.addActionListener(controller);
-        menuBar.add(button);
-        button = new JButton("T-10");
-        button.addActionListener(controller);
-        menuBar.add(button);       
-        button = new JButton("T-100");
-        button.addActionListener(controller);
-        menuBar.add(button);             
+        // Create Navigation Buttons
+        addButton("Higher");
+        addButton("Lower");
+        addButton("+500ms");
+        addButton("+1s");
+        addButton("+2s");
+        addButton("+5s");
+        addButton("+10s");
+        addButton("+30s");
+    	addButton("+1min");
+        addButton("-500ms");
+        addButton("-1s");
+        addButton("-2s");
+        addButton("-5s");
+        addButton("-10s");
+        addButton("-30s");
+    	addButton("-1min");     
         return menuBar;
 
     }
+	
+	public void addButton(String buttonText) {
+		JButton button = new JButton(buttonText);
+		button.addActionListener(controller);
+		menuBar.add(button);
+	}
 	
 	public void openFileInDFTEditor() {
         String fileName = FileTools.PromptForFileOpen(view);
