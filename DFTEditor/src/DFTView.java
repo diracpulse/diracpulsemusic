@@ -218,7 +218,7 @@ public class DFTView extends JComponent {
 		
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if(DFTEditor.fileDataRead) DrawFileData(g, true);
+        DrawFileData(g, true);
     }
 	
 }
