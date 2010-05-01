@@ -57,6 +57,7 @@ public class DFTEditor extends JFrame {
 			System.out.println("DFTEditor.ReadBinaryFileData: unsupported format");
 			System.exit(0);
 		}
+		this.setTitle("Loading: " + fileName);
 		timeToFreqToAmp = new TreeMap<Integer, TreeMap<Integer, Float>>();
 		floorAmpToCount = new TreeMap<Integer, Integer>();
 		TreeMap<Integer, Float> freqToAmp;
@@ -124,6 +125,7 @@ public class DFTEditor extends JFrame {
 		calculateAmpSum();
 		calculateMaxAmpAtFreq();
 		printFloorAmpCount();
+		this.setTitle(fileName);
 	}
 	
 	public void printFloorAmpCount() {
