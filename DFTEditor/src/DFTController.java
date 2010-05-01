@@ -115,7 +115,10 @@ public class DFTController implements MouseListener, ActionListener {
         if ("-10s".equals(e.getActionCommand())) adjustX(-10000 / DFTEditor.timeStepInMillis);
         if ("-30s".equals(e.getActionCommand())) adjustX(-30000 / DFTEditor.timeStepInMillis);
     	if ("-1min".equals(e.getActionCommand())) adjustX(-60000 / DFTEditor.timeStepInMillis);
-        if ("Open".equals(e.getActionCommand())) {
+        if ("Play".equals(e.getActionCommand())) {
+            System.out.println("Play");
+        }
+    	if ("Open".equals(e.getActionCommand())) {
             parent.openFileInDFTEditor();
         }
         if ("Exit".equals(e.getActionCommand())) {
