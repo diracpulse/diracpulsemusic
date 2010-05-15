@@ -22,6 +22,32 @@ public class DFTView extends JComponent {
 		}
 	}
 	
+	public void DrawMinimaAmdMaximas(Graphics g) {
+		Graphics2D g2 = (Graphics2D) g;
+		int startX = DFTEditor.leftX;
+		int endX = DFTEditor.leftX + (getWidth() - DFTEditor.leftOffset) / DFTEditor.xStep;
+		int screenIndex = startX;
+		int screenEnd = endX;
+		Color minimaColor = new Color(1.0f, 0.5f, 0.5f, 0.25f);
+		Color maximaColor = new Color(0.5f, 0.5f, 1.0f, 0.25f);
+        g2.setStroke(new BasicStroke(DFTEditor.xStep));
+		for(int time = startX; screenIndex < screenEnd; time += DFTUtils.getTimeIncrement()) {
+			int screenX = DFTEditor.leftOffset + ((screenIndex - startX) * DFTEditor.xStep);
+			int xVal = screenX + DFTEditor.xStep / 2; // center line
+			if(DFTEditor.timeAtAmpMaximas.contains(time)) {
+				g2.setColor(maximaColor);
+				g2.drawLine(xVal, DFTEditor.upperOffset, xVal, getHeight());
+			}
+			if(DFTEditor.timeAtAmpMinimas.contains(time)) {
+				g2.setColor(minimaColor);
+				g2.drawLine(xVal, DFTEditor.upperOffset, xVal, getHeight());
+			}	
+			screenIndex++;
+		}
+	}
+	
+	
+	
 	public void DrawMaxAmpAtFreq(Graphics g) {
 		int startY = DFTEditor.upperY;
 		int endY = startY + getHeight() - DFTEditor.upperOffset / DFTEditor.yStep;
@@ -164,17 +190,17 @@ public class DFTView extends JComponent {
         		int screenY = DFTEditor.upperOffset + ((screenYIndex - DFTEditor.upperY) * DFTEditor.yStep);
                 float currentVal = DFTUtils.getMaxValue(x, y).getAmplitude();
                 if(currentVal > 0.0f) {
-                	drawAmplitude(g, screenX, screenY, currentVal, DFTEditor.minAmplitude, DFTEditor.maxAmplitude, 1);
+                	drawAmplitude(g, screenX, screenY, currentVal, DFTEditor.minAmplitude, DFTEditor.maxAmplitude, 2);
                 }
 				screenYIndex++;
 			}
             screenXIndex++;
 		}
 		Graphics2D g2 = (Graphics2D) g;
-        g2.setColor(new Color(1.0f, 0.0f, 0.0f, 0.5f));
-        g2.setStroke(new BasicStroke(4));
-        g2.drawLine(100, 400, 1500, 400);
-		
+        //g2.setColor(new Color(1.0f, 0.0f, 0.0f, 0.5f));
+        //g2.setStroke(new BasicStroke(4));
+        //g2.drawLine(100, 400, 1500, 400);
+		DrawMinimaAmdMaximas(g);
 	}
 	
 	public void drawAmplitude(Graphics g, int screenX, int screenY, float currentVal, float minVal, float maxVal, int digits) {
