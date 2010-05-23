@@ -10,8 +10,8 @@ import java.util.TreeMap;
 public class Harmonics {
 	
 	private String harmonicsFileName;
-	private static TreeMap<Integer, TreeMap<Integer, Harmonic>> timeToFreqToHarmonic;
-	private static ArrayList<Harmonic> harmonicsArray;	
+	private TreeMap<Integer, TreeMap<Integer, Harmonic>> timeToFreqToHarmonic;
+	private ArrayList<Harmonic> harmonicsArray;	
 	
 	Harmonics(String baseFileName) {
 		harmonicsFileName = baseFileName + ".harmonics";
@@ -91,15 +91,20 @@ public class Harmonics {
 		
 	}
 	
-	public static void addHarmonic(ArrayList<DFTModel.TFA> harmonic) {
+	// returns true if freq and time are within the bounds of a saved harmonic
+	public boolean inHarmonic(int freq, int time) {
+		return false;
+	}
+	
+	public void addHarmonic(ArrayList<DFTModel.TFA> harmonicData) {
+		harmonicsArray.add(new Harmonic(harmonicData));
+	}
+	
+	public void removeHarmonic(int startTime, int startFreq) {
 		
 	}
 	
-	public static void removeHarmonic(int startTime, int startFreq) {
-		
-	}
-	
-	public static void synthHarmonics(int startTime, int endTime) {
+	public void synthHarmonics(int startTime, int endTime) {
 		
 	}
 	
