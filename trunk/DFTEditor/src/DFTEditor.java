@@ -14,6 +14,7 @@ public class DFTEditor extends JFrame {
 	public static DFTController controller;
 	// Swing components
 	public static JMenuBar menuBar = null;
+	public static JToolBar navigationBar = null;
 	
 	public static TreeMap<Integer, TreeMap<Integer, Float>> timeToFreqToAmp;
 	public static TreeMap<Integer, Float> timeToAmpSum;
@@ -224,55 +225,62 @@ public class DFTEditor extends JFrame {
 	}
 	
 	public JMenuBar createMenuBar() {
-        JMenu menu;
+        JMenu fileMenu;
+        JMenu playMenu;
         JMenuItem menuItem;
         JButton button;
         //Create the menu bar.
         menuBar = new JMenuBar();
         //Create the file menu
-        menu = new JMenu("File");
-        menuBar.add(menu);
+        fileMenu = new JMenu("File");
+        menuBar.add(fileMenu);
         menuItem = new JMenuItem("Open");
         menuItem.addActionListener(controller);
-        menu.add(menuItem);
+        fileMenu.add(menuItem);
         menuItem = new JMenuItem("Print Params");
         menuItem.addActionListener(controller);
-        menu.add(menuItem);
+        fileMenu.add(menuItem);
         menuItem = new JMenuItem("Save Params");
         menuItem.addActionListener(controller);
-        menu.add(menuItem);          
+        fileMenu.add(menuItem);          
         menuItem = new JMenuItem("Exit");
         menuItem.addActionListener(controller);
-        menu.add(menuItem);
+        fileMenu.add(menuItem);
         // Create Play Button
-        button = new JButton("Play");
-        button.addActionListener(controller);
-        menuBar.add(button);
-        // Create Navigation Buttons
-        addButton("Higher");
-        addButton("Lower");
-        addButton("+500ms");
-        addButton("+1s");
-        addButton("+2s");
-        addButton("+5s");
-        addButton("+10s");
-        addButton("+30s");
-    	addButton("+1min");
-        addButton("-500ms");
-        addButton("-1s");
-        addButton("-2s");
-        addButton("-5s");
-        addButton("-10s");
-        addButton("-30s");
-    	addButton("-1min");     
+        playMenu = new JMenu("Play");
+        menuBar.add(playMenu);        
+        menuItem = new JMenuItem("Play Harmonics");
+        menuItem.addActionListener(controller);
+        playMenu.add(menuItem);
         return menuBar;
-
     }
+
+	public JToolBar createNavigationBar() {
+		navigationBar = new JToolBar("Navigation Bar");
+        // Create Navigation Buttons
+        addNavigationButton("Higher");
+        addNavigationButton("Lower");
+        addNavigationButton("+500ms");
+        addNavigationButton("+1s");
+        addNavigationButton("+2s");
+        addNavigationButton("+5s");
+        addNavigationButton("+10s");
+        addNavigationButton("+30s");
+    	addNavigationButton("+1min");
+        addNavigationButton("-500ms");
+        addNavigationButton("-1s");
+        addNavigationButton("-2s");
+        addNavigationButton("-5s");
+        addNavigationButton("-10s");
+        addNavigationButton("-30s");
+    	addNavigationButton("-1min");
+    	return navigationBar;
+	}
 	
-	public void addButton(String buttonText) {
+	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);
 		button.addActionListener(controller);
-		menuBar.add(button);
+		navigationBar.add(button);
 	}
 	
 	public void openFileInDFTEditor() {
@@ -287,6 +295,7 @@ public class DFTEditor extends JFrame {
         view.setBackground(Color.black);
         controller = new DFTController(this);
         setJMenuBar(createMenuBar());
+        add(createNavigationBar(), BorderLayout.PAGE_START);
         view.addMouseListener(controller);
         controller.setView(view);
         add(view);
