@@ -12,6 +12,7 @@ public class DFTEditor extends JFrame {
 	private static final long serialVersionUID = -2291799595853726615L;
 	public static DFTView view;
 	public static DFTController controller;
+	public static Harmonics harmonics;
 	// Swing components
 	public static JMenuBar menuBar = null;
 	public static JToolBar navigationBar = null;
@@ -286,6 +287,8 @@ public class DFTEditor extends JFrame {
 	public void openFileInDFTEditor() {
         String fileName = FileTools.PromptForFileOpen(view);
         ReadBinaryFileData(fileName, "mono5ms");
+        String fileNameTrimmed = fileName.substring(0, fileName.length() - 4);
+        harmonics = new Harmonics(fileNameTrimmed);
         view.repaint();
 	}
 	

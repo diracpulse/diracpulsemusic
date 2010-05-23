@@ -1,18 +1,39 @@
 
 import java.awt.Rectangle;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.TreeMap;
+
+import javax.swing.JOptionPane;
 
 public class DFTController implements MouseListener, ActionListener {
 	
 	private DFTView view;
 	private DFTEditor parent;
+	private Harmonics harmonics;
+	private State currentState;
+	// This contains selected start points for harmonics
+	// Used to create harmonics once an end point is selected
+	private TreeMap<Integer, Integer> harmonicStartFreqToTime = null;
+	
+	private enum State {
+		SelectHarmonicStart,
+		SelectHarmonicEnd,
+		SelectHarmonic;
+	}
 	
 	DFTController(DFTEditor parent) {
 		this.parent = parent;
+		currentState = State.SelectHarmonicStart;
+		harmonicStartFreqToTime = new TreeMap<Integer, Integer>();
 	}
 	
 	public void setView(DFTView view) {
 		this.view = view;
+	}
+	
+	public void setHarmonics(Harmonics harmonics) {
+		this.harmonics = harmonics;
 	}
 	
 	public void mouseReleased(MouseEvent e) {}
@@ -22,6 +43,7 @@ public class DFTController implements MouseListener, ActionListener {
 	    int x = e.getX();
 	    int y = e.getY();
 	    DFTModel.TFA selected = getFileData(x, y);
+	    handleSelectedData(selected);
 	    if(selected != null) {
 	    	System.out.println(selected);
 	    } else {
@@ -169,5 +191,45 @@ public class DFTController implements MouseListener, ActionListener {
     	}
     }
     
+    private void handleSelectedData(DFTModel.TFA selected) {
+    	if(selected == null) return;
+    	TreeMap<Integer, Float> freqToAmp = null;
+    	ArrayList<DFTModel.TFA> TFAInput = new ArrayList<DFTModel.TFA>();
+    	int freq = selected.getFreq();
+    	int time = selected.getTime();
+    	float amplitude = 0.0f;
+    	if(harmonicStartFreqToTime.containsKey(freq)) {
+    		currentState = State.SelectHarmonicEnd;
+    	} else {
+    		if(harmonics.inHarmonic(freq, time)) {
+    			currentState = State.SelectHarmonic;
+    		}
+    		currentState = State.SelectHarmonicStart;
+    	}
+    	switch(currentState) {
+    	case SelectHarmonicStart:
+    		harmonicStartFreqToTime.put(freq, time);
+    		break;
+    	case SelectHarmonicEnd:
+    		int startTime = harmonicStartFreqToTime.get(freq);
+    		int endTime = time;
+    		for(int timeIndex = startTime; timeIndex <= endTime; timeIndex++) {
+    			if(DFTEditor.timeToFreqToAmp.containsKey(timeIndex)) {
+    				freqToAmp = DFTEditor.timeToFreqToAmp.get(timeIndex);
+    				if(freqToAmp.containsKey(freq)) {
+    					amplitude = freqToAmp.get(freq);
+    					TFAInput.add(new DFTModel.TFA(time, freq, amplitude));
+    				}
+    			}
+    		}
+    		harmonics.addHarmonic(TFAInput);
+    		harmonicStartFreqToTime.remove(freq);
+    		break;
+    	case SelectHarmonic:
+    		JOptionPane.showConfirmDialog(parent, "Delete Harmonic");
+    		break;
+    	}
+    }
+
 }
 

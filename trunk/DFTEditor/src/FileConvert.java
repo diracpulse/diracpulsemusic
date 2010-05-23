@@ -23,7 +23,7 @@ public class FileConvert {
 			for(File dataFile: dataFiles) {
 				String fileName = dataFile.getName();
 				if(fileName.endsWith(".wav")) {
-					if(fileName == "input.wav") continue;
+					if(fileName.equals("input.wav")) continue;
 					String fileNameTrimmed = fileName.substring(0, fileName.length() - 4);
 					wavFileNames.add(fileNameTrimmed);
 				}
