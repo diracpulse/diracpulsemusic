@@ -25,9 +25,9 @@ Output: a.exe<br>
 
 == Running ==
 
-*a > out.txt*<br>
+Place a.exe into the DFTEditor folder (same directory as DFTEditor.jar)<br>
 "input.wav" is used as input<br>
-out.txt is read by DFTEditor.java<br>
+stdout from a.exe is read by DFTEditor.jar<br>
 
 == Files ==
 
