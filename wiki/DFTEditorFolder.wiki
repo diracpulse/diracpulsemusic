@@ -25,7 +25,7 @@ The -Xms2g option is needed for larger files, for smaller files (< 5 min) it mig
 == Files ==
 
 _Main Class:_<br>
-*DFTEditor.java*: creates .mono5ms files from .wav files (see FileConvert.java), prompts user for ".mono5ms" file to load, initializes main data structures, and creates GUI components<br>
+*DFTEditor.java*: creates .mono5ms files from .wav files (see !FileConvert.java), prompts user for ".mono5ms" file to load, initializes main data structures, and creates GUI components<br>
 <br>
 _MVC Classes:_<br>
 *DFTController.java*: Handles mouse events, menu events<br>
