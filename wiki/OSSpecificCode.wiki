@@ -1,0 +1,41 @@
+#summary Code that may need to be modified for non-Windows operating systems.
+
+== OS Specific Code ==
+
+=== !FileConvert.java === 
+
+*ConvertWAVToMono5ms(String fileName):*
+
+*Lines 85 - 93: (delete "input.wav")*
+
+{{{
+String[] del = new String[4];
+del[0] = "cmd";
+del[1] = "/C";
+del[2] = "del";
+del[3] = "input.wav";
+printToConsole("Starting: ", del);
+Process p = Runtime.getRuntime().exec(del);
+p.waitFor();
+printToConsole("Finished: ", del);
+}}}
+
+*Lines 94 - 103: (copy fileName to "input.wav")*
+
+{{{
+String[] copy = new String[5];
+copy[0] = "cmd";
+copy[1] = "/C";
+copy[2] = "copy";
+copy[3] = "\"" + fileName + ".wav\"";
+copy[4] = "input.wav";
+printToConsole("Starting: ", copy);
+p = Runtime.getRuntime().exec(copy);
+p.waitFor();
+}}}
+
+*Line 106 (run "a.exe")*
+
+{{{
+p = Runtime.getRuntime().exec("a");
+}}}
