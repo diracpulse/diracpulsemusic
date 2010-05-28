@@ -4,9 +4,9 @@ _It is assumed you have already checked out the source code_
 
 == Step 1: Compiling the C Code ==
 
-See DFTFolder for more information
+See [DFTFolder DFT Folder] for more information
 
-Open your Unix Command Line Tool (ex. MSYS) _if needed_<br>
+Open your Unix Command Line Tool (ex. MSYS)<br>
 Navigate to the DFT folder in the source code<br>
 run: gcc - O3 main.c filter.c<br>
 (This was tested under Windows Vista using MinGW and MSYS)<br>
@@ -16,12 +16,12 @@ Place a.exe into the DFTEditor folder (same directory as DFTEditor.jar)<br>
 
 == Step 2: Building the Java Code ==
 
-See DFTEditorFolder for more information
+See [DFTEditorFolder DFT Editor] for more information
 
-If you are using an operating system other than Windows, see OSSpecificCode, and make any necessary changes before building !DFTEditor.jar
+If you are using an operating system other than Windows, see [OSSpecificCode OS Specific Code] and make any necessary changes before building DFTEditor.jar
 
 It is assumed you have references to ANT and Java in your PATH variable in Windows (or the equivalent in your OS of choice)
 
-Double click on c.bat in the !DFTEditor folder<br>
+Run c.bat in the DFTEditor folder<br>
 (c.bat deletes existing class files and runs ANT)<br>
-Output: !DFTEditor.jar<br>
+Output: DFTEditor.jar<br>
