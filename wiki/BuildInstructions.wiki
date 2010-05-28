@@ -4,7 +4,7 @@ _It is assumed you have already checked out the source code_
 
 == Step 1: Compiling the C Code ==
 
-See [DFTFolder DFT Folder] for more information
+See [DFTFolder DFT] for more information
 
 Open your Unix Command Line Tool (ex. MSYS)<br>
 Navigate to the DFT folder in the source code<br>
