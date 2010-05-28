@@ -19,15 +19,16 @@ it is assumed that freq exists at that particular time and that amplitude == res
 
 == Compiling ==
 
-*gcc main.c filter.c*<br>
-(done under Windows Vista using MinGW and MSYS)<br>
+*gcc - O3 main.c filter.c*<br>
+This was done under Windows Vista using MinGW and MSYS<br>
+It is important to optimize for speed, since the algorithms are computationally intensive.<br>
 Output: a.exe<br>
 
 == Running ==
 
 Place a.exe into the DFTEditor folder (same directory as DFTEditor.jar)<br>
 "input.wav" is used as input<br>
-stdout from a.exe is read by DFTEditor.jar<br>
+stdout from a.exe is read by DFTEditor.jar, see !FileConvert.java <br>
 
 == Files ==
 
