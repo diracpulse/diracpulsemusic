@@ -3,10 +3,11 @@
 
 == Overview ==
 
-Displays the output of "out.txt" created by a.exe<br>
-See *main.c* in [DFTFolder DFTFolder] for format of "out.txt"<br>
-Creates a binary clone "out.mono5ms" from "out.txt" if this file does not already exist.<br>
-Binary file only takes a few seconds to load ("out.txt" takes at least a minute)<br>
+Checks its directory for .wav files.
+Creates a file: _filename_ - ".wav" + ".mono5ms" from all .wav files (if this file does not already exist).<br>
+Output Specification of .mono5ms files (see also DataFormatsAndConstants):<br>
+Java binary (big endian):<br>
+*int* `time / 5ms`: *short* `log2(Hz)*31`: *float* `log2(amplitude)`<br>
 
 == Building ==
 
@@ -18,22 +19,27 @@ Output: DFTEditor.jar<br>
 == Running ==
 From DOS Prompt:<br>
 >*r*<br>
-(r.bat is simply "java -jar DFTEditor.java")
+r.bat is simply "java -Xms2g -jar DFTEditor.jar"<br>
+The -Xms2g option is needed for larger files, for smaller files (< 5 min) it might not be necessary.<br>
 
 == Files ==
 
 _Main Class:_<br>
-*DFTEditor.java*: Loads "out.txt" or "out.mono5ms", initializes main data structures, and creates GUI components<br>
+*DFTEditor.java*: creates .mono5ms files from .wav files (see FileConvert.java), prompts user for ".mono5ms" file to load, initializes main data structures, and creates GUI components<br>
 <br>
 _MVC Classes:_<br>
 *DFTController.java*: Handles mouse events, menu events<br>
 *DFTView*: Handles matrix display of file data<br>
 *DFTModel.java*: Defines common data structures<br>
 <br>
+_Output Classes:_<br>
+*Harmonics.java*: Creates, appends to ".harmonics" files from user selection of TFA data in corresponding ".mono5ms" files<br>
+<br>
 _Main Helper Class:_<br>
 *DFTUtils.java*: Contains helper functions used by multiple classes<br>
 <br>
 _Classes with specific functions:_<br>
+*!FileConvert.java*: Creates .out5ms from .wav files<br>
 *!AudioPlayer.java*: Plays PCM data at run time<br>
 *!CreateWavelets.java*: Mirrors wavelet generation code in main.c<br>
 *!FileTools.java*: Displays open/save prompts<br>
