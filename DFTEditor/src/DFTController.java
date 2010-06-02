@@ -137,21 +137,6 @@ public class DFTController implements MouseListener, ActionListener {
         if ("-10s".equals(e.getActionCommand())) adjustX(-10000 / DFTEditor.timeStepInMillis);
         if ("-30s".equals(e.getActionCommand())) adjustX(-30000 / DFTEditor.timeStepInMillis);
     	if ("-1min".equals(e.getActionCommand())) adjustX(-60000 / DFTEditor.timeStepInMillis);
-        if ("Play Harmonics".equals(e.getActionCommand())) {
-            System.out.println("Play Harmonics");
-        }
-    	if ("Open".equals(e.getActionCommand())) {
-            parent.openFileInDFTEditor();
-        }
-        if ("Exit".equals(e.getActionCommand())) {
-            System.exit(0);
-        }
-        if ("Print Params".equals(e.getActionCommand())) {
-            GenerateWavelets.printParams(); 
-        }
-        if ("Save Params".equals(e.getActionCommand())) {
-            GenerateWavelets.writeParamsToFile(); 
-        }        
         if((apOldUpperY != DFTEditor.upperY) || (apOldLeftX != DFTEditor.leftX)) {
         	DFTEditor.view.repaint();
         }
@@ -203,8 +188,9 @@ public class DFTController implements MouseListener, ActionListener {
     	} else {
     		if(harmonics.inHarmonic(freq, time)) {
     			currentState = State.SelectHarmonic;
+    		} else {
+    			currentState = State.SelectHarmonicStart;
     		}
-    		currentState = State.SelectHarmonicStart;
     	}
     	switch(currentState) {
     	case SelectHarmonicStart:
