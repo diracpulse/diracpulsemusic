@@ -19,12 +19,18 @@ public class DFTModel {
 			return freq;
 		}
 		
+		double getRadianFreq() {
+			return (Math.PI * 2.0d) / getFreqInHz();
+		}
+		
 		double getFreqInHz() {
 			double dBase = (double) DFTEditor.freqsPerOctave;
 			double dFreq = (double) freq;
 			double freqInHz = Math.pow(2.0, dFreq / dBase);
 			return freqInHz;
 		}
+		
+		
 		
 		float getAmplitude() {
 			return amplitude;
@@ -63,6 +69,11 @@ public class DFTModel {
 			return timeInMillis;
 		}
 		
+		double getTimeInSeconds() {
+			double timeInMillis = (double) getTimeInMillis();
+			return timeInMillis / 1000.0d;
+		}
+		
 		int getFreq() {
 			return freq;
 		}
@@ -70,10 +81,13 @@ public class DFTModel {
 		double getFreqInHz() {
 			double dBase = (double) DFTEditor.freqsPerOctave;
 			double dFreq = (double) freq;
-			double freqInHz = Math.pow(2.0, dFreq / dBase);
-			return freqInHz;
+			return Math.pow(2.0, dFreq / dBase);
 		}
-				
+		
+		double getRadianFreq() {
+			return (Math.PI * 2.0d) / getFreqInHz();
+		}
+		
 		float getAmplitude() {
 			return amplitude;
 		}

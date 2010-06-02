@@ -226,34 +226,8 @@ public class DFTEditor extends JFrame {
 	}
 	
 	public JMenuBar createMenuBar() {
-        JMenu fileMenu;
-        JMenu playMenu;
-        JMenuItem menuItem;
-        JButton button;
-        //Create the menu bar.
-        menuBar = new JMenuBar();
-        //Create the file menu
-        fileMenu = new JMenu("File");
-        menuBar.add(fileMenu);
-        menuItem = new JMenuItem("Open");
-        menuItem.addActionListener(controller);
-        fileMenu.add(menuItem);
-        menuItem = new JMenuItem("Print Params");
-        menuItem.addActionListener(controller);
-        fileMenu.add(menuItem);
-        menuItem = new JMenuItem("Save Params");
-        menuItem.addActionListener(controller);
-        fileMenu.add(menuItem);          
-        menuItem = new JMenuItem("Exit");
-        menuItem.addActionListener(controller);
-        fileMenu.add(menuItem);
-        // Create Play Button
-        playMenu = new JMenu("Play");
-        menuBar.add(playMenu);        
-        menuItem = new JMenuItem("Play Harmonics");
-        menuItem.addActionListener(controller);
-        playMenu.add(menuItem);
-        return menuBar;
+        ActionHandler actionHandler = new ActionHandler(this);
+        return actionHandler.createMenuBar();
     }
 
 	public JToolBar createNavigationBar() {
