@@ -10,7 +10,7 @@ Copy .WAV files into the [DFTEditorFolder DFTEditor Folder] (which contains DFTE
 _(It is assumed you have already completed the steps outlined in [BuildInstructions Build Instructions])_<br>
 
 Open a command line window set to the DFTEditor directory, and run r.bat (or the contents of r.bat)<br>
-You can run DFTEditor.jar just by clicking on it, but you won't be able to see the progress that is written to the console (and the -Xms2g option may be be needed for larger files, see *Running* in [DFTEditor DFTEditor Folder])<br>
+You can run DFTEditor.jar just by clicking on it, but you won't be able to see the progress that is written to the console (and the -Xms2g option may be be needed for larger files, see *Running* in [DFTEditorFolder DFTEditor Folder])<br>
 It may take 10 - 30 minutes to analyze a 5 minute long .wav file.  The DFTEditor GUI will be displayed once all new .wav files have been analyzed.<br>
 DFTEditor.jar will create a .mono5ms file from the data in each .wav file.  This .mono5ms file contains the frequency domain data for the cooresponding .wav file.<br>
 
@@ -18,7 +18,7 @@ DFTEditor.jar will create a .mono5ms file from the data in each .wav file.  This
 
 _*Note: This is experimental software, so some menu options may not be implemented.*_
 
-Start DFTEditor (see *Running* in [DFTEditor DFTEditor Folder])<br>
+Start DFTEditor (see *Running* in [DFTEditorFolder DFTEditor Folder])<br>
 Select .mono5ms file to view from the File Prompt (which will come up automatically)<br>
 To view another file, select File->Open from the menu bar.<br>
 
