@@ -1,5 +1,4 @@
 #summary Contents of the DFTEditor folder.
-#labels Featured
 
 == Overview ==
 
@@ -20,7 +19,9 @@ Output: DFTEditor.jar<br>
 From DOS Prompt:<br>
 >*r*<br>
 r.bat is simply "java -Xms2g -jar DFTEditor.jar"<br>
-The -Xms2g option is needed for larger files, for smaller files (< 5 min) it might not be necessary.<br>
+_*Note: The -Xms2g option requests that the JVM be given 2GB of RAM.<br>
+It is only needed for larger .wav files (around 10 minutes or more).<br>  
+If this option causes problems (such as "insufficient memory"), simply remove it.*_<br>
 
 == Files ==
 
@@ -28,12 +29,13 @@ _Main Class:_<br>
 *DFTEditor.java*: creates .mono5ms files from .wav files (see !FileConvert.java), prompts user for ".mono5ms" file to load, initializes main data structures, and creates GUI components<br>
 <br>
 _MVC Classes:_<br>
-*DFTController.java*: Handles mouse events, menu events<br>
+*DFTController.java*: Handles mouse events, navigation bar events<br>
+*!ActionHandler.java*:(_Controller_) Handles menu bar events<br>
 *DFTView*: Handles matrix display of file data<br>
 *DFTModel.java*: Defines common data structures<br>
 <br>
 _Output Classes:_<br>
-*Harmonics.java*: Creates, appends to ".harmonics" files from user selection of TFA data in corresponding ".mono5ms" files<br>
+*Harmonics.java*: Creates, appends to ".harmonics" files from user selection of TFA data in corresponding ".mono5ms" files _(This functionality is still being developed)_.<br>
 <br>
 _Main Helper Class:_<br>
 *DFTUtils.java*: Contains helper functions used by multiple classes<br>
