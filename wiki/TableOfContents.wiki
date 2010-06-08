@@ -1,5 +1,7 @@
   * [BuildInstructions Build Instructions]
     * [OSSpecificCode OS Specific Code]
+  * [UserManual User Manual]
+    * [HowToReadFrequencyData How To Read Frequency Data]
   * [SourceCodeFolders Source Code Folders]
     * [DFTFolder DFT]
     * [DFTEditorFolder DFTEditor]
