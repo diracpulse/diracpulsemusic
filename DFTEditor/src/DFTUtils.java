@@ -15,12 +15,26 @@ public class DFTUtils {
 		return maxValue;
 	}
 	
+	public static DFTModel.TFA getValue(int time, int freq) {
+		TreeMap<Integer, Float> freqToAmp;
+		DFTModel.TFA returnVal = new DFTModel.TFA(0, 0, 0.0f);
+		freq = DFTEditor.maxRealFreq - freq;
+		if(DFTEditor.timeToFreqToAmp.containsKey(time)) {
+			freqToAmp = DFTEditor.timeToFreqToAmp.get(time);
+			if(freqToAmp.containsKey(freq)) {
+				float amplitude = freqToAmp.get(freq);
+				returnVal = new DFTModel.TFA(time, freq, amplitude);
+			}
+		}
+		return returnVal;
+	}
+		
 	public static DFTModel.TFA getMaxValue(int time, int freq) {
 		TreeMap<Integer, Float> freqToAmp;
 		DFTModel.TFA returnVal = new DFTModel.TFA(0, 0, 0.0f);
 		freq = DFTEditor.maxRealFreq - freq;
-		int endTime = time + getTimeIncrement();
-		int endFreq = freq + getFreqIncrement();
+		int endTime = time + DFTView.getTimeIncrement();
+		int endFreq = freq + DFTView.getFreqIncrement();
 		for(int timeIndex = time; timeIndex < endTime; timeIndex++) {
 			for(int freqIndex = freq; freqIndex < endFreq; freqIndex++) {
 				if(DFTEditor.timeToFreqToAmp.containsKey(timeIndex)) {
@@ -36,15 +50,7 @@ public class DFTUtils {
 		}
 		return returnVal;
 	}
-	
-	public static int getTimeIncrement() {
-		return DFTEditor.timeIncrement;
-	}
-	
-	public static int getFreqIncrement() {
-		return DFTEditor.freqIncrement;
-	}
-	
+		
 	public static int getIncrement(TreeMap<Integer, Boolean> isCollapsed, int value, int step) {
 		int key = value / step;
 		if(isCollapsed == null) return 1;

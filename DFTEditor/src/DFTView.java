@@ -7,15 +7,46 @@ public class DFTView extends JComponent {
 	 * 
 	 */
 	private static final long serialVersionUID = 2964004162144513754L;
-
+	
+	public enum View {
+		Digits,
+		Pixels;
+	}
+	
+	public static void setView(View v) {
+		view = v;
+	}
+	
+	private static View view = View.Digits; 
+	
+	public static int getTimeIncrement() {
+    	switch(view) {
+    	case Digits:
+    		return 1;
+    	case Pixels:
+    		return 2;
+    	}
+    	return 1;
+	}
+	
+	public static int getFreqIncrement() {
+    	switch(view) {
+    	case Digits:
+    		return 1;
+    	case Pixels:
+    		return 3;
+    	}
+    	return 1;
+	}	
+	
 	public void DrawAmpSums(Graphics g) {
 		int startX = DFTEditor.leftX;
 		int endX = DFTEditor.leftX + (getWidth() - DFTEditor.leftOffset) / DFTEditor.xStep;
 		int screenIndex = startX;
 		int screenEnd = endX;
-		for(int time = startX; screenIndex < screenEnd; time += DFTUtils.getTimeIncrement()) {
+		for(int time = startX; screenIndex < screenEnd; time += getTimeIncrement()) {
 			int screenX = DFTEditor.leftOffset + ((screenIndex - startX) * DFTEditor.xStep);
-			float ampSumVal = DFTUtils.getMaxValue(DFTEditor.timeToAmpSum, time, DFTUtils.getTimeIncrement());
+			float ampSumVal = DFTUtils.getMaxValue(DFTEditor.timeToAmpSum, time, getTimeIncrement());
 			// draw amp even if 0.0f, to overwrite previous value
 			drawAmplitude(g, screenX, 0, ampSumVal, 0.0f, DFTEditor.maxAmplitudeSum, 2);
 			screenIndex++;
@@ -31,7 +62,7 @@ public class DFTView extends JComponent {
 		Color minimaColor = new Color(1.0f, 0.5f, 0.5f, 0.25f);
 		Color maximaColor = new Color(0.5f, 0.5f, 1.0f, 0.25f);
         g2.setStroke(new BasicStroke(DFTEditor.xStep));
-		for(int time = startX; screenIndex < screenEnd; time += DFTUtils.getTimeIncrement()) {
+		for(int time = startX; screenIndex < screenEnd; time += getTimeIncrement()) {
 			int screenX = DFTEditor.leftOffset + ((screenIndex - startX) * DFTEditor.xStep);
 			int xVal = screenX + DFTEditor.xStep / 2; // center line
 			if(DFTEditor.timeAtAmpMaximas.contains(time)) {
@@ -56,13 +87,13 @@ public class DFTView extends JComponent {
 		float amp;
 		int screenIndex = startY;
 		int screenEnd = endY;
-		for(int freqIndex = startY; screenIndex < screenEnd; freqIndex += DFTUtils.getFreqIncrement()) {
+		for(int freqIndex = startY; screenIndex < screenEnd; freqIndex += getFreqIncrement()) {
 			if(freqIndex < (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) {			
 				iFreq = DFTEditor.maxRealFreq - freqIndex;
 			} else {
 				iFreq = 1; // dummy value
 			}
-			amp = DFTUtils.getMaxValue(DFTEditor.freqToMaxAmp, iFreq, DFTUtils.getFreqIncrement());
+			amp = DFTUtils.getMaxValue(DFTEditor.freqToMaxAmp, iFreq, getFreqIncrement());
 			// draw amp even if 0.0f, to overwrite previous value
 			screenY = DFTEditor.upperOffset + ((screenIndex - startY) * DFTEditor.yStep);
 			drawAmplitude(g, 0, screenY, amp, 0.0f, DFTEditor.maxAmplitude, 1);
@@ -86,7 +117,7 @@ public class DFTView extends JComponent {
 		int startX = DFTEditor.leftX;
 		int endX = DFTEditor.leftX + (getWidth() - DFTEditor.leftOffset) / DFTEditor.xStep;
 		int screenIndex = startX; // controls actual position on the screen
-		for(timeIndex = startX; screenIndex < endX; timeIndex += DFTUtils.getTimeIncrement()) {
+		for(timeIndex = startX; screenIndex < endX; timeIndex += getTimeIncrement()) {
 			iTime = timeIndex * DFTEditor.timeStepInMillis;;
 			leading0 = true;
 			int yOffset = 1;
@@ -136,7 +167,7 @@ public class DFTView extends JComponent {
 		int screenX;
 		int screenY;
 		int screenIndex = startY; // controls actual position on the screen
-		for(freqIndex = startY; screenIndex < endY; freqIndex += DFTUtils.getFreqIncrement()) {
+		for(freqIndex = startY; screenIndex < endY; freqIndex += getFreqIncrement()) {
 			if(freqIndex < (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) {			
 				iFreq = DFTEditor.maxRealFreq - freqIndex;
 			} else {
@@ -172,23 +203,27 @@ public class DFTView extends JComponent {
 		DrawLeftFreqs(g);
 		DrawUpperTimes(g);
 		DrawAmpSums(g);
-		DrawMaxAmpAtFreq(g);
+		// DrawMaxAmpAtFreq(g);
 		// clear old data
 		g.setColor(new Color(0.0f, 0.0f, 0.0f));
 		g.fillRect(DFTEditor.leftOffset, DFTEditor.upperOffset, getWidth(), getHeight());
+		if(view == View.Pixels) {
+			drawFileDataAsPixels(g);
+			return;
+		}
 		int startX = DFTEditor.leftX;
 		int endX = startX + ((getWidth() - DFTEditor.leftOffset) / DFTEditor.xStep);
 		int startY = DFTEditor.upperY;
 		int endY = startY + ((getHeight() - DFTEditor.upperOffset) / DFTEditor.yStep);
 		int screenXIndex = startX;
-		for(int x = startX; screenXIndex < endX; x += DFTUtils.getTimeIncrement()) {
+		for(int x = startX; screenXIndex < endX; x += getTimeIncrement()) {
             if(x >= DFTEditor.maxTime) break;
     		int screenYIndex = startY;
-            for(int y = startY; screenYIndex < endY; y += DFTUtils.getFreqIncrement()) {
+            for(int y = startY; screenYIndex < endY; y += getFreqIncrement()) {
                 if(y >= (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) break;
         		int screenX = DFTEditor.leftOffset + ((screenXIndex - DFTEditor.leftX) * DFTEditor.xStep);
         		int screenY = DFTEditor.upperOffset + ((screenYIndex - DFTEditor.upperY) * DFTEditor.yStep);
-                float currentVal = DFTUtils.getMaxValue(x, y).getAmplitude();
+                float currentVal = DFTUtils.getValue(x, y).getAmplitude();
                 if(currentVal > 0.0f) {
                 	drawAmplitude(g, screenX, screenY, currentVal, DFTEditor.minAmplitude, DFTEditor.maxAmplitude, 2);
                 }
@@ -200,7 +235,7 @@ public class DFTView extends JComponent {
         //g2.setColor(new Color(1.0f, 0.0f, 0.0f, 0.5f));
         //g2.setStroke(new BasicStroke(4));
         //g2.drawLine(100, 400, 1500, 400);
-		DrawMinimaAmdMaximas(g);
+		//DrawMinimaAmdMaximas(g);
 	}
 	
 	public void drawAmplitude(Graphics g, int screenX, int screenY, float currentVal, float minVal, float maxVal, int digits) {
@@ -231,6 +266,13 @@ public class DFTView extends JComponent {
 		// g.setColor(new Color(red, green, blue));
 		// g.fillRect(x * xStep, y * yStep, xStep, yStep);
 		Color b = new Color(red, green, blue);
+		if(digits == 0) {
+			g.setColor(b);
+			int pixelStepX = (DFTEditor.xStep / getTimeIncrement());
+			int pixelStepY = (DFTEditor.yStep / getFreqIncrement());
+			g.fillRect(screenX, screenY, pixelStepX, pixelStepY);
+			return;
+		}
 		if(digits == 1) {
 			DFTUtils.DrawSegmentData(g, b, screenX, screenY, digitVal);
 			return;
@@ -240,6 +282,33 @@ public class DFTView extends JComponent {
 			return;
 		}
 		System.out.println("DFTView.drawAmplitude() invalid number of digits: " + digits);
+	}
+	
+	public void drawFileDataAsPixels(Graphics g) {
+		int pixelStepX = (DFTEditor.xStep / getTimeIncrement());
+		int pixelStepY = (DFTEditor.yStep / getFreqIncrement());
+		int startX = DFTEditor.leftX;
+		int endX = startX + ((getWidth() - DFTEditor.leftOffset) / pixelStepX);
+		int startY = DFTEditor.upperY;
+		int endY = startY + ((getHeight() - DFTEditor.upperOffset) / pixelStepY);
+		for(int x = startX; x < endX; x += getTimeIncrement()) {
+            for(int y = startY; y < endY; y += getFreqIncrement()) {
+        		int screenX = DFTEditor.leftOffset + ((x - DFTEditor.leftX) * pixelStepX);
+        		int screenY = DFTEditor.upperOffset + ((y - DFTEditor.upperY) * pixelStepY);
+        		for(int xOffset = 0; xOffset < getTimeIncrement(); xOffset++) {
+        			if(xOffset >= DFTEditor.maxTime) break;
+        			for(int yOffset = 0; yOffset < getFreqIncrement(); yOffset++) {
+        				if(yOffset >= (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) break;
+                        float currentVal = DFTUtils.getValue(x + xOffset, y + yOffset).getAmplitude();
+                        if(currentVal > 0.0f) {
+                        	int innerScreenX = screenX + xOffset * pixelStepX;
+                        	int innerScreenY = screenY + yOffset * pixelStepY;
+                        	drawAmplitude(g, innerScreenX, innerScreenY, currentVal, DFTEditor.minAmplitude, DFTEditor.maxAmplitude, 0);
+                        }
+        			}
+        		}
+			}
+		}
 	}
 		
     protected void paintComponent(Graphics g) {
