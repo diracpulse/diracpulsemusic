@@ -15,6 +15,7 @@ public class DFTController implements MouseListener, ActionListener {
 	// This contains selected start points for harmonics
 	// Used to create harmonics once an end point is selected
 	private TreeMap<Integer, Integer> harmonicStartFreqToTime = null;
+
 	
 	private enum State {
 		SelectHarmonicStart,
@@ -95,10 +96,10 @@ public class DFTController implements MouseListener, ActionListener {
 		int startY = DFTEditor.upperY;
 		int endY = startY + ((view.getHeight() - DFTEditor.upperOffset) / DFTEditor.yStep);
 		int screenXIndex = startX;
-		for(int x = startX; screenXIndex < endX; x += DFTUtils.getTimeIncrement()) {
+		for(int x = startX; screenXIndex < endX; x += DFTView.getTimeIncrement()) {
             if(x >= DFTEditor.maxTime) break;
     		int screenYIndex = startY;
-            for(int y = startY; screenYIndex < endY; y += DFTUtils.getFreqIncrement()) {
+            for(int y = startY; screenYIndex < endY; y += DFTView.getFreqIncrement()) {
                 if(y >= (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) break;
         		int screenX = DFTEditor.leftOffset + ((screenXIndex - DFTEditor.leftX) * DFTEditor.xStep);
         		int screenY = DFTEditor.upperOffset + ((screenYIndex - DFTEditor.upperY) * DFTEditor.yStep);

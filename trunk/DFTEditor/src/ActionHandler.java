@@ -77,6 +77,34 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
+	public class ViewDigitsAction extends AbstractAction {
+
+		public ViewDigitsAction() {
+			super("Digits");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("View Digits");
+			DFTView.setView(DFTView.View.Digits);
+			DFTEditor.view.repaint();
+		}
+	}
+	
+	public class ViewPixelsAction extends AbstractAction {
+
+		public ViewPixelsAction() {
+			super("Pixels");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("View Pixels");
+			DFTView.setView(DFTView.View.Pixels);
+			DFTEditor.view.repaint();
+		}
+	}
+	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -91,6 +119,10 @@ public class ActionHandler extends JPanel {
         menuBar.add(playMenu);        
         playMenu.add(new JMenuItem(new PlayHarmonicsAction()));
         playMenu.add(new JMenuItem(new PlayWAVAction()));
+        JMenu viewMenu = new JMenu("View");
+        menuBar.add(viewMenu);        
+        viewMenu.add(new JMenuItem(new ViewPixelsAction()));
+        viewMenu.add(new JMenuItem(new ViewDigitsAction()));
         return menuBar;
 	}
 
