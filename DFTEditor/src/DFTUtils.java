@@ -16,35 +16,21 @@ public class DFTUtils {
 	}
 	
 	public static DFTModel.TFA getValue(int time, int freq) {
-		TreeMap<Integer, Float> freqToAmp;
-		DFTModel.TFA returnVal = new DFTModel.TFA(0, 0, 0.0f);
-		freq = DFTEditor.maxRealFreq - freq;
-		if(DFTEditor.timeToFreqToAmp.containsKey(time)) {
-			freqToAmp = DFTEditor.timeToFreqToAmp.get(time);
-			if(freqToAmp.containsKey(freq)) {
-				float amplitude = freqToAmp.get(freq);
-				returnVal = new DFTModel.TFA(time, freq, amplitude);
-			}
-		}
-		return returnVal;
+		//freq = DFTEditor.maxRealFreq - freq;
+		return new DFTModel.TFA(time, freq, DFTEditor.getAmplitude(time, freq));
 	}
-		
+
 	public static DFTModel.TFA getMaxValue(int time, int freq) {
 		TreeMap<Integer, Float> freqToAmp;
 		DFTModel.TFA returnVal = new DFTModel.TFA(0, 0, 0.0f);
-		freq = DFTEditor.maxRealFreq - freq;
+		//freq = DFTEditor.maxRealFreq - freq;
 		int endTime = time + DFTView.getTimeIncrement();
 		int endFreq = freq + DFTView.getFreqIncrement();
 		for(int timeIndex = time; timeIndex < endTime; timeIndex++) {
 			for(int freqIndex = freq; freqIndex < endFreq; freqIndex++) {
-				if(DFTEditor.timeToFreqToAmp.containsKey(timeIndex)) {
-					freqToAmp = DFTEditor.timeToFreqToAmp.get(timeIndex);
-					if(freqToAmp.containsKey(freqIndex)) {
-						float amplitude = freqToAmp.get(freqIndex);
-						if(amplitude > returnVal.getAmplitude()) {
-							returnVal = new DFTModel.TFA(timeIndex, freqIndex, amplitude);
-						}
-					}
+				float amplitude = DFTEditor.getAmplitude(time, freq);
+				if(amplitude > returnVal.getAmplitude()) {
+					returnVal = new DFTModel.TFA(timeIndex, freqIndex, amplitude);
 				}
 			}
 		}
@@ -78,9 +64,9 @@ public class DFTUtils {
 	
 	public static void DrawSegmentData(Graphics g, Color b, int screenX, int screenY, int digitVal, int fractionVal) {
 		Color black = new Color(0.0f, 0.0f, 0.0f);
-		int lowerScreenY = screenY + DFTEditor.yStep;			
+		int lowerScreenY = screenY + DFTEditor.yStep / 2;			
 		g.setColor(b);
-		g.fillRect(screenX, screenY, DFTEditor.xStep, DFTEditor.yStep * 2);;
+		g.fillRect(screenX, screenY, DFTEditor.xStep, DFTEditor.yStep);;
 		SevenSegmentSmall(g, black, b, screenX, screenY, digitVal);
 		SevenSegmentSmall(g, black, b, screenX, lowerScreenY, fractionVal);
 		// g.setColor(black);

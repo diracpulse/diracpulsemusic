@@ -35,7 +35,7 @@ const double upperFreq = 20000.0;
 const double centerFreq = 1000.0;
 const double lowerFreq = 20.0;
 const double taperPerOctave = 1.4142135623730950488016887242097; // sqrt(2.0)
-const double alpha = 6.5;
+const double alpha = 1.0;
 int numWavelets = 0;
 double KaiserWindow[MAXDFTWINDOW];
 
@@ -127,7 +127,8 @@ void SingleDFT(int waveletIndex, int startIndex, int endIndex) {
 		logAmp = 0.0;
 	}
 	logAmps[waveletIndex] = logAmp;
-	//printf("%f ", ampVal);
+	// MATRIX OUTPUT
+	printf("%f\n", logAmp);
 }
 
 void SampleArrayIndex(int waveletIndex) {
@@ -170,14 +171,15 @@ void SampleArrayIndex(int waveletIndex) {
 void FreqDFT() {
 	//if(debug) printf("FreqDFT\n");
 	int waveletIndex = 0;
-	double upperAmp = 0.0;
-	double centerAmp = 0.0;
-	double lowerAmp = 0.0;
+	//double upperAmp = 0.0;
+	//double centerAmp = 0.0;
+	//double lowerAmp = 0.0;
 	for(waveletIndex = 0; waveletIndex < numWavelets; waveletIndex++) {
 		SampleArrayIndex(waveletIndex);
 	}
-	upperAmp = logAmps[0];
-	centerAmp = logAmps[1];
+	//upperAmp = logAmps[0];
+	//centerAmp = logAmps[1];
+	/*
 	for(waveletIndex = 2; waveletIndex < numWavelets; waveletIndex++) {
 		lowerAmp = logAmps[waveletIndex];
 		if((centerAmp >= upperAmp) && (centerAmp >= lowerAmp)) {
@@ -186,6 +188,7 @@ void FreqDFT() {
 		upperAmp = centerAmp;
 		centerAmp = lowerAmp;
 	}
+	*/
 }
 
 void InitWavelets() {
@@ -247,6 +250,9 @@ void InitWavelets() {
     }
     numWavelets = index;
     maxDFTLength = windowLength;
+    // MATRIX OUTPUT
+    printf("%d\n", maxNote);
+    printf("%d\n", minNote);
     //printf("%d\n", numWavelets, maxDFTLength);
     CalculateWavelets();
 }
@@ -350,7 +356,7 @@ int main(int argc, char *argv[])
 		printf("Unable to open input file\n");
 		return 0;
 	}
-	FileDFT(input, 0, 44100 * 600);
+	FileDFT(input, 0, 44100 * 60 * 10);
 	fclose(input);
 	return 0;
 }
