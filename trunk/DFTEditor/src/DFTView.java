@@ -286,7 +286,7 @@ public class DFTView extends JComponent {
 	
 	public void drawFileDataAsPixels(Graphics g) {
 		int pixelStepX = (DFTEditor.xStep / getTimeIncrement());
-		int pixelStepY = (DFTEditor.yStep / getFreqIncrement());
+		int pixelStepY = (DFTEditor.yStep / getFreqIncrement() / 2);
 		int startX = DFTEditor.leftX;
 		int endX = startX + ((getWidth() - DFTEditor.leftOffset) / pixelStepX);
 		int startY = DFTEditor.upperY;

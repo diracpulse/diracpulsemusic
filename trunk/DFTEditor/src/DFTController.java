@@ -201,13 +201,7 @@ public class DFTController implements MouseListener, ActionListener {
     		int startTime = harmonicStartFreqToTime.get(freq);
     		int endTime = time;
     		for(int timeIndex = startTime; timeIndex <= endTime; timeIndex++) {
-    			if(DFTEditor.timeToFreqToAmp.containsKey(timeIndex)) {
-    				freqToAmp = DFTEditor.timeToFreqToAmp.get(timeIndex);
-    				if(freqToAmp.containsKey(freq)) {
-    					amplitude = freqToAmp.get(freq);
-    					TFAInput.add(new DFTModel.TFA(time, freq, amplitude));
-    				}
-    			}
+    			TFAInput.add(new DFTModel.TFA(time, freq, parent.getAmplitude(time, freq)));
     		}
     		harmonics.addHarmonic(TFAInput);
     		harmonicStartFreqToTime.remove(freq);

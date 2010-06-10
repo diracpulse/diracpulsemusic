@@ -17,7 +17,8 @@ public class DFTEditor extends JFrame {
 	public static JMenuBar menuBar = null;
 	public static JToolBar navigationBar = null;
 	
-	public static TreeMap<Integer, TreeMap<Integer, Float>> timeToFreqToAmp;
+	//public static TreeMap<Integer, TreeMap<Integer, Float>> timeToFreqToAmp;
+	private static float[][] amplitudes; // amplitude = amplitudes[time][freq]
 	public static TreeMap<Integer, Float> timeToAmpSum;
 	public static TreeSet<Integer> ampMaximaTimes;
 	public static ArrayList<Integer> timeAtAmpMaximas;
@@ -25,7 +26,7 @@ public class DFTEditor extends JFrame {
 	public static TreeMap<Integer, Float> freqToMaxAmp;
 	public static TreeMap<Integer, Integer> floorAmpToCount;
 	public static int xStep = 6;
-	public static int yStep = 9; // one digit;
+	public static int yStep = 9 * 2; // two digits;
 	public static int topYStep = 8; // used by DrawUpperTimes
 	public static int leftOffset = xStep * 6; // start of first data cell
 	public static int upperOffset = topYStep * 8; // start of first data cell
@@ -53,6 +54,11 @@ public class DFTEditor extends JFrame {
 	public static int timeIncrement = 1;
 	public static int freqIncrement = 1;
 	
+	public static float getAmplitude(int time, int freq) {
+		if(time > maxTime || freq > maxScreenFreq) return 0.0f;
+		return amplitudes[time][freq];
+	}
+	
 	// This function reads from a binary file
 	public void ReadBinaryFileData(String fileName, String type) {
 		if(!type.equals("mono5ms")) {
@@ -60,17 +66,15 @@ public class DFTEditor extends JFrame {
 			System.exit(0);
 		}
 		this.setTitle("Loading: " + fileName);
-		timeToFreqToAmp = new TreeMap<Integer, TreeMap<Integer, Float>>();
+		//timeToFreqToAmp = new TreeMap<Integer, TreeMap<Integer, Float>>();
 		floorAmpToCount = new TreeMap<Integer, Integer>();
-		TreeMap<Integer, Float> freqToAmp;
+		ArrayList<Float> matrixVals = new ArrayList<Float>();
 		DataInputStream in = null;
 		maxAmplitude = 0.0f;
 		minAmplitude = 15.0f;
 		minRealFreq = freqsPerOctave * 100;
 		maxRealFreq = 0;
 		maxTime = 0;
-		int time;
-		short freq;
 		float amp;
 	    try {
 	    	in = new DataInputStream(new
@@ -80,33 +84,17 @@ public class DFTEditor extends JFrame {
 			return;
 		}
 		try {
+			maxRealFreq = in.readInt();
+			minRealFreq = in.readInt();
 			while(true) {
-				time = in.readInt();
-				freq = in.readShort();
 				amp = in.readFloat();
+				matrixVals.add(amp);
 				if(amp > maxAmplitude) {
 					maxAmplitude = amp;
 				}
 				if(amp < minAmplitude) {
 					minAmplitude = amp;
 				}
-				if(freq > maxRealFreq) {
-					maxRealFreq = freq;
-				}
-				if(freq < minRealFreq) {
-					minRealFreq = freq;
-				}				
-				if(time > maxTime) {
-					maxTime = time;
-				}				
-				if (timeToFreqToAmp.containsKey(time)) {
-					freqToAmp = timeToFreqToAmp.get(time);
-				} else {
-					timeToFreqToAmp.put(time, new TreeMap<Integer, Float>());
-					freqToAmp = timeToFreqToAmp.get(time);
-				}
-				freqToAmp.put((int) freq, amp);
-				// Start floorAmp count
 				int floorAmp = (int) Math.floor(amp);
 				int number = 0;
 				if(floorAmpToCount.containsKey(floorAmp)) {
@@ -123,9 +111,20 @@ public class DFTEditor extends JFrame {
 				System.out.println("DFTEditor: error reading from: " + fileName);
 			}
 		}
+		int matrixValsSize = matrixVals.size();
 		maxScreenFreq = maxRealFreq - minRealFreq;
+		maxTime = matrixValsSize / maxScreenFreq;
+		amplitudes = new float[maxTime + 1][maxScreenFreq + 1];
+		int index = 0;
+		for(int time = 0; time < maxTime; time++) {
+			for(int freq = 0; freq <= maxScreenFreq; freq++) {
+				if(index < matrixValsSize) amplitudes[time][freq] = matrixVals.get(index);
+				index++;
+			}
+		}
+		System.out.println("maxtrixVals size: " + matrixVals.size() + "index: " + index);
 		calculateAmpSum();
-		calculateMaxAmpAtFreq();
+		//calculateMaxAmpAtFreq();
 		printFloorAmpCount();
 		this.setTitle(fileName);
 	}
@@ -148,11 +147,8 @@ public class DFTEditor extends JFrame {
 		for(int time = 0; time < maxTime; time++) {
 			double dsum = 0.0;
 			double dexponent = 1.0;
-			if(timeToFreqToAmp.get(new Integer(time)) == null) {
-				timeToAmpSum.put(new Integer(time), new Float(0.0f));
-				continue;
-			}
-			for(Float f: timeToFreqToAmp.get(new Integer(time)).values()) {
+			timeToAmpSum.put(new Integer(time), new Float(0.0f));
+			for(Float f: amplitudes[time]) {
 				dexponent = f.doubleValue();
 				dsum += Math.pow(2.0, dexponent);
 			}
@@ -207,19 +203,18 @@ public class DFTEditor extends JFrame {
 		}
 	}
 	
+	// Currently DEPRECIATED (not shown)
 	// This calculates the maximum amplitude at a particular frequency
+	// NOT YET TESTED FOR MATRICES
 	public void calculateMaxAmpAtFreq() {
 		freqToMaxAmp = new TreeMap<Integer, Float>();
 		for(int iFreq = minRealFreq; iFreq <= maxRealFreq; iFreq++) {
-			freqToMaxAmp.put(new Integer(iFreq), new Float(0.0f));
+			freqToMaxAmp.put(iFreq, 0.0f);
 		}
-		TreeMap<Integer, Float> freqToAmp;
 		for(int time = 0; time < maxTime; time++) {
-			freqToAmp = timeToFreqToAmp.get(new Integer(time));
-			if(freqToAmp == null) continue;
-			for(Integer IFreq: freqToAmp.keySet()) {
-				if(freqToMaxAmp.get(IFreq) < freqToAmp.get(IFreq)) {
-					freqToMaxAmp.put(IFreq, freqToAmp.get(IFreq));
+			for(int freq = minRealFreq; freq < maxRealFreq; freq++) {
+				if(getAmplitude(time, freq) > freqToMaxAmp.get(freq)) {
+					freqToMaxAmp.put(freq, getAmplitude(time, freq));
 				}
 			}
 		}

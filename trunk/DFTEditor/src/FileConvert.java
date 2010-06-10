@@ -107,13 +107,12 @@ public class FileConvert {
             BufferedReader stdInput = new BufferedReader(new 
                  InputStreamReader(p.getInputStream()));
             // BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+            Integer maxRealFreq = new Integer(stdInput.readLine());
+            binaryOut.writeInt(maxRealFreq);
+            Integer minRealFreq = new Integer(stdInput.readLine());
+            binaryOut.writeInt(minRealFreq);
             while ((linein = stdInput.readLine()) != null) {
-				tokens = linein.split(" ");
-				time = new Integer(tokens[0]);
-				freq = new Integer(tokens[1]);
-				amp = new Float(tokens[2]);
-				binaryOut.writeInt(time);
-				binaryOut.writeShort(freq);
+				amp = new Float(linein);
 				binaryOut.writeFloat(amp);
             }
             binaryOut.close();
