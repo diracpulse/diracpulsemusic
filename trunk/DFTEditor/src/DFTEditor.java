@@ -113,7 +113,7 @@ public class DFTEditor extends JFrame {
 		}
 		int matrixValsSize = matrixVals.size();
 		maxScreenFreq = maxRealFreq - minRealFreq;
-		maxTime = matrixValsSize / maxScreenFreq;
+		maxTime = matrixValsSize / (maxScreenFreq + 1);
 		amplitudes = new float[maxTime + 1][maxScreenFreq + 1];
 		int index = 0;
 		for(int time = 0; time < maxTime; time++) {
@@ -122,7 +122,9 @@ public class DFTEditor extends JFrame {
 				index++;
 			}
 		}
-		System.out.println("maxtrixVals size: " + matrixVals.size() + "index: " + index);
+		int msfplus1 = maxScreenFreq + 1;
+		System.out.println("maxtrixVals div size: " + matrixValsSize / msfplus1 + "index: " + index / msfplus1);
+		System.out.println("maxtrixVals mod size: " + matrixValsSize % msfplus1 + "index: " + index % msfplus1);
 		calculateAmpSum();
 		//calculateMaxAmpAtFreq();
 		printFloorAmpCount();
