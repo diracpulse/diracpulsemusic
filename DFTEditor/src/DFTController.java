@@ -90,40 +90,27 @@ public class DFTController implements MouseListener, ActionListener {
 	    */
 	}
 	
-	public DFTModel.TFA getFileData(int mouseX, int mouseY) {
-		int startX = DFTEditor.leftX;
-		int endX = startX + ((view.getWidth() - DFTEditor.leftOffset) / DFTEditor.xStep);
-		int startY = DFTEditor.upperY;
-		int endY = startY + ((view.getHeight() - DFTEditor.upperOffset) / DFTEditor.yStep);
-		int screenXIndex = startX;
-		for(int x = startX; screenXIndex < endX; x += DFTView.getTimeIncrement()) {
-            if(x >= DFTEditor.maxTime) break;
-    		int screenYIndex = startY;
-            for(int y = startY; screenYIndex < endY; y += DFTView.getFreqIncrement()) {
-                if(y >= (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) break;
-        		int screenX = DFTEditor.leftOffset + ((screenXIndex - DFTEditor.leftX) * DFTEditor.xStep);
-        		int screenY = DFTEditor.upperOffset + ((screenYIndex - DFTEditor.upperY) * DFTEditor.yStep);
-                DFTModel.TFA currentVal = DFTUtils.getMaxValue(x, y);
-                if(currentVal.getAmplitude() > 0.0f) {
-                	Rectangle currentRect = new Rectangle(screenX, screenY, DFTEditor.xStep, DFTEditor.yStep);
-                	if (currentRect.contains(mouseX, mouseY)) {
-                		System.out.println("SCREEN: " + screenX + " " + screenY);
-                		view.repaint();
-                		return currentVal;
-                	}
-                }
-				screenYIndex++;
-			}
-            screenXIndex++;
-		}
-		return null;
+	public static DFTModel.TFA getFileData(int mouseX, int mouseY) {
+		if(mouseX < DFTEditor.leftOffset || mouseY < DFTEditor.upperOffset) return null;
+		int xStep = DFTView.getXStep();
+		int yStep = DFTView.getYStep();
+		int time = (mouseX - DFTEditor.leftOffset) / xStep + DFTEditor.leftX;
+		int freq = (mouseY - DFTEditor.upperOffset) / yStep + DFTEditor.upperY;
+		int realFreq = DFTEditor.maxRealFreq - freq;
+		DFTModel.TFA returnVal = new DFTModel.TFA(time, realFreq, DFTEditor.getAmplitude(time, freq));
+		System.out.println("Selected: " + returnVal.getTimeInMillis() + " " + returnVal.getFreqInHz() + " " + returnVal.getAmplitude());
+		return returnVal;
 	}
 	
     public void actionPerformed(ActionEvent e) {
         int apOldUpperY = DFTEditor.upperY;
         int apOldLeftX = DFTEditor.leftX;
-        if ("Higher".equals(e.getActionCommand())) adjustY(-DFTEditor.freqsPerOctave);
-        if ("Lower".equals(e.getActionCommand())) adjustY(DFTEditor.freqsPerOctave);
+        // Frequency values have reverse sign due to screen display
+        if ("F+31".equals(e.getActionCommand())) adjustY(-31);
+        if ("F-31".equals(e.getActionCommand())) adjustY(31);
+        if ("F+6".equals(e.getActionCommand())) adjustY(-6);
+        if ("F-6".equals(e.getActionCommand())) adjustY(6);        
+        if ("+250ms".equals(e.getActionCommand())) adjustX(250 / DFTEditor.timeStepInMillis);
         if ("+500ms".equals(e.getActionCommand())) adjustX(500 / DFTEditor.timeStepInMillis);
         if ("+1s".equals(e.getActionCommand())) adjustX(1000 / DFTEditor.timeStepInMillis);
         if ("+2s".equals(e.getActionCommand())) adjustX(2000 / DFTEditor.timeStepInMillis);
@@ -131,6 +118,7 @@ public class DFTController implements MouseListener, ActionListener {
         if ("+10s".equals(e.getActionCommand())) adjustX(10000 / DFTEditor.timeStepInMillis);
         if ("+30s".equals(e.getActionCommand())) adjustX(30000 / DFTEditor.timeStepInMillis);
     	if ("+1min".equals(e.getActionCommand())) adjustX(60000 / DFTEditor.timeStepInMillis);
+        if ("-250ms".equals(e.getActionCommand())) adjustX(-250 / DFTEditor.timeStepInMillis);
         if ("-500ms".equals(e.getActionCommand())) adjustX(-500 / DFTEditor.timeStepInMillis);
         if ("-1s".equals(e.getActionCommand())) adjustX(-1000 / DFTEditor.timeStepInMillis);
         if ("-2s".equals(e.getActionCommand())) adjustX(-2000 / DFTEditor.timeStepInMillis);
@@ -179,6 +167,7 @@ public class DFTController implements MouseListener, ActionListener {
     
     private void handleSelectedData(DFTModel.TFA selected) {
     	if(selected == null) return;
+    	if(harmonics == null) return;
     	TreeMap<Integer, Float> freqToAmp = null;
     	ArrayList<DFTModel.TFA> TFAInput = new ArrayList<DFTModel.TFA>();
     	int freq = selected.getFreq();
