@@ -55,8 +55,8 @@ public class DFTEditor extends JFrame {
 	public static int freqIncrement = 1;
 	
 	public static float getAmplitude(int time, int freq) {
-		if(time > maxTime || freq > maxScreenFreq) return 0.0f;
-		return amplitudes[time][freq];
+		if(time < maxTime && freq < maxScreenFreq) return amplitudes[time][freq];
+		return 0.0f;
 	}
 	
 	// This function reads from a binary file
@@ -230,8 +230,11 @@ public class DFTEditor extends JFrame {
 	public JToolBar createNavigationBar() {
 		navigationBar = new JToolBar("Navigation Bar");
         // Create Navigation Buttons
-        addNavigationButton("Higher");
-        addNavigationButton("Lower");
+        addNavigationButton("F+31");
+        addNavigationButton("F-31");
+        addNavigationButton("F+6");
+        addNavigationButton("F-6");
+        addNavigationButton("+250ms");
         addNavigationButton("+500ms");
         addNavigationButton("+1s");
         addNavigationButton("+2s");
@@ -239,6 +242,7 @@ public class DFTEditor extends JFrame {
         addNavigationButton("+10s");
         addNavigationButton("+30s");
     	addNavigationButton("+1min");
+        addNavigationButton("-250ms");
         addNavigationButton("-500ms");
         addNavigationButton("-1s");
         addNavigationButton("-2s");

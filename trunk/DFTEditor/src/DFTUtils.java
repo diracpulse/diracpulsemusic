@@ -19,24 +19,7 @@ public class DFTUtils {
 		//freq = DFTEditor.maxRealFreq - freq;
 		return new DFTModel.TFA(time, freq, DFTEditor.getAmplitude(time, freq));
 	}
-
-	public static DFTModel.TFA getMaxValue(int time, int freq) {
-		TreeMap<Integer, Float> freqToAmp;
-		DFTModel.TFA returnVal = new DFTModel.TFA(0, 0, 0.0f);
-		//freq = DFTEditor.maxRealFreq - freq;
-		int endTime = time + DFTView.getTimeIncrement();
-		int endFreq = freq + DFTView.getFreqIncrement();
-		for(int timeIndex = time; timeIndex < endTime; timeIndex++) {
-			for(int freqIndex = freq; freqIndex < endFreq; freqIndex++) {
-				float amplitude = DFTEditor.getAmplitude(time, freq);
-				if(amplitude > returnVal.getAmplitude()) {
-					returnVal = new DFTModel.TFA(timeIndex, freqIndex, amplitude);
-				}
-			}
-		}
-		return returnVal;
-	}
-		
+	
 	public static int getIncrement(TreeMap<Integer, Boolean> isCollapsed, int value, int step) {
 		int key = value / step;
 		if(isCollapsed == null) return 1;

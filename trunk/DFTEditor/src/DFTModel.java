@@ -1,8 +1,6 @@
 
 public class DFTModel {
-	
-	static int maxFreq = 31 * 18;
-	
+		
 	public static class FAPair {
 		int freq;
 		float amplitude;
@@ -10,9 +8,6 @@ public class DFTModel {
 		public FAPair(int freq, float amplitude) {
 			this.freq = freq;
 			this.amplitude = amplitude;
-			if(freq > maxFreq) {
-				System.out.println("FAPair: Freq out of bounds");
-			}
 		}
 		
 		int getFreq() {
@@ -55,9 +50,6 @@ public class DFTModel {
 			this.time = time;
 			this.freq = freq;
 			this.amplitude = amplitude;
-			if(freq > maxFreq) {
-				System.out.println("TFA: Freq out of bounds");
-			}
 		}
 		
 		int getTime() {
