@@ -32,15 +32,7 @@ stdout from a.exe is read by DFTEditor.jar, see !FileConvert.java <br>
 
 == Files ==
 
-*main.c:* takes a file input.wav and produces a TFA output. (see also DataFormatsAndConstants)<br>
-Output tokens are space delimited (three numbers per line) and terminated with a \n:<br>
-`token[0] as int`<br>
-`token[1] as int`<br>
-`token[2] as float`<br>
-`Time = (token[0] / 5ms)`<br>
-`Frequency = 2.0 ^ (token[1] / 31.0)`<br> 
-`Amplitude = 2.0 ^ (token[2])`<br>
-<br>
+*main.c:* takes a file input.wav and produces a matrix output. (see DataFormatsAndConstants)<br>
 
 *filter.c*: creates and tests Kaiser-Bessel windowed FIR filters<br>
 Also used by main.c to create Kaiser-Bessel windows used in analysis<br>
