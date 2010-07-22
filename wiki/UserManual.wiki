@@ -22,6 +22,31 @@ Start DFTEditor (see *Running* in [DFTEditorFolder DFTEditor Folder])<br>
 Select .mono5ms file to view from the File Prompt (which will come up automatically)<br>
 To view another file, select File->Open from the menu bar.<br>
 
-Use the navigation bar to adjust the times and frequencies displayed.
+== Viewing the data ==
 
-See [HowToReadFrequencyData How To Read Frequency Data]
+The data is displayed as a matrix.
+
+The frequency in Hz is displayed on the left.
+
+The time in milliseconds is displayed on the top
+
+The color is based on amplitude and is displayed as followed:<br>
+(based on a 16-bit wav file that uses all 16 bits for the loudest passages)<br>
+In digit mode, the value displayed is: _log2(amplitude)/2.0_<br>
+For values 10.0 or greater, the leading 1 is not displayed<br>
+
+Red = loudest (13.0 to 16.0) = (78dB to 96dB)<br>
+Greenish Red = average (10.0 to 13.0) = (60dB to 78dB)<br>
+Green = medium soft (7.0 to 10.0) = (42dB to 60dB)<br>
+Greenish Blue = very soft (4.0 to 7.0) = (24dB to 42dB)<br>
+Blue = barely audible (2.0 to 4.0) = (12dB to 24dB)<br>
+Black = silence (less than 2.0) = (less than 12dB)<br>
+
+Increasing a sound by 6dB is perceived as doubling the volume
+
+== Using the navigation bar to adjust the times and frequencies displayed ==
+
+Use "F+31" to "F-31" to move up or down one octave<br>
+Use "F+6" to "F-6" to move up or down 6 notes (about 1/5 of an octave)<br>
+
+Use "+_time_" to move forward and "-_time_" to move backward by the indicated amounts<br>
