@@ -10,21 +10,24 @@ public class DFTView extends JComponent {
 	
 	public enum View {
 		Digits,
-		Pixels;
+		Pixels1,
+		Pixels2;
 	}
 	
 	public static void setView(View v) {
 		view = v;
 	}
 	
-	private static View view = View.Pixels; 
+	private static View view = View.Pixels1; 
 	
 	public static int getXStep() {
     	switch(view) {
     	case Digits:
     		return DFTEditor.xStep;
-    	case Pixels:
+    	case Pixels1:
     		return 1;
+    	case Pixels2:
+    		return 2;
     	}
     	return 1;
 	}
@@ -33,8 +36,10 @@ public class DFTView extends JComponent {
     	switch(view) {
     	case Digits:
     		return DFTEditor.yStep;
-    	case Pixels:
+    	case Pixels1:
     		return 1;
+    	case Pixels2:
+    		return 2;
     	}
     	return 1;
 	}	
@@ -98,10 +103,12 @@ public class DFTView extends JComponent {
 		Color blank = new Color(0.0f, 0.0f, 0.0f);
 		int screenX;
 		int screenY;
+		int xStep = DFTEditor.xStep + DFTEditor.xStep % getXStep();
+		int timeStep = xStep / getXStep();
 		int startTime = DFTEditor.leftX;
-		int endTime = DFTEditor.leftX + (getWidth() - DFTEditor.leftOffset) / DFTEditor.xStep;
-		for(int time = startTime; time < endTime; time++) {
-			iTime = time * DFTEditor.timeStepInMillis;;
+		int endTime = DFTEditor.leftX + (getWidth() - DFTEditor.leftOffset) / xStep * timeStep;
+		for(int time = startTime; time < endTime; time += timeStep) {
+			iTime = time * DFTEditor.timeStepInMillis;
 			leading0 = true;
 			int yOffset = 1;
 			for(digitPlace = 1000000; digitPlace >= 1; digitPlace /= 10) {
@@ -123,7 +130,7 @@ public class DFTView extends JComponent {
 					f = blank;
 					b = blank;
 				}
-				screenX = DFTEditor.leftOffset + (time - startTime) * DFTEditor.xStep;
+				screenX = DFTEditor.leftOffset + ((time - startTime) / timeStep) * xStep;
 				screenY = yOffset * DFTEditor.topYStep;
 				g.setColor(b);
 				g.fillRect(screenX, screenY, 6, 8);				
@@ -141,9 +148,15 @@ public class DFTView extends JComponent {
 		Color f;
 		Color b;
 		Color blank = new Color(0.0f, 0.0f, 0.0f);
+		// ADJUST FROM 2 DIGITS TO 1
+		int mainYStep = DFTEditor.yStep;
+		if(view != View.Digits) mainYStep /= 2;
+		int yStep = mainYStep + mainYStep % getYStep();
+		int freqStep = yStep / getYStep();
 		int startFreq = DFTEditor.upperY;
-		int endFreq = startFreq + (getHeight() - DFTEditor.upperOffset) / DFTEditor.yStep;
-		for(int freq = startFreq; freq < endFreq; freq++) {
+		int freqRange = (getHeight() - DFTEditor.upperOffset) / yStep * freqStep;
+		int endFreq = startFreq + freqRange;
+		for(int freq = startFreq; freq < endFreq; freq += freqStep) {
 			iFreq = DFTEditor.maxRealFreq - freq;
 			int xOffset = 1;
 			double freqsPerOctave = (double) DFTEditor.freqsPerOctave;
@@ -159,7 +172,7 @@ public class DFTView extends JComponent {
 					b = blank;
 				}
 				int screenX = xOffset * DFTEditor.xStep;
-				int screenY = DFTEditor.upperOffset + (freq - startFreq) * DFTEditor.yStep;
+				int screenY = DFTEditor.upperOffset + ((freq - startFreq) / freqStep) * yStep;
 				g.setColor(b);
 				g.fillRect(screenX, screenY, 6, 8);
 				DFTUtils.SevenSegmentSmall(g, f, b, screenX, 
@@ -174,13 +187,13 @@ public class DFTView extends JComponent {
 		// clear old data
 		g.setColor(new Color(0.0f, 0.0f, 0.0f));
 		g.fillRect(DFTEditor.leftOffset, DFTEditor.upperOffset, getWidth(), getHeight());
-		if(view == View.Pixels) {
+		DrawLeftFreqs(g);
+		DrawUpperTimes(g);		
+		if(view != View.Digits) {
 			drawFileDataAsPixels(g);
 			return;
 		}
 		//DrawMaxAmpAtFreq(g);
-		DrawLeftFreqs(g);
-		DrawUpperTimes(g);
 		DrawAmpSums(g);
 		int startTime = DFTEditor.leftX;
 		int endTime = startTime + ((getWidth() - DFTEditor.leftOffset) / DFTEditor.xStep);
@@ -251,8 +264,8 @@ public class DFTView extends JComponent {
 	}
 	
 	public void drawFileDataAsPixels(Graphics g) {
-		int pixelStepX = 1; //(DFTEditor.xStep / getTimeIncrement());
-		int pixelStepY = 1; //(DFTEditor.yStep / getFreqIncrement() / 2);
+		int pixelStepX = getXStep(); //(DFTEditor.xStep / getTimeIncrement());
+		int pixelStepY = getYStep(); //(DFTEditor.yStep / getFreqIncrement() / 2);
 		int startX = DFTEditor.leftX;
 		int endX = startX + ((getWidth() - DFTEditor.leftOffset) / pixelStepX);
 		int startY = DFTEditor.upperY;
