@@ -4,9 +4,7 @@
 
 Checks its directory for .wav files.
 Creates a file: _filename_ - ".wav" + ".mono5ms" from all .wav files (if this file does not already exist).<br>
-Output Specification of .mono5ms files (see also DataFormatsAndConstants):<br>
-Java binary (big endian):<br>
-*int* `time / 5ms`: *short* `log2(Hz)*31`: *float* `log2(amplitude)`<br>
+For output specification of .mono5ms files see DataFormatsAndConstants<br>
 
 == Building ==
 
@@ -20,7 +18,7 @@ From DOS Prompt:<br>
 >*r*<br>
 r.bat is simply "java -Xms2g -jar DFTEditor.jar"<br>
 _*Note: The -Xms2g option requests that the JVM be given 2GB of RAM.<br>
-It is only needed for larger .wav files (around 10 minutes or more).<br>  
+It is only needed for larger .wav files (more than 7 minutes or so).<br>  
 If this option causes problems (such as "insufficient memory"), simply remove it.*_<br>
 
 == Files ==
