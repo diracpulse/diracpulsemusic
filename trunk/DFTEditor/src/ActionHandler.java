@@ -1,8 +1,6 @@
 import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.JButton;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -11,6 +9,10 @@ import javax.swing.JPanel;
 
 public class ActionHandler extends JPanel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 672340751348574007L;
 	private DFTEditor parent;
 	
 	public ActionHandler(DFTEditor parent) {
@@ -18,6 +20,8 @@ public class ActionHandler extends JPanel {
 	}
 	
 	public class OpenAction extends AbstractAction {
+
+		private static final long serialVersionUID = -5323292053150793042L;
 
 		public OpenAction() {
 			super("Open");
@@ -31,6 +35,8 @@ public class ActionHandler extends JPanel {
 
 	public class ExitAction extends AbstractAction {
 
+		private static final long serialVersionUID = -3384173774207253726L;
+
 		public ExitAction() {
 			super("Exit");
 		}
@@ -42,6 +48,8 @@ public class ActionHandler extends JPanel {
 	}
 
 	public class ImportAction extends AbstractAction {
+
+		private static final long serialVersionUID = -4814209505628569590L;
 
 		public ImportAction() {
 			super("Import");
@@ -55,6 +63,8 @@ public class ActionHandler extends JPanel {
 	
 	public class PlayHarmonicsAction extends AbstractAction {
 
+		private static final long serialVersionUID = 2018379987198757465L;
+
 		public PlayHarmonicsAction() {
 			super("Play Harmonics");
 		}
@@ -66,6 +76,8 @@ public class ActionHandler extends JPanel {
 	}
 	
 	public class PlayWAVAction extends AbstractAction {
+
+		private static final long serialVersionUID = 7354387706903212877L;
 
 		public PlayWAVAction() {
 			super("Play WAV");
@@ -79,6 +91,8 @@ public class ActionHandler extends JPanel {
 	
 	public class ViewDigitsAction extends AbstractAction {
 
+		private static final long serialVersionUID = 5910687309575402310L;
+
 		public ViewDigitsAction() {
 			super("Digits");
 		}
@@ -91,16 +105,34 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
-	public class ViewPixelsAction extends AbstractAction {
+	public class ViewPixels1Action extends AbstractAction {
 
-		public ViewPixelsAction() {
-			super("Pixels");
+		private static final long serialVersionUID = -1592520256131827974L;
+
+		public ViewPixels1Action() {
+			super("Pixels = 1");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("View Pixels1");
+			DFTView.setView(DFTView.View.Pixels1);
+			DFTEditor.view.repaint();
+		}
+	}
+	
+	public class ViewPixels2Action extends AbstractAction {
+
+		private static final long serialVersionUID = 270072643328180860L;
+
+		public ViewPixels2Action() {
+			super("Pixels = 2");
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("View Pixels");
-			DFTView.setView(DFTView.View.Pixels);
+			DFTView.setView(DFTView.View.Pixels2);
 			DFTEditor.view.repaint();
 		}
 	}
@@ -121,7 +153,8 @@ public class ActionHandler extends JPanel {
         playMenu.add(new JMenuItem(new PlayWAVAction()));
         JMenu viewMenu = new JMenu("View");
         menuBar.add(viewMenu);        
-        viewMenu.add(new JMenuItem(new ViewPixelsAction()));
+        viewMenu.add(new JMenuItem(new ViewPixels1Action()));
+        viewMenu.add(new JMenuItem(new ViewPixels2Action()));    
         viewMenu.add(new JMenuItem(new ViewDigitsAction()));
         return menuBar;
 	}
