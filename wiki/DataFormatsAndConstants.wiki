@@ -53,11 +53,17 @@
 *Minimum Output Amplitude*: 4.0 (see function _SingleDFT_ in main.c)<br>
 *Theoretical Maximum Output Amplitude*: 2 ^ 17.0<br>
 *Output Specification:*<br>
-_As ASCII to stdout: quantities delimited by a space and terminated by a newline_<br>
-Time `(int) time / 5ms`: Frequency `(int) log2(Hz) * 31`: Amplitude `(float) log2(amplitude)`<br>
+_As ASCII to stdout: quantities separated by a newline_<br>
+int log2(maxFreq)<br>
+int log2(minFreq)<br>
+_matrix data starts here, number of lines = (number of freqs *multiplied by* number of sample times)_<br>
+float log2(amplitude)/2.0<br>
 
 _*DFTEditor Binary Representation of DFT Output:*_<br>
 
 *Output Specification:*<br>
-Java binary (big endian):<br>
-*int* `time / 5ms`: *short* `log2(Hz)*31`: *float* `log2(amplitude)`<br>
+_Java binary (big endian):<br>_
+int log2(maxFreq)<br>
+int log2(minFreq)<br>
+_matrix data starts here, number of lines = (number of freqs *multiplied by* number of sample times)_<br>
+float log2(amplitude)/2.0<br>
