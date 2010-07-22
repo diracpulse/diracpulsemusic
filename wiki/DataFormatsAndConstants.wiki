@@ -59,7 +59,7 @@ int log2(minFreq)<br>
 _matrix data starts here, number of lines = (number of freqs *multiplied by* number of sample times)_<br>
 float log2(amplitude)/2.0<br>
 
-_*DFTEditor Binary Representation of DFT Output:*_<br>
+_*DFTEditor Binary Representation of DFT Output (.mono5ms files):*_<br>
 
 *Output Specification:*<br>
 _Java binary (big endian):<br>_
