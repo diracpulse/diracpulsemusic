@@ -50,3 +50,7 @@ Use "F+31" to "F-31" to move up or down one octave<br>
 Use "F+6" to "F-6" to move up or down 6 notes (about 1/5 of an octave)<br>
 
 Use "+_time_" to move forward and "-_time_" to move backward by the indicated amounts<br>
+
+== Selecting Harmonics  ==
+
+_(not yet implemented)_
