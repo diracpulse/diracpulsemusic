@@ -35,7 +35,7 @@ const double upperFreq = 20000.0;
 const double centerFreq = 1000.0;
 const double lowerFreq = 20.0;
 const double taperPerOctave = 1.4142135623730950488016887242097; // sqrt(2.0)
-const double alpha = 1.0;
+const double alpha = 5.0;
 int numWavelets = 0;
 double KaiserWindow[MAXDFTWINDOW];
 
