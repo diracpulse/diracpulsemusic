@@ -15,6 +15,7 @@ public class DFTController implements MouseListener, ActionListener {
 	// This contains selected start points for harmonics
 	// Used to create harmonics once an end point is selected
 	private TreeMap<Integer, Integer> harmonicStartFreqToTime = null;
+	private DFTModel.TFA harmonicStart = null;
 
 	
 	private enum State {
@@ -162,6 +163,14 @@ public class DFTController implements MouseListener, ActionListener {
     		} else {
     			DFTEditor.leftX = 0;
     		}
+    	}
+    }
+    
+    private void handleMousePressed(DFTModel.TFA selected) {
+    	if(harmonicStart == null) {
+    		harmonicStart = selected;
+    	} else {
+    		
     	}
     }
     
