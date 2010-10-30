@@ -10,6 +10,7 @@ public class DFTEditor extends JFrame {
 	 * 
 	 */
 	private static final long serialVersionUID = -2291799595853726615L;
+	public static MultiWindow parent;
 	public static DFTView view;
 	public static DFTController controller;
 	public static Harmonics harmonics;
@@ -281,11 +282,25 @@ public class DFTEditor extends JFrame {
         openFileInDFTEditor();
     }
     
-    public static void main(String[] args)
-    {
-       //GenerateWavelets.printParams();
-       DFTEditor frame = new DFTEditor();
-       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-       frame.setVisible(true);
-    }
+	private static void createAndShowGUI() {
+		// Create and set up the window.
+		parent = new MultiWindow();
+		parent.dftEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		parent.dftEditorFrame.pack();
+		parent.dftEditorFrame.setVisible(true);
+		parent.harmonicsEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		parent.harmonicsEditorFrame.pack();
+		parent.harmonicsEditorFrame.setVisible(true);
+	}
+
+	public static void main(String[] args) {
+		// Schedule a job for the event-dispatching thread:
+		// creating and showing this application's GUI.
+		javax.swing.SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				createAndShowGUI();
+			}
+		});
+	}
+
 }
