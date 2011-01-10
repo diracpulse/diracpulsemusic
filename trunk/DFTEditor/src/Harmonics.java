@@ -10,85 +10,86 @@ import java.util.TreeMap;
 public class Harmonics {
 	
 	private String harmonicsFileName;
-	private TreeMap<Integer, TreeMap<Integer, Harmonic>> timeToFreqToHarmonic;
+	private TreeMap<Integer, TreeMap<Integer, Harmonic>> noteToHarmonic;
 	private ArrayList<Harmonic> harmonicsArray;	
 	
 	Harmonics(String baseFileName) {
 		harmonicsFileName = baseFileName + ".harmonics";
 	}
 	
-	private static class FAPair {
+	public static class TAPair {
 		
-		double freqInHz;
-		double realAmplitude;
+		private int timeInMillis; // time in milliseconds
+		private float logAmplitude; // log2(amplitude)
 		
-		FAPair(double freqInHz, double realAmplitude) {
-			this.freqInHz = freqInHz;
-			this.realAmplitude = realAmplitude;
+		TAPair(int timeInMillis, float logAmplitude) {
+			this.timeInMillis = timeInMillis;
+			this.logAmplitude = logAmplitude;
 		}
 		
-		double getFreqInHz() {
-			return freqInHz;
+		int getTimeInMillis() {
+			return timeInMillis;
 		}
 		
-		double getRealAmplitude() {
-			return realAmplitude;
+		float getLogAmplitude() {
+			return logAmplitude;
 		}
 	}
 	
 	private static class Harmonic {
 		
-		static double constFreq = 0;
-		static boolean freqIsConstant = true;
-		static TreeMap<Integer, DFTModel.FAPair> variableFreqData = null;
+		int note; // note = log2(freqInHz) * 31
+		int startTimeInMillis;
+		int lengthInMillis;
+		TreeMap<Integer, Float> timeInMillisToLogAmplitude = null;
 		
-		public Harmonic(ArrayList<DFTModel.TFA> TFAInput) {
-			initHarmonic(TFAInput);
+		public Harmonic(int note, int startTimeInMillis, ArrayList<TAPair> TAInput) {
+			this.note = note;
+			this.startTimeInMillis = startTimeInMillis;
+			this.lengthInMillis = 0;
+			initHarmonic(TAInput);
 		}
 		
 		public Harmonic(String stringInput) {
 			initHarmonic(stringInput);
 		}
 		
-				
-		public static void initHarmonic(ArrayList<DFTModel.TFA> TFAInput) {
-			variableFreqData = new TreeMap<Integer, DFTModel.FAPair>();
-			for(DFTModel.TFA tfa: TFAInput) {
-				int time = tfa.getTimeInMillis();
-				int freq = tfa.getFreq();
-				float amplitude = tfa.getAmplitude();
-				if(constFreq == 0) constFreq = freq;
-				if(tfa.getFreq() != constFreq) freqIsConstant = false;
-				if(variableFreqData.containsKey(tfa.getTime())) {
-					System.out.println("Input Error in Harmonics.Harmonics: Duplicate Time" + time);
-				} else {
-					variableFreqData.put(time, new DFTModel.FAPair(freq, amplitude));
+		public void initHarmonic(ArrayList<TAPair> TAInput) {
+			timeInMillisToLogAmplitude = new TreeMap<Integer, Float>();
+			for(TAPair TA: TAInput) {
+				int timeInMillis = TA.getTimeInMillis();
+				float logAmplitude = TA.getLogAmplitude();
+				if(timeInMillisToLogAmplitude.containsKey(timeInMillis)) {
+					System.out.println("ERROR: initHarmonic(ArrayList<TAPair> TAInput)): duplicate time");
+					System.exit(0);
 				}
+				if(timeInMillis > lengthInMillis) lengthInMillis = timeInMillis;
+				timeInMillisToLogAmplitude.put(timeInMillis, logAmplitude);
 			}
 		}
 		
-		public static void initHarmonic(String input) {
-			ArrayList<DFTModel.TFA> TFAInput = new ArrayList<DFTModel.TFA>();
-			String[] tfaValues = input.split(":");
-			for(String tfa: tfaValues) {
-				String[] tfaParams = tfa.split(" ");
-				int time = Integer.parseInt(tfaParams[0]) / DFTEditor.timeStepInMillis;
-				int freq = Integer.parseInt(tfaParams[1]);
-				float amplitude = Float.parseFloat(tfaParams[2]);
-				TFAInput.add(new DFTModel.TFA(time, freq, amplitude));
+		public void initHarmonic(String input) {
+			ArrayList<TAPair> TAInput = new ArrayList<TAPair>();
+			String[] taValues = input.split(":");
+			this.note = Integer.parseInt(taValues[0]);
+			this.startTimeInMillis = Integer.parseInt(taValues[1]);
+			this.lengthInMillis = 0;
+			for(int index = 2; index < taValues.length; index += 2) {
+				int timeInMillis = Integer.parseInt(taValues[index]);
+				float logAmplitude = Float.parseFloat(taValues[index + 1]);
+				TAInput.add(new TAPair(timeInMillis, logAmplitude));
 			}
-			initHarmonic(TFAInput);
+			initHarmonic(TAInput);
 		}
 		
 		public String toString() {
 			StringBuffer sb = new StringBuffer();
-			for(int timeInMillis: variableFreqData.keySet()) {
-				DFTModel.FAPair fa = variableFreqData.get(timeInMillis);
-				sb.append(timeInMillis + " " + fa.getFreq() + " " + fa.getAmplitude() + ":");
+			sb.append(note + ":" + startTimeInMillis);
+			for(int timeInMillis: timeInMillisToLogAmplitude.keySet()) {
+				sb.append(":" + timeInMillis + ":" + timeInMillisToLogAmplitude.get(timeInMillis));
 			}
 			return sb.toString();
 		}
-		
 	}
 	
 	// returns true if freq and time are within the bounds of a saved harmonic
@@ -96,8 +97,8 @@ public class Harmonics {
 		return false;
 	}
 	
-	public void addHarmonic(ArrayList<DFTModel.TFA> harmonicData) {
-		harmonicsArray.add(new Harmonic(harmonicData));
+	public void addHarmonic(Harmonic harmonic) {
+		harmonicsArray.add(harmonic);
 	}
 	
 	public void removeHarmonic(int startTime, int startFreq) {
