@@ -44,55 +44,7 @@ public class HarmonicsView extends JComponent {
     	return 1;
 	}	
 	
-	public void DrawAmpSums(Graphics g) {
-		int startTime = HarmonicsEditor.leftX;
-		int endTime = HarmonicsEditor.leftX + (getWidth() - HarmonicsEditor.leftOffset) / HarmonicsEditor.xStep;
-		for(int time = startTime; time < endTime; time++) {
-			if(time >= HarmonicsEditor.timeToAmpSum.size()) return;
-			int screenX = HarmonicsEditor.leftOffset + (time - startTime) * HarmonicsEditor.xStep;
-			float ampSumValue = HarmonicsEditor.timeToAmpSum.get(time);
-			// draw amp even if 0.0f, to overwrite previous value
-			drawAmplitude(g, screenX, 0, ampSumValue, 0.0f, HarmonicsEditor.maxAmplitudeSum, 2);
-		}
-	}
-	
-	public void DrawMinimaAmdMaximas(Graphics g) {
-		Graphics2D g2 = (Graphics2D) g;
-		int startTime = HarmonicsEditor.leftX;
-		int endTime = HarmonicsEditor.leftX + (getWidth() - HarmonicsEditor.leftOffset) / HarmonicsEditor.xStep;
-		Color minimaColor = new Color(1.0f, 0.5f, 0.5f, 0.25f);
-		Color maximaColor = new Color(0.5f, 0.5f, 1.0f, 0.25f);
-        g2.setStroke(new BasicStroke(HarmonicsEditor.xStep));
-		for(int time = startTime; time < endTime; time++) {
-			int screenX = HarmonicsEditor.leftOffset + time * HarmonicsEditor.xStep;
-			int xVal = screenX + HarmonicsEditor.xStep / 2; // center line
-			if(HarmonicsEditor.timeAtAmpMaximas.contains(time)) {
-				g2.setColor(maximaColor);
-				g2.drawLine(xVal, HarmonicsEditor.upperOffset, xVal, getHeight());
-			}
-			if(HarmonicsEditor.timeAtAmpMinimas.contains(time)) {
-				g2.setColor(minimaColor);
-				g2.drawLine(xVal, HarmonicsEditor.upperOffset, xVal, getHeight());
-			}	
-		}
-	}
-	
-	
-	// NOT YET TESTED
-	public void DrawMaxAmpAtFreq(Graphics g) {
-		if(HarmonicsEditor.freqToMaxAmp == null) return;
-		int startY = HarmonicsEditor.upperY;
-		int endY = startY + getHeight() - HarmonicsEditor.upperOffset / HarmonicsEditor.yStep;
-		int screenY;
-		float amp;
-		for(int y = startY; y < endY; y++) {
-			int freq = HarmonicsEditor.maxRealFreq - y;
-			amp = HarmonicsEditor.freqToMaxAmp.get(freq);
-			screenY = HarmonicsEditor.upperOffset + (y - startY) * HarmonicsEditor.yStep;
-			drawAmplitude(g, 0, screenY, amp, 0.0f, HarmonicsEditor.maxAmplitude, 1);
-		}
-	}
-	
+
 	public void DrawUpperTimes(Graphics g) {
 		int iTime;
 		int digitPlace;
@@ -194,7 +146,6 @@ public class HarmonicsView extends JComponent {
 			return;
 		}
 		//DrawMaxAmpAtFreq(g);
-		DrawAmpSums(g);
 		int startTime = HarmonicsEditor.leftX;
 		int endTime = startTime + ((getWidth() - HarmonicsEditor.leftOffset) / HarmonicsEditor.xStep);
 		int startFreq = HarmonicsEditor.upperY;

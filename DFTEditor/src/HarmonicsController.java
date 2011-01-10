@@ -44,7 +44,6 @@ public class HarmonicsController implements MouseListener, ActionListener {
 	    int x = e.getX();
 	    int y = e.getY();
 	    DFTModel.TFA selected = getFileData(x, y);
-	    handleSelectedData(selected);
 	    if(selected != null) {
 	    	System.out.println(selected);
 	    } else {
@@ -164,50 +163,6 @@ public class HarmonicsController implements MouseListener, ActionListener {
     		}
     	}
     }
-    
-    private void handleMousePressed(DFTModel.TFA selected) {
-    	if(harmonicStart == null) {
-    		harmonicStart = selected;
-    	} else {
-    		
-    	}
-    }
-    
-    private void handleSelectedData(DFTModel.TFA selected) {
-    	if(selected == null) return;
-    	if(harmonics == null) return;
-    	TreeMap<Integer, Float> freqToAmp = null;
-    	ArrayList<DFTModel.TFA> TFAInput = new ArrayList<DFTModel.TFA>();
-    	int freq = selected.getFreq();
-    	int time = selected.getTime();
-    	float amplitude = 0.0f;
-    	if(harmonicStartFreqToTime.containsKey(freq)) {
-    		currentState = State.SelectHarmonicEnd;
-    	} else {
-    		if(harmonics.inHarmonic(freq, time)) {
-    			currentState = State.SelectHarmonic;
-    		} else {
-    			currentState = State.SelectHarmonicStart;
-    		}
-    	}
-    	switch(currentState) {
-    	case SelectHarmonicStart:
-    		harmonicStartFreqToTime.put(freq, time);
-    		break;
-    	case SelectHarmonicEnd:
-    		int startTime = harmonicStartFreqToTime.get(freq);
-    		int endTime = time;
-    		for(int timeIndex = startTime; timeIndex <= endTime; timeIndex++) {
-    			TFAInput.add(new DFTModel.TFA(time, freq, parent.getAmplitude(time, freq)));
-    		}
-    		harmonics.addHarmonic(TFAInput);
-    		harmonicStartFreqToTime.remove(freq);
-    		break;
-    	case SelectHarmonic:
-    		JOptionPane.showConfirmDialog(parent, "Delete Harmonic");
-    		break;
-    	}
-    }
-
+   
 }
 

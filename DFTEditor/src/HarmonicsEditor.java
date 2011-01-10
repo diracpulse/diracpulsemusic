@@ -14,13 +14,6 @@ public class HarmonicsEditor extends JFrame {
 	public static JToolBar navigationBar = null;
 	
 	//public static TreeMap<Integer, TreeMap<Integer, Float>> timeToFreqToAmp;
-	private static float[][] amplitudes; // amplitude = amplitudes[time][freq]
-	public static TreeMap<Integer, Float> timeToAmpSum;
-	public static TreeSet<Integer> ampMaximaTimes;
-	public static ArrayList<Integer> timeAtAmpMaximas;
-	public static ArrayList<Integer> timeAtAmpMinimas;
-	public static TreeMap<Integer, Float> freqToMaxAmp;
-	public static TreeMap<Integer, Integer> floorAmpToCount;
 	public static int xStep = 6;
 	public static int yStep = 9 * 2; // two digits;
 	public static int topYStep = 8; // used by DrawUpperTimes
@@ -51,7 +44,7 @@ public class HarmonicsEditor extends JFrame {
 	public static int freqIncrement = 1;
 	
 	public static float getAmplitude(int time, int freq) {
-		if(time < maxTime && freq < maxScreenFreq) return amplitudes[time][freq];
+		//if(time < maxTime && freq < maxScreenFreq) return amplitudes[time][freq];
 		return 0.0f;
 	}
 	
@@ -92,6 +85,8 @@ public class HarmonicsEditor extends JFrame {
 		navigationBar.add(button);
 	}
 	
+	
+	
 	public void openFileInHarmonicsEditor() {
         String fileName = FileTools.PromptForFileOpen(view);
         String fileNameTrimmed = fileName.substring(0, fileName.length() - 4);
@@ -99,8 +94,14 @@ public class HarmonicsEditor extends JFrame {
         view.repaint();
 	}
 	
+	public void saveFileInHarmonicsEditor() {
+        String fileName = FileTools.PromptForFileSave(view);
+        String fileNameTrimmed = fileName.substring(0, fileName.length() - 4);
+        //harmonics = new Harmonics(fileNameTrimmed);
+        view.repaint();
+	}
+	
     public HarmonicsEditor() {
-    	FileConvert.wavImport();
         view = new HarmonicsView();
         view.setBackground(Color.black);
         controller = new HarmonicsController(this);
@@ -110,7 +111,6 @@ public class HarmonicsEditor extends JFrame {
         controller.setView(view);
         add(view);
         setSize(1500, 800);
-        //openFileInHarmonicsEditor();
     }
     
 }
