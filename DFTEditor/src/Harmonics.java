@@ -36,15 +36,15 @@ public class Harmonics {
 		}
 	}
 	
-	private static class Harmonic {
+	public static class Harmonic {
 		
-		int note; // note = log2(freqInHz) * 31
+		int freq; // note = log2(freqInHz) * 31
 		int startTimeInMillis;
 		int lengthInMillis;
 		TreeMap<Integer, Float> timeInMillisToLogAmplitude = null;
 		
-		public Harmonic(int note, int startTimeInMillis, ArrayList<TAPair> TAInput) {
-			this.note = note;
+		public Harmonic(int freq, int startTimeInMillis, ArrayList<TAPair> TAInput) {
+			this.freq = freq;
 			this.startTimeInMillis = startTimeInMillis;
 			this.lengthInMillis = 0;
 			initHarmonic(TAInput);
@@ -71,7 +71,7 @@ public class Harmonics {
 		public void initHarmonic(String input) {
 			ArrayList<TAPair> TAInput = new ArrayList<TAPair>();
 			String[] taValues = input.split(":");
-			this.note = Integer.parseInt(taValues[0]);
+			this.freq = Integer.parseInt(taValues[0]);
 			this.startTimeInMillis = Integer.parseInt(taValues[1]);
 			this.lengthInMillis = 0;
 			for(int index = 2; index < taValues.length; index += 2) {
@@ -84,7 +84,7 @@ public class Harmonics {
 		
 		public String toString() {
 			StringBuffer sb = new StringBuffer();
-			sb.append(note + ":" + startTimeInMillis);
+			sb.append(freq + ":" + startTimeInMillis);
 			for(int timeInMillis: timeInMillisToLogAmplitude.keySet()) {
 				sb.append(":" + timeInMillis + ":" + timeInMillisToLogAmplitude.get(timeInMillis));
 			}

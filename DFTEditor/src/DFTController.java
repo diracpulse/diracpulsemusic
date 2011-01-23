@@ -11,22 +11,25 @@ public class DFTController implements MouseListener, ActionListener {
 	private DFTView view;
 	private DFTEditor parent;
 	private Harmonics harmonics;
-	private State currentState;
 	// This contains selected start points for harmonics
 	// Used to create harmonics once an end point is selected
 	private TreeMap<Integer, Integer> harmonicStartFreqToTime = null;
 	private DFTModel.TFA harmonicStart = null;
-
 	
-	private enum State {
-		SelectHarmonicStart,
-		SelectHarmonicEnd,
-		SelectHarmonic;
+	private class TFPair {
+		
+		private int time; // time/5ms
+		private int note; // log2(freqInHz)*31
+		
+		TFPair(int time, int note) {
+			this.time = time;
+			this.note = note;
+		}
+		
 	}
 	
 	DFTController(DFTEditor parent) {
 		this.parent = parent;
-		currentState = State.SelectHarmonicStart;
 		harmonicStartFreqToTime = new TreeMap<Integer, Integer>();
 	}
 	
@@ -44,12 +47,48 @@ public class DFTController implements MouseListener, ActionListener {
 	public void mousePressed(MouseEvent e){
 	    int x = e.getX();
 	    int y = e.getY();
-	    DFTModel.TFA selected = getFileData(x, y);
-	    if(selected != null) {
-	    	System.out.println(selected);
+	    if (view.getView() == DFTView.View.Digits) {
+	    	harmonicSelection(getFileData(x,y));
 	    } else {
-	    	System.out.println(x + " " + y);
+	    	DFTModel.TFA selected = getFileData(x, y);
+	    	if(selected != null) {
+	    		System.out.println(selected);
+	    	} else {
+	    		System.out.println(x + " " + y);
+	    	}
 	    }
+	}
+	
+	public void harmonicSelection(DFTModel.TFA selected) {
+		if(selected == null) {
+			System.out.println("DFTController: Selection aborted");
+			harmonicStart = null;
+			return;
+		}
+		if(harmonicStart == null) {
+			System.out.println("DFTController: Start Harmonic = " + selected);
+			harmonicStart = selected;
+			return;
+		}
+		DFTModel.TFA start = harmonicStart;
+		DFTModel.TFA end = selected;
+		if(start.time > end.time) {
+			System.out.println("DFTController: Exchanging START, END");
+			DFTModel.TFA temp = start;
+			start = end;
+			end = temp;
+		}
+		if(start.freq != end.freq) {
+			System.out.println("DFTController: Differing Frequency, Selection aborted");
+			harmonicStart = null;
+			return;
+		}
+		int freq = start.freq;
+		ArrayList<Harmonics.TAPair> TAInput = new ArrayList<Harmonics.TAPair>();
+		for(int time = start.time; time <= end.time; time++) {
+			TAInput.add(new Harmonics.TAPair(time * DFTEditor.timeStepInMillis, DFTEditor.getAmplitude(time, freq)));
+		}
+		
 	}
 	
 	public void mouseClicked(MouseEvent e){

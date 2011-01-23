@@ -18,6 +18,10 @@ public class DFTView extends JComponent {
 		view = v;
 	}
 	
+	public View getView() {
+		return view;
+	}
+	
 	private static View view = View.Pixels1; 
 	
 	public static int getXStep() {
