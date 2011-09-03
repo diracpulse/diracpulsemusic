@@ -1,5 +1,6 @@
 
 import javax.swing.*;
+
 import java.awt.*;
 import java.util.*;
 import java.io.*;
@@ -61,20 +62,20 @@ public class HarmonicsEditor extends JFrame {
         addNavigationButton("F+6");
         addNavigationButton("F-6");
         addNavigationButton("+250ms");
-        addNavigationButton("+500ms");
-        addNavigationButton("+1s");
-        addNavigationButton("+2s");
-        addNavigationButton("+5s");
-        addNavigationButton("+10s");
-        addNavigationButton("+30s");
-    	addNavigationButton("+1min");
         addNavigationButton("-250ms");
+        addNavigationButton("+500ms");
         addNavigationButton("-500ms");
-        addNavigationButton("-1s");
-        addNavigationButton("-2s");
+        addNavigationButton("+1s");
+        addNavigationButton("-1s");       
+        addNavigationButton("+2s");
+        addNavigationButton("-2s");     
+        addNavigationButton("+5s");
         addNavigationButton("-5s");
-        addNavigationButton("-10s");
-        addNavigationButton("-30s");
+        addNavigationButton("+10s");
+        addNavigationButton("-10s");      
+        addNavigationButton("+30s");
+        addNavigationButton("-30s");        
+    	addNavigationButton("+1min");
     	addNavigationButton("-1min");
     	return navigationBar;
 	}
