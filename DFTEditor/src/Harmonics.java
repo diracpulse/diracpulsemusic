@@ -10,11 +10,14 @@ import java.util.TreeMap;
 public class Harmonics {
 	
 	private String harmonicsFileName;
+	// Note -> StartTime -> Harmonic
 	private TreeMap<Integer, TreeMap<Integer, Harmonic>> noteToHarmonic;
 	private ArrayList<Harmonic> harmonicsArray;	
 	
 	Harmonics(String baseFileName) {
 		harmonicsFileName = baseFileName + ".harmonics";
+		noteToHarmonic = new TreeMap<Integer, TreeMap<Integer, Harmonic>>();
+		harmonicsArray = new ArrayList<Harmonic>();
 	}
 	
 	public static class TAPair {
@@ -95,6 +98,15 @@ public class Harmonics {
 	// returns true if freq and time are within the bounds of a saved harmonic
 	public boolean inHarmonic(int freq, int time) {
 		return false;
+	}
+	
+	// Currently just for implementing DrawLeftFreqs in Harmonic Editor
+	public ArrayList<Integer> getNotes() {
+		ArrayList<Integer> returnVal = new ArrayList<Integer>();
+		for(int power = 5; power < 15; power++) {
+			returnVal.add(power * 31);
+		}
+		return returnVal;
 	}
 	
 	public void addHarmonic(Harmonic harmonic) {

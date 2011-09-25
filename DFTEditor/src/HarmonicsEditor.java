@@ -106,6 +106,7 @@ public class HarmonicsEditor extends JFrame {
         view = new HarmonicsView();
         view.setBackground(Color.black);
         controller = new HarmonicsController(this);
+        harmonics = new Harmonics("Test");
         setJMenuBar(createMenuBar());
         add(createNavigationBar(), BorderLayout.PAGE_START);
         view.addMouseListener(controller);
