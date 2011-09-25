@@ -93,45 +93,15 @@ public class HarmonicsView extends JComponent {
 	}
 
 
-	public void DrawLeftFreqs(Graphics g) {
-		int iFreq;
-		int digitPlace;
-		int digitVal;
-		Color f;
-		Color b;
-		Color blank = new Color(0.0f, 0.0f, 0.0f);
-		// ADJUST FROM 2 DIGITS TO 1
-		int mainYStep = HarmonicsEditor.yStep;
-		if(view != View.Digits) mainYStep /= 2;
-		int yStep = mainYStep + mainYStep % getYStep();
-		int freqStep = yStep / getYStep();
-		int startFreq = HarmonicsEditor.upperY;
-		int freqRange = (getHeight() - HarmonicsEditor.upperOffset) / yStep * freqStep;
-		int endFreq = startFreq + freqRange;
-		for(int freq = startFreq; freq < endFreq; freq += freqStep) {
-			iFreq = HarmonicsEditor.maxRealFreq - freq;
-			int xOffset = 1;
-			double freqsPerOctave = (double) HarmonicsEditor.freqsPerOctave;
-			double dFreq = (double) iFreq;
-			float freqInHz = (float) Math.pow(2.0, dFreq / freqsPerOctave);			
-			for(digitPlace = 10000; digitPlace >= 1; digitPlace /= 10) {
-				digitVal = (int) Math.floor(freqInHz / digitPlace);
-				freqInHz -= digitVal * digitPlace;
-				f = new Color(1.0f, 1.0f, 1.0f);
-				b = new Color(0.0f, 0.0f, 0.0f);
-				if(freq >= (HarmonicsEditor.maxRealFreq - HarmonicsEditor.minRealFreq)) {
-					f = blank;
-					b = blank;
-				}
-				int screenX = xOffset * HarmonicsEditor.xStep;
-				int screenY = HarmonicsEditor.upperOffset + ((freq - startFreq) / freqStep) * yStep;
-				g.setColor(b);
-				g.fillRect(screenX, screenY, 6, 8);
-				DFTUtils.SevenSegmentSmall(g, f, b, screenX, 
-				                           screenY, 
-				                           digitVal);
-				xOffset++;
-			}
+	public void DrawLeftNotes(Graphics g) {
+		int screenX = 0;
+		int screenY = HarmonicsEditor.upperOffset;
+		int numdigits = 5;
+		Color background = new Color(0 ,0 ,0);
+		if (HarmonicsEditor.harmonics.getNotes() == null) return;
+		for(int note : HarmonicsEditor.harmonics.getNotes()) {
+			DFTUtils.DrawIntegerHorizonal(g, background, screenX, screenY, numdigits, note);
+			screenY += HarmonicsEditor.yStep;
 		}
 	}
 		
@@ -139,33 +109,8 @@ public class HarmonicsView extends JComponent {
 		// clear old data
 		g.setColor(new Color(0.0f, 0.0f, 0.0f));
 		g.fillRect(HarmonicsEditor.leftOffset, HarmonicsEditor.upperOffset, getWidth(), getHeight());
-		DrawLeftFreqs(g);
-		DrawUpperTimes(g);		
-		if(view != View.Digits) {
-			drawFileDataAsPixels(g);
-			return;
-		}
-		//DrawMaxAmpAtFreq(g);
-		int startTime = HarmonicsEditor.leftX;
-		int endTime = startTime + ((getWidth() - HarmonicsEditor.leftOffset) / HarmonicsEditor.xStep);
-		int startFreq = HarmonicsEditor.upperY;
-		int endFreq = startFreq + ((getHeight() - HarmonicsEditor.upperOffset) / HarmonicsEditor.yStep);
-		for(int time = startTime; time < endTime; time++) {
-            if(!isXInBounds(time)) break;
-            for(int freq = startFreq; freq < endFreq; freq++) {
-                if(!isYInBounds(freq)) break;
-        		int screenX = HarmonicsEditor.leftOffset + ((time - HarmonicsEditor.leftX) * HarmonicsEditor.xStep);
-        		int screenY = HarmonicsEditor.upperOffset + ((freq - HarmonicsEditor.upperY) * HarmonicsEditor.yStep);
-                float amp = HarmonicsEditor.getAmplitude(time, freq);
-                if(amp > 0.0f) {
-                	drawAmplitude(g, screenX, screenY, amp, HarmonicsEditor.minAmplitude, HarmonicsEditor.maxAmplitude, 2);
-                }
-			}
-		}
-        //g2.setColor(new Color(1.0f, 0.0f, 0.0f, 0.5f));
-        //g2.setStroke(new BasicStroke(4));
-        //g2.drawLine(100, 400, 1500, 400);
-		//DrawMinimaAmdMaximas(g);
+		DrawLeftNotes(g);
+		DrawUpperTimes(g);
 	}
 	
 	public void drawAmplitude(Graphics g, int screenX, int screenY, float currentVal, float minVal, float maxVal, int digits) {

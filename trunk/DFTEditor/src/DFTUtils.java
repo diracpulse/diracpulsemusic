@@ -20,17 +20,19 @@ public class DFTUtils {
 		return new DFTModel.TFA(time, freq, DFTEditor.getAmplitude(time, freq));
 	}
 	
-	public static int getIncrement(TreeMap<Integer, Boolean> isCollapsed, int value, int step) {
-		int key = value / step;
-		if(isCollapsed == null) return 1;
-		// key may be too large if bottom of screen extends beyond data
-		if(!isCollapsed.containsKey(key)) {
-			return 1;
+	public static void DrawIntegerHorizonal(Graphics g, Color b, int screenX, int screenY, int numdigits, int value) {
+		for(int digitPlace = (int) Math.round(Math.pow(10, numdigits)); digitPlace >= 1; digitPlace /= 10) {
+			int digitVal = (int) Math.floor(value / digitPlace);
+			value -= digitVal * digitPlace;
+			Color f = new Color(1.0f, 1.0f, 1.0f);
+			//Color b = new Color(0.0f, 0.0f, 0.0f);
+			g.setColor(b);
+			g.fillRect(screenX, screenY, 6, 8);
+			DFTUtils.SevenSegmentSmall(g, f, b, screenX, 
+			                           screenY, 
+			                           digitVal);
+			screenX += HarmonicsEditor.xStep;
 		}
-		if(isCollapsed.get(key).booleanValue() == true) {
-			return step;
-		}
-		return 1;
 	}
 	
 	public static void DrawSegmentData(Graphics g, Color b, int screenX, int screenY, int digitVal) {
@@ -45,6 +47,7 @@ public class DFTUtils {
 		// g.drawLine(screenX, bottomScreenY, screenX + xStep, bottomScreenY);
 	}
 	
+	//This takes two vertical lines, digitVal is above fraction val 
 	public static void DrawSegmentData(Graphics g, Color b, int screenX, int screenY, int digitVal, int fractionVal) {
 		Color black = new Color(0.0f, 0.0f, 0.0f);
 		int lowerScreenY = screenY + DFTEditor.yStep / 2;			
