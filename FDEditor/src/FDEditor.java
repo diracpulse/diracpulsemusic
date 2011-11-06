@@ -17,14 +17,15 @@ public class FDEditor extends JFrame {
 	public static JToolBar navigationBar;
 	public static TreeMap  timeToFreqToData;
 	
+	public static int startTimeIndex = 0; // = (actual Time)/ timeStepInMillis
+	public static int startFreqIndex = 0; // = 
+	
 	public static int segmentWidth = 6;
 	public static int segmentHeight = 9;
 	public static int leftFreqSegments = 8; // used by drawFreqScale
-	public static int upperTimeSegments = 7; // used by drawTimeScale
+	public static int upperTimeSegments = 6; // used by drawTimeScale
 	public static int xDataStart = segmentWidth * leftFreqSegments; // start of first data cell
 	public static int yDataStart = segmentHeight * upperTimeSegments; // start of first data cell
-	public static int leftX = 0; // index of freq in leftmost data cell
-	public static int upperY = 0; // index of time in uppermost data cell
 	public static int timeStepInMillis = 5; // time in ms = time * timeStepInMillis
 	
 	public JMenuBar createMenuBar() {

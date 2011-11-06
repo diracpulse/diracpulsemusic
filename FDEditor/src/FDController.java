@@ -8,14 +8,14 @@ import javax.swing.JOptionPane;
 
 public class FDController implements MouseListener, ActionListener {
 	
-	private DFTView view;
+	private FDView view;
 	private FDEditor parent;
 
 	FDController(FDEditor parent) {
 		this.parent = parent;
 	}
 	
-	public void setView(DFTView view) {
+	public void setView(FDView view) {
 		this.view = view;
 	}	
 	public void mouseReleased(MouseEvent e) {}
@@ -24,6 +24,7 @@ public class FDController implements MouseListener, ActionListener {
 	public void mousePressed(MouseEvent e){
 	    int x = e.getX();
 	    int y = e.getY();
+	    /*
 	    if (view.getView() == DFTView.View.Digits) {
 	    	//harmonicSelection(getFileData(x,y));
 	    } else {
@@ -34,6 +35,7 @@ public class FDController implements MouseListener, ActionListener {
 	    		System.out.println(x + " " + y);
 	    	}
 	    }
+	    */
 	}
 	
 	public void mouseClicked(MouseEvent e){
@@ -74,21 +76,23 @@ public class FDController implements MouseListener, ActionListener {
 	    */
 	}
 	
-	public static DFTModel.TFA getFileData(int mouseX, int mouseY) {
+	public static void getFileData(int mouseX, int mouseY) {
+		/*
 		if(mouseX < FDEditor.leftOffset || mouseY < FDEditor.upperOffset) return null;
 		int xStep = DFTView.getXStep();
 		int yStep = DFTView.getYStep();
-		int time = (mouseX - FDEditor.leftOffset) / xStep + FDEditor.leftX;
-		int freq = (mouseY - FDEditor.upperOffset) / yStep + FDEditor.upperY;
+		int time = (mouseX - FDEditor.leftOffset) / xStep + FDEditor.startTimeIndex;
+		int freq = (mouseY - FDEditor.upperOffset) / yStep + FDEditor.startFreqIndex;
 		int realFreq = FDEditor.maxRealFreq - freq;
 		DFTModel.TFA returnVal = new DFTModel.TFA(time, realFreq, FDEditor.getAmplitude(time, freq));
 		System.out.println("Selected: " + returnVal.getTimeInMillis() + " " + returnVal.getFreqInHz() + " " + returnVal.getAmplitude());
 		return returnVal;
+		*/
 	}
 	
     public void actionPerformed(ActionEvent e) {
-        int apOldUpperY = FDEditor.upperY;
-        int apOldLeftX = FDEditor.leftX;
+        int apOldUpperY = FDEditor.startFreqIndex;
+        int apOldLeftX = FDEditor.startTimeIndex;
         // Frequency values have reverse sign due to screen display
         if ("F+31".equals(e.getActionCommand())) adjustY(-31);
         if ("F-31".equals(e.getActionCommand())) adjustY(31);
@@ -110,41 +114,41 @@ public class FDController implements MouseListener, ActionListener {
         if ("-10s".equals(e.getActionCommand())) adjustX(-10000 / FDEditor.timeStepInMillis);
         if ("-30s".equals(e.getActionCommand())) adjustX(-30000 / FDEditor.timeStepInMillis);
     	if ("-1min".equals(e.getActionCommand())) adjustX(-60000 / FDEditor.timeStepInMillis);
-        if((apOldUpperY != FDEditor.upperY) || (apOldLeftX != FDEditor.leftX)) {
+        if((apOldUpperY != FDEditor.startFreqIndex) || (apOldLeftX != FDEditor.startTimeIndex)) {
         	FDEditor.view.repaint();
         }
     }
     
     private void adjustY(int deltaY) {
     	if(deltaY > 0) {
-    		int maxY = (FDEditor.maxRealFreq - FDEditor.minRealFreq);
-    		if((FDEditor.upperY + deltaY) < maxY) {
-    			FDEditor.upperY += deltaY;
+    		int maxY = 1000000; // (FDEditor.maxRealFreq - FDEditor.minRealFreq);
+    		if((FDEditor.startFreqIndex + deltaY) < maxY) {
+    			FDEditor.startFreqIndex += deltaY;
     		} else {
-    			FDEditor.upperY = maxY;
+    			FDEditor.startFreqIndex = maxY;
     		}
     	} else {
-    		if((FDEditor.upperY + deltaY) > 0) {
-    			FDEditor.upperY += deltaY;
+    		if((FDEditor.startFreqIndex + deltaY) > 0) {
+    			FDEditor.startFreqIndex += deltaY;
     		} else {
-    			FDEditor.upperY = 0;
+    			FDEditor.startFreqIndex = 0;
     		}
     	}
     }
     
     private void adjustX(int deltaX) {
     	if(deltaX > 0) {
-    		int maxX = FDEditor.maxTime;
-    		if((FDEditor.leftX + deltaX) < maxX) {
-    			FDEditor.leftX += deltaX;
+    		int maxX = 1000000; //FDEditor.maxTime;
+    		if((FDEditor.startTimeIndex + deltaX) < maxX) {
+    			FDEditor.startTimeIndex += deltaX;
     		} else {
-    			FDEditor.leftX = maxX;
+    			FDEditor.startTimeIndex = maxX;
     		}
     	} else {
-    		if((FDEditor.leftX + deltaX) > 0) {
-    			FDEditor.leftX += deltaX;
+    		if((FDEditor.startTimeIndex + deltaX) > 0) {
+    			FDEditor.startTimeIndex += deltaX;
     		} else {
-    			FDEditor.leftX = 0;
+    			FDEditor.startTimeIndex = 0;
     		}
     	}
     }

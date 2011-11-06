@@ -3,18 +3,29 @@ import java.util.*;
 
 public class FDUtils {
 
-	public static void DrawIntegerHorizonal(Graphics g, Color b, int screenX, int screenY, int numdigits, int value) {
-		for(int digitPlace = (int) Math.round(Math.pow(10, numdigits)); digitPlace >= 1; digitPlace /= 10) {
+	public static void DrawIntegerHorizonal(Graphics g, Color b, Color f, int screenX, int screenY, int numdigits, int value) {
+		for(int digitPlace = (int) Math.round(Math.pow(10, numdigits - 1)); digitPlace >= 1; digitPlace /= 10) {
 			int digitVal = (int) Math.floor(value / digitPlace);
 			value -= digitVal * digitPlace;
-			Color f = new Color(1.0f, 1.0f, 1.0f);
-			//Color b = new Color(0.0f, 0.0f, 0.0f);
 			g.setColor(b);
 			g.fillRect(screenX, screenY, 6, 8);
 			FDUtils.SevenSegmentSmall(g, f, b, screenX, 
 			                           screenY, 
 			                           digitVal);
 			screenX += FDEditor.segmentWidth;
+		}
+	}
+	
+	public static void DrawIntegerVertical(Graphics g, Color b, Color f, int screenX, int screenY, int numdigits, int value) {
+		for(int digitPlace = (int) Math.round(Math.pow(10, numdigits - 1)); digitPlace >= 1; digitPlace /= 10) {
+			int digitVal = (int) Math.floor(value / digitPlace);
+			value -= digitVal * digitPlace;
+			g.setColor(b);
+			g.fillRect(screenX, screenY, 6, 8);
+			FDUtils.SevenSegmentSmall(g, f, b, screenX, 
+			                           screenY, 
+			                           digitVal);
+			screenY += FDEditor.segmentHeight;
 		}
 	}
 	
