@@ -15,18 +15,19 @@ public class FDEditor extends JFrame {
 	public static FDController controller;
 	public static FDActionHandler actionHandler;
 	public static JToolBar navigationBar;
-	public static TreeMap  timeToFreqToData;
+	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToData;
 	
 	public static int startTimeIndex = 0; // = (actual Time)/ timeStepInMillis
 	public static int startFreqIndex = 0; // = 
 	
-	public static int segmentWidth = 6;
-	public static int segmentHeight = 9;
-	public static int leftFreqSegments = 8; // used by drawFreqScale
-	public static int upperTimeSegments = 6; // used by drawTimeScale
-	public static int xDataStart = segmentWidth * leftFreqSegments; // start of first data cell
-	public static int yDataStart = segmentHeight * upperTimeSegments; // start of first data cell
-	public static int timeStepInMillis = 5; // time in ms = time * timeStepInMillis
+	public static final int segmentWidth = 6;
+	public static final int segmentHeight = 9;
+	public static final int leftFreqSegments = 8; // used by drawFreqScale
+	public static final int upperTimeSegments = 6; // used by drawTimeScale
+	public static final int xDataStart = segmentWidth * leftFreqSegments; // start of first data cell
+	public static final int yDataStart = segmentHeight * upperTimeSegments; // start of first data cell
+	public static final int timeStepInMillis = 5; // timeInMillis = time * timeStepInMillis
+	public static final int noteBase = 31; // frequencyInHz = pow(2.0, (note / noteBase))
 	
 	public JMenuBar createMenuBar() {
         FDActionHandler actionHandler = new FDActionHandler(this);
@@ -82,6 +83,7 @@ public class FDEditor extends JFrame {
         controller.setView(view);
         add(view);
         setSize(1500, 800);
+        initTimeToNoteToData();
         //openFileInFDEditor();
     }
     
@@ -105,5 +107,38 @@ public class FDEditor extends JFrame {
 			}
 		});
 	}
-
+	
+	public static TreeSet<Integer> getNotes() {
+		TreeSet<Integer> notes = new TreeSet<Integer>();
+		for(Integer time: timeToNoteToData.keySet()) {
+			for(Integer note: timeToNoteToData.get(time).keySet()) {
+				if(!notes.contains(note)) notes.add(note);
+			}
+		}
+		return notes;
+	}
+	
+	public void initTimeToNoteToData() {
+		timeToNoteToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
+	}
+	
+	// returns true if data already exists
+	public boolean addData(FDData data, boolean overwrite) {
+		if(!timeToNoteToData.containsKey(data.getTime())) {
+			timeToNoteToData.put(data.getTime(), new TreeMap<Integer, FDData>());
+		}
+		TreeMap<Integer, FDData> noteToData = timeToNoteToData.get(data.getTime());
+		if(!noteToData.containsKey(data.getNote())) {
+			noteToData.put(data.getNote(), data);
+			return false;
+		} else {
+			if(overwrite) {
+				noteToData.put(data.getNote(), data);
+				return true;
+			} else {
+				return true;
+			}
+		}
+	}
+	
 }

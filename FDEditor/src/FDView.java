@@ -75,9 +75,26 @@ public class FDView extends JComponent {
 
 
 	public void DrawLeftFreqs(Graphics g) {
-		return;
+		Color f;
+		Color b;
+		int screenX = 0;
+		int maxScreenY = getHeight();
+		int screenY = FDEditor.yDataStart;
+		for(Integer note: FDEditor.getNotes()) {
+		    int octaveFreqInHz = (int) Math.floor(Math.pow(2, (note / FDEditor.noteBase)));
+		    int displayNote = note % FDEditor.noteBase;
+			b = new Color(1.0f, 1.0f, 1.0f);
+			f = new Color(0.0f, 0.0f, 0.0f);
+			FDUtils.DrawIntegerHorizontal(g, b, f, screenX, screenY, 5, octaveFreqInHz);
+			// millis
+			screenY = 6 * FDEditor.segmentHeight; // leave a space (5 + 1)
+			f = new Color(1.0f, 1.0f, 1.0f);
+			b = new Color(0.0f, 0.0f, 0.0f);
+			FDUtils.DrawIntegerHorizontal(g, b, f, screenX, screenY, 3, displayNote);
+			screenY += FDEditor.segmentHeight;
+		}
 	}
-		
+
 	public void DrawFileData(Graphics g, boolean scaleLines) {
 		DrawLeftFreqs(g);
 		DrawUpperTimes(g);		

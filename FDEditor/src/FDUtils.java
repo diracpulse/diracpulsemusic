@@ -3,7 +3,7 @@ import java.util.*;
 
 public class FDUtils {
 
-	public static void DrawIntegerHorizonal(Graphics g, Color b, Color f, int screenX, int screenY, int numdigits, int value) {
+	public static void DrawIntegerHorizontal(Graphics g, Color b, Color f, int screenX, int screenY, int numdigits, int value) {
 		for(int digitPlace = (int) Math.round(Math.pow(10, numdigits - 1)); digitPlace >= 1; digitPlace /= 10) {
 			int digitVal = (int) Math.floor(value / digitPlace);
 			value -= digitVal * digitPlace;
