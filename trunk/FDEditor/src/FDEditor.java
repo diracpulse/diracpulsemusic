@@ -15,6 +15,9 @@ public class FDEditor extends JFrame {
 	public static FDController controller;
 	public static FDActionHandler actionHandler;
 	public static JToolBar navigationBar;
+	public static JToolBar dataCreationBar;
+	public static JTextField startTextField;
+	public static JTextField endTextField;
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToData;
 	
 	public static int startTimeIndex = 0; // = (actual Time)/ timeStepInMillis
@@ -28,6 +31,8 @@ public class FDEditor extends JFrame {
 	public static final int yDataStart = segmentHeight * upperTimeSegments; // start of first data cell
 	public static final int timeStepInMillis = 5; // timeInMillis = time * timeStepInMillis
 	public static final int noteBase = 31; // frequencyInHz = pow(2.0, (note / noteBase))
+	
+	//Data Entry Classes
 	
 	public JMenuBar createMenuBar() {
         FDActionHandler actionHandler = new FDActionHandler(this);
@@ -66,6 +71,17 @@ public class FDEditor extends JFrame {
 		navigationBar.add(button);
 	}
 	
+	public JToolBar createDataCreationBar() {
+		dataCreationBar = new JToolBar("Data Creation Bar");
+		startTextField = new JTextField(40);
+		startTextField.addActionListener(controller);
+		dataCreationBar.add(startTextField);
+		endTextField = new JTextField(40);
+		endTextField.addActionListener(controller);
+		dataCreationBar.add(endTextField);
+		return dataCreationBar;
+	}
+	
 	public void openFileInFDEditor() {
         //String fileName = FileTools.PromptForFileOpen(view);
         //ReadFDFileData(fileName, "mono5ms");
@@ -79,6 +95,7 @@ public class FDEditor extends JFrame {
         controller = new FDController(this);
         setJMenuBar(createMenuBar());
         add(createNavigationBar(), BorderLayout.PAGE_START);
+        add(createDataCreationBar(), BorderLayout.PAGE_END);
         view.addMouseListener(controller);
         controller.setView(view);
         add(view);
@@ -125,6 +142,7 @@ public class FDEditor extends JFrame {
 	// returns true if data already exists in interpolated region
 	public boolean addDataInterpolate(FDData start, FDData end, boolean overwrite) {
 		boolean returnVal = false;
+		ArrayList<FDData> interpolatedData = new ArrayList<FDData>();
 		if(start.time < end.time) {
 			FDData temp = start;
 			start = end;
@@ -140,31 +158,40 @@ public class FDEditor extends JFrame {
 			double dNote = start.noteFraction + deltaNote * elapsedTime / deltaTime;
 			int note = (int) Math.round(dNote);
 			double noteFraction = dNote - note;
-			FDData data = new FDData(time, note, logAmplitude);
-			if(addData(data, overwrite)) {
-				returnVal = true; 
-			}
+			FDData dataPoint = new FDData(time, note, logAmplitude);
+			interpolatedData.add(dataPoint);
 		}
+		returnVal = containsData(interpolatedData);
+		if(returnVal && !overwrite) return returnVal;
+		addData(interpolatedData);
 		return returnVal;
 	}
 	
+	public void addData(ArrayList<FDData> dataArray) {
+		for(FDData dataPoint: dataArray) addData(dataPoint);
+	}
+	
+	public boolean containsData(ArrayList<FDData> dataArray) {
+		for(FDData dataPoint: dataArray) {
+			if(containsData(dataPoint)) return true;
+		}
+		return false;
+	}
+	
 	// returns true if data already exists
-	public boolean addData(FDData data, boolean overwrite) {
+	public void addData(FDData data) {
 		if(!timeToNoteToData.containsKey(data.getTime())) {
 			timeToNoteToData.put(data.getTime(), new TreeMap<Integer, FDData>());
 		}
 		TreeMap<Integer, FDData> noteToData = timeToNoteToData.get(data.getTime());
-		if(!noteToData.containsKey(data.getNote())) {
-			noteToData.put(data.getNote(), data);
-			return false;
-		} else {
-			if(overwrite) {
-				noteToData.put(data.getNote(), data);
-				return true;
-			} else {
-				return true;
-			}
-		}
+		noteToData.put(data.getNote(), data);
+	}
+	
+	public boolean containsData(FDData data) {
+		if(!timeToNoteToData.containsKey(data.getTime())) return false;
+		TreeMap<Integer, FDData> noteToData = timeToNoteToData.get(data.getTime());
+		if(!noteToData.containsKey(data.getNote())) return false;
+		return true;
 	}
 	
 }
