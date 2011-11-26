@@ -4,7 +4,11 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
+import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 public class FDController implements MouseListener, ActionListener {
 	
@@ -91,6 +95,10 @@ public class FDController implements MouseListener, ActionListener {
 	}
 	
     public void actionPerformed(ActionEvent e) {
+    	if(e.getSource().getClass() == JTextField.class) {
+    		handleDataCreationAction(e);
+    		return;
+    	}
         int apOldUpperY = FDEditor.startFreqIndex;
         int apOldLeftX = FDEditor.startTimeIndex;
         // Frequency values have reverse sign due to screen display
@@ -117,6 +125,11 @@ public class FDController implements MouseListener, ActionListener {
         if((apOldUpperY != FDEditor.startFreqIndex) || (apOldLeftX != FDEditor.startTimeIndex)) {
         	FDEditor.view.repaint();
         }
+    }
+    
+    public void handleDataCreationAction(ActionEvent e) {
+    	System.out.println("Start: " + FDEditor.startTextField.getText());
+    	System.out.println("End: " + FDEditor.endTextField.getText());
     }
     
     private void adjustY(int deltaY) {
