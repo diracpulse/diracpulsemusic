@@ -9,6 +9,7 @@ public class FDData {
 	DataType type = DataType.FUNDAMENTAL;
 	int time;
 	int note;
+	double noteFraction = 0.0; // frequency = 2^(note/31) + 2^(noteFraction/31);
 	double logAmplitude;
 	
 	public FDData(int time, int note, double logAmplitude) {
@@ -30,6 +31,14 @@ public class FDData {
 	
 	int getNote() {
 		return note;
+	}
+	
+	double getNoteFraction() {
+		return noteFraction;
+	}
+	
+	void setNoteFraction(double noteFraction) {
+		this.noteFraction = noteFraction; 
 	}
 		
 }

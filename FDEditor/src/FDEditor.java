@@ -122,6 +122,32 @@ public class FDEditor extends JFrame {
 		timeToNoteToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
 	}
 	
+	// returns true if data already exists in interpolated region
+	public boolean addDataInterpolate(FDData start, FDData end, boolean overwrite) {
+		boolean returnVal = false;
+		if(start.time < end.time) {
+			FDData temp = start;
+			start = end;
+			end = temp;
+			System.out.println("FDEditor.addDataInterpolate start,end exchanged");
+		}
+		double deltaTime = end.time - start.time;
+		double deltaLogAmplitude = end.logAmplitude - start.logAmplitude;
+		double deltaNote = end.note - start.note;
+		for(int time = start.time; time < end.time; time++) {
+			double elapsedTime = time - start.time;
+			double logAmplitude = start.logAmplitude + deltaLogAmplitude * elapsedTime / deltaTime;
+			double dNote = start.noteFraction + deltaNote * elapsedTime / deltaTime;
+			int note = (int) Math.round(dNote);
+			double noteFraction = dNote - note;
+			FDData data = new FDData(time, note, logAmplitude);
+			if(addData(data, overwrite)) {
+				returnVal = true; 
+			}
+		}
+		return returnVal;
+	}
+	
 	// returns true if data already exists
 	public boolean addData(FDData data, boolean overwrite) {
 		if(!timeToNoteToData.containsKey(data.getTime())) {
