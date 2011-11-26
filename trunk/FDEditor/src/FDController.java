@@ -95,8 +95,8 @@ public class FDController implements MouseListener, ActionListener {
 	}
 	
     public void actionPerformed(ActionEvent e) {
-    	if(e.getSource().getClass() == JTextField.class) {
-    		handleDataCreationAction(e);
+    	if("Add Data".equals(e.getActionCommand())) {
+    		handleDataCreationAction();
     		return;
     	}
         int apOldUpperY = FDEditor.startFreqIndex;
@@ -127,9 +127,13 @@ public class FDController implements MouseListener, ActionListener {
         }
     }
     
-    public void handleDataCreationAction(ActionEvent e) {
-    	System.out.println("Start: " + FDEditor.startTextField.getText());
-    	System.out.println("End: " + FDEditor.endTextField.getText());
+    public void handleDataCreationAction() {
+    	System.out.println("Start Time: " + FDEditor.startTimeTextField.getText());
+    	System.out.println("Start Note: " + FDEditor.startNoteTextField.getText());
+    	System.out.println("Start Amplitude: " + FDEditor.startAmplitudeTextField.getText());
+    	System.out.println("End Time: " + FDEditor.endTimeTextField.getText());
+    	System.out.println("End Note: " + FDEditor.endNoteTextField.getText());
+    	System.out.println("End Amplitude: " + FDEditor.endAmplitudeTextField.getText());
     }
     
     private void adjustY(int deltaY) {
