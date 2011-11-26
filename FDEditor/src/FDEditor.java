@@ -16,8 +16,6 @@ public class FDEditor extends JFrame {
 	public static FDActionHandler actionHandler;
 	public static JToolBar navigationBar;
 	public static JToolBar dataCreationBar;
-	public static JTextField startTextField;
-	public static JTextField endTextField;
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToData;
 	
 	public static int startTimeIndex = 0; // = (actual Time)/ timeStepInMillis
@@ -32,7 +30,13 @@ public class FDEditor extends JFrame {
 	public static final int timeStepInMillis = 5; // timeInMillis = time * timeStepInMillis
 	public static final int noteBase = 31; // frequencyInHz = pow(2.0, (note / noteBase))
 	
-	//Data Entry Classes
+	//Data Entry Swing Classes
+	public static JTextField startTimeTextField;
+	public static JTextField startNoteTextField;
+	public static JTextField startAmplitudeTextField;
+	public static JTextField endTimeTextField;
+	public static JTextField endNoteTextField;
+	public static JTextField endAmplitudeTextField;
 	
 	public JMenuBar createMenuBar() {
         FDActionHandler actionHandler = new FDActionHandler(this);
@@ -73,12 +77,27 @@ public class FDEditor extends JFrame {
 	
 	public JToolBar createDataCreationBar() {
 		dataCreationBar = new JToolBar("Data Creation Bar");
-		startTextField = new JTextField(40);
-		startTextField.addActionListener(controller);
-		dataCreationBar.add(startTextField);
-		endTextField = new JTextField(40);
-		endTextField.addActionListener(controller);
-		dataCreationBar.add(endTextField);
+		dataCreationBar.add(new JLabel("START TIME: (S)"));
+		startTimeTextField = new JTextField(3 + 1 + 3); // SSS.SSSS
+		dataCreationBar.add(startTimeTextField);
+		dataCreationBar.add(new JLabel("START NOTE: (Octave,Note.Fraction)")); 
+		startNoteTextField = new JTextField(2 + 1 + 2 + 1 + 2); // OO,NN.FF
+		dataCreationBar.add(startNoteTextField);
+		dataCreationBar.add(new JLabel("START AMPLITUDE(2.0 ^ VALUE)"));
+		startAmplitudeTextField = new JTextField(2 + 1 + 2); // AA.AA
+		dataCreationBar.add(startAmplitudeTextField);
+		dataCreationBar.add(new JLabel("end TIME: (S)"));
+		endTimeTextField = new JTextField(3 + 1 + 3); // SSS.SSSS
+		dataCreationBar.add(endTimeTextField);
+		dataCreationBar.add(new JLabel("end NOTE: (Octave,Note.Fraction)")); 
+		endNoteTextField = new JTextField(2 + 1 + 2 + 1 + 2); // OO,NN.FF
+		dataCreationBar.add(endNoteTextField);
+		dataCreationBar.add(new JLabel("end AMPLITUDE(2.0 ^ VALUE)"));
+		endAmplitudeTextField = new JTextField(2 + 1 + 2); // AA.AA
+		dataCreationBar.add(endAmplitudeTextField);
+		JButton button = new JButton("Add Data");
+		button.addActionListener(controller);
+		dataCreationBar.add(button);
 		return dataCreationBar;
 	}
 	
@@ -94,8 +113,9 @@ public class FDEditor extends JFrame {
         view.setBackground(Color.black);
         controller = new FDController(this);
         setJMenuBar(createMenuBar());
-        add(createNavigationBar(), BorderLayout.PAGE_START);
-        add(createDataCreationBar(), BorderLayout.PAGE_END);
+        //this.setLayout(new GridLayout(3,0));
+        add(createNavigationBar(), BorderLayout.NORTH);
+        add(createDataCreationBar(), BorderLayout.SOUTH);
         view.addMouseListener(controller);
         controller.setView(view);
         add(view);
@@ -159,6 +179,7 @@ public class FDEditor extends JFrame {
 			int note = (int) Math.round(dNote);
 			double noteFraction = dNote - note;
 			FDData dataPoint = new FDData(time, note, logAmplitude);
+			dataPoint.setNoteFraction(noteFraction);
 			interpolatedData.add(dataPoint);
 		}
 		returnVal = containsData(interpolatedData);
