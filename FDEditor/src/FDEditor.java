@@ -27,17 +27,19 @@ public class FDEditor extends JFrame {
 	public static final int upperTimeSegments = 6; // used by drawTimeScale
 	public static final int xDataStart = segmentWidth * leftFreqSegments; // start of first data cell
 	public static final int yDataStart = segmentHeight * upperTimeSegments; // start of first data cell
-	public static final int timeStepInMillis = 5; // timeInMillis = time * timeStepInMillis
-	public static final int noteBase = 31; // frequencyInHz = pow(2.0, (note / noteBase))
+	public static final int timeStepInMillis = FDData.timeStepInMillis; // timeInMillis = time * timeStepInMillis
+	public static final int noteBase = FDData.noteBase; // frequencyInHz = pow(2.0, (note / noteBase))
 	
 	//Data Entry Swing Classes
 	public static JTextField startTimeTextField;
-	public static JTextField startNoteTextField;
-	public static JTextField startAmplitudeTextField;
+	public static JTextField startOctaveTextField;
+	public static JTextField startNoteOffsetTextField;
+	public static JTextField startLogAmplitudeTextField;
 	public static JTextField endTimeTextField;
-	public static JTextField endNoteTextField;
-	public static JTextField endAmplitudeTextField;
-	
+	public static JTextField endOctaveTextField;
+	public static JTextField endNoteOffsetTextField;
+	public static JTextField endLogAmplitudeTextField;
+		
 	public JMenuBar createMenuBar() {
         FDActionHandler actionHandler = new FDActionHandler(this);
         return actionHandler.createMenuBar();
@@ -77,24 +79,30 @@ public class FDEditor extends JFrame {
 	
 	public JToolBar createDataCreationBar() {
 		dataCreationBar = new JToolBar("Data Creation Bar");
-		dataCreationBar.add(new JLabel("START TIME: (S)"));
+		dataCreationBar.add(new JLabel("S TIME:"));
 		startTimeTextField = new JTextField(3 + 1 + 3); // SSS.SSSS
 		dataCreationBar.add(startTimeTextField);
-		dataCreationBar.add(new JLabel("START NOTE: (Octave,Note.Fraction)")); 
-		startNoteTextField = new JTextField(2 + 1 + 2 + 1 + 2); // OO,NN.FF
-		dataCreationBar.add(startNoteTextField);
-		dataCreationBar.add(new JLabel("START AMPLITUDE(2.0 ^ VALUE)"));
-		startAmplitudeTextField = new JTextField(2 + 1 + 2); // AA.AA
-		dataCreationBar.add(startAmplitudeTextField);
-		dataCreationBar.add(new JLabel("end TIME: (S)"));
+		dataCreationBar.add(new JLabel("S(TART) OCTAVE:")); 
+		startOctaveTextField = new JTextField(2); // OO
+		dataCreationBar.add(startOctaveTextField);
+		dataCreationBar.add(new JLabel("S NOTE OFFSET:")); 
+		startNoteOffsetTextField = new JTextField(2 + 1 + 2); // NN.FF
+		dataCreationBar.add(startNoteOffsetTextField);
+		dataCreationBar.add(new JLabel("S LOG AMPLITUDE:"));
+		startLogAmplitudeTextField = new JTextField(2 + 1 + 2); // AA.AA
+		dataCreationBar.add(startLogAmplitudeTextField);
+		dataCreationBar.add(new JLabel("E(ND) TIME:"));
 		endTimeTextField = new JTextField(3 + 1 + 3); // SSS.SSSS
 		dataCreationBar.add(endTimeTextField);
-		dataCreationBar.add(new JLabel("end NOTE: (Octave,Note.Fraction)")); 
-		endNoteTextField = new JTextField(2 + 1 + 2 + 1 + 2); // OO,NN.FF
-		dataCreationBar.add(endNoteTextField);
-		dataCreationBar.add(new JLabel("end AMPLITUDE(2.0 ^ VALUE)"));
-		endAmplitudeTextField = new JTextField(2 + 1 + 2); // AA.AA
-		dataCreationBar.add(endAmplitudeTextField);
+		dataCreationBar.add(new JLabel("E OCTAVE:")); 
+		endOctaveTextField = new JTextField(2); // OO
+		dataCreationBar.add(endOctaveTextField);
+		dataCreationBar.add(new JLabel("E NOTE OFFSET:")); 
+		endNoteOffsetTextField = new JTextField(2 + 1 + 2); // NN.FF
+		dataCreationBar.add(endNoteOffsetTextField);
+		dataCreationBar.add(new JLabel("E LOG AMPLITUDE"));
+		endLogAmplitudeTextField = new JTextField(2 + 1 + 2); // AA.AA
+		dataCreationBar.add(endLogAmplitudeTextField);
 		JButton button = new JButton("Add Data");
 		button.addActionListener(controller);
 		dataCreationBar.add(button);
@@ -159,28 +167,87 @@ public class FDEditor extends JFrame {
 		timeToNoteToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
 	}
 	
+	/* Input ArrayList<String> = 
+	 * time (in seconds),
+	 * octave = floor(note / noteBase),
+	 * note offset = note - octave * noteBase;
+	 * logAmplitude = log2(amplitude)
+	 */
+	public static boolean addDataInterpolate(ArrayList<String> start, ArrayList<String> end, boolean overwrite) {
+		FDData startDataPoint;
+		FDData endDataPoint;
+		int startTime;
+		int startNote;
+		double startNoteFraction;
+		double startLogAmplitude;
+		int endTime;
+		int endNote;
+		double endNoteFraction;
+		double endLogAmplitude;
+		try {
+			double startTimeSeconds = new Double(start.get(0));
+			startTime = (int) Math.round(1000.0 * startTimeSeconds / timeStepInMillis);
+			int startOctave = new Integer(start.get(1));
+			double dStartNoteOffset = new Double(start.get(2));
+			int startNoteOffset = (int) Math.round(dStartNoteOffset);
+			startNoteFraction = dStartNoteOffset - startNoteOffset;
+			startLogAmplitude = new Double(start.get(3));
+			startNote = startOctave * noteBase + startNoteOffset;
+			double endTimeSeconds = new Double(end.get(0));
+			endTime = (int) Math.round(1000.0 * endTimeSeconds / timeStepInMillis);
+			int endOctave = new Integer(end.get(1));
+			double dEndNoteOffset = new Double(end.get(2));
+			int endNoteOffset = (int) Math.round(dEndNoteOffset);
+			endNoteFraction = dEndNoteOffset - endNoteOffset;
+			endLogAmplitude = new Double(end.get(3));
+			endNote = endOctave * noteBase + endNoteOffset;
+		} catch (NumberFormatException e) {
+			JOptionPane.showMessageDialog(null, "Error Parsing String To Number", 
+					                            "FDEditor.addDataInterpolate", JOptionPane.ERROR_MESSAGE);
+			return false;
+		}	
+		try {
+			startDataPoint = new FDData(startTime, startNote, startNoteFraction, startLogAmplitude);
+			endDataPoint = new FDData(endTime, endNote, endNoteFraction, endLogAmplitude);
+		} catch (Exception e){
+			JOptionPane.showMessageDialog(null, "Data out of bounds", 
+												"FDEditor.addDataInterpolate (String Args)", 
+												JOptionPane.ERROR_MESSAGE);
+			return false;
+		}
+		return addDataInterpolate(startDataPoint, endDataPoint, overwrite);
+	}
+	
 	// returns true if data already exists in interpolated region
-	public boolean addDataInterpolate(FDData start, FDData end, boolean overwrite) {
+	// does not perform bounds checking
+	public static boolean addDataInterpolate(FDData start, FDData end, boolean overwrite) {
+		FDData dataPoint;
 		boolean returnVal = false;
 		ArrayList<FDData> interpolatedData = new ArrayList<FDData>();
-		if(start.time < end.time) {
+		if(start.getTime() > end.getTime()) {
 			FDData temp = start;
 			start = end;
 			end = temp;
 			System.out.println("FDEditor.addDataInterpolate start,end exchanged");
 		}
-		double deltaTime = end.time - start.time;
-		double deltaLogAmplitude = end.logAmplitude - start.logAmplitude;
-		double deltaNote = end.note - start.note;
-		for(int time = start.time; time < end.time; time++) {
-			double elapsedTime = time - start.time;
-			double logAmplitude = start.logAmplitude + deltaLogAmplitude * elapsedTime / deltaTime;
-			double dNote = start.noteFraction + deltaNote * elapsedTime / deltaTime;
+		double deltaTime = end.getTime() - start.getTime();
+		double deltaLogAmplitude = end.getLogAmplitude() - start.getLogAmplitude();
+		double deltaNote = end.getNoteComplete() - start.getNoteComplete();
+		for(int time = start.getTime(); time <= end.getTime(); time++) {
+			double elapsedTime = time - start.getTime();
+			double logAmplitude = start.getLogAmplitude() + deltaLogAmplitude * elapsedTime / deltaTime;
+			double dNote = start.getNoteComplete() + deltaNote * elapsedTime / deltaTime;
 			int note = (int) Math.round(dNote);
 			double noteFraction = dNote - note;
-			FDData dataPoint = new FDData(time, note, logAmplitude);
-			dataPoint.setNoteFraction(noteFraction);
-			interpolatedData.add(dataPoint);
+			try {
+				dataPoint = new FDData(time, note, noteFraction, logAmplitude);
+			} catch (Exception e) {
+				JOptionPane.showMessageDialog(null, "Data out of bounds", 
+													"FDEditor.addDataInterpolate(Numerical Args)", 
+													JOptionPane.ERROR_MESSAGE);
+				return false;
+			}
+			interpolatedData.add(dataPoint);		
 		}
 		returnVal = containsData(interpolatedData);
 		if(returnVal && !overwrite) return returnVal;
@@ -188,11 +255,11 @@ public class FDEditor extends JFrame {
 		return returnVal;
 	}
 	
-	public void addData(ArrayList<FDData> dataArray) {
+	public static void addData(ArrayList<FDData> dataArray) {
 		for(FDData dataPoint: dataArray) addData(dataPoint);
 	}
 	
-	public boolean containsData(ArrayList<FDData> dataArray) {
+	public static boolean containsData(ArrayList<FDData> dataArray) {
 		for(FDData dataPoint: dataArray) {
 			if(containsData(dataPoint)) return true;
 		}
@@ -200,7 +267,7 @@ public class FDEditor extends JFrame {
 	}
 	
 	// returns true if data already exists
-	public void addData(FDData data) {
+	public static void addData(FDData data) {
 		if(!timeToNoteToData.containsKey(data.getTime())) {
 			timeToNoteToData.put(data.getTime(), new TreeMap<Integer, FDData>());
 		}
@@ -208,7 +275,7 @@ public class FDEditor extends JFrame {
 		noteToData.put(data.getNote(), data);
 	}
 	
-	public boolean containsData(FDData data) {
+	public static boolean containsData(FDData data) {
 		if(!timeToNoteToData.containsKey(data.getTime())) return false;
 		TreeMap<Integer, FDData> noteToData = timeToNoteToData.get(data.getTime());
 		if(!noteToData.containsKey(data.getNote())) return false;
