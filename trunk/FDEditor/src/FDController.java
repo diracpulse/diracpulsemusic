@@ -128,12 +128,33 @@ public class FDController implements MouseListener, ActionListener {
     }
     
     public void handleDataCreationAction() {
-    	System.out.println("Start Time: " + FDEditor.startTimeTextField.getText());
-    	System.out.println("Start Note: " + FDEditor.startNoteTextField.getText());
-    	System.out.println("Start Amplitude: " + FDEditor.startAmplitudeTextField.getText());
-    	System.out.println("End Time: " + FDEditor.endTimeTextField.getText());
-    	System.out.println("End Note: " + FDEditor.endNoteTextField.getText());
-    	System.out.println("End Amplitude: " + FDEditor.endAmplitudeTextField.getText());
+    	String startTime = FDEditor.startTimeTextField.getText();
+       	String startOctave = FDEditor.startOctaveTextField.getText();
+    	String startNoteOffset = FDEditor.startNoteOffsetTextField.getText();
+    	String startLogAmplitude = FDEditor.startLogAmplitudeTextField.getText();
+    	String endTime = FDEditor.endTimeTextField.getText();
+       	String endOctave = FDEditor.endOctaveTextField.getText();
+    	String endNoteOffset = FDEditor.endNoteOffsetTextField.getText();
+    	String endLogAmplitude = FDEditor.endLogAmplitudeTextField.getText();
+    	System.out.println("Start Time: " + startTime);
+       	System.out.println("Start Octave: " + startOctave);
+    	System.out.println("Start Note Offset: " + startNoteOffset);
+    	System.out.println("Start Amplitude: " + startLogAmplitude);
+    	System.out.println("End Time: " + endTime);
+       	System.out.println("End Octave: " + endOctave);
+    	System.out.println("End Note Offset: " + endNoteOffset);
+    	System.out.println("End Amplitude: " + endLogAmplitude);
+    	ArrayList<String> startData = new ArrayList<String>();
+    	ArrayList<String> endData = new ArrayList<String>();
+    	startData.add(startTime);
+    	startData.add(startOctave);
+    	startData.add(startNoteOffset);
+    	startData.add(startLogAmplitude);
+    	endData.add(endTime);
+    	endData.add(endOctave);
+    	endData.add(endNoteOffset);
+    	endData.add(endLogAmplitude);
+    	FDEditor.addDataInterpolate(startData, endData, false);
     }
     
     private void adjustY(int deltaY) {
