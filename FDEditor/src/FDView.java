@@ -1,5 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class FDView extends JComponent {
 	
@@ -62,9 +64,9 @@ public class FDView extends JComponent {
 		    screenY = 0;
 			b = new Color(1.0f, 1.0f, 1.0f);
 			f = new Color(0.0f, 0.0f, 0.0f);
-			FDUtils.DrawIntegerVertical(g, b, f, screenX, screenY, 4, seconds);
+			FDUtils.DrawIntegerVertical(g, b, f, screenX, screenY, 3, seconds);
 			// millis
-			screenY = 4 * FDEditor.segmentHeight;
+			screenY = 3 * FDEditor.segmentHeight;
 			f = new Color(1.0f, 1.0f, 1.0f);
 			b = new Color(0.0f, 0.0f, 0.0f);
 			FDUtils.DrawIntegerVertical(g, b, f, screenX, screenY, 3, millis);
@@ -77,17 +79,19 @@ public class FDView extends JComponent {
 	public void DrawLeftFreqs(Graphics g) {
 		Color f;
 		Color b;
-		int screenX = 0;
+		int screenX;
 		int maxScreenY = getHeight();
 		int screenY = FDEditor.yDataStart;
 		for(Integer note: FDEditor.getNotes()) {
+			screenX = 0;
+			// octave
 		    int octaveFreqInHz = (int) Math.floor(Math.pow(2, (note / FDEditor.noteBase)));
 		    int displayNote = note % FDEditor.noteBase;
 			b = new Color(1.0f, 1.0f, 1.0f);
 			f = new Color(0.0f, 0.0f, 0.0f);
 			FDUtils.DrawIntegerHorizontal(g, b, f, screenX, screenY, 5, octaveFreqInHz);
-			// millis
-			screenY = 6 * FDEditor.segmentHeight; // leave a space (5 + 1)
+			// note
+			screenX = 5 * FDEditor.segmentWidth + 1;
 			f = new Color(1.0f, 1.0f, 1.0f);
 			b = new Color(0.0f, 0.0f, 0.0f);
 			FDUtils.DrawIntegerHorizontal(g, b, f, screenX, screenY, 3, displayNote);
@@ -97,11 +101,29 @@ public class FDView extends JComponent {
 
 	public void DrawFileData(Graphics g, boolean scaleLines) {
 		DrawLeftFreqs(g);
-		DrawUpperTimes(g);		
-        //g2.setColor(new Color(1.0f, 0.0f, 0.0f, 0.5f));
-        //g2.setStroke(new BasicStroke(4));
-        //g2.drawLine(100, 400, 1500, 400);
-		//DrawMinimaAmdMaximas(g);
+		DrawUpperTimes(g);
+		float minVal = (float) FDEditor.getMinAmplitude();
+		float maxVal = (float) FDEditor.getMaxAmplitude();
+		TreeSet<Integer> notes = FDEditor.getNotes(); // for efficiency
+		int screenX = FDEditor.xDataStart;
+        for(Integer time: FDEditor.timeToNoteToData.keySet()) {
+        	TreeMap<Integer, FDData> noteToData = FDEditor.timeToNoteToData.get(time);
+        	for(Integer note: noteToData.keySet()) {
+        		int screenY = noteToScreenY(notes, note);
+        		float currentVal = (float) noteToData.get(note).getLogAmplitude();
+        		drawAmplitude(g, screenX, screenY, currentVal, minVal, maxVal, 1); 
+        	}
+        	screenX += FDEditor.segmentWidth;
+        }
+	}
+	
+	public int noteToScreenY(TreeSet<Integer> notes, int note) {
+		int screenY = FDEditor.yDataStart;
+		for(Integer testNote: notes) {
+			if(note == testNote) return screenY;
+			screenY += FDEditor.segmentHeight;
+		}
+		return 0;
 	}
 	
 	public void drawAmplitude(Graphics g, int screenX, int screenY, float currentVal, float minVal, float maxVal, int digits) {
@@ -111,7 +133,7 @@ public class FDView extends JComponent {
 		float green;
 		float blue;
 		float ampRange = maxVal - minVal;
-		if(currentVal > 10.0f) {
+		if(currentVal >= 10.0f) {
 			digitVal = (int) Math.floor(currentVal);
 			digitVal -= 10;					
 		} else {
