@@ -166,6 +166,14 @@ public class FDEditor extends JFrame {
 		return notes;
 	}
 	
+	public static double getMaxAmplitude() {
+		return 16.0;
+	}
+	
+	public static double getMinAmplitude() {
+		return 0.0;
+	}
+	
 	public void initTimeToNoteToData() {
 		timeToNoteToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
 	}
@@ -173,9 +181,9 @@ public class FDEditor extends JFrame {
 	public void initTestData() {
 		if(!test) return;
 		try {
-			addDataInterpolate(new FDData(0, 31.0 * 10.0, 12.0), new FDData(200, 31.0 * 10.0, 0.0), true);
-			addDataInterpolate(new FDData(0, 31.0 * 9.0, 11.0), new FDData(150, 31.0 * 9.0, 0.0), true);
-			addDataInterpolate(new FDData(0, 31.0 * 8.0, 10.0), new FDData(100, 31.0 * 8.0, 0.0), true);
+			addDataInterpolate(new FDData(0, 31.0 * 10.0, 12.0), new FDData(400, 31.0 * 11.0, 0.0), true);
+			addDataInterpolate(new FDData(0, 31.0 * 9.0, 11.0), new FDData(200, 31.0 * 10.0, 0.0), true);
+			addDataInterpolate(new FDData(0, 31.0 * 8.0, 10.0), new FDData(100, 31.0 * 9.0, 0.0), true);
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(null, "Data out of bounds", 
 					"FDEditor.initTestData()", 
