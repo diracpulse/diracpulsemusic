@@ -9,7 +9,7 @@ public class FDData {
 	//Data Bounds
 	public static final int minTime = 0;
 	public static final int maxTime = 10 * 60 * (1000 / timeStepInMillis);
-	public static final double minLogAmplitude = 1.0;
+	public static final double minLogAmplitude = 0.0;
 	public static final double maxLogAmplitude = 24.0;
 	public static final double minFrequencyInHz = 20.0;
 	public static final double maxFrequencyInHz = 20000.0;
