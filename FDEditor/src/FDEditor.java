@@ -30,6 +30,8 @@ public class FDEditor extends JFrame {
 	public static final int timeStepInMillis = FDData.timeStepInMillis; // timeInMillis = time * timeStepInMillis
 	public static final int noteBase = FDData.noteBase; // frequencyInHz = pow(2.0, (note / noteBase))
 	
+	public static final boolean test = true;
+	
 	//Data Entry Swing Classes
 	public static JTextField startTimeTextField;
 	public static JTextField startOctaveTextField;
@@ -129,6 +131,7 @@ public class FDEditor extends JFrame {
         add(view);
         setSize(1500, 800);
         initTimeToNoteToData();
+        initTestData();
         //openFileInFDEditor();
     }
     
@@ -167,6 +170,20 @@ public class FDEditor extends JFrame {
 		timeToNoteToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
 	}
 	
+	public void initTestData() {
+		if(!test) return;
+		try {
+			addDataInterpolate(new FDData(0, 31.0 * 10.0, 12.0), new FDData(200, 31.0 * 10.0, 0.0), true);
+			addDataInterpolate(new FDData(0, 31.0 * 9.0, 11.0), new FDData(150, 31.0 * 9.0, 0.0), true);
+			addDataInterpolate(new FDData(0, 31.0 * 8.0, 10.0), new FDData(100, 31.0 * 8.0, 0.0), true);
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(null, "Data out of bounds", 
+					"FDEditor.initTestData()", 
+					JOptionPane.ERROR_MESSAGE);
+		}
+		
+	}
+
 	/* Input ArrayList<String> = 
 	 * time (in seconds),
 	 * octave = floor(note / noteBase),
