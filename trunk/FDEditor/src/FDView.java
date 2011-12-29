@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -76,13 +77,15 @@ public class FDView extends JComponent {
 	}
 
 
-	public void DrawLeftFreqs(Graphics g) {
+	public void DrawLeftNotes(Graphics g) {
 		Color f;
 		Color b;
 		int screenX;
 		int maxScreenY = getHeight();
-		int screenY = FDEditor.yDataStart;
+		ArrayList<Integer> notes = FDEditor.getNotes();
 		for(Integer note: FDEditor.getNotes()) {
+			int screenY = noteToScreenY(g, notes, note);
+			if (screenY == -1) continue;
 			screenX = 0;
 			// octave
 		    int octaveFreqInHz = (int) Math.floor(Math.pow(2, (note / FDEditor.noteBase)));
@@ -100,16 +103,19 @@ public class FDView extends JComponent {
 	}
 
 	public void DrawFileData(Graphics g, boolean scaleLines) {
-		DrawLeftFreqs(g);
+		DrawLeftNotes(g);
 		DrawUpperTimes(g);
 		float minVal = (float) FDEditor.getMinAmplitude();
 		float maxVal = (float) FDEditor.getMaxAmplitude();
-		TreeSet<Integer> notes = FDEditor.getNotes(); // for efficiency
+		ArrayList<Integer> notes = FDEditor.getNotes(); // for efficiency
 		int screenX = FDEditor.xDataStart;
+		// NOTE: As is, silent passages may not be visible
         for(Integer time: FDEditor.timeToNoteToData.keySet()) {
+        	if(time < FDEditor.startTimeIndex) continue;
         	TreeMap<Integer, FDData> noteToData = FDEditor.timeToNoteToData.get(time);
         	for(Integer note: noteToData.keySet()) {
-        		int screenY = noteToScreenY(notes, note);
+        		int screenY = noteToScreenY(g, notes, note);
+        		if(screenY == -1) continue;
         		float currentVal = (float) noteToData.get(note).getLogAmplitude();
         		drawAmplitude(g, screenX, screenY, currentVal, minVal, maxVal, 1); 
         	}
@@ -117,13 +123,26 @@ public class FDView extends JComponent {
         }
 	}
 	
-	public int noteToScreenY(TreeSet<Integer> notes, int note) {
+	public int timeToScreenX(Graphics g, int time) {
+		if(time < FDEditor.startTimeIndex) return -1;
+		int screenX = FDEditor.xDataStart + (time - FDEditor.startTimeIndex) * FDEditor.segmentWidth;
+		if(screenX > getWidth()) return -1;
+		return screenX;
+	}
+	
+	// Returns screen Y corresponding to note, or -1 if out of bounds
+	// pass notes as arguement to avoid recalculating
+	public int noteToScreenY(Graphics g, ArrayList<Integer> notes, int note) {
+		if(notes.size() < 1) return -1; // no data
+		int topNote = notes.get(0) - FDEditor.startNoteIndex;
 		int screenY = FDEditor.yDataStart;
 		for(Integer testNote: notes) {
-			if(note == testNote) return screenY;
+			if(testNote > topNote) continue;
+			if(testNote == note) return screenY;
 			screenY += FDEditor.segmentHeight;
+			if(screenY > getHeight()) return -1;
 		}
-		return 0;
+		return -1;
 	}
 	
 	public void drawAmplitude(Graphics g, int screenX, int screenY, float currentVal, float minVal, float maxVal, int digits) {

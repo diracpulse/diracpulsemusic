@@ -99,7 +99,7 @@ public class FDController implements MouseListener, ActionListener {
     		handleDataCreationAction();
     		return;
     	}
-        int apOldUpperY = FDEditor.startFreqIndex;
+        int apOldUpperY = FDEditor.startNoteIndex;
         int apOldLeftX = FDEditor.startTimeIndex;
         // Frequency values have reverse sign due to screen display
         if ("F+31".equals(e.getActionCommand())) adjustY(-31);
@@ -122,7 +122,7 @@ public class FDController implements MouseListener, ActionListener {
         if ("-10s".equals(e.getActionCommand())) adjustX(-10000 / FDEditor.timeStepInMillis);
         if ("-30s".equals(e.getActionCommand())) adjustX(-30000 / FDEditor.timeStepInMillis);
     	if ("-1min".equals(e.getActionCommand())) adjustX(-60000 / FDEditor.timeStepInMillis);
-        if((apOldUpperY != FDEditor.startFreqIndex) || (apOldLeftX != FDEditor.startTimeIndex)) {
+        if((apOldUpperY != FDEditor.startNoteIndex) || (apOldLeftX != FDEditor.startTimeIndex)) {
         	FDEditor.view.repaint();
         }
     }
@@ -160,16 +160,16 @@ public class FDController implements MouseListener, ActionListener {
     private void adjustY(int deltaY) {
     	if(deltaY > 0) {
     		int maxY = 1000000; // (FDEditor.maxRealFreq - FDEditor.minRealFreq);
-    		if((FDEditor.startFreqIndex + deltaY) < maxY) {
-    			FDEditor.startFreqIndex += deltaY;
+    		if((FDEditor.startNoteIndex + deltaY) < maxY) {
+    			FDEditor.startNoteIndex += deltaY;
     		} else {
-    			FDEditor.startFreqIndex = maxY;
+    			FDEditor.startNoteIndex = maxY;
     		}
     	} else {
-    		if((FDEditor.startFreqIndex + deltaY) > 0) {
-    			FDEditor.startFreqIndex += deltaY;
+    		if((FDEditor.startNoteIndex + deltaY) > 0) {
+    			FDEditor.startNoteIndex += deltaY;
     		} else {
-    			FDEditor.startFreqIndex = 0;
+    			FDEditor.startNoteIndex = 0;
     		}
     	}
     }
