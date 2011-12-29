@@ -19,7 +19,7 @@ public class FDEditor extends JFrame {
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToData;
 	
 	public static int startTimeIndex = 0; // = (actual Time)/ timeStepInMillis
-	public static int startFreqIndex = 0; // = 
+	public static int startNoteIndex = 0; // = 
 	
 	public static final int segmentWidth = 6;
 	public static final int segmentHeight = 9;
@@ -156,14 +156,19 @@ public class FDEditor extends JFrame {
 		});
 	}
 	
-	public static TreeSet<Integer> getNotes() {
+	// returns notes in reverse order
+	public static ArrayList<Integer> getNotes() {
 		TreeSet<Integer> notes = new TreeSet<Integer>();
 		for(Integer time: timeToNoteToData.keySet()) {
 			for(Integer note: timeToNoteToData.get(time).keySet()) {
 				if(!notes.contains(note)) notes.add(note);
 			}
 		}
-		return notes;
+		ArrayList<Integer> returnVal = new ArrayList<Integer>();
+		for(Integer note: notes) {
+			returnVal.add(0, note);
+		}
+		return returnVal;
 	}
 	
 	public static double getMaxAmplitude() {
