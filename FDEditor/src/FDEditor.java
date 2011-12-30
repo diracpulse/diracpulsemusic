@@ -194,6 +194,8 @@ public class FDEditor extends JFrame {
 					"FDEditor.initTestData()", 
 					JOptionPane.ERROR_MESSAGE);
 		}
+		TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToDataClone = SynthTools.copyTreeMap(timeToNoteToData);
+		timeToNoteToData = timeToNoteToDataClone;
 		
 	}
 
@@ -296,7 +298,6 @@ public class FDEditor extends JFrame {
 		return false;
 	}
 	
-	// returns true if data already exists
 	public static void addData(FDData data) {
 		if(!timeToNoteToData.containsKey(data.getTime())) {
 			timeToNoteToData.put(data.getTime(), new TreeMap<Integer, FDData>());
@@ -305,6 +306,7 @@ public class FDEditor extends JFrame {
 		noteToData.put(data.getNote(), data);
 	}
 	
+	// returns true if data already exists
 	public static boolean containsData(FDData data) {
 		if(!timeToNoteToData.containsKey(data.getTime())) return false;
 		TreeMap<Integer, FDData> noteToData = timeToNoteToData.get(data.getTime());
