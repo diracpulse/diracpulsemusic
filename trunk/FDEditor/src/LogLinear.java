@@ -8,9 +8,9 @@ class LogLinear {
 	double[] envelope;
 	double sampleRate = 44100.0;
 	
-	LogLinear(double[] times, double[] amps) {
+	LogLinear(double[] times, double[] values) {
 		int numTimes = times.length;
-		if(numTimes != amps.length) {
+		if(numTimes != values.length) {
 			System.out.println("ERROR: LogLinear: array length mismatch");
 			return;
 		}
@@ -27,20 +27,20 @@ class LogLinear {
 		envelope = new double[numSamples];
 		// System.out.println("LogLinear: endSample = " + endSample + ", numSamples = " + numSamples);
 		for(arrayIndex = 0; arrayIndex < (numTimes - 1); arrayIndex++) {
-			double lowerAmp;
-			double upperAmp;
+			double lowerValue;
+			double upperValue;
 			double lowerTime = times[arrayIndex];
 			double upperTime = times[arrayIndex + 1];
 			if (logInterpolate) {
-				lowerAmp = amps[arrayIndex]; // log interpolate
-				upperAmp = amps[arrayIndex + 1]; // log interpolate
+				lowerValue = values[arrayIndex]; // log interpolate
+				upperValue = values[arrayIndex + 1]; // log interpolate
 			} else {
-				lowerAmp = Math.pow(2.0, amps[arrayIndex]); // linear interpolate
-				upperAmp = Math.pow(2.0, amps[arrayIndex + 1]); // linear interpolate
+				lowerValue = Math.pow(2.0, values[arrayIndex]); // linear interpolate
+				upperValue = Math.pow(2.0, values[arrayIndex + 1]); // linear interpolate
 			}		
-			double slope = (upperAmp - lowerAmp) / (upperTime - lowerTime);
+			double slope = (upperValue - lowerValue) / (upperTime - lowerTime);
 			for(timeIndex = lowerTime; timeIndex < upperTime; timeIndex += timeStep) {
-				envValue = lowerAmp + (timeIndex - lowerTime) * slope;
+				envValue = lowerValue + (timeIndex - lowerTime) * slope;
 				if (logInterpolate) {
 					envValue = Math.pow(2.0, envValue);
 				}
