@@ -7,6 +7,7 @@ class LogLinear {
 	int endSample;
 	double[] envelope;
 	double sampleRate = 44100.0;
+	public static final double logBase = 2.0;
 	
 	LogLinear(double[] times, double[] values) {
 		int numTimes = times.length;
@@ -35,14 +36,14 @@ class LogLinear {
 				lowerValue = values[arrayIndex]; // log interpolate
 				upperValue = values[arrayIndex + 1]; // log interpolate
 			} else {
-				lowerValue = Math.pow(2.0, values[arrayIndex]); // linear interpolate
-				upperValue = Math.pow(2.0, values[arrayIndex + 1]); // linear interpolate
+				lowerValue = Math.pow(logBase, values[arrayIndex]); // linear interpolate
+				upperValue = Math.pow(logBase, values[arrayIndex + 1]); // linear interpolate
 			}		
 			double slope = (upperValue - lowerValue) / (upperTime - lowerTime);
 			for(timeIndex = lowerTime; timeIndex < upperTime; timeIndex += timeStep) {
 				envValue = lowerValue + (timeIndex - lowerTime) * slope;
 				if (logInterpolate) {
-					envValue = Math.pow(2.0, envValue);
+					envValue = Math.pow(logBase, envValue);
 				}
 				envelope[envIndex] = envValue;
 				envIndex++;
