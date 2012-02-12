@@ -21,17 +21,15 @@ class SynthTools {
 				Harmonic currentHarmonic = new Harmonic();
 				// ARBITRARY: start at lowest note
 				int currentNote = input.get(inputTime).firstKey();
-				FDData currentData = input.get(inputTime).get(currentNote);
-				currentHarmonic.addData(currentData);
 				int harmonicTime = inputTime;
-				System.out.println(harmonicTime);
+				//System.out.println(harmonicTime);
 				try {
 					Thread.sleep(100);
 				} catch (Exception e){
 					System.out.println(e);
 				}
-				while(input.containsKey(++harmonicTime)) {
-					System.out.println(harmonicTime);
+				while(input.containsKey(harmonicTime)) {
+					//System.out.println(harmonicTime);
 					try {
 						Thread.sleep(100);
 					} catch (Exception e){
@@ -41,6 +39,7 @@ class SynthTools {
 					if(input.get(harmonicTime).containsKey(currentNote)) {
 						currentHarmonic.addData(input.get(harmonicTime).get(currentNote));
 						input.get(harmonicTime).remove(currentNote);
+						harmonicTime++;
 						continue;
 					}					
 					// check for data at [currentNote+1,time+1]
@@ -48,6 +47,7 @@ class SynthTools {
 					if(input.get(harmonicTime).containsKey(currentNote)) {
 						currentHarmonic.addData(input.get(harmonicTime).get(currentNote));
 						input.get(harmonicTime).remove(currentNote);
+						harmonicTime++;
 						continue;
 					}
 					// check for data at [currentNote-1,time-1]
@@ -55,12 +55,13 @@ class SynthTools {
 					if(input.get(harmonicTime).containsKey(currentNote)) {
 						currentHarmonic.addData(input.get(harmonicTime).get(currentNote));
 						input.get(harmonicTime).remove(currentNote);
+						harmonicTime++;
 						continue;
 					}
+					break;
 				}
 				harmonics.add(currentHarmonic);
 			} // while(!input.get(inputTime).isEmpty())
-			input.remove(inputTime);
 			inputTime++;
 		} // while(!input.isEmpty())
 		printHarmonics(harmonics);

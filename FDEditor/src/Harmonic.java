@@ -8,11 +8,11 @@ public class Harmonic {
 	private TreeMap<Integer, FDData> timeToData = new TreeMap<Integer, FDData>();
 	
 	public Harmonic() {
-		
 	}
 	
 	// returns true if data already exists at that time
 	public boolean addData(FDData data) {
+		System.out.println(data);
 		if(!timeToData.containsKey(data.getTime())) {
 			timeToData.put(data.getTime(), data);
 			return false;

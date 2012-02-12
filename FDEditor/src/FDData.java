@@ -98,5 +98,9 @@ public class FDData {
 		if(frequency > maxFrequencyInHz) return false;
 		return true;
 	}
-		
+	
+	public String toString() {
+		return "[" + getTime() + "|" + getNote() + "|" + getLogAmplitude() + "]";
+	}
+	
 }
