@@ -1,16 +1,55 @@
+import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Timer;
 import java.util.TreeMap;
 
 class SynthTools {
 	
 	static double sampleRate = 44100.0;
 	static double twoPI = 2.0 * Math.PI;
+	static double timeToSample = sampleRate * (FDData.timeStepInMillis * 1.0 / 1000.0);
 	
 	static void playFileData() {
-		synthFileData(FDEditor.timeToNoteToData);
+		long startSynthTimeInMillis = System.currentTimeMillis();
+		System.out.println("SynthTools.playFileData started");
+		ArrayList<Harmonic> harmonics = createHarmonics(FDEditor.timeToNoteToData);
+		// Find number of samples needed
+		int endSampleOffset = 0;
+		System.out.println("SynthTools.playFileData harmonics created");
+		for(Harmonic harmonic: harmonics) {
+			//System.out.println("SynthTools.playFileData harmonic.endSampleOffset = " + harmonic.getEndSampleOffset());
+			if(harmonic.getEndSampleOffset() > endSampleOffset) {
+				endSampleOffset = harmonic.getEndSampleOffset();
+				//System.out.println("SynthTools.playFileData endSampleOffset = " + endSampleOffset);
+			}
+		}
+		System.out.println("SynthTools.playFileData endSampleOffset = " + endSampleOffset);
+		// create PCM Data
+		double[] PCMData = new double[endSampleOffset + 1];
+		System.out.println("End Sample Offset " + endSampleOffset);
+		for(int i= 0; i <= endSampleOffset; i++) PCMData[i] = 0.0;
+		for(Harmonic harmonic: harmonics) {
+			System.out.println("New Harmonic Synthesized");
+			int startSample = harmonic.getStartSampleOffset();
+			int endSample = harmonic.getEndSampleOffset();
+			Double[] HarmonicPCMData = harmonic.getPCMData();
+			for(int currentSample = startSample; currentSample < endSample; currentSample++) {
+				PCMData[currentSample] += HarmonicPCMData[currentSample - startSample];
+				if(startSample % 441 == 0) {
+					//System.out.println(currentSample + ":" + PCMData[currentSample]);
+				}
+			}
+		}
+		for(int i= 0; i <= endSampleOffset; i += 100) {
+			System.out.println(i + "!" + PCMData[i]);
+		}
+		long timeElapsed = startSynthTimeInMillis - System.currentTimeMillis();
+		System.out.println("Time Elapsed = " + timeElapsed);
+		AudioPlayer ap = new AudioPlayer();
+		ap.PlayBuffer(PCMData, 1.0);
 	}
 	
-	static void synthFileData(TreeMap<Integer, TreeMap<Integer, FDData>> saveInput) {
+	static ArrayList<Harmonic> createHarmonics(TreeMap<Integer, TreeMap<Integer, FDData>> saveInput) {
 		// create a copy of input because algorithm removes keys after added to harmonics
 		TreeMap<Integer, TreeMap<Integer, FDData>> input = copyTreeMap(saveInput);
 		ArrayList<Harmonic> harmonics = new ArrayList<Harmonic>();
@@ -22,19 +61,9 @@ class SynthTools {
 				// ARBITRARY: start at lowest note
 				int currentNote = input.get(inputTime).firstKey();
 				int harmonicTime = inputTime;
-				//System.out.println(harmonicTime);
-				try {
-					Thread.sleep(100);
-				} catch (Exception e){
-					System.out.println(e);
-				}
 				while(input.containsKey(harmonicTime)) {
-					//System.out.println(harmonicTime);
-					try {
-						Thread.sleep(100);
-					} catch (Exception e){
-						System.out.println(e);
-					}
+					//System.out.println("SynthTools.createHarmonics harmonicTime" + harmonicTime);
+					//sleep(10);
 					// check for data at [currentNote,time+1]
 					if(input.get(harmonicTime).containsKey(currentNote)) {
 						currentHarmonic.addData(input.get(harmonicTime).get(currentNote));
@@ -62,9 +91,13 @@ class SynthTools {
 				}
 				harmonics.add(currentHarmonic);
 			} // while(!input.get(inputTime).isEmpty())
+			input.remove(inputTime);
 			inputTime++;
+			//System.out.println("SynthTools.createHarmonics input size " + input.size());
+			//sleep(10);
 		} // while(!input.isEmpty())
 		printHarmonics(harmonics);
+		return harmonics;
 	}
 	
 	static void printHarmonics(ArrayList<Harmonic> harmonics) {
@@ -72,6 +105,16 @@ class SynthTools {
 			System.out.print(harmonic);
 		}
 	}
+	
+	static void sleep(long ms) {
+		try {
+			Thread.sleep(ms);
+		} catch (Exception e){
+			System.out.println(e);
+		}
+
+	}
+
 	
 	static TreeMap<Integer, TreeMap<Integer, FDData>> copyTreeMap(TreeMap<Integer, TreeMap<Integer, FDData>> input) {
 		TreeMap<Integer, TreeMap<Integer, FDData>> output = new TreeMap<Integer, TreeMap<Integer, FDData>>();
@@ -84,34 +127,5 @@ class SynthTools {
 		}
 		return output;
 	}
-	
-	static double[] getAudio(double freq, LogLinear env) {
-		int sampleIndex;
-		int startIndex = 0;
-		int endIndex = env.getEndIndex();
-		double currentPhase = 0.0;
-		double deltaPhase = twoPI * (freq / sampleRate);
-		double[] returnVal = new double[endIndex];
-		for(sampleIndex = startIndex; sampleIndex < endIndex; sampleIndex++) {
-			returnVal[sampleIndex] = env.getSample(sampleIndex) * Math.sin(currentPhase);
-			currentPhase += deltaPhase;
-			// System.out.println(sampleIndex + " " + returnVal[sampleIndex]);
-		}
-		return returnVal;
-	}
-	
-	static double[] getAudio(double[] inputArray, double freq, double gain, LogLinear env) {
-		int sampleIndex;
-		int startIndex = 0;
-		int endIndex = env.getEndIndex();
-		double currentPhase = 0.0;
-		double deltaPhase = twoPI * (freq / sampleRate);
-		for(sampleIndex = startIndex; sampleIndex < endIndex; sampleIndex++) {
-			inputArray[sampleIndex] += gain * env.getSample(sampleIndex) * Math.sin(currentPhase);
-			currentPhase += deltaPhase;
-			// System.out.println(sampleIndex + " " + returnVal[sampleIndex]);
-		}
-		return inputArray;
-	}
-	
+
 }

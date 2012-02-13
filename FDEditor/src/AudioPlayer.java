@@ -58,9 +58,11 @@ class AudioPlayer {
 	
 	/* NOTE: this version of PlayBuffer scales maxAmplitude to 1.0 */
 	public void PlayBuffer(double[] left, double right[], double masterVolume) {
-		if (left.length != right.length) return; 
+		if (left.length != right.length) return;
+		System.out.println("AudioPlayer.PlayBuffer: START");
 		int numberOfSamples = left.length;
 		int numBytesToWrite = numberOfSamples * 4;
+		System.out.println("AudioPlayer.numBytesToWrite: " + numBytesToWrite);
 		byte[] audioByteData = new byte[numBytesToWrite];
 		double maxAmplitude = 0.0;
 		double leftAmplitude;
@@ -90,6 +92,7 @@ class AudioPlayer {
 		}
 		int offset = 0;
 		line.write(audioByteData, offset, numBytesToWrite);
+		System.out.println("AudioPlayer.PlayBuffer: END");
 	}
 
 	
