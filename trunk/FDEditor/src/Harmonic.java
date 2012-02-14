@@ -13,7 +13,7 @@ public class Harmonic {
 	
 	// returns true if data already exists at that time
 	public boolean addData(FDData data) {
-		System.out.println(data);
+		//System.out.println(data);
 		if(!timeToData.containsKey(data.getTime())) {
 			timeToData.put(data.getTime(), data);
 			return false;
@@ -41,8 +41,10 @@ public class Harmonic {
 	
 	public int getLength() {
 		if(!containsData()) return 0;
-		int length = (int) Math.round(timeToData.lastKey() * SynthTools.timeToSample);
-		length += getTaperLength();
+		int startSample = getStartSampleOffset();
+		int endSample = (int) Math.round(timeToData.lastKey() * SynthTools.timeToSample);
+		int length = endSample - startSample;
+		length += getTaperLength() * SynthTools.timeToSample;
 		return length;
 	}
 	
@@ -104,10 +106,15 @@ public class Harmonic {
 	public int getTaperLength() {
 		FDData endData = timeToData.lastEntry().getValue();
 		double endLogAmp = endData.getLogAmplitude();
-		if(endLogAmp <= 0.0) return 0;
-		double endLogFreq = endData.getNoteComplete() / FDData.noteBase;
-		double cycleLength = SynthTools.sampleRate / Math.pow(FDData.logBase, endLogFreq);
-		return (int) Math.ceil(endLogAmp * cycleLength);
+		int taperLength = 0;
+		if(endLogAmp > 0.0) {
+			double endLogFreq = endData.getNoteComplete() / FDData.noteBase;
+			double cycleLength = SynthTools.sampleRate / Math.pow(FDData.logBase, endLogFreq);
+			taperLength =  (int) Math.ceil(endLogAmp * cycleLength);
+			taperLength /= SynthTools.timeToSample; 
+		}
+		System.out.println("Harmonic.getTaperLength: " + taperLength);
+		return taperLength;
 	}
 
 	// this is here so there's no warning

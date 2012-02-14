@@ -10,6 +10,8 @@ class SynthTools {
 	static double timeToSample = sampleRate * (FDData.timeStepInMillis * 1.0 / 1000.0);
 	
 	static void playFileData() {
+		//powSpeedTest();
+		//sinSpeedTest();
 		long startSynthTimeInMillis = System.currentTimeMillis();
 		System.out.println("SynthTools.playFileData started");
 		ArrayList<Harmonic> harmonics = createHarmonics(FDEditor.timeToNoteToData);
@@ -29,24 +31,51 @@ class SynthTools {
 		System.out.println("End Sample Offset " + endSampleOffset);
 		for(int i= 0; i <= endSampleOffset; i++) PCMData[i] = 0.0;
 		for(Harmonic harmonic: harmonics) {
-			System.out.println("New Harmonic Synthesized");
-			int startSample = harmonic.getStartSampleOffset();
-			int endSample = harmonic.getEndSampleOffset();
 			Double[] HarmonicPCMData = harmonic.getPCMData();
-			for(int currentSample = startSample; currentSample < endSample; currentSample++) {
+			int startSample = harmonic.getStartSampleOffset();
+			int endSample = startSample + HarmonicPCMData.length - 1;
+			System.out.println("SynthTools.playFileData startSample = " + startSample);
+			System.out.println("SynthTools.playFileData endSample = " + endSample);
+			System.out.println("SynthTools.playFileData HarmonicPCMData.length = " + HarmonicPCMData.length);
+			for(int currentSample = startSample; currentSample < endSample - 1; currentSample++) {
 				PCMData[currentSample] += HarmonicPCMData[currentSample - startSample];
-				if(startSample % 441 == 0) {
+				if(currentSample % 441 == 0) {
 					//System.out.println(currentSample + ":" + PCMData[currentSample]);
 				}
 			}
 		}
 		for(int i= 0; i <= endSampleOffset; i += 100) {
-			System.out.println(i + "!" + PCMData[i]);
+			//System.out.println(i + "!" + PCMData[i]);
 		}
-		long timeElapsed = startSynthTimeInMillis - System.currentTimeMillis();
+		long timeElapsed = System.currentTimeMillis() - startSynthTimeInMillis;
 		System.out.println("Time Elapsed = " + timeElapsed);
 		AudioPlayer ap = new AudioPlayer();
 		ap.PlayBuffer(PCMData, 1.0);
+	}
+	
+	//4419
+	static void powSpeedTest() {
+		double result = 0.0;
+		double numLoops = 10 * 1000 * 1000;
+		double maxVal = 10.0;
+		long startSynthTimeInMillis = System.currentTimeMillis();
+		for(double exponent = 0.0; exponent < maxVal; exponent += maxVal/numLoops) {
+			result += Math.pow(FDData.logBase, exponent);
+		}
+		long timeElapsed = System.currentTimeMillis() - startSynthTimeInMillis;
+		System.out.println("SynthTools.powSpeedTest: Time Elapsed = " + timeElapsed + " " + result);
+	}
+	
+	static void sinSpeedTest() {
+		double result = 0.0;
+		double numLoops = 10 * 1000 * 1000;
+		double maxVal = numLoops;
+		long startSynthTimeInMillis = System.currentTimeMillis();
+		for(double angle = 0.0; angle < maxVal; angle += maxVal/numLoops) {
+			result += Math.sin(angle);
+		}
+		long timeElapsed = System.currentTimeMillis() - startSynthTimeInMillis;
+		System.out.println("SynthTools.sinSpeedTest: Time Elapsed = " + timeElapsed + " " + result);
 	}
 	
 	static ArrayList<Harmonic> createHarmonics(TreeMap<Integer, TreeMap<Integer, FDData>> saveInput) {
@@ -96,7 +125,7 @@ class SynthTools {
 			//System.out.println("SynthTools.createHarmonics input size " + input.size());
 			//sleep(10);
 		} // while(!input.isEmpty())
-		printHarmonics(harmonics);
+		//printHarmonics(harmonics);
 		return harmonics;
 	}
 	

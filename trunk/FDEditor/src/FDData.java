@@ -27,7 +27,7 @@ public class FDData {
 	public FDData(int time, double noteComplete, double logAmplitude) throws Exception {
 		int note = (int) Math.round(noteComplete);
 		double noteFraction = noteComplete - note;
-		System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
+		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
 		if(!withinBounds(time, note, noteFraction, logAmplitude)) throw new Exception();
 		this.time = time;
 		this.note = note;
@@ -36,7 +36,7 @@ public class FDData {
 	}
 	
 	public FDData(int time, int note, double noteFraction, double logAmplitude) throws Exception {
-		System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
+		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
 		if(!withinBounds(time, note, noteFraction, logAmplitude)) throw new Exception();
 		this.time = time;
 		this.note = note;

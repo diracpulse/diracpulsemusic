@@ -39,7 +39,7 @@ class LogLinear {
 	public double getSample(int sample) {
 		int sampleIndex = sample;
 		if((sampleIndex % 441) == 0) {
-			System.out.println("LogLinear.getSample(int): sample=" + sample + ", sample= " + envelope[sampleIndex]);
+			//System.out.println("LogLinear.getSample(int): sample=" + sample + ", sample= " + envelope[sampleIndex]);
 		}
 		if((sampleIndex >= 0) && (sampleIndex < numSamples)) {
 			return envelope[sampleIndex];
