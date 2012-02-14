@@ -187,6 +187,7 @@ public class FDEditor extends JFrame {
 		if(!test) return;
 		try {
 			addDataInterpolate(new FDData(0, 31.0 * 6.0, 12.0), new FDData(200, 31.0 * 6.0, 12.0), true);
+			addDataInterpolate(new FDData(0, 31.0 * 10.0, 12.0), new FDData(300, 31.0 * 10.0, 12.0), true);
 			addDataInterpolate(new FDData(50, 31.0 * 9.0, 11.0), new FDData(150, 31.0 * 10.0, 0.0), true);
 			addDataInterpolate(new FDData(100, 31.0 * 8.0, 10.0), new FDData(1000, 31.0 * 9.0, 0.0), true);
 		} catch (Exception e) {

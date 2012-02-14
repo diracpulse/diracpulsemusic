@@ -60,7 +60,8 @@ class SynthTools {
 		double maxVal = 10.0;
 		long startSynthTimeInMillis = System.currentTimeMillis();
 		for(double exponent = 0.0; exponent < maxVal; exponent += maxVal/numLoops) {
-			result += Math.pow(FDData.logBase, exponent);
+			//result += Math.pow(FDData.logBase, exponent);
+			Math.exp(exponent);
 		}
 		long timeElapsed = System.currentTimeMillis() - startSynthTimeInMillis;
 		System.out.println("SynthTools.powSpeedTest: Time Elapsed = " + timeElapsed + " " + result);
