@@ -31,7 +31,7 @@ public class DFTUtils {
 			DFTUtils.SevenSegmentSmall(g, f, b, screenX, 
 			                           screenY, 
 			                           digitVal);
-			screenX += HarmonicsEditor.xStep;
+			screenX += DFTEditor.xStep;
 		}
 	}
 	
