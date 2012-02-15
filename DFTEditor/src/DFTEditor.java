@@ -13,7 +13,6 @@ public class DFTEditor extends JFrame {
 	public static MultiWindow parent;
 	public static DFTView view;
 	public static DFTController controller;
-	public static Harmonics harmonics;
 	// Swing components
 	public static JMenuBar menuBar = null;
 	public static JToolBar navigationBar = null;
@@ -264,7 +263,6 @@ public class DFTEditor extends JFrame {
         String fileName = FileTools.PromptForFileOpen(view);
         ReadBinaryFileData(fileName, "mono5ms");
         String fileNameTrimmed = fileName.substring(0, fileName.length() - 4);
-        harmonics = new Harmonics(fileNameTrimmed);
         view.repaint();
 	}
 	
@@ -288,9 +286,9 @@ public class DFTEditor extends JFrame {
 		parent.dftEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		parent.dftEditorFrame.pack();
 		parent.dftEditorFrame.setVisible(true);
-		parent.harmonicsEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		parent.harmonicsEditorFrame.pack();
-		parent.harmonicsEditorFrame.setVisible(true);
+		//parent.harmonicsEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		//parent.harmonicsEditorFrame.pack();
+		//parent.harmonicsEditorFrame.setVisible(true);
 	}
 
 	public static void main(String[] args) {
