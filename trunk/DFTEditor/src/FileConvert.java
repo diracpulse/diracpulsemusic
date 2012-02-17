@@ -107,13 +107,30 @@ public class FileConvert {
             BufferedReader stdInput = new BufferedReader(new 
                  InputStreamReader(p.getInputStream()));
             // BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-            Integer maxRealFreq = new Integer(stdInput.readLine());
-            binaryOut.writeInt(maxRealFreq);
-            Integer minRealFreq = new Integer(stdInput.readLine());
-            binaryOut.writeInt(minRealFreq);
+            // Non-Amplitude data is indicated by "#", followed by value as string ON NEXT LINE
+            // Comments start with "#" and must not include _*_
+            // AMPLITUDE DATA PASSED MUST BE READ IN CORRECT ORDER
             while ((linein = stdInput.readLine()) != null) {
-				amp = new Float(linein);
-				binaryOut.writeFloat(amp);
+            	if(linein.contains("#")) {
+            		Integer data = null;
+            		if(linein.contains("_MAXNOTE_")) {
+               			data = new Integer(stdInput.readLine());
+            			binaryOut.writeInt(data);
+            			System.out.println("_MAXNOTE_ = " + data);
+            			continue;
+            		}
+            		if(linein.contains("_MINNOTE_")) {
+            			data = new Integer(stdInput.readLine());
+            			binaryOut.writeInt(data);
+            			System.out.println("_MINNOTE_ = " + data);
+            			continue;
+            		}
+            		System.out.println(linein); // print comment 
+            	} else {
+            		// assumes it's amplitude data (must be in proper order)
+            		amp = new Float(linein);
+            		binaryOut.writeFloat(amp);
+            	}
             }
             binaryOut.close();
             p.waitFor();

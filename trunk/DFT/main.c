@@ -29,7 +29,7 @@ const double twoPI = 6.283185307179586476925286766559;
 const double samplingRate = 44100.0;
 const double samplesPerStep = 220.5; // 5ms
 const double notesPerOctave = 31.0;
-const double maxBinStep = 2.0;
+const double maxBinStep = 1.0;
 const double alpha = 5.0;
 
 // Calculated Variables
@@ -200,7 +200,9 @@ int frequencyToNote(double frequency) {
 
 void InitWavelets() {
 	int index = 0;
-	double maxFreqHz = 20000.0;
+	// UNRESOLVED ISSUE: bin step = 2.0 and maxFreqHz = 20000.0, causes noise at 20000.0
+	// does not occur at frequency above, or two below
+	double maxFreqHz = 19160.0;
 	double minFreqHz = 20.0;
 	//if(debug) printf("InitWavelets\n");
 	maxDFTLength = 0;
@@ -209,8 +211,8 @@ void InitWavelets() {
 	index = InitWaveletsHelper(500.0, minFreqHz, index, 2.0);
     numWavelets = index;
     // MATRIX OUTPUT
-    printf("%d\n", frequencyToNote(maxFreqHz));
-    printf("%d\n", frequencyToNote(minFreqHz) + 1); // stops before last note
+    printf("#_MAXNOTE_\n%d\n", frequencyToNote(maxFreqHz));
+    printf("#_MINNOTE_\n%d\n", frequencyToNote(minFreqHz) + 1); // stops before last note
     //printf("%d\n", numWavelets, maxDFTLength);
     CalculateWavelets();
 }
@@ -229,8 +231,11 @@ int InitWaveletsHelper(double upperFreqHz, double stopFreqHz, int index, double 
     	double currentLogFreq =  log(freqInHz) / log(2.0);
     	double taperValue = pow(taperPerOctave, startLogFreq - currentLogFreq);
     	double cyclesPerWindow = maxCyclesPerWindow / taperValue;
-    	double dWindowLength = samplingRate / freqInHz;
-    	double windowLength = (int) round(cyclesPerWindow * dWindowLength);
+    	double windowLength = (int) round(cyclesPerWindow * samplesPerCycle);
+    	//IMPORTANT: the next 3 lines set cycles per window to an integer (doesn't improve anything)
+    	//samplesPerCycle = round(windowLength / cyclesPerWindow);
+    	//windowLength = cyclesPerWindow * samplesPerCycle;
+    	//radianFreq = twoPI / samplesPerCycle;
     	if(windowLength > maxDFTLength) maxDFTLength = windowLength;
     	if(windowLength > MAXDFTWINDOW) {
     		printf("InitWavelets: Max DFT window length exceeded\n");
@@ -246,6 +251,16 @@ int InitWaveletsHelper(double upperFreqHz, double stopFreqHz, int index, double 
     	index++;
     }
     return index;
+}
+
+void printWaveletInfo(struct WaveletInfo wavelet, int index) {
+	printf("# Wavelet:");
+	printf("index: %d ", index);
+	printf("radFreq: %f ", wavelet.radianFreq);
+	printf("gain: %f ", wavelet.gain);
+	printf("length: %d ", wavelet.length);
+	printf("*sin[]: %x ", wavelet.sinArray);
+	printf("*cos[]: %x\n", wavelet.cosArray);
 }
 
 void CalculateWavelets() {
@@ -270,16 +285,10 @@ void CalculateWavelets() {
 			dIndex = (double) index;
 			gain += KaiserWindow[index];
 			WaveletInfoArray[waveletIndex].sinArray[index] = sin(dIndex * radianFreq) * KaiserWindow[index];
-			WaveletInfoArray[waveletIndex].cosArray[index] = sin(dIndex * radianFreq) * KaiserWindow[index];
+			WaveletInfoArray[waveletIndex].cosArray[index] = cos(dIndex * radianFreq) * KaiserWindow[index];
 		}
 		WaveletInfoArray[waveletIndex].gain = gain;
-	}
-	for(index = 0; index < numWavelets; index++) {
-		radianFreq = WaveletInfoArray[index].radianFreq;
-		length = WaveletInfoArray[index].length;
-		note = WaveletInfoArray[index].note;
-		gain = WaveletInfoArray[index].gain;
-		//printf("Wavelet: %d: %f %d %d %d %f\n", index, radianFreq, length, startIndex, note, gain);
+		printWaveletInfo(WaveletInfoArray[index], index);
 	}
 }
 
