@@ -57,9 +57,21 @@ public class DFTEditor extends JFrame {
 		return 0.0f;
 	}
 	
+	public static int freqToNote(int freq) {
+		return maxRealFreq - freq;
+	}
+	
 	public static boolean isMaxima(int time, int freq) {
 		return timeToFreqsAtMaxima.get(time).contains(freq);
-	}	
+	}
+	
+	public static Set<Integer> timesWithMaxima() {
+		return timeToFreqsAtMaxima.keySet();
+	}
+	
+	public static ArrayList<Integer> maximasAtTime(int time) {
+		return timeToFreqsAtMaxima.get(time);
+	}
 	
 	// This function reads from a binary file
 	public void ReadBinaryFileData(String fileName, String type) {
@@ -222,8 +234,14 @@ public class DFTEditor extends JFrame {
 	public void openFileInDFTEditor() {
         String fileName = FileTools.PromptForFileOpen(view);
         ReadBinaryFileData(fileName, "mono5ms");
-        String fileNameTrimmed = fileName.substring(0, fileName.length() - 4);
+        //String fileNameTrimmed = fileName.substring(0, fileName.length() - 4);
         view.repaint();
+	}
+	
+	public void exportFileInDFTEditor() {
+        String fileName = FileTools.PromptForFileSave(view);
+        FileOutput.OutputMaximasToFile(fileName);
+        JOptionPane.showMessageDialog(this, "Finished exporting");
 	}
 	
     public DFTEditor() {

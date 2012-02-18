@@ -35,6 +35,18 @@ public class FDData {
 		this.logAmplitude = logAmplitude;
 	}
 	
+	// This contructor is used to input file data
+	public FDData(int time, int note, float logAmplitude) throws Exception {
+		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
+		if(!withinBounds(time, note, 0.0, logAmplitude)) {
+			throw new Exception("FDData [" + time + "|" + note + "|" + logAmplitude + "]");
+		}
+		this.time = time;
+		this.note = note;
+		this.noteFraction = 0.0;
+		this.logAmplitude = logAmplitude;
+	}
+	
 	public FDData(int time, int note, double noteFraction, double logAmplitude) throws Exception {
 		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
 		if(!withinBounds(time, note, noteFraction, logAmplitude)) throw new Exception();

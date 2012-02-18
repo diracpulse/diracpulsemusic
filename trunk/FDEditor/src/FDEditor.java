@@ -9,6 +9,10 @@ public class FDEditor extends JFrame {
 	/**
 	 * 
 	 */
+	private static final long serialVersionUID = 6252327634736973395L;
+	/**
+	 * 
+	 */
 
 	public static MultiWindow parent;
 	public static FDView view;
@@ -112,10 +116,10 @@ public class FDEditor extends JFrame {
 	}
 	
 	public void openFileInFDEditor() {
-        //String fileName = FileTools.PromptForFileOpen(view);
-        //ReadFDFileData(fileName, "mono5ms");
-        //String fileNameTrimmed = fileName.substring(0, fileName.length() - 4);
-        //view.repaint();
+        String fileName = FileTools.PromptForFileOpen(view);
+        FDFileInput.ReadBinaryFileData(fileName);
+        this.setTitle(fileName);
+        view.repaint();
 	}
 	
     public FDEditor() {
