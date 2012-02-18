@@ -31,7 +31,7 @@ public class DFTUtils {
 			DFTUtils.SevenSegmentSmall(g, f, b, screenX, 
 			                           screenY, 
 			                           digitVal);
-			screenX += DFTEditor.xStep;
+			screenX += DFTView.getXStep();
 		}
 	}
 	
@@ -39,7 +39,7 @@ public class DFTUtils {
 		Color black = new Color(0.0f, 0.0f, 0.0f);
 		// int lowerScreenY = screenY + topYStep;				
 		g.setColor(b);
-		g.fillRect(screenX, screenY, DFTEditor.xStep, DFTEditor.yStep);;
+		g.fillRect(screenX, screenY, DFTView.getXStep(), DFTView.getYStep());;
 		SevenSegmentSmall(g, black, b, screenX, screenY, digitVal);
 		// SevenSegmentSmall(g, black, b, screenX, lowerScreenY, fractionVal);
 		// g.setColor(black);
@@ -50,9 +50,9 @@ public class DFTUtils {
 	//This takes two vertical lines, digitVal is above fraction val 
 	public static void DrawSegmentData(Graphics g, Color b, int screenX, int screenY, int digitVal, int fractionVal) {
 		Color black = new Color(0.0f, 0.0f, 0.0f);
-		int lowerScreenY = screenY + DFTEditor.yStep / 2;			
+		int lowerScreenY = screenY + DFTEditor.yStep;
 		g.setColor(b);
-		g.fillRect(screenX, screenY, DFTEditor.xStep, DFTEditor.yStep);;
+		g.fillRect(screenX, screenY, DFTView.getXStep(), DFTView.getYStep());;
 		SevenSegmentSmall(g, black, b, screenX, screenY, digitVal);
 		SevenSegmentSmall(g, black, b, screenX, lowerScreenY, fractionVal);
 		// g.setColor(black);
