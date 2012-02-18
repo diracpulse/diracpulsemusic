@@ -89,18 +89,32 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
-	public class ViewDigitsAction extends AbstractAction {
+	public class ViewDigits1Action extends AbstractAction {
 
 		private static final long serialVersionUID = 5910687309575402310L;
 
-		public ViewDigitsAction() {
-			super("Digits");
+		public ViewDigits1Action() {
+			super("Digits = 1");
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("View Digits");
-			DFTView.setView(DFTView.View.Digits);
+			System.out.println("View Digits1");
+			DFTView.setView(DFTView.View.Digits1);
+			DFTEditor.view.repaint();
+		}
+	}
+	
+	public class ViewDigits2Action extends AbstractAction {
+
+		public ViewDigits2Action() {
+			super("Digits = 2");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("View Digits2");
+			DFTView.setView(DFTView.View.Digits2);
 			DFTEditor.view.repaint();
 		}
 	}
@@ -131,7 +145,7 @@ public class ActionHandler extends JPanel {
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("View Pixels");
+			System.out.println("View Pixels2");
 			DFTView.setView(DFTView.View.Pixels2);
 			DFTEditor.view.repaint();
 		}
@@ -155,7 +169,8 @@ public class ActionHandler extends JPanel {
         menuBar.add(viewMenu);        
         viewMenu.add(new JMenuItem(new ViewPixels1Action()));
         viewMenu.add(new JMenuItem(new ViewPixels2Action()));    
-        viewMenu.add(new JMenuItem(new ViewDigitsAction()));
+        viewMenu.add(new JMenuItem(new ViewDigits1Action()));
+        viewMenu.add(new JMenuItem(new ViewDigits2Action()));
         return menuBar;
 	}
 
