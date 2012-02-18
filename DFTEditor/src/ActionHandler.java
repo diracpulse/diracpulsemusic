@@ -61,6 +61,21 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
+	public class ExportAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public ExportAction() {
+			super("Export");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Export");
+			parent.exportFileInDFTEditor();
+		}
+	}
+	
 	public class PlayHarmonicsAction extends AbstractAction {
 
 		private static final long serialVersionUID = 2018379987198757465L;
@@ -159,6 +174,7 @@ public class ActionHandler extends JPanel {
         menuBar.add(fileMenu);
         fileMenu.add(new OpenAction());
         fileMenu.add(new ImportAction());
+        fileMenu.add(new ExportAction());
         fileMenu.add(new ExitAction());
         //Create the Play menu
         JMenu playMenu = new JMenu("Play");
