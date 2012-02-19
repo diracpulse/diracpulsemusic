@@ -137,8 +137,8 @@ public class DFTEditor extends JFrame {
 			}
 		}
 		int msfplus1 = maxScreenFreq + 1;
-		System.out.println("maxtrixVals div size: " + matrixValsSize / msfplus1 + "index: " + index / msfplus1);
-		System.out.println("maxtrixVals mod size: " + matrixValsSize % msfplus1 + "index: " + index % msfplus1);
+		//System.out.println("maxtrixVals div size: " + matrixValsSize / msfplus1 + "index: " + index / msfplus1);
+		//System.out.println("maxtrixVals mod size: " + matrixValsSize % msfplus1 + "index: " + index % msfplus1);
 		calculateAmpSum();
 		//calculateMaxAmpAtFreq();
 		printFloorAmpCount();
@@ -238,15 +238,22 @@ public class DFTEditor extends JFrame {
         //String fileNameTrimmed = fileName.substring(0, fileName.length() - 4);
         view.repaint();
 	}
-	
+
 	public void exportFileInDFTEditor() {
         //String fileName = FileTools.PromptForFileSave(view);
-        FileOutput.OutputMaximasToFile(this.getTitle());
-        JOptionPane.showMessageDialog(this, "Finished exporting");
+		String fileName = this.getTitle();
+		String fileNameTrimmed = fileName.substring(0, fileName.length() - 8); // ".mono5ms"
+        FileOutput.OutputMaximasToFile(fileNameTrimmed);
+        JOptionPane.showMessageDialog(this, "Finished exporting: " + fileName);
+	}
+	
+	public void exportAllFiles() {
+        FileOutput.minmaxExportAll(this);
+        JOptionPane.showMessageDialog(this, "Finished exporting all files");
 	}
 	
     public DFTEditor() {
-    	FileConvert.wavImport();
+    	FileConvert.wavImportAll();
         view = new DFTView();
         view.setBackground(Color.black);
         controller = new DFTController(this);
