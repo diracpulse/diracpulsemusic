@@ -12,7 +12,7 @@ public class FileConvert {
 	
 	// This function reads from a (newly created) text file
 	// It also creates a binary clone for future use
-	public static void wavImport() {
+	public static void wavImportAll() {
 		try {
 		//runProcess();
 			TreeSet<String> wavFileNames = new TreeSet<String>();
