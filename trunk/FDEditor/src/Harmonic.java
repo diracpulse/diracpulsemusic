@@ -48,10 +48,19 @@ public class Harmonic {
 		return length;
 	}
 	
+	// used to avoid null pointer for small harmonics
+	public Double[] getDummyArray() {
+		Double[] returnVal = new Double[3];
+		returnVal[0] = 0.0;
+		returnVal[1] = 0.0;
+		returnVal[2] = 0.0;
+		return returnVal;
+	}
+	
 	public Double[] getPCMData() {
 		if(timeToData.size() < 2) {
-			System.out.println("Harmonics.getPCMData: number of data points < 2");
-			return null;
+			//System.out.println("Harmonics.getPCMData: number of data points < 2");
+			return getDummyArray();
 		}
 		ArrayList<Double> sampleTimes = new ArrayList<Double>();
 		ArrayList<Double> logAmps = new ArrayList<Double>();
@@ -113,7 +122,7 @@ public class Harmonic {
 			taperLength =  (int) Math.ceil(endLogAmp * cycleLength);
 			taperLength /= SynthTools.timeToSample; 
 		}
-		System.out.println("Harmonic.getTaperLength: " + taperLength);
+		//System.out.println("Harmonic.getTaperLength: " + taperLength);
 		return taperLength;
 	}
 
