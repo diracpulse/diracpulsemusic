@@ -156,6 +156,7 @@ public class DFTEditor extends JFrame {
 			for(int freqIndex = 2; freqIndex <= maxScreenFreq; freqIndex++) {
 				float lowerVal = amplitudes[timeIndex][freqIndex];
 				if((centerVal >= upperVal) && (centerVal >= lowerVal)) {
+					if(centerVal == 0.0) continue;
 					freqsAtMaxima.add(freqIndex - 1);
 				}
 				upperVal = centerVal;
@@ -239,8 +240,8 @@ public class DFTEditor extends JFrame {
 	}
 	
 	public void exportFileInDFTEditor() {
-        String fileName = FileTools.PromptForFileSave(view);
-        FileOutput.OutputMaximasToFile(fileName);
+        //String fileName = FileTools.PromptForFileSave(view);
+        FileOutput.OutputMaximasToFile(this.getTitle());
         JOptionPane.showMessageDialog(this, "Finished exporting");
 	}
 	

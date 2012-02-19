@@ -34,9 +34,9 @@ class SynthTools {
 			Double[] HarmonicPCMData = harmonic.getPCMData();
 			int startSample = harmonic.getStartSampleOffset();
 			int endSample = startSample + HarmonicPCMData.length - 1;
-			System.out.println("SynthTools.playFileData startSample = " + startSample);
-			System.out.println("SynthTools.playFileData endSample = " + endSample);
-			System.out.println("SynthTools.playFileData HarmonicPCMData.length = " + HarmonicPCMData.length);
+			//System.out.println("SynthTools.playFileData startSample = " + startSample);
+			//System.out.println("SynthTools.playFileData endSample = " + endSample);
+			//System.out.println("SynthTools.playFileData HarmonicPCMData.length = " + HarmonicPCMData.length);
 			for(int currentSample = startSample; currentSample < endSample - 1; currentSample++) {
 				PCMData[currentSample] += HarmonicPCMData[currentSample - startSample];
 				if(currentSample % 441 == 0) {
@@ -52,7 +52,7 @@ class SynthTools {
 		AudioPlayer ap = new AudioPlayer();
 		ap.PlayBuffer(PCMData, 1.0);
 	}
-	
+
 	//4419
 	static void powSpeedTest() {
 		double result = 0.0;
