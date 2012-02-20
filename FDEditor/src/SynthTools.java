@@ -3,13 +3,15 @@ import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TreeMap;
 
+import javax.swing.JOptionPane;
+
 class SynthTools {
 	
 	static double sampleRate = 44100.0;
 	static double twoPI = 2.0 * Math.PI;
 	static double timeToSample = sampleRate * (FDData.timeStepInMillis * 1.0 / 1000.0);
 	
-	static void playFileData() {
+	static void playFileData(FDEditor parent) {
 		//powSpeedTest();
 		//sinSpeedTest();
 		long startSynthTimeInMillis = System.currentTimeMillis();
@@ -49,6 +51,7 @@ class SynthTools {
 		}
 		long timeElapsed = System.currentTimeMillis() - startSynthTimeInMillis;
 		System.out.println("Time Elapsed = " + timeElapsed);
+		JOptionPane.showMessageDialog(parent, "Ready To Play");
 		AudioPlayer ap = new AudioPlayer();
 		ap.PlayBuffer(PCMData, 1.0);
 	}

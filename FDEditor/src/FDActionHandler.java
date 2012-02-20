@@ -84,7 +84,7 @@ public class FDActionHandler extends JPanel {
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Play\n");
-			SynthTools.playFileData();
+			SynthTools.playFileData(parent);
 		}
 	}
 	

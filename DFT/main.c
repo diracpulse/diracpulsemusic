@@ -36,6 +36,9 @@ const double alpha = 5.0;
 double maxCyclesPerWindow = 0.0;
 int numWavelets = 0;
 
+// Special Variables
+double roundingFactor = 10.0;
+
 double KaiserWindow[MAXDFTWINDOW];
 
 struct WaveletInfo {
@@ -108,6 +111,7 @@ void SingleDFT(int waveletIndex, int startIndex, int endIndex) {
 	double cosVal = 0.0;
 	double ampVal = 0.0;
 	double logAmp = 0.0;
+	double roundedLogAmp = 0.0;
 	for(index = 0; index < maxIndex; index++) {
 		leftVal = (double) LeftRight[(startIndex + index) * 2];
 		rightVal = (double) LeftRight[(startIndex + index) * 2 + 1];
@@ -126,7 +130,8 @@ void SingleDFT(int waveletIndex, int startIndex, int endIndex) {
 	}
 	logAmps[waveletIndex] = logAmp;
 	// MATRIX OUTPUT
-	printf("%f\n", logAmp);
+	roundedLogAmp = round(logAmp * roundingFactor) / roundingFactor;
+	printf("%f\n", roundedLogAmp);
 }
 
 void SampleArrayIndex(int waveletIndex) {
@@ -288,7 +293,7 @@ void CalculateWavelets() {
 			WaveletInfoArray[waveletIndex].cosArray[index] = cos(dIndex * radianFreq) * KaiserWindow[index];
 		}
 		WaveletInfoArray[waveletIndex].gain = gain;
-		printWaveletInfo(WaveletInfoArray[index], index);
+		printWaveletInfo(WaveletInfoArray[waveletIndex], waveletIndex);
 	}
 }
 

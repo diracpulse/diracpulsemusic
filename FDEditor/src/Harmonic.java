@@ -4,8 +4,10 @@ import java.util.TreeMap;
 
 public class Harmonic {
 
-	private boolean applyTaper = false;
-	private boolean overwrite = false;
+	private int minTimeStep = 4; // 4 * 5.0ms = 20ms
+	private double minCycles = 2;
+	private boolean applyTaper = true; // not in use currently
+	private boolean overwrite = true; // not in use currently
 	private TreeMap<Integer, FDData> timeToData = new TreeMap<Integer, FDData>();
 	
 	public Harmonic() {
@@ -58,31 +60,29 @@ public class Harmonic {
 	}
 	
 	public Double[] getPCMData() {
-		if(timeToData.size() < 2) {
-			//System.out.println("Harmonics.getPCMData: number of data points < 2");
+		if(timeToData.size() < 4) {
+			//System.out.println("Harmonics.getPCMData: number of data points < 4");
 			return getDummyArray();
 		}
+		double minLogFreq = 16.0; // 65kHz
 		ArrayList<Double> sampleTimes = new ArrayList<Double>();
 		ArrayList<Double> logAmps = new ArrayList<Double>();
 		ArrayList<Double> logFreqs = new ArrayList<Double>();
 		ArrayList<Double> PCMData = new ArrayList<Double>();
 		double startSample = -1;
 		for(int time: timeToData.keySet()) {
-			if(startSample == -1) {
-				startSample = time;
-				sampleTimes.add(0.0);
-				logAmps.add(timeToData.get(time).getLogAmplitude());
-				logFreqs.add(timeToData.get(time).getNoteComplete() / FDData.noteBase);
-				continue;
-			}
+			if(startSample == -1) startSample = time;
 			sampleTimes.add(time - startSample);
 			logAmps.add(timeToData.get(time).getLogAmplitude());
-			logFreqs.add(timeToData.get(time).getNoteComplete() / FDData.noteBase);
+			double logFreq = timeToData.get(time).getNoteComplete() / FDData.noteBase;
+			if(logFreq < minLogFreq) minLogFreq = logFreq;
+			logFreqs.add(logFreq);
 		}
 		// NOTE logAmps.size() = logFreqs.size() = sampleTimes.size()
 		// Parallel arrays are fully contained within function so they should be OK
 		double endTime = sampleTimes.get(sampleTimes.size() - 1);
 		double endLogFreq = logFreqs.get(sampleTimes.size() - 1);
+		if (!minimumCyclesExceeded(minLogFreq, endTime)) return getDummyArray();
 		if(getTaperLength() > 0) {
 			// Apply taper to avoid "pop" at end of harmonic
 			sampleTimes.add(endTime + getTaperLength());
@@ -110,6 +110,14 @@ public class Harmonic {
 		Double[] returnVal = new Double[PCMData.size()];
 		returnVal = PCMData.toArray(returnVal);
 		return returnVal;
+	}
+	
+	public boolean minimumCyclesExceeded(double minLogFreq, double endTime) {
+		double cycleLength = SynthTools.sampleRate / Math.pow(FDData.logBase, minLogFreq);
+		double lengthInSamples = endTime * FDEditor.timeStepInMillis * (SynthTools.sampleRate / 1000.0);
+		double lengthInCycles = lengthInSamples / cycleLength;
+		if(lengthInCycles <= minCycles) return false;
+		return true;
 	}
 	
 	public int getTaperLength() {
