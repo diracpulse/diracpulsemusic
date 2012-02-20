@@ -19,7 +19,7 @@ public class DFTEditor extends JFrame {
 	
 	//public static TreeMap<Integer, TreeMap<Integer, Float>> timeToFreqToAmp;
 	private static float[][] amplitudes; // amplitude = amplitudes[time][freq]
-	private static TreeMap<Integer, ArrayList<Integer>> timeToFreqsAtMaxima;
+	private static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima;
 	public static TreeMap<Integer, Float> timeToAmpSum;
 	public static TreeSet<Integer> ampMaximaTimes;
 	public static ArrayList<Integer> timeAtAmpMaximas;
@@ -69,7 +69,7 @@ public class DFTEditor extends JFrame {
 		return timeToFreqsAtMaxima.keySet();
 	}
 	
-	public static ArrayList<Integer> maximasAtTime(int time) {
+	public static TreeSet<Integer> maximasAtTime(int time) {
 		return timeToFreqsAtMaxima.get(time);
 	}
 	
@@ -148,9 +148,9 @@ public class DFTEditor extends JFrame {
 	
 	// NOTE: maxima test is not performed for freq = 0 and freq = maxFreq
 	public void calculateTimeToFreqsAtMaxima() {
-		timeToFreqsAtMaxima = new TreeMap<Integer, ArrayList<Integer>>();
+		timeToFreqsAtMaxima = new TreeMap<Integer, TreeSet<Integer>>();
 		for(int timeIndex = 0; timeIndex <= maxTime; timeIndex++) {
-			ArrayList<Integer> freqsAtMaxima = new ArrayList<Integer>();
+			TreeSet<Integer> freqsAtMaxima = new TreeSet<Integer>();
 			float upperVal = amplitudes[timeIndex][0];
 			float centerVal = amplitudes[timeIndex][1]; // should be initialized in for loop
 			for(int freqIndex = 2; freqIndex <= maxScreenFreq; freqIndex++) {
@@ -163,6 +163,25 @@ public class DFTEditor extends JFrame {
 				centerVal = lowerVal;
 			}
 			timeToFreqsAtMaxima.put(timeIndex, freqsAtMaxima);
+		}
+		// collapse maximas at adjacent freqs
+		for(int time: timeToFreqsAtMaxima.keySet()) {
+			TreeSet<Integer> freqSet = new TreeSet<Integer>();
+			// create deep copy of timeToFreqsAtMaxima.get(time)
+			for(Integer value: timeToFreqsAtMaxima.get(time)) freqSet.add(value);;
+			while(!freqSet.isEmpty()) {
+				int freq = freqSet.first();
+				int startFreq = freq;
+				freqSet.remove(startFreq);
+				timeToFreqsAtMaxima.get(time).remove(startFreq);
+				while(freqSet.contains(freq + 1)) {
+					freq++;
+					freqSet.remove(freq);
+					timeToFreqsAtMaxima.get(time).remove(freq);
+				}
+				int centerFreq = startFreq + (freq - startFreq) / 2;
+				timeToFreqsAtMaxima.get(time).add(centerFreq);
+			}
 		}
 	}
 	
