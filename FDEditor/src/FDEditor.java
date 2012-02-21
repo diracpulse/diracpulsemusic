@@ -21,6 +21,8 @@ public class FDEditor extends JFrame {
 	public static JToolBar navigationBar;
 	public static JToolBar dataCreationBar;
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToData;
+	public static ArrayList<Harmonic>  harmonics;
+	public static String fileName;
 	
 	public static int startTimeIndex = 0; // = (actual Time)/ timeStepInMillis
 	public static int startNoteIndex = 0; // = 
@@ -116,9 +118,20 @@ public class FDEditor extends JFrame {
 	}
 	
 	public void openFileInFDEditor() {
-        String fileName = FileTools.PromptForFileOpen(view);
+        fileName = FileTools.PromptForFileOpen(view);
         FDFileInput.ReadBinaryFileData(fileName);
         this.setTitle(fileName);
+        view.repaint();
+	}
+	
+	public void displayHarmonicsInFDEditor() {
+        SynthTools.createHarmonics(timeToNoteToData);
+        this.setTitle("HARMONICS : " + fileName);
+        timeToNoteToData.clear();
+        for(Harmonic harmonic: harmonics) {
+        	//System.out.println(harmonic.hasPCMData());
+        	for(FDData data: harmonic.getAllData()) addData(data);
+        }
         view.repaint();
 	}
 	
@@ -174,7 +187,7 @@ public class FDEditor extends JFrame {
 		}
 		return returnVal;
 	}
-	
+		
 	public static double getMaxAmplitude() {
 		return 16.0;
 	}
