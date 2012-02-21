@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.TreeMap;
 
 
@@ -50,6 +51,11 @@ public class Harmonic {
 		return length;
 	}
 	
+	public ArrayList<FDData> getAllData() {
+		if(hasPCMData() == false) return new ArrayList<FDData>();
+		return new ArrayList<FDData>(timeToData.values());
+	}	
+	
 	// used to avoid null pointer for small harmonics
 	public Double[] getDummyArray() {
 		Double[] returnVal = new Double[3];
@@ -60,7 +66,12 @@ public class Harmonic {
 	}
 	
 	public Double[] getPCMData() {
-		if(timeToData.size() < 4) {
+		return getPCMData(true);
+	}
+	
+	// If synthesize == false, returns null if harmonic WILL BE systhesized, else returns dummyArray
+	private Double[] getPCMData(boolean synthesize) {
+		if(timeToData.size() < minTimeStep) {
 			//System.out.println("Harmonics.getPCMData: number of data points < 4");
 			return getDummyArray();
 		}
@@ -83,6 +94,8 @@ public class Harmonic {
 		double endTime = sampleTimes.get(sampleTimes.size() - 1);
 		double endLogFreq = logFreqs.get(sampleTimes.size() - 1);
 		if (!minimumCyclesExceeded(minLogFreq, endTime)) return getDummyArray();
+		if(synthesize == false) return null;
+		// AT THIS POINT HARMONIC WILL BE SYNTHESIZED
 		if(getTaperLength() > 0) {
 			// Apply taper to avoid "pop" at end of harmonic
 			sampleTimes.add(endTime + getTaperLength());
@@ -112,6 +125,11 @@ public class Harmonic {
 		return returnVal;
 	}
 	
+	public boolean hasPCMData() {
+		if(getPCMData(false) == null) return true;
+		return false; // if here, dummy array returned
+	}
+
 	public boolean minimumCyclesExceeded(double minLogFreq, double endTime) {
 		double cycleLength = SynthTools.sampleRate / Math.pow(FDData.logBase, minLogFreq);
 		double lengthInSamples = endTime * FDEditor.timeStepInMillis * (SynthTools.sampleRate / 1000.0);

@@ -16,11 +16,11 @@ class SynthTools {
 		//sinSpeedTest();
 		long startSynthTimeInMillis = System.currentTimeMillis();
 		System.out.println("SynthTools.playFileData started");
-		ArrayList<Harmonic> harmonics = createHarmonics(FDEditor.timeToNoteToData);
+		createHarmonics(FDEditor.timeToNoteToData);
 		// Find number of samples needed
 		int endSampleOffset = 0;
 		System.out.println("SynthTools.playFileData harmonics created");
-		for(Harmonic harmonic: harmonics) {
+		for(Harmonic harmonic: FDEditor.harmonics) {
 			//System.out.println("SynthTools.playFileData harmonic.endSampleOffset = " + harmonic.getEndSampleOffset());
 			if(harmonic.getEndSampleOffset() > endSampleOffset) {
 				endSampleOffset = harmonic.getEndSampleOffset();
@@ -32,7 +32,7 @@ class SynthTools {
 		double[] PCMData = new double[endSampleOffset + 1];
 		System.out.println("End Sample Offset " + endSampleOffset);
 		for(int i= 0; i <= endSampleOffset; i++) PCMData[i] = 0.0;
-		for(Harmonic harmonic: harmonics) {
+		for(Harmonic harmonic: FDEditor.harmonics) {
 			Double[] HarmonicPCMData = harmonic.getPCMData();
 			int startSample = harmonic.getStartSampleOffset();
 			int endSample = startSample + HarmonicPCMData.length - 1;
@@ -82,10 +82,10 @@ class SynthTools {
 		System.out.println("SynthTools.sinSpeedTest: Time Elapsed = " + timeElapsed + " " + result);
 	}
 	
-	static ArrayList<Harmonic> createHarmonics(TreeMap<Integer, TreeMap<Integer, FDData>> saveInput) {
+	static void createHarmonics(TreeMap<Integer, TreeMap<Integer, FDData>> saveInput) {
 		// create a copy of input because algorithm removes keys after added to harmonics
 		TreeMap<Integer, TreeMap<Integer, FDData>> input = copyTreeMap(saveInput);
-		ArrayList<Harmonic> harmonics = new ArrayList<Harmonic>();
+		FDEditor.harmonics= new ArrayList<Harmonic>(); 
 		while(!input.isEmpty()) {
 			int inputTime = input.firstKey();
 			// loop through all frequencies at current time 
@@ -122,7 +122,7 @@ class SynthTools {
 					}
 					break;
 				}
-				harmonics.add(currentHarmonic);
+				FDEditor.harmonics.add(currentHarmonic);
 			} // while(!input.get(inputTime).isEmpty())
 			input.remove(inputTime);
 			inputTime++;
@@ -130,7 +130,7 @@ class SynthTools {
 			//sleep(10);
 		} // while(!input.isEmpty())
 		//printHarmonics(harmonics);
-		return harmonics;
+		return;
 	}
 	
 	static void printHarmonics(ArrayList<Harmonic> harmonics) {

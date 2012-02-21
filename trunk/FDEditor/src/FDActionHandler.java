@@ -88,6 +88,24 @@ public class FDActionHandler extends JPanel {
 		}
 	}
 	
+	public class ViewHarmonicsAction extends AbstractAction {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -9196870261707581557L;
+
+		public ViewHarmonicsAction() {
+			super("View Harmonics");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("View Harmonics\n");
+			parent.displayHarmonicsInFDEditor();
+		}
+	}
+	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -102,6 +120,7 @@ public class FDActionHandler extends JPanel {
         menuBar.add(playMenu);        
         playMenu.add(new JMenuItem(new PlayAllAction()));
         JMenu viewMenu = new JMenu("View");
+        viewMenu.add(new ViewHarmonicsAction());
         menuBar.add(viewMenu);
         return menuBar;
 	}
