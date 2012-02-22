@@ -22,7 +22,7 @@ class LogLinear {
 			double slope = (upperValue - lowerValue) / (upperTime - lowerTime);
 			for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
 				double envValue = lowerValue + (timeIndex - lowerTime) * slope;
-				envelope[envIndex] = Math.pow(FDData.logBase, envValue);
+				envelope[envIndex] = Math.exp(envValue * Math.log(2.0));
 				if(envIndex == numSamples) {
 					//System.out.println("LogLinear: numSamples reached in loop");
 					return;

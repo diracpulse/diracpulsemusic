@@ -51,9 +51,17 @@ public class Harmonic {
 		return length;
 	}
 	
-	public ArrayList<FDData> getAllData() {
-		if(hasPCMData() == false) return new ArrayList<FDData>();
-		return new ArrayList<FDData>(timeToData.values());
+	public ArrayList<FDData> getAllData(int pass) {
+		if(pass == 0) {
+			flattenHarmonic();
+			return new ArrayList<FDData>(timeToData.values());
+		}
+		if(pass == 1) {
+			if(isNoise() == true) return new ArrayList<FDData>();
+			return new ArrayList<FDData>(timeToData.values());
+		}
+		System.out.println("Harmonic.getData(int pass): pass out of bounds:" + pass);
+		return null;
 	}	
 	
 	// used to avoid null pointer for small harmonics
@@ -119,15 +127,49 @@ public class Harmonic {
 			//System.out.println(PCMData.get(PCMData.size() - 1));
 			//System.out.println(currentPhase);
 			currentPhase += deltaPhase;
+			if(currentPhase > Math.PI) currentPhase -= 2.0 * Math.PI;
 		}
 		Double[] returnVal = new Double[PCMData.size()];
 		returnVal = PCMData.toArray(returnVal);
 		return returnVal;
 	}
 	
-	public boolean hasPCMData() {
-		if(getPCMData(false) == null) return true;
-		return false; // if here, dummy array returned
+	private void flattenHarmonic() {
+		if(timeToData.size() < 2) return;
+		double prevNote = -1;
+		double deltaNoteSum = 0.0;
+		double noteSum = -1.0;
+		boolean firstPass = true;
+		for(int time: timeToData.keySet()) {
+			double note = timeToData.get(time).getNote();
+			if(firstPass) {
+				prevNote = note;
+				noteSum = note;
+				firstPass = false;
+				continue; // might not need this
+			} else {
+				noteSum += note;
+				deltaNoteSum += note - prevNote;
+				prevNote = note;
+			}
+		}
+		if(Math.abs(deltaNoteSum) < 31.0) {
+			try {
+				int averageNote = (int) Math.round(noteSum / timeToData.size());
+				for(int time: timeToData.keySet()) {
+					FDData data = timeToData.get(time);
+					float logAmp = (float) data.getLogAmplitude();
+					timeToData.put(time, new FDData(time, averageNote, logAmp));
+				}
+			} catch (Exception e) {
+				System.out.println("Error in Harmonic.flattenHarmonic(): " + e.getMessage());
+			}
+		}
+	}
+	
+	public boolean isNoise() {
+		if(getPCMData(false) == null) return false;
+		return true; // if here, dummy array returned
 	}
 
 	public boolean minimumCyclesExceeded(double minLogFreq, double endTime) {
