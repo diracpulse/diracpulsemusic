@@ -1,5 +1,5 @@
 cd bin
 del *.class
 cd ..
-del FD.jar
+del FDEditor.jar
 ant
