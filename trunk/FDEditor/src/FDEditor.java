@@ -125,12 +125,20 @@ public class FDEditor extends JFrame {
 	}
 	
 	public void displayHarmonicsInFDEditor() {
-        SynthTools.createHarmonics(timeToNoteToData);
         this.setTitle("HARMONICS : " + fileName);
+        //first pass        
+        SynthTools.createHarmonics(timeToNoteToData);
         timeToNoteToData.clear();
         for(Harmonic harmonic: harmonics) {
         	//System.out.println(harmonic.hasPCMData());
-        	for(FDData data: harmonic.getAllData()) addData(data);
+        	for(FDData data: harmonic.getAllData(0)) addData(data);
+        }
+        // second pass
+        SynthTools.createHarmonics(timeToNoteToData);
+        timeToNoteToData.clear();
+        for(Harmonic harmonic: harmonics) {
+        	//System.out.println(harmonic.hasPCMData());
+        	for(FDData data: harmonic.getAllData(1)) addData(data);
         }
         view.repaint();
 	}
