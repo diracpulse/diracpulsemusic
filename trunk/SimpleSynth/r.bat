@@ -1,3 +1,1 @@
-java -classpath classes Test
-
-
+java -jar SimpleSynth.jar

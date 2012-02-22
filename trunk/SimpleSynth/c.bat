@@ -1,2 +1,5 @@
-javac -d classes *.java
-
+cd bin
+del *.class
+cd ..
+del SimpleSynth.jar
+ant
