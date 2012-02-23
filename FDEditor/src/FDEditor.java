@@ -23,6 +23,7 @@ public class FDEditor extends JFrame {
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToData;
 	public static ArrayList<Harmonic>  harmonics;
 	public static String fileName;
+	public static MathTools mathTools;
 	
 	public static int startTimeIndex = 0; // = (actual Time)/ timeStepInMillis
 	public static int startNoteIndex = 0; // = 
@@ -157,6 +158,7 @@ public class FDEditor extends JFrame {
         setSize(1500, 800);
         initTimeToNoteToData();
         initTestData();
+        mathTools = new MathTools();
         //openFileInFDEditor();
     }
     
