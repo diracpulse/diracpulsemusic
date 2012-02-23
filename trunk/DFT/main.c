@@ -212,8 +212,9 @@ void InitWavelets() {
 	//if(debug) printf("InitWavelets\n");
 	maxDFTLength = 0;
 	maxCyclesPerWindow = maxBinStep / (pow(2.0, 1.0 / notesPerOctave) - 1.0);
-	index = InitWaveletsHelper(maxFreqHz, 500.0, index, 1.0);
-	index = InitWaveletsHelper(500.0, minFreqHz, index, 2.0);
+	index = InitWaveletsHelper(maxFreqHz, 240.0, index, 1.0, 1.0);
+	index = InitWaveletsHelper(240.0, 80.0, index, 1.0, 1.55); // bins = 20 @ freq = 80Hz
+	index = InitWaveletsHelper(80.0, 20.0, index, 4.0, sqrt(2.0)); // bins = 10 @ freq = 20Hz
     numWavelets = index;
     // MATRIX OUTPUT
     printf("#_MAXNOTE_\n%d\n", frequencyToNote(maxFreqHz));
@@ -224,7 +225,7 @@ void InitWavelets() {
 
 // Creates Wavelets starting at upperNote and ending at (lowerNote - 1)
 // Returns index for NEXT wavelet
-int InitWaveletsHelper(double upperFreqHz, double stopFreqHz, int index, double taperPerOctave) {
+int InitWaveletsHelper(double upperFreqHz, double stopFreqHz, int index, double initialTaper, double taperPerOctave) {
 	int note = 0;
 	int upperNote = frequencyToNote(upperFreqHz);
 	int stopNote = frequencyToNote(stopFreqHz);
@@ -234,9 +235,9 @@ int InitWaveletsHelper(double upperFreqHz, double stopFreqHz, int index, double 
     	double samplesPerCycle = samplingRate / freqInHz;
     	double radianFreq = twoPI / samplesPerCycle;
     	double currentLogFreq =  log(freqInHz) / log(2.0);
-    	double taperValue = pow(taperPerOctave, startLogFreq - currentLogFreq);
+    	double taperValue = initialTaper * pow(taperPerOctave, startLogFreq - currentLogFreq);
     	double cyclesPerWindow = maxCyclesPerWindow / taperValue;
-    	double windowLength = (int) round(cyclesPerWindow * samplesPerCycle);
+    	int windowLength = (int) round(cyclesPerWindow * samplesPerCycle);
     	//IMPORTANT: the next 3 lines set cycles per window to an integer (doesn't improve anything)
     	//samplesPerCycle = round(windowLength / cyclesPerWindow);
     	//windowLength = cyclesPerWindow * samplesPerCycle;
@@ -261,11 +262,19 @@ int InitWaveletsHelper(double upperFreqHz, double stopFreqHz, int index, double 
 void printWaveletInfo(struct WaveletInfo wavelet, int index) {
 	printf("# Wavelet:");
 	printf("index: %d ", index);
-	printf("radFreq: %f ", wavelet.radianFreq);
+	double radFreq = wavelet.radianFreq;
+	printf("radFreq: %f ", radFreq);
+	double freqInHz = samplingRate / twoPI * radFreq;
+	double length = wavelet.length;
+	double samplesPerCycle = samplingRate / freqInHz;
+	double bins = length / samplesPerCycle;
+	printf("freqInHz: %f ", freqInHz);
+	printf("bins: %f ", bins);
 	printf("gain: %f ", wavelet.gain);
-	printf("length: %d ", wavelet.length);
-	printf("*sin[]: %x ", wavelet.sinArray);
-	printf("*cos[]: %x\n", wavelet.cosArray);
+	printf("length: %d ", wavelet.length); // pass as int
+	//printf("*sin[]: %x ", wavelet.sinArray);
+	//printf("*cos[]: %x ", wavelet.cosArray);
+	printf("\n");
 }
 
 void CalculateWavelets() {
