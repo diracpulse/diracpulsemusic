@@ -12,8 +12,6 @@ class SynthTools {
 	static double timeToSample = sampleRate * (FDData.timeStepInMillis * 1.0 / 1000.0);
 	
 	static void playFileData(FDEditor parent) {
-		//powSpeedTest();
-		//sinSpeedTest();
 		long startSynthTimeInMillis = System.currentTimeMillis();
 		System.out.println("SynthTools.playFileData started");
 		createHarmonics(FDEditor.timeToNoteToData);
@@ -56,32 +54,7 @@ class SynthTools {
 		ap.PlayBuffer(PCMData, 1.0);
 	}
 
-	//4419
-	static void powSpeedTest() {
-		double result = 0.0;
-		double numLoops = 10 * 1000 * 1000;
-		double maxVal = 10.0;
-		long startSynthTimeInMillis = System.currentTimeMillis();
-		for(double exponent = 0.0; exponent < maxVal; exponent += maxVal/numLoops) {
-			//result += Math.pow(FDData.logBase, exponent);
-			Math.exp(exponent);
-		}
-		long timeElapsed = System.currentTimeMillis() - startSynthTimeInMillis;
-		System.out.println("SynthTools.powSpeedTest: Time Elapsed = " + timeElapsed + " " + result);
-	}
-	
-	static void sinSpeedTest() {
-		double result = 0.0;
-		double numLoops = 10 * 1000 * 1000;
-		double maxVal = numLoops;
-		long startSynthTimeInMillis = System.currentTimeMillis();
-		for(double angle = 0.0; angle < maxVal; angle += maxVal/numLoops) {
-			result += Math.sin(angle);
-		}
-		long timeElapsed = System.currentTimeMillis() - startSynthTimeInMillis;
-		System.out.println("SynthTools.sinSpeedTest: Time Elapsed = " + timeElapsed + " " + result);
-	}
-	
+
 	static void createHarmonics(TreeMap<Integer, TreeMap<Integer, FDData>> saveInput) {
 		// create a copy of input because algorithm removes keys after added to harmonics
 		TreeMap<Integer, TreeMap<Integer, FDData>> input = copyTreeMap(saveInput);

@@ -106,6 +106,20 @@ public class FDActionHandler extends JPanel {
 		}
 	}
 	
+	public class TestAction extends AbstractAction {
+
+		public TestAction() {
+			super("Test");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Test\n");
+			MathTools mt = new MathTools();
+			mt.runTests();
+		}
+	}
+	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -122,6 +136,9 @@ public class FDActionHandler extends JPanel {
         JMenu viewMenu = new JMenu("View");
         viewMenu.add(new ViewHarmonicsAction());
         menuBar.add(viewMenu);
+        JMenu testMenu = new JMenu("Test");
+        testMenu.add(new TestAction());
+        menuBar.add(testMenu);
         return menuBar;
 	}
 
