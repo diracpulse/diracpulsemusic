@@ -179,7 +179,8 @@ public class DFTView extends JComponent {
 	public void drawAmplitude(Graphics g, int screenX, int screenY, float currentVal, Color b) {
 		int digitVal;
 		int fractionVal;
-		if(currentVal > 10.0f) {
+		// need to use >= to avoid "E" segment at currentVal = 10.0f
+		if(currentVal >= 10.0f) {
 			digitVal = (int) Math.floor(currentVal);
 			digitVal -= 10;					
 		} else {

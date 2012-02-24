@@ -52,6 +52,7 @@ public class DFTEditor extends JFrame {
 	// maxTime = length of file in ms / timeStepInMillis
 	public static int maxTime; 
 	
+	// note: actual freq = maxScreenFreq - freq
 	public static float getAmplitude(int time, int freq) {
 		if(time < maxTime && freq < maxScreenFreq) return amplitudes[time][freq];
 		return 0.0f;
