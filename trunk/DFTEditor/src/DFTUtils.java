@@ -18,8 +18,8 @@ public class DFTUtils {
 	public static FDData getValue(int time, int freq) {
 		FDData returnVal = null;
 		try {
-			int actualNote = DFTEditor.maxRealFreq - freq;
-			returnVal = new FDData(time, actualNote, DFTEditor.getAmplitude(time, freq));
+			int note = DFTEditor.freqToNote(freq);
+			returnVal = new FDData(time, note, DFTEditor.getAmplitude(time, freq));
 		} catch (Exception e) {
 			System.out.println("DFTUtils.getValue: Error creating FDData");
 		}
