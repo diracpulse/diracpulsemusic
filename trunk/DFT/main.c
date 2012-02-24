@@ -30,7 +30,7 @@ const double samplingRate = 44100.0;
 const double samplesPerStep = 220.5; // 5ms
 const double notesPerOctave = 31.0;
 const double maxBinStep = 1.0;
-const double alpha = 5.0;
+const double alpha = 2.0;
 
 // Calculated Variables
 double maxCyclesPerWindow = 0.0;

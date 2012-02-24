@@ -12,21 +12,7 @@ public class DFTController implements MouseListener, ActionListener {
 	private DFTEditor parent;
 	// This contains selected start points for harmonics
 	// Used to create harmonics once an end point is selected
-	private TreeMap<Integer, Integer> harmonicStartFreqToTime = null;
-	private DFTModel.TFA harmonicStart = null;
-	
-	private class TFPair {
-		
-		private int time; // time/5ms
-		private int note; // log2(freqInHz)*31
-		
-		TFPair(int time, int note) {
-			this.time = time;
-			this.note = note;
-		}
-		
-	}
-	
+
 	DFTController(DFTEditor parent) {
 		this.parent = parent;
 	}
@@ -42,7 +28,7 @@ public class DFTController implements MouseListener, ActionListener {
 	public void mousePressed(MouseEvent e){
 	    int x = e.getX();
 	    int y = e.getY();
-	    DFTModel.TFA selected = getFileData(x, y);
+	    FDData selected = getFileData(x, y);
 	    if(selected != null) {
 	    	System.out.println(selected);
 	    } else {
@@ -89,15 +75,15 @@ public class DFTController implements MouseListener, ActionListener {
 	    */
 	}
 	
-	public static DFTModel.TFA getFileData(int mouseX, int mouseY) {
+	public static FDData getFileData(int mouseX, int mouseY) {
 		if(mouseX < DFTEditor.leftOffset || mouseY < DFTEditor.upperOffset) return null;
 		int xStep = DFTView.getXStep();
 		int yStep = DFTView.getYStep();
 		int time = (mouseX - DFTEditor.leftOffset) / xStep + DFTEditor.leftX;
 		int freq = (mouseY - DFTEditor.upperOffset) / yStep + DFTEditor.upperY;
-		int realFreq = DFTEditor.maxRealFreq - freq;
-		DFTModel.TFA returnVal = new DFTModel.TFA(time, realFreq, DFTEditor.getAmplitude(time, freq));
-		System.out.println("Selected: " + returnVal.getTimeInMillis() + " " + returnVal.getFreqInHz() + " " + returnVal.getAmplitude());
+		//int realFreq = DFTEditor.maxRealFreq - freq;
+		FDData returnVal = DFTUtils.getValue(time, freq);
+		System.out.println("Selected: " + returnVal.getTimeInMillis() + " " + returnVal.getFrequencyInHz() + " " + returnVal.getLogAmplitude());
 		return returnVal;
 	}
 	

@@ -15,9 +15,15 @@ public class DFTUtils {
 		return maxValue;
 	}
 	
-	public static DFTModel.TFA getValue(int time, int freq) {
-		//freq = DFTEditor.maxRealFreq - freq;
-		return new DFTModel.TFA(time, freq, DFTEditor.getAmplitude(time, freq));
+	public static FDData getValue(int time, int freq) {
+		FDData returnVal = null;
+		try {
+			int actualNote = DFTEditor.maxRealFreq - freq;
+			returnVal = new FDData(time, actualNote, DFTEditor.getAmplitude(time, freq));
+		} catch (Exception e) {
+			System.out.println("DFTUtils.getValue: Error creating FDData");
+		}
+		return returnVal;
 	}
 	
 	public static void DrawIntegerHorizonal(Graphics g, Color b, int screenX, int screenY, int numdigits, int value) {
