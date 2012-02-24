@@ -181,6 +181,22 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
+	public class ViewPixels3Action extends AbstractAction {
+
+		private static final long serialVersionUID = 270072643328180860L;
+
+		public ViewPixels3Action() {
+			super("Pixels = 3");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("View Pixels3");
+			DFTView.setView(DFTView.View.Pixels3);
+			DFTEditor.view.repaint();
+		}
+	}
+	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -200,7 +216,8 @@ public class ActionHandler extends JPanel {
         JMenu viewMenu = new JMenu("View");
         menuBar.add(viewMenu);        
         viewMenu.add(new JMenuItem(new ViewPixels1Action()));
-        viewMenu.add(new JMenuItem(new ViewPixels2Action()));    
+        viewMenu.add(new JMenuItem(new ViewPixels2Action()));
+        viewMenu.add(new JMenuItem(new ViewPixels3Action()));    
         viewMenu.add(new JMenuItem(new ViewDigits1Action()));
         viewMenu.add(new JMenuItem(new ViewDigits2Action()));
         return menuBar;

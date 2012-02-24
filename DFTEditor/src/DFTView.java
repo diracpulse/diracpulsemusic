@@ -12,7 +12,8 @@ public class DFTView extends JComponent {
 		Digits1,
 		Digits2,
 		Pixels1,
-		Pixels2;
+		Pixels2,
+		Pixels3;
 	}
 	
 	public static void setView(View v) {
@@ -35,6 +36,8 @@ public class DFTView extends JComponent {
     		return 1;
     	case Pixels2:
     		return 2;
+    	case Pixels3:
+    		return 3;
     	}
     	return 1;
 	}
@@ -49,7 +52,9 @@ public class DFTView extends JComponent {
     		return 1;
     	case Pixels2:
     		return 2;
-    	}
+		case Pixels3:
+			return 3;
+		}
     	return 1;
 	}	
 	

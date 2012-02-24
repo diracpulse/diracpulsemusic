@@ -45,17 +45,27 @@ public class DFTEditor extends JFrame {
 	//maxRealFreq = log(maxRealFreqInHz) * freqsPerOctave
 	//maxScreenFreq = maxRealFreq - minRealFreq
 	//(where log is base 2, of course)
-	public static int freqsPerOctave = 31;
+	public static int freqsPerOctave = FDData.noteBase;
 	public static int minRealFreq;
 	public static int maxRealFreq;
 	public static int maxScreenFreq;
 	// maxTime = length of file in ms / timeStepInMillis
 	public static int maxTime; 
 	
-	// note: actual freq = maxScreenFreq - freq
+	// IMPORTANT: In order to display data with upper frequencies above lower frequencies:
+	// amplitudes[time][0] references the HIGHEST note (maxRealFreq)
+	// amplitudes[time][maxScreenFreq] references the LOWEST note (minRealFreq)
+	// in general "freq" refers to the index to the data in amplitudes[][]
+	// in general "note" refers to freqInHz = 2^(note / noteBase) and is the value output by FDData
+	// they are related as calculated in noteToFreq(int note) and freqToNote(int freq)
+	
 	public static float getAmplitude(int time, int freq) {
 		if(time < maxTime && freq < maxScreenFreq) return amplitudes[time][freq];
 		return 0.0f;
+	}
+	
+	public static int noteToFreq(int note) {
+		return maxRealFreq - note;
 	}
 	
 	public static int freqToNote(int freq) {
