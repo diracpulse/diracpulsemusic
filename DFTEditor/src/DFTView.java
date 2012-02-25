@@ -238,19 +238,27 @@ public class DFTView extends JComponent {
 		float red;
 		float green;
 		float blue;
-		if(DFTEditor.isMaxima(time, freq)) {
-			blue = 1.0f - currentVal / 2.0f;
-			red = currentVal / 2.0f + 0.5f;
-			green = 0.5f;
-		} else {
-			blue = 1.0f - currentVal;
-			red = currentVal;
-			if(red >= 0.5f) {
-				green = (1.0f - red) * 2.0f;
-			} else {
-				green = red * 2.0f;
-			}
+		if(DFTEditor.isSelected(time, freq)) {
+			float gray = currentVal / 2.0f + 0.5f;
+			blue = gray;
+			red = gray;
+			green = gray;
+			return new Color(red, green, blue);
 		}
+		blue = 1.0f - currentVal;
+		red = currentVal;
+		if(red >= 0.5f) {
+			green = (1.0f - red) * 2.0f;
+		} else {
+			green = red * 2.0f;
+		}
+		if(DFTEditor.isMaxima(time, freq)) {
+			blue = blue / 2.0f + 0.5f;
+			red = red / 2.0f + 0.5f;
+			green = green / 2.0f + 0.5f;
+			return new Color(red, green, blue);
+		}
+		// normal data
 		return new Color(red, green, blue);
 	}
 	

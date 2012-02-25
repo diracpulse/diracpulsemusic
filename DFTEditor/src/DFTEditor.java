@@ -14,17 +14,15 @@ public class DFTEditor extends JFrame {
 	public static DFTView view;
 	public static DFTController controller;
 	// Swing components
-	public static JMenuBar menuBar = null;
+	//public static JMenuBar menuBar = null;
 	public static JToolBar navigationBar = null;
 	
 	//public static TreeMap<Integer, TreeMap<Integer, Float>> timeToFreqToAmp;
 	private static float[][] amplitudes; // amplitude = amplitudes[time][freq]
 	private static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima;
-	public static TreeMap<Integer, Float> timeToAmpSum;
-	public static TreeSet<Integer> ampMaximaTimes;
-	public static ArrayList<Integer> timeAtAmpMaximas;
-	public static ArrayList<Integer> timeAtAmpMinimas;
-	public static TreeMap<Integer, Float> freqToMaxAmp;
+	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToFreqToSelectedData;
+	public static ArrayList<Selection> selections;
+	public static Selection.Type selectionType = Selection.Type.FLAT;
 	public static TreeMap<Integer, Integer> floorAmpToCount;
 	public static int xStep = 6;
 	public static int yStep = 9; // one digit;
@@ -33,7 +31,7 @@ public class DFTEditor extends JFrame {
 	public static int upperOffset = topYStep * 8; // start of first data cell
 	public static int leftX = 0; // index of freq in leftmost data cell
 	public static int upperY = 0; // index of time in uppermost data cell
-	public static int timeStepInMillis = 5; // time in ms = time * timeStepInMillis
+	public static int timeStepInMillis = FDData.timeStepInMillis; // time in ms = time * timeStepInMillis
 	// these are the max/min valued amplitude for the whole file
 	// they are used to calculate the color of amplitude values
 	public static float maxAmplitude;
@@ -73,6 +71,7 @@ public class DFTEditor extends JFrame {
 	}
 	
 	public static boolean isMaxima(int time, int freq) {
+		if(!timeToFreqsAtMaxima.containsKey(time)) return false;
 		return timeToFreqsAtMaxima.get(time).contains(freq);
 	}
 	
@@ -81,7 +80,48 @@ public class DFTEditor extends JFrame {
 	}
 	
 	public static TreeSet<Integer> maximasAtTime(int time) {
+		if(!timeToFreqsAtMaxima.containsKey(time)) return new TreeSet<Integer>();
 		return timeToFreqsAtMaxima.get(time);
+	}
+	
+	public static boolean isSelected(int time, int freq) {
+		if(!timeToFreqToSelectedData.containsKey(time)) return false;
+		return timeToFreqToSelectedData.get(time).containsKey(freq);
+	}
+	
+	public static FDData getSelected(int time, int freq) {
+		return timeToFreqToSelectedData.get(time).get(freq);
+	}
+	
+	private static void addSelected(FDData data) {
+		int time = data.getTime();
+		int freq = DFTEditor.noteToFreq(data.getNote());
+		if(!timeToFreqToSelectedData.containsKey(time)) {
+			timeToFreqToSelectedData.put(time, new TreeMap<Integer, FDData>());
+		}
+		// overwrite is OK
+		timeToFreqToSelectedData.get(time).put(freq, data);
+	}
+	
+	public static void handleSelection(FDData data) {
+		if(selections.isEmpty()) {
+			selections.add(new Selection(selectionType));
+		}
+		int index = selections.size() - 1;
+		if(selections.get(index).selectionComplete()) {
+			System.out.println("DFTEditor.handleSelection: unhandled completed selection");
+			return;
+		}
+		selections.get(index).addData(data);
+		if(selections.get(index).selectionComplete()) {
+			for(FDData loopData: selections.get(index).getSelectedData()) addSelected(loopData);
+			selections.add(new Selection(selectionType));
+		}
+		view.repaint();
+	}
+	
+	public static Set<Integer> selectedFreqsAtTime(int time) {
+		return timeToFreqToSelectedData.get(time).keySet();
 	}
 	
 	// This function reads from a binary file
@@ -150,7 +190,7 @@ public class DFTEditor extends JFrame {
 		int msfplus1 = maxScreenFreq + 1;
 		//System.out.println("maxtrixVals div size: " + matrixValsSize / msfplus1 + "index: " + index / msfplus1);
 		//System.out.println("maxtrixVals mod size: " + matrixValsSize % msfplus1 + "index: " + index % msfplus1);
-		calculateAmpSum();
+		//calculateAmpSum();
 		//calculateMaxAmpAtFreq();
 		printFloorAmpCount();
 		calculateTimeToFreqsAtMaxima();
@@ -206,30 +246,11 @@ public class DFTEditor extends JFrame {
 		System.out.println("total count: " + total);
 	}
 	
-	
-	// This calculates the sum of all amplitudes at a given time
-	public void calculateAmpSum() {
-		maxAmplitudeSum = 0.0f;
-		timeToAmpSum = new TreeMap<Integer, Float>();
-		for(int time = 0; time < maxTime; time++) {
-			double dsum = 0.0;
-			double dexponent = 1.0;
-			timeToAmpSum.put(new Integer(time), new Float(0.0f));
-			for(Float f: amplitudes[time]) {
-				dexponent = f.doubleValue();
-				dsum += Math.pow(2.0, dexponent);
-			}
-			dsum = Math.log(dsum) / Math.log(2.0);
-			if (maxAmplitudeSum < dsum) maxAmplitudeSum = (float) dsum;
-			timeToAmpSum.put(new Integer(time), new Float(dsum));
-		}
-	}
-	
 	public JMenuBar createMenuBar() {
         ActionHandler actionHandler = new ActionHandler(this);
         return actionHandler.createMenuBar();
     }
-
+	
 	public JToolBar createNavigationBar() {
 		navigationBar = new JToolBar("Navigation Bar");
         // Create Navigation Buttons
@@ -294,6 +315,8 @@ public class DFTEditor extends JFrame {
         add(view);
         setSize(1500, 800);
         openFileInDFTEditor();
+        selections = new ArrayList<Selection>();
+        timeToFreqToSelectedData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
     }
     
 	private static void createAndShowGUI() {
