@@ -8,8 +8,14 @@ import javax.swing.JOptionPane;
 
 public class DFTController implements MouseListener, ActionListener {
 	
+	public enum ControllerAction {
+		MAKE_SELECTION,
+		ZOOM;
+	}
+	
 	private DFTView view;
 	private DFTEditor parent;
+	private ControllerAction currentAction = ControllerAction.MAKE_SELECTION;
 	// This contains selected start points for harmonics
 	// Used to create harmonics once an end point is selected
 
@@ -28,9 +34,18 @@ public class DFTController implements MouseListener, ActionListener {
 	public void mousePressed(MouseEvent e){
 	    int x = e.getX();
 	    int y = e.getY();
-	    FDData selected = getFileData(x, y);
-	    if(selected != null) {
-	    	System.out.println(selected);
+	    FDData data = getFileData(x, y);
+	    if(data != null) {
+	    	System.out.println(data);
+			switch(currentAction) {
+				case MAKE_SELECTION:
+					DFTEditor.handleSelection(data);
+					return;
+				case ZOOM:
+					System.out.println("ZOOM not implemented currently");
+					return;
+			}
+		System.out.println("SelectionType unknown");	
 	    } else {
 	    	System.out.println(x + " " + y);
 	    }

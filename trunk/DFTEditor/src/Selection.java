@@ -3,15 +3,15 @@ import java.util.ArrayList;
 
 public class Selection {
 	
-	public enum SelectionType {
+	public enum Type {
 		FLAT, FOLLOW_FREQUENCY;
 	}
 	
 	private ArrayList<FDData> data;
 	
-	SelectionType type;
+	Type type = Type.FLAT;
 	
-	public Selection(SelectionType type) {
+	public Selection(Type type) {
 		this.type = type;
 		data = new ArrayList<FDData>();
 	}
@@ -24,11 +24,12 @@ public class Selection {
 		switch(type) {
 			case FLAT:
 				if(data.size() == 2) return true;
+				return false;
 			case FOLLOW_FREQUENCY:
 				System.out.println("FOLLOW_FREQUENCY not implemented currently");
 				return false;
 		}
-		System.out.println("SelectionType unknown");
+		System.out.println("Selection.selectionComplete() SelectionType unknown");
 		return false;
 	}
 	
@@ -40,48 +41,10 @@ public class Selection {
 				System.out.println("FOLLOW_FREQUENCY not implemented currently");
 				return null;
 		}
-		System.out.println("SelectionType unknown");
+		System.out.println("Selection.getSelectedData() SelectionType unknown");
 		return null;
 	}
-	
-	public ArrayList<Integer> getSelectedFreqs() {
-		ArrayList<Integer> returnVal = new ArrayList<Integer>();
-		switch(type) {
-			case FLAT:
-				if(data.size() == 0) return returnVal;
-				returnVal.add(DFTEditor.noteToFreq(data.get(0).getNote()));
-				if(data.size() == 1) return returnVal;
-				returnVal.add(DFTEditor.noteToFreq(data.get(1).getNote()));
-				if(data.size() == 2) return returnVal;
-				System.out.println("Selection.getSelectedFreqs() data size exceeded");
-				return null;
-			case FOLLOW_FREQUENCY:
-				System.out.println("FOLLOW_FREQUENCY not implemented currently");
-			return null;
-		}
-	System.out.println("SelectionType unknown");
-	return null;
-	}
-	
-	public ArrayList<Integer> getSelectedTimes() {
-		ArrayList<Integer> returnVal = new ArrayList<Integer>();
-		switch(type) {
-			case FLAT:
-				if(data.size() == 0) return returnVal;
-				returnVal.add(data.get(0).getTime());
-				if(data.size() == 1) return returnVal;
-				returnVal.add(data.get(1).getTime());
-				if(data.size() == 2) return returnVal;
-				System.out.println("Selection.getSelectedTimes() data size exceeded");
-				return null;
-			case FOLLOW_FREQUENCY:
-				System.out.println("FOLLOW_FREQUENCY not implemented currently");
-			return null;
-		}
-	System.out.println("SelectionType unknown");
-	return null;
-	}
-	
+
 	private ArrayList<FDData> getFLATData() {
 		ArrayList<FDData> returnVal = new ArrayList<FDData>();
 		int startTime = data.get(0).getTime();
@@ -108,11 +71,11 @@ public class Selection {
 					maxAmplitude = currentAmplitude;
 					noteAtMaximum = note;
 				}
-				try {
-					returnVal.add(new FDData(time, noteAtMaximum, maxAmplitude));
-				} catch (Exception e) {
-					System.out.println("Selection.getFLATData: error adding FDData");
-				}
+			}
+			try {
+				returnVal.add(new FDData(time, noteAtMaximum, maxAmplitude));
+			} catch (Exception e) {
+				System.out.println("Selection.getFLATData: error adding FDData");
 			}
 		}
 		return returnVal;
