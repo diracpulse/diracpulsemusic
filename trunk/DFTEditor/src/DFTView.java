@@ -24,7 +24,22 @@ public class DFTView extends JComponent {
 		return view;
 	}
 	
+	public enum DataView {
+		DATA_ONLY,
+		MAXIMAS_ONLY,
+		DATA_AND_MAXIMAS;
+	}
+	
+	public static void setDataView(DataView v) {
+		dataView = v;
+	}
+	
+	public DataView getDataView() {
+		return dataView;
+	}
+	
 	private static View view = View.Pixels1; 
+	private static DataView dataView = DataView.MAXIMAS_ONLY; 
 	
 	public static int getXStep() {
     	switch(view) {
@@ -58,7 +73,7 @@ public class DFTView extends JComponent {
     	return 1;
 	}	
 	
-	public void DrawUpperTimes(Graphics g) {
+	public void drawUpperTimes(Graphics g) {
 		int iTime;
 		int digitPlace;
 		int digitVal;
@@ -106,7 +121,7 @@ public class DFTView extends JComponent {
 	}
 
 
-	public void DrawLeftFreqs(Graphics g) {
+	public void drawLeftFreqs(Graphics g) {
 		int iFreq;
 		int digitPlace;
 		int digitVal;
@@ -148,12 +163,12 @@ public class DFTView extends JComponent {
 		}
 	}
 		
-	public void DrawFileData(Graphics g, boolean scaleLines) {
+	public void drawFileData(Graphics g, boolean scaleLines) {
 		// clear old data
 		g.setColor(new Color(0.0f, 0.0f, 0.0f));
 		g.fillRect(DFTEditor.leftOffset, DFTEditor.upperOffset, getWidth(), getHeight());
-		DrawLeftFreqs(g);
-		DrawUpperTimes(g);		
+		drawLeftFreqs(g);
+		drawUpperTimes(g);		
 		if((view != View.Digits1) && (view != View.Digits2)) {
 			drawFileDataAsPixels(g);
 			return;
@@ -235,31 +250,53 @@ public class DFTView extends JComponent {
 		currentVal /= ampRange;
 		if(currentVal < 0.0f) currentVal = 0.0f;
 		if(currentVal > 1.0f) currentVal = 1.0f;
-		float red;
-		float green;
-		float blue;
-		if(DFTEditor.isSelected(time, freq)) {
-			float gray = currentVal / 2.0f + 0.5f;
-			blue = gray;
-			red = gray;
-			green = gray;
-			return new Color(red, green, blue);
-		}
-		blue = 1.0f - currentVal;
-		red = currentVal;
+		float red = currentVal;
+		float green = 0.0f;
+		float blue = 1.0f - currentVal;
 		if(red >= 0.5f) {
 			green = (1.0f - red) * 2.0f;
 		} else {
 			green = red * 2.0f;
 		}
-		if(DFTEditor.isMaxima(time, freq)) {
-			blue = blue / 2.0f + 0.5f;
+		if(DFTEditor.isSelected(time, freq)) {
 			red = red / 2.0f + 0.5f;
-			green = green / 2.0f + 0.5f;
+			green = 0.0f;
+			blue = blue / 2.0f + 0.5f;
 			return new Color(red, green, blue);
+		}		
+		switch(dataView) {
+			case DATA_ONLY:
+				return new Color(red, green, blue);
+			case MAXIMAS_ONLY:
+				if(DFTEditor.isMaxima(time, freq)) return new Color(red, green, blue);
+				return new Color(0.0f, 0.0f, 0.0f);
+			case DATA_AND_MAXIMAS:
+				if(DFTEditor.isMaxima(time, freq)) {
+					red = red / 2.0f + 0.5f;
+					green = green / 2.0f + 0.5f;
+					blue = blue / 2.0f + 0.5f;
+				}
+				return new Color(red, green, blue);
 		}
-		// normal data
-		return new Color(red, green, blue);
+		// if we're here there's an error
+		return new Color(-1.0f, -1.0f, -1.0f);
+	}
+	
+	private void drawHarmonicsBase31(Graphics g) {
+		if(DFTEditor.drawHarmonicsBaseFreq == -1) return;
+		g.setColor(new Color(1.0f, 1.0f, 1.0f, 0.75f));
+		int currentFreq = DFTEditor.drawHarmonicsBaseFreq;
+		int startX = DFTEditor.leftOffset;
+		int width = getWidth() - DFTEditor.leftOffset;
+		int height = getYStep();
+		int index = 1;
+		int outputFreq = currentFreq;
+		while(DFTUtils.freqToScreenY(outputFreq) != -1) {
+			g.fillRect(startX, DFTUtils.freqToScreenY(outputFreq), width, height);
+			// REMEMBER: "freq" decreases as freqInHz increases (see comment near top of DFTEditor)
+			outputFreq = currentFreq - DFTUtils.getConsonantOvertonesBase31(index);
+			index++;
+		}
 	}
 	
 	// See also DFTEditor.getAmplitude()
@@ -276,7 +313,8 @@ public class DFTView extends JComponent {
 		
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        DrawFileData(g, true);
+        drawFileData(g, true);
+        drawHarmonicsBase31(g);
     }
 	
 }

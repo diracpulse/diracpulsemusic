@@ -76,10 +76,7 @@ public class FileConvert {
 	
 	public static void ConvertWAVToMono5ms(String fileName) {
 		System.out.println("Starting conversion of \"" + fileName + ".wav\" to \"" + fileName + ".mono5ms\"");
-		String[] tokens;
 		String linein = "";
-		Integer time;
-		Integer freq;
 		Float amp;
 	    try {
 	    	String[] del = new String[4];
