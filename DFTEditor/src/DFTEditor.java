@@ -48,7 +48,10 @@ public class DFTEditor extends JFrame {
 	public static int maxRealFreq;
 	public static int maxScreenFreq;
 	// maxTime = length of file in ms / timeStepInMillis
-	public static int maxTime; 
+	public static int maxTime;
+	// harmonic display variables
+	public static int drawHarmonicsBaseFreq = -1; // -1 means don't display
+	
 	
 	// IMPORTANT: In order to display data with upper frequencies above lower frequencies:
 	// amplitudes[time][0] references the HIGHEST note (maxRealFreq)
@@ -124,6 +127,10 @@ public class DFTEditor extends JFrame {
 		return timeToFreqToSelectedData.get(time).keySet();
 	}
 	
+	public static void refreshView() {
+		view.repaint();
+	}
+	
 	// This function reads from a binary file
 	public void ReadBinaryFileData(String fileName, String type) {
 		if(!type.equals("mono5ms")) {
@@ -187,7 +194,6 @@ public class DFTEditor extends JFrame {
 				index++;
 			}
 		}
-		int msfplus1 = maxScreenFreq + 1;
 		//System.out.println("maxtrixVals div size: " + matrixValsSize / msfplus1 + "index: " + index / msfplus1);
 		//System.out.println("maxtrixVals mod size: " + matrixValsSize % msfplus1 + "index: " + index % msfplus1);
 		//calculateAmpSum();
@@ -307,16 +313,16 @@ public class DFTEditor extends JFrame {
     	FileConvert.wavImportAll();
         view = new DFTView();
         view.setBackground(Color.black);
-        controller = new DFTController(this);
+        controller = new DFTController();
         setJMenuBar(createMenuBar());
         add(createNavigationBar(), BorderLayout.PAGE_START);
         view.addMouseListener(controller);
-        controller.setView(view);
         add(view);
         setSize(1500, 800);
         openFileInDFTEditor();
         selections = new ArrayList<Selection>();
         timeToFreqToSelectedData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
+        DFTUtils.testGetConsonantOvertonesBase31();
     }
     
 	private static void createAndShowGUI() {

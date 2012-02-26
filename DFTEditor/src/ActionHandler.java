@@ -9,9 +9,6 @@ import javax.swing.JPanel;
 
 public class ActionHandler extends JPanel {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 672340751348574007L;
 	private DFTEditor parent;
 	
@@ -137,6 +134,8 @@ public class ActionHandler extends JPanel {
 	
 	public class ViewDigits2Action extends AbstractAction {
 
+		private static final long serialVersionUID = 1L;
+
 		public ViewDigits2Action() {
 			super("Digits = 2");
 		}
@@ -167,7 +166,7 @@ public class ActionHandler extends JPanel {
 	
 	public class ViewPixels2Action extends AbstractAction {
 
-		private static final long serialVersionUID = 270072643328180860L;
+		private static final long serialVersionUID = 1L;
 
 		public ViewPixels2Action() {
 			super("Pixels = 2");
@@ -183,7 +182,7 @@ public class ActionHandler extends JPanel {
 	
 	public class ViewPixels3Action extends AbstractAction {
 
-		private static final long serialVersionUID = 270072643328180860L;
+		private static final long serialVersionUID = 1L;
 
 		public ViewPixels3Action() {
 			super("Pixels = 3");
@@ -193,6 +192,54 @@ public class ActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("View Pixels3");
 			DFTView.setView(DFTView.View.Pixels3);
+			DFTEditor.view.repaint();
+		}
+	}
+	
+	public class DataAndMaximasViewAction extends AbstractAction {
+
+		private static final long serialVersionUID = 270072643328180860L;
+
+		public DataAndMaximasViewAction() {
+			super("Data and Maximas");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Data and Maximas");
+			DFTView.setDataView(DFTView.DataView.DATA_AND_MAXIMAS);
+			DFTEditor.view.repaint();
+		}
+	}
+	
+	public class MaximasViewAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public MaximasViewAction() {
+			super("Maximas");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Maximas");
+			DFTView.setDataView(DFTView.DataView.MAXIMAS_ONLY);
+			DFTEditor.view.repaint();
+		}
+	}
+	
+	public class DataViewAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public DataViewAction() {
+			super("Data");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Data");
+			DFTView.setDataView(DFTView.DataView.DATA_ONLY);
 			DFTEditor.view.repaint();
 		}
 	}
@@ -219,7 +266,12 @@ public class ActionHandler extends JPanel {
         viewMenu.add(new JMenuItem(new ViewPixels2Action()));
         viewMenu.add(new JMenuItem(new ViewPixels3Action()));    
         viewMenu.add(new JMenuItem(new ViewDigits1Action()));
-        viewMenu.add(new JMenuItem(new ViewDigits2Action()));
+        viewMenu.add(new JMenuItem(new ViewDigits2Action())); 
+        JMenu dataViewMenu = new JMenu("DataView");
+        menuBar.add(dataViewMenu);
+        dataViewMenu.add(new JMenuItem(new DataAndMaximasViewAction()));
+        dataViewMenu.add(new JMenuItem(new MaximasViewAction()));
+        dataViewMenu.add(new JMenuItem(new DataViewAction()));
         return menuBar;
 	}
 

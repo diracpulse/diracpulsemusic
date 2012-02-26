@@ -1,10 +1,5 @@
 
-import java.awt.Rectangle;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.TreeMap;
-
-import javax.swing.JOptionPane;
 
 public class DFTController implements MouseListener, ActionListener {
 	
@@ -13,27 +8,27 @@ public class DFTController implements MouseListener, ActionListener {
 		ZOOM;
 	}
 	
-	private DFTView view;
-	private DFTEditor parent;
 	private ControllerAction currentAction = ControllerAction.MAKE_SELECTION;
-	// This contains selected start points for harmonics
-	// Used to create harmonics once an end point is selected
 
-	DFTController(DFTEditor parent) {
-		this.parent = parent;
-	}
-	
-	public void setView(DFTView view) {
-		this.view = view;
-	}
-	
-	
+	DFTController() {}
+
 	public void mouseReleased(MouseEvent e) {}
 	public void mouseEntered(MouseEvent e){}
 	public void mouseExited(MouseEvent e){}
 	public void mousePressed(MouseEvent e){
 	    int x = e.getX();
 	    int y = e.getY();
+	    if(e.isControlDown()) {
+	    	int freqSelected = DFTUtils.screenYToFreq(y);
+	    	if(freqSelected != DFTEditor.drawHarmonicsBaseFreq) {
+	    		DFTEditor.drawHarmonicsBaseFreq = freqSelected;
+	    	} else {
+	    		// toggle off harmonics display
+	    		DFTEditor.drawHarmonicsBaseFreq = -1;
+	    	}
+	    	DFTEditor.refreshView();
+	    	return;
+	    }
 	    FDData data = getFileData(x, y);
 	    if(data != null) {
 	    	System.out.println(data);

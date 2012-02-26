@@ -15,6 +15,60 @@ public class DFTUtils {
 		return maxValue;
 	}
 	
+	public static int getConsonantOvertonesBase31(int index) {
+		int[] first3 = {31, 18, 13};
+		int[] cycle4 = {10, 8, 7, 6};
+		int returnVal = 0;
+		for(int testIndex = 0; testIndex < 3; testIndex++) {
+			if(testIndex == index) return returnVal;
+			returnVal += first3[testIndex];
+		}
+		for(int testIndex = 0; testIndex < 12 * 4; testIndex++) {
+			if(testIndex + 3 == index) return returnVal;
+			returnVal += cycle4[testIndex % 4];
+		}
+		System.out.println("DFTUtils.getConsonantOvertonesBase31 index exceeded");
+		return returnVal;
+	}
+	
+	public static void testGetConsonantOvertonesBase31() {
+		for(int index = 0; index < 13 * 4; index++) {
+			int harmonic = getConsonantOvertonesBase31(index);
+			if(harmonic == -1) break;
+			System.out.println(Math.pow(2.0, harmonic / 31.0));
+		}
+	}
+	
+	// returns -1 if screenX is LEFT of data area
+	public static int screenXToTime(int screenX) {
+		if(screenX < DFTEditor.leftOffset) return -1;
+		screenX -= DFTEditor.leftOffset;
+		int time = screenX / DFTView.getXStep() + DFTEditor.leftX;
+		return time;
+	}
+	
+	// returns -1 if screenY is ABOVE data area
+	public static int screenYToFreq(int screenY) {
+		if(screenY < DFTEditor.upperOffset) return -1;
+		screenY -= DFTEditor.upperOffset;
+		int freq = screenY / DFTView.getYStep() + DFTEditor.upperY;
+		return freq;
+	}
+	
+	// returns -1 if screenX is LEFT of data area
+	public static int timeToScreenX(int time) {
+		if(time < DFTEditor.leftX) return -1;
+		int screenX = DFTEditor.leftOffset + ((time - DFTEditor.leftX) * DFTView.getXStep());
+		return screenX;
+	}
+	
+	// returns -1 if screenY is ABOVE data area
+	public static int freqToScreenY(int freq) {
+		if(freq < DFTEditor.upperY) return -1;
+		int screenY = DFTEditor.upperOffset + ((freq - DFTEditor.upperY) * DFTView.getYStep());
+		return screenY;
+	}
+
 	public static FDData getValue(int time, int freq) {
 		FDData returnVal = null;
 		try {
