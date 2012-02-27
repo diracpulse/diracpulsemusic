@@ -44,17 +44,17 @@ public class ActionHandler extends JPanel {
 		}
 	}
 
-	public class ImportAction extends AbstractAction {
+	public class SaveSelectedAction extends AbstractAction {
 
 		private static final long serialVersionUID = -4814209505628569590L;
 
-		public ImportAction() {
-			super("Import");
+		public SaveSelectedAction() {
+			super("Save Selected");
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Import");
+			System.out.println("Save Selected");
 		}
 	}
 	
@@ -244,6 +244,51 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
+	public class LineAreaAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public LineAreaAction() {
+			super("Line");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Line");
+			DFTEditor.setSelectionArea(Selection.Area.LINE);
+		}
+	}
+	
+	public class RectangleAreaAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public RectangleAreaAction() {
+			super("Rectangle");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Rectangle");
+			DFTEditor.setSelectionArea(Selection.Area.RECTANGLE);
+		}
+	}
+	
+	public class TriangleAreaAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public TriangleAreaAction() {
+			super("Triangle");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Triangle");
+			DFTEditor.setSelectionArea(Selection.Area.TRIANGLE);
+		}
+	}
+	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -251,7 +296,7 @@ public class ActionHandler extends JPanel {
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
         fileMenu.add(new OpenAction());
-        fileMenu.add(new ImportAction());
+        fileMenu.add(new SaveSelectedAction());
         fileMenu.add(new ExportAction());
         fileMenu.add(new ExportAllAction());
         fileMenu.add(new ExitAction());
@@ -272,6 +317,11 @@ public class ActionHandler extends JPanel {
         dataViewMenu.add(new JMenuItem(new DataAndMaximasViewAction()));
         dataViewMenu.add(new JMenuItem(new MaximasViewAction()));
         dataViewMenu.add(new JMenuItem(new DataViewAction()));
+        JMenu selectionAreaMenu = new JMenu("SelectionArea");
+        menuBar.add(selectionAreaMenu);
+        selectionAreaMenu.add(new JMenuItem(new LineAreaAction()));
+        selectionAreaMenu.add(new JMenuItem(new RectangleAreaAction()));
+        selectionAreaMenu.add(new JMenuItem(new TriangleAreaAction()));
         return menuBar;
 	}
 

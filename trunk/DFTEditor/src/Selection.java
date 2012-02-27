@@ -4,19 +4,20 @@ import java.util.TreeMap;
 public class Selection {
 	
 	public enum Area {
-		RECTANGLE, RIGHT_TRIANGLE;
+		LINE, RECTANGLE, TRIANGLE;
 	}
 	
 	public enum Type {
-		FLATTEN, FOLLOW_FREQUENCY, GRANULAR;
+		DEFAULT; //, HARMONIC, GRANULAR;
 	}
-	
+
+	// These are used to avoid excess passing of arguments in internal functions
 	private ArrayList<FDData> inputData;
 	private ArrayList<FDData> outputData;
 	
-	Area area = Area.RECTANGLE;
-	Type type = Type.FLATTEN;
-	// FILL GAPS IS BROKEN
+	
+	Area area = Area.LINE;
+	Type type = Type.DEFAULT;
 	public boolean fillGaps = true;
 	
 	public Selection(Area area, Type type) {
@@ -32,11 +33,11 @@ public class Selection {
 	
 	public boolean selectionComplete() {
 		switch(area) {
-			case RECTANGLE:
+			case LINE:
 				if(inputData.size() == 2) return true;
 				return false;
-			case RIGHT_TRIANGLE:
-				if(inputData.size() == 3) return true;
+			case RECTANGLE:
+				if(inputData.size() == 2) return true;
 				return false;
 		}
 		System.out.println("Selection.selectionComplete() SelectionType unknown");
@@ -46,38 +47,29 @@ public class Selection {
 	public ArrayList<FDData> getSelectedData() {
 		if(!selectionComplete()) return null;
 		switch(area) {
+			case LINE:
+				getLINEData();
+				return outputData;
 			case RECTANGLE:
 				getRECTANGLEData();
 				return outputData;
-			case RIGHT_TRIANGLE:
-				System.out.println("RIGHT_TRIANGLE not implemented currently");
-				return null;
+				
 		}
 		System.out.println("Selection.getSelectedData() SelectionType unknown");
 		return null;
 	}
 
-	private void getRECTANGLEData() {
+	private void getLINEData() {
 		TreeMap<Integer, FDData> internalData = new TreeMap<Integer, FDData>();
-		int startTime = inputData.get(0).getTime();
-		int endTime = inputData.get(1).getTime();
-		if(endTime < startTime) {
-			int saveEndTime = endTime;
-			endTime = startTime;
-			startTime = saveEndTime;
-		}
-		int lowerNote = inputData.get(0).getNote();
-		int upperNote = inputData.get(1).getNote();
-		if(upperNote < lowerNote) {
-			int saveUpperNote = upperNote;
-			upperNote = lowerNote;
-			lowerNote = saveUpperNote;
-		}
-		for(int time = startTime; time <= endTime; time++) {
+		DFTGeometry.SortedPair times = 
+			new  DFTGeometry.SortedPair(inputData.get(0).getTime(), inputData.get(1).getTime());
+		DFTGeometry.SortedPair notes = 
+			new  DFTGeometry.SortedPair(inputData.get(0).getNote(), inputData.get(1).getNote());
+		for(int time = times.lower; time <= times.upper; time++) {
 			float maxAmplitude = 0.0f;
 			float currentAmplitude = 0.0f;
 			int noteAtMaximum = -1;
-			for(int note = lowerNote; note <= upperNote; note++) {
+			for(int note = notes.lower; note <= notes.upper; note++) {
 				if(DFTView.getDataView() != DFTView.DataView.MAXIMAS_ONLY) {
 					currentAmplitude = DFTEditor.getAmplitude(time, DFTEditor.noteToFreq(note));
 				} else {
@@ -106,6 +98,26 @@ public class Selection {
 		}
 	}
 	
+	// Adds all Maxima data in a rectangular region
+	private void getRECTANGLEData() {
+		DFTGeometry.SortedPair times = 
+			new  DFTGeometry.SortedPair(inputData.get(0).getTime(), inputData.get(1).getTime());
+		DFTGeometry.SortedPair notes = 
+			new  DFTGeometry.SortedPair(inputData.get(0).getNote(), inputData.get(1).getNote());
+		for(int note = notes.lower; note <= notes.upper; note++) {
+			float currentAmplitude = 0.0f;
+			for(int time = times.lower; time <= times.upper; time++) {
+				if(!DFTEditor.isMaxima(time, DFTEditor.noteToFreq(note))) continue;
+				currentAmplitude = DFTEditor.getAmplitude(time, DFTEditor.noteToFreq(note));
+				try {
+					outputData.add(new FDData(time, note, currentAmplitude));
+				} catch (Exception e) {
+					System.out.println("Selection.getRECTANGLEData: error adding FDData");
+				}
+			}
+		}
+	}
+	
 	private void fillGaps(ArrayList<FDData> internalData) {
 		if(internalData.size() < 2) {
 			System.out.println("Selection.fillGaps: internalData < 2");
@@ -125,7 +137,7 @@ public class Selection {
 		outputData.add(currentValue);
 	}
 	
-	// DOES NOT RETURN end (this is to avoid duplicates)
+	// DOES NOT ADD end (this is to avoid duplicates)
 	private void interpolateData(FDData start, FDData end) {
 		if(start.getTime() == end.getTime()) {
 			outputData.add(start);
@@ -146,7 +158,7 @@ public class Selection {
 			int noteVal = (int) Math.round(dStartNote + noteSlope * dDeltaTime);
 			// note is passed to FDData as noteComplete
 			try {
-				System.out.println("Selection.interpolateData():" + time + " " + noteVal + " " + ampVal);
+				//System.out.println("Selection.interpolateData():" + time + " " + noteVal + " " + ampVal);
 				outputData.add(new FDData(time, noteVal, ampVal));
 			} catch (Exception e) {
 				System.out.println("Selection.interpolateData(): Error creating FDData");

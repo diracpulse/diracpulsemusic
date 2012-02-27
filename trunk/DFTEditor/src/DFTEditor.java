@@ -22,8 +22,8 @@ public class DFTEditor extends JFrame {
 	private static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima;
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToFreqToSelectedData;
 	public static ArrayList<Selection> selections;
-	public static Selection.Type selectionType = Selection.Type.FLATTEN;
-	public static Selection.Area selectionArea = Selection.Area.RECTANGLE;
+	public static Selection.Type selectionType = Selection.Type.DEFAULT;
+	public static Selection.Area selectionArea = Selection.Area.LINE;
 	public static TreeMap<Integer, Integer> floorAmpToCount;
 	public static int xStep = 6;
 	public static int yStep = 9; // one digit;
@@ -106,6 +106,18 @@ public class DFTEditor extends JFrame {
 		// overwrite is OK
 		timeToFreqToSelectedData.get(time).put(freq, data);
 	}
+	
+	public static void setSelectionArea(Selection.Area area) {
+		DFTEditor.selectionArea = area;
+		DFTEditor.selections.remove(selections.size() - 1);
+		selections.add(new Selection(DFTEditor.selectionArea, DFTEditor.selectionType));
+	}
+	
+	public static void setSelectionType(Selection.Type type) {
+		DFTEditor.selectionType = type;
+		DFTEditor.selections.remove(selections.size() - 1);
+		selections.add(new Selection(DFTEditor.selectionArea, DFTEditor.selectionType));
+	}	
 	
 	public static void handleSelection(FDData data) {
 		if(selections.isEmpty()) {
@@ -322,6 +334,7 @@ public class DFTEditor extends JFrame {
         setSize(1500, 800);
         openFileInDFTEditor();
         selections = new ArrayList<Selection>();
+        selections.add(new Selection(DFTEditor.selectionArea, DFTEditor.selectionType));
         timeToFreqToSelectedData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
         DFTUtils.testGetConsonantOvertonesBase31();
     }
