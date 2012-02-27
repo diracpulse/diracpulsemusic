@@ -34,7 +34,7 @@ public class DFTView extends JComponent {
 		dataView = v;
 	}
 	
-	public DataView getDataView() {
+	public static DataView getDataView() {
 		return dataView;
 	}
 	
@@ -183,10 +183,18 @@ public class DFTView extends JComponent {
                 if(!isYInBounds(freq)) break;
         		int screenX = DFTEditor.leftOffset + ((time - DFTEditor.leftX) * getXStep());
         		int screenY = DFTEditor.upperOffset + ((freq - DFTEditor.upperY) * getYStep());
-                float amp = DFTEditor.getAmplitude(time, freq);
-                if(amp > 0.0f) {
-                	Color b = getColor(time, freq);
-                	drawAmplitude(g, screenX, screenY, amp, b);
+        		if(DFTEditor.isSelected(time, freq)) {
+        			float amp = (float) DFTEditor.getSelected(time, freq).getLogAmplitude();
+        			if(amp > 0.0f) {
+        				Color b = getColor(time, freq);
+        				drawAmplitude(g, screenX, screenY, amp, b);
+        			}
+        		} else {
+        			float amp = DFTEditor.getAmplitude(time, freq);
+        			if(amp > 0.0f) {
+        				Color b = getColor(time, freq);
+        				drawAmplitude(g, screenX, screenY, amp, b);
+        			}
                 }
 			}
 		}
@@ -238,7 +246,12 @@ public class DFTView extends JComponent {
         		float amp = DFTEditor.getAmplitude(x, y);
         		if(amp == 0.0f) continue;
         		Color b = getColor(x, y);
-                drawAmplitude(g, screenX, screenY, DFTEditor.getAmplitude(x, y), b);
+        		if(DFTEditor.isSelected(x, y)) {
+        			float logAmplitude = (float) DFTEditor.getSelected(x, y).getLogAmplitude();
+        			drawAmplitude(g, screenX, screenY, logAmplitude, b);
+        		} else {
+        			drawAmplitude(g, screenX, screenY, DFTEditor.getAmplitude(x, y), b);
+        		}
             }
 		}
 	}
@@ -284,7 +297,7 @@ public class DFTView extends JComponent {
 	
 	private void drawHarmonicsBase31(Graphics g) {
 		if(DFTEditor.drawHarmonicsBaseFreq == -1) return;
-		g.setColor(new Color(1.0f, 1.0f, 1.0f, 0.75f));
+		g.setColor(new Color(1.0f, 1.0f, 1.0f, 0.5f));
 		int currentFreq = DFTEditor.drawHarmonicsBaseFreq;
 		int startX = DFTEditor.leftOffset;
 		int width = getWidth() - DFTEditor.leftOffset;

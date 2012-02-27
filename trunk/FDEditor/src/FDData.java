@@ -15,7 +15,7 @@ public class FDData {
 	public static final double maxFrequencyInHz = 20000.0;
 	
 	public enum DataType {
-		FUNDAMENTAL, HARMONIC, FORMANT, PERCUSSIVE
+		FUNDAMENTAL, HARMONIC, FORMANT, PERCUSSIVE, GRAIN
 	}
 		
 	private DataType type = DataType.FUNDAMENTAL;
