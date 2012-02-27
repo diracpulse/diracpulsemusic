@@ -22,7 +22,8 @@ public class DFTEditor extends JFrame {
 	private static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima;
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToFreqToSelectedData;
 	public static ArrayList<Selection> selections;
-	public static Selection.Type selectionType = Selection.Type.FLAT;
+	public static Selection.Type selectionType = Selection.Type.FLATTEN;
+	public static Selection.Area selectionArea = Selection.Area.RECTANGLE;
 	public static TreeMap<Integer, Integer> floorAmpToCount;
 	public static int xStep = 6;
 	public static int yStep = 9; // one digit;
@@ -96,7 +97,7 @@ public class DFTEditor extends JFrame {
 		return timeToFreqToSelectedData.get(time).get(freq);
 	}
 	
-	private static void addSelected(FDData data) {
+	public static void addSelected(FDData data) {
 		int time = data.getTime();
 		int freq = DFTEditor.noteToFreq(data.getNote());
 		if(!timeToFreqToSelectedData.containsKey(time)) {
@@ -108,7 +109,7 @@ public class DFTEditor extends JFrame {
 	
 	public static void handleSelection(FDData data) {
 		if(selections.isEmpty()) {
-			selections.add(new Selection(selectionType));
+			selections.add(new Selection(selectionArea, selectionType));
 		}
 		int index = selections.size() - 1;
 		if(selections.get(index).selectionComplete()) {
@@ -118,7 +119,7 @@ public class DFTEditor extends JFrame {
 		selections.get(index).addData(data);
 		if(selections.get(index).selectionComplete()) {
 			for(FDData loopData: selections.get(index).getSelectedData()) addSelected(loopData);
-			selections.add(new Selection(selectionType));
+			selections.add(new Selection(selectionArea, selectionType));
 		}
 		view.repaint();
 	}
