@@ -140,6 +140,16 @@ public class DFTEditor extends JFrame {
 		return timeToFreqToSelectedData.get(time).keySet();
 	}
 	
+	public void startDrawPlayTime() {
+		System.out.println(view.getTimeAxisWidthInMillis());
+		new DisplayPlayTime(this, 50, view.getTimeAxisWidthInMillis());
+	}
+	
+	public void drawPlayTime(int offsetInMillis, int refreshRateInMillis) {
+		view.drawPlayTime(offsetInMillis, refreshRateInMillis);
+		refreshView();
+	}
+	
 	public static void refreshView() {
 		view.repaint();
 	}

@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class DFTView extends JComponent {
 	
@@ -7,6 +8,12 @@ public class DFTView extends JComponent {
 	 * 
 	 */
 	private static final long serialVersionUID = 2964004162144513754L;
+	
+	private static BufferedImage bi;
+	private static boolean useImage = true;
+	private static boolean drawPlaying = false;
+	private static int offsetInMillis;
+	private static int refreshInMillis;
 	
 	public enum View {
 		Digits1,
@@ -312,6 +319,17 @@ public class DFTView extends JComponent {
 		}
 	}
 	
+	public void drawPlayTime(int offsetInMillis, int refreshInMillis) {
+		drawPlaying = true;
+		DFTView.offsetInMillis = offsetInMillis;
+		DFTView.refreshInMillis = refreshInMillis;
+	}
+	
+	public int getTimeAxisWidthInMillis() {
+   		double millisPerPixel = (double) FDData.timeStepInMillis / (double) getXStep();
+   		return (int) Math.round(getWidth() * millisPerPixel);
+	}
+	
 	// See also DFTEditor.getAmplitude()
 	private boolean isYInBounds(int y) {
 		if(y > DFTEditor.maxScreenFreq) return false;
@@ -325,9 +343,30 @@ public class DFTView extends JComponent {
 	}
 		
     protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        drawFileData(g, true);
-        drawHarmonicsBase31(g);
+    	if(drawPlaying) {
+    		double millisPerPixel = (double) FDData.timeStepInMillis / (double) getXStep();
+    		int startX = (int) Math.round((double) DFTView.offsetInMillis / millisPerPixel + DFTEditor.leftOffset);
+    		int width = (int)  Math.round((double) DFTView.refreshInMillis / millisPerPixel);
+    		g.drawImage(bi, 0, 0, null);
+       		g.setColor(new Color(0.5f, 0.5f, 0.5f, 0.75f));
+    		g.fillRect(startX, 0, width, getHeight());    		
+    		drawPlaying = false;
+    		return;
+    	}
+    	if(useImage == true) {
+    		bi = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+    		Graphics2D g2 = bi.createGraphics();
+    		super.paintComponent(g);
+    		drawFileData(g2, true);
+    		drawHarmonicsBase31(g2);
+    		g.drawImage(bi, 0, 0, null);
+    		return;
+    	}
+		super.paintComponent(g);
+		drawFileData(g, true);
+		drawHarmonicsBase31(g);
+		return;
+    	
     }
 	
 }
