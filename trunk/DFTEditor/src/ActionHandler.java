@@ -98,7 +98,7 @@ public class ActionHandler extends JPanel {
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			parent.startDrawPlayTime();
+			parent.playSelectedDataInCurrentWindow();
 			System.out.println("Play Harmonics");
 		}
 	}
