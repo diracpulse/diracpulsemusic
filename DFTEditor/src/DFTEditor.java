@@ -21,6 +21,7 @@ public class DFTEditor extends JFrame {
 	private static float[][] amplitudes; // amplitude = amplitudes[time][freq]
 	private static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima;
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToFreqToSelectedData;
+	public static ArrayList<Harmonic> harmonics;
 	public static ArrayList<Selection> selections;
 	public static Selection.Type selectionType = Selection.Type.DEFAULT;
 	public static Selection.Area selectionArea = Selection.Area.LINE;
@@ -140,11 +141,14 @@ public class DFTEditor extends JFrame {
 		return timeToFreqToSelectedData.get(time).keySet();
 	}
 	
-	public void startDrawPlayTime() {
-		System.out.println(view.getTimeAxisWidthInMillis());
-		new DisplayPlayTime(this, 50, view.getTimeAxisWidthInMillis());
+	public int getTimeAxisWidthInMillis() {
+		return view.getTimeAxisWidthInMillis();
 	}
 	
+	public void playSelectedDataInCurrentWindow() {
+		new DisplayPlayTime(this, 50, view.getTimeAxisWidthInMillis());
+	}
+
 	public void drawPlayTime(int offsetInMillis, int refreshRateInMillis) {
 		view.drawPlayTime(offsetInMillis, refreshRateInMillis);
 		refreshView();

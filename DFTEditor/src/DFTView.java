@@ -349,7 +349,7 @@ public class DFTView extends JComponent {
     		int width = (int)  Math.round((double) DFTView.refreshInMillis / millisPerPixel);
     		g.drawImage(bi, 0, 0, null);
        		g.setColor(new Color(0.5f, 0.5f, 0.5f, 0.75f));
-    		g.fillRect(startX, 0, width, getHeight());    		
+    		g.fillRect(startX, 0, 1, getHeight());    		
     		drawPlaying = false;
     		return;
     	}

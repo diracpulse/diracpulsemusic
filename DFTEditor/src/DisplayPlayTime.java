@@ -10,6 +10,7 @@ public class DisplayPlayTime implements ActionListener {
 	int endTimeInMillis;
 	Timer timer;
 	DFTEditor parent;
+	boolean startPlay = true;
 	
 	DisplayPlayTime(DFTEditor parent, int refreshRateInMillis, int endTimeInMillis) {
 		this.parent = parent;
@@ -17,12 +18,17 @@ public class DisplayPlayTime implements ActionListener {
 		this.refreshRateInMillis = refreshRateInMillis;
 		this.endTimeInMillis = endTimeInMillis;
 		timer = new Timer(refreshRateInMillis, this);
+		SynthTools.initSelectedRegion(parent);
         timer.setInitialDelay(0);
-        timer.start(); 
+        timer.start();
 	}
 
 	public void actionPerformed(ActionEvent e) {
-		System.out.println(currentOffsetInMillis);
+		//System.out.println(currentOffsetInMillis);
+		if(startPlay) {
+			SynthTools.playSelectedRegion();
+			startPlay = false;
+		}
 		parent.drawPlayTime(currentOffsetInMillis, refreshRateInMillis);
 		currentOffsetInMillis += refreshRateInMillis;
 		if(currentOffsetInMillis >= endTimeInMillis) timer.stop();

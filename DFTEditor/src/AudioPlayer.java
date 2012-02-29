@@ -1,7 +1,10 @@
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.SourceDataLine;
 
-import javax.sound.sampled.*;
-
-class AudioPlayer {
+public class AudioPlayer extends Thread {
 
 	SourceDataLine line;
 	
@@ -11,9 +14,18 @@ class AudioPlayer {
 	final boolean signed = true;
 	final boolean bigEndian = false;
 	final double fullScale = Short.MAX_VALUE - 1;
+	private DFTEditor parent;
+	private double[] mono;
+	private double masterVolume;
 
 	
-	AudioPlayer () {
+	AudioPlayer (DFTEditor parent, double[] mono, double masterVolume) {
+		this.parent = parent;
+		this.mono = mono;
+		this.masterVolume = masterVolume;
+	}
+	
+	public void run() {
 
 		AudioFormat format = new AudioFormat(sampleRate, bitsPerSample, channels, signed, bigEndian);
 		
@@ -31,8 +43,8 @@ class AudioPlayer {
 			System.out.println("Speaker port unsupported");
 			System.exit(1);
 		}
-		
 		line.start();
+		PlayBuffer(mono, masterVolume);
 		
 	}
 
