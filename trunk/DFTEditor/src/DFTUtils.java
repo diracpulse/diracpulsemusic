@@ -71,6 +71,10 @@ public class DFTUtils {
 
 	public static FDData getValue(int time, int freq) {
 		FDData returnVal = null;
+		if (time > DFTEditor.maxTime) time = DFTEditor.maxTime;
+		if (freq > DFTEditor.maxScreenFreq) freq = DFTEditor.maxScreenFreq;
+		if (time < 0) time = 0;
+		if (freq < 0) freq = 0;		
 		try {
 			int note = DFTEditor.freqToNote(freq);
 			returnVal = new FDData(time, note, DFTEditor.getAmplitude(time, freq));
