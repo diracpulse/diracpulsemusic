@@ -19,6 +19,7 @@ public class Selection {
 	Area area = Area.LINE;
 	Type type = Type.DEFAULT;
 	public boolean fillGaps = true;
+	public boolean deleteSelected = false;
 	
 	public Selection(Area area, Type type) {
 		this.area = area;

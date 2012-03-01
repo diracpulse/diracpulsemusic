@@ -104,7 +104,6 @@ public class AudioPlayer extends Thread {
 		line.write(audioByteData, offset, numBytesToWrite);
 	}
 
-	
 	public void SoundOff() {
 		
 		line.drain();
