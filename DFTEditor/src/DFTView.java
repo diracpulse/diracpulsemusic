@@ -13,7 +13,6 @@ public class DFTView extends JComponent {
 	private static boolean useImage = true;
 	private static boolean drawPlaying = false;
 	private static int offsetInMillis;
-	private static int refreshInMillis;
 	
 	public enum View {
 		Digits1,
@@ -129,7 +128,7 @@ public class DFTView extends JComponent {
 
 
 	public void drawLeftFreqs(Graphics g) {
-		int iFreq;
+		int note;
 		int digitPlace;
 		int digitVal;
 		Color f;
@@ -144,17 +143,17 @@ public class DFTView extends JComponent {
 		int freqRange = (getHeight() - DFTEditor.upperOffset) / yStep * freqStep;
 		int endFreq = startFreq + freqRange;
 		for(int freq = startFreq; freq < endFreq; freq += freqStep) {
-			iFreq = DFTEditor.maxRealFreq - freq;
+			note = DFTEditor.freqToNote(freq);
 			int xOffset = 1;
 			double freqsPerOctave = (double) DFTEditor.freqsPerOctave;
-			double dFreq = (double) iFreq;
+			double dFreq = (double) note;
 			float freqInHz = (float) Math.pow(2.0, dFreq / freqsPerOctave);			
 			for(digitPlace = 10000; digitPlace >= 1; digitPlace /= 10) {
 				digitVal = (int) Math.floor(freqInHz / digitPlace);
 				freqInHz -= digitVal * digitPlace;
 				f = new Color(1.0f, 1.0f, 1.0f);
 				b = new Color(0.0f, 0.0f, 0.0f);
-				if(freq >= (DFTEditor.maxRealFreq - DFTEditor.minRealFreq)) {
+				if(freq >= (DFTEditor.maxScreenFreq)) {
 					f = blank;
 					b = blank;
 				}
@@ -308,7 +307,7 @@ public class DFTView extends JComponent {
 		int currentFreq = DFTEditor.drawHarmonicsBaseFreq;
 		int startX = DFTEditor.leftOffset;
 		int width = getWidth() - DFTEditor.leftOffset;
-		int height = getYStep();
+		int height = 1; // getYStep();
 		int index = 1;
 		int outputFreq = currentFreq;
 		while(DFTUtils.freqToScreenY(outputFreq) != -1) {
@@ -319,10 +318,19 @@ public class DFTView extends JComponent {
 		}
 	}
 	
+	private void drawVerticesSelectedArea(Graphics g) {
+		g.setColor(new Color(1.0f, 1.0f, 0.0f, 0.5f));
+		for(FDData data: DFTEditor.getCurrentSelection().getInputData()) {
+			int x = DFTUtils.timeToScreenX(data.getTime());
+			int y = DFTUtils.freqToScreenY(DFTEditor.noteToFreq(data.getNote()));
+			g.drawLine(DFTEditor.leftOffset, y, getWidth(), y);
+			g.drawLine(x, DFTEditor.upperOffset, x, getHeight());
+		}
+	}
+	
 	public void drawPlayTime(int offsetInMillis, int refreshInMillis) {
 		drawPlaying = true;
 		DFTView.offsetInMillis = offsetInMillis;
-		DFTView.refreshInMillis = refreshInMillis;
 	}
 	
 	public int getTimeAxisWidthInMillis() {
@@ -346,7 +354,6 @@ public class DFTView extends JComponent {
     	if(drawPlaying) {
     		double millisPerPixel = (double) FDData.timeStepInMillis / (double) getXStep();
     		int startX = (int) Math.round((double) DFTView.offsetInMillis / millisPerPixel + DFTEditor.leftOffset);
-    		int width = (int)  Math.round((double) DFTView.refreshInMillis / millisPerPixel);
     		g.drawImage(bi, 0, 0, null);
        		g.setColor(new Color(0.5f, 0.5f, 0.5f, 0.75f));
     		g.fillRect(startX, 0, 1, getHeight());    		
@@ -359,12 +366,14 @@ public class DFTView extends JComponent {
     		super.paintComponent(g);
     		drawFileData(g2, true);
     		drawHarmonicsBase31(g2);
+    		drawVerticesSelectedArea(g2);
     		g.drawImage(bi, 0, 0, null);
     		return;
     	}
 		super.paintComponent(g);
 		drawFileData(g, true);
 		drawHarmonicsBase31(g);
+		drawVerticesSelectedArea(g);
 		return;
     	
     }

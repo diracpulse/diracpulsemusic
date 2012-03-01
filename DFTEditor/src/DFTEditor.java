@@ -47,8 +47,8 @@ public class DFTEditor extends JFrame {
 	//maxScreenFreq = maxRealFreq - minRealFreq
 	//(where log is base 2, of course)
 	public static int freqsPerOctave = FDData.noteBase;
-	public static int minRealFreq;
-	public static int maxRealFreq;
+	public static int minScreenNote;
+	public static int maxScreenNote;
 	public static int maxScreenFreq;
 	// maxTime = length of file in ms / timeStepInMillis
 	public static int maxTime;
@@ -69,11 +69,11 @@ public class DFTEditor extends JFrame {
 	}
 	
 	public static int noteToFreq(int note) {
-		return maxRealFreq - note;
+		return maxScreenNote - note;
 	}
 	
 	public static int freqToNote(int freq) {
-		return maxRealFreq - freq;
+		return maxScreenNote - freq;
 	}
 	
 	public static boolean isMaxima(int time, int freq) {
@@ -153,6 +153,10 @@ public class DFTEditor extends JFrame {
 		view.repaint();
 	}
 	
+	public static Selection getCurrentSelection() {
+		return selections.get(selections.size() - 1);
+	}
+	
 	public static Set<Integer> selectedFreqsAtTime(int time) {
 		return timeToFreqToSelectedData.get(time).keySet();
 	}
@@ -187,8 +191,8 @@ public class DFTEditor extends JFrame {
 		DataInputStream in = null;
 		maxAmplitude = 0.0f;
 		minAmplitude = 15.0f;
-		minRealFreq = freqsPerOctave * 100;
-		maxRealFreq = 0;
+		minScreenNote = freqsPerOctave * 100;
+		maxScreenNote = 0;
 		maxTime = 0;
 		float amp;
 	    try {
@@ -199,8 +203,8 @@ public class DFTEditor extends JFrame {
 			return;
 		}
 		try {
-			maxRealFreq = in.readInt();
-			minRealFreq = in.readInt();
+			maxScreenNote = in.readInt();
+			minScreenNote = in.readInt();
 			while(true) {
 				amp = in.readFloat();
 				matrixVals.add(amp);
@@ -227,7 +231,7 @@ public class DFTEditor extends JFrame {
 			}
 		}
 		int matrixValsSize = matrixVals.size();
-		maxScreenFreq = maxRealFreq - minRealFreq;
+		maxScreenFreq = maxScreenNote - minScreenNote;
 		maxTime = matrixValsSize / (maxScreenFreq + 1);
 		amplitudes = new float[maxTime + 1][maxScreenFreq + 1];
 		int index = 0;

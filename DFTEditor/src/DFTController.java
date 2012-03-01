@@ -86,7 +86,7 @@ public class DFTController implements MouseListener, ActionListener {
 	}
 	
 	public static FDData getFileData(int mouseX, int mouseY) {
-		if(mouseX < DFTEditor.leftOffset || mouseY < DFTEditor.upperOffset) return null;
+		//if(mouseX < DFTEditor.leftOffset || mouseY < DFTEditor.upperOffset) return null;
 		int xStep = DFTView.getXStep();
 		int yStep = DFTView.getYStep();
 		int time = (mouseX - DFTEditor.leftOffset) / xStep + DFTEditor.leftX;
@@ -130,7 +130,7 @@ public class DFTController implements MouseListener, ActionListener {
     
     private void adjustY(int deltaY) {
     	if(deltaY > 0) {
-    		int maxY = (DFTEditor.maxRealFreq - DFTEditor.minRealFreq);
+    		int maxY = (DFTEditor.maxScreenFreq);
     		if((DFTEditor.upperY + deltaY) < maxY) {
     			DFTEditor.upperY += deltaY;
     		} else {

@@ -4,7 +4,7 @@ import java.util.TreeMap;
 public class Selection {
 	
 	public enum Area {
-		LINE, RECTANGLE, TRIANGLE;
+		LINE, RECTANGLE, PURE_INTERPOLATE, TRIANGLE;
 	}
 	
 	public enum Type {
@@ -32,6 +32,10 @@ public class Selection {
 		inputData.add(input);
 	}
 	
+	public ArrayList<FDData> getInputData() {
+		return inputData;
+	}
+	
 	public boolean selectionComplete() {
 		switch(area) {
 			case LINE:
@@ -40,6 +44,9 @@ public class Selection {
 			case RECTANGLE:
 				if(inputData.size() == 2) return true;
 				return false;
+			case PURE_INTERPOLATE:
+				if(inputData.size() == 2) return true;
+				return false;				
 		}
 		System.out.println("Selection.selectionComplete() SelectionType unknown");
 		return false;
@@ -53,6 +60,9 @@ public class Selection {
 				return outputData;
 			case RECTANGLE:
 				getRECTANGLEData();
+				return outputData;
+			case PURE_INTERPOLATE:
+				interpolateData(inputData.get(0), inputData.get(1), true);
 				return outputData;
 				
 		}
@@ -132,17 +142,24 @@ public class Selection {
 				continue;
 			}
 			nextValue = loopData;
-			interpolateData(currentValue, nextValue);
+			interpolateData(currentValue, nextValue, false);
 			currentValue = nextValue;
 		}
 		outputData.add(currentValue);
 	}
 	
-	// DOES NOT ADD end (this is to avoid duplicates)
-	private void interpolateData(FDData start, FDData end) {
+	// Note adding end is to used to avoid duplicates in getRECTANGLEData 
+	private void interpolateData(FDData start, FDData end, boolean addEnd) {
+		int addEndVal = 0;
+		if(addEnd) addEndVal = 1;
 		if(start.getTime() == end.getTime()) {
 			outputData.add(start);
 			return;
+		}
+		if(start.getTime() > end.getTime()) {
+			FDData saveStart = start;
+			start = end;
+			end = saveStart;
 		}
 		double dStartTime = start.getTime();
 		double dEndTime = end.getTime();
@@ -152,7 +169,7 @@ public class Selection {
 		double dEndAmp = end.getLogAmplitude();
 		double ampSlope = (dEndAmp - dStartAmp) / (dEndTime - dStartTime);
 		double noteSlope = (dEndNote - dStartNote) / (dEndTime - dStartTime);
-		for(int time = start.getTime(); time < end.getTime(); time++) {
+		for(int time = start.getTime(); time < end.getTime() + addEndVal; time++) {
 			double dTime = time;
 			double dDeltaTime = dTime - dStartTime;
 			double ampVal = dStartAmp + ampSlope * dDeltaTime;

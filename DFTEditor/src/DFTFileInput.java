@@ -3,18 +3,12 @@ import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.TreeMap;
 
 
 public class DFTFileInput {
 	
-	private DFTEditor parent;
-	
-	public DFTFileInput(DFTEditor parent) {
-		this.parent = parent;
-	}
+	public DFTFileInput(DFTEditor parent) {}
 	
 	// This function reads from a binary file
 	public static void ReadSelectedFileData(String fileName) {
