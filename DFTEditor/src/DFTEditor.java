@@ -25,6 +25,7 @@ public class DFTEditor extends JFrame {
 	public static ArrayList<Selection> selections;
 	public static Selection.Type selectionType = Selection.Type.DEFAULT;
 	public static Selection.Area selectionArea = Selection.Area.LINE;
+	public static boolean deleteSelected = false;
 	public static TreeMap<Integer, Integer> floorAmpToCount;
 	public static int xStep = 6;
 	public static int yStep = 9; // one digit;
@@ -108,6 +109,16 @@ public class DFTEditor extends JFrame {
 		timeToFreqToSelectedData.get(time).put(freq, data);
 	}
 	
+	public static void removeSelected(FDData data) {
+		int time = data.getTime();
+		int freq = DFTEditor.noteToFreq(data.getNote());
+		if(!timeToFreqToSelectedData.containsKey(time)) {
+			timeToFreqToSelectedData.put(time, new TreeMap<Integer, FDData>());
+		}
+		// overwrite is OK
+		timeToFreqToSelectedData.get(time).remove(freq);
+	}
+	
 	public static void setSelectionArea(Selection.Area area) {
 		DFTEditor.selectionArea = area;
 		DFTEditor.selections.remove(selections.size() - 1);
@@ -131,8 +142,13 @@ public class DFTEditor extends JFrame {
 		}
 		selections.get(index).addData(data);
 		if(selections.get(index).selectionComplete()) {
-			for(FDData loopData: selections.get(index).getSelectedData()) addSelected(loopData);
-			selections.add(new Selection(selectionArea, selectionType));
+			if(deleteSelected) {
+				for(FDData loopData: selections.get(index).getSelectedData()) removeSelected(loopData);
+				selections.add(new Selection(selectionArea, selectionType));
+			} else {
+				for(FDData loopData: selections.get(index).getSelectedData()) addSelected(loopData);
+				selections.add(new Selection(selectionArea, selectionType));				
+			}
 		}
 		view.repaint();
 	}
@@ -146,7 +162,7 @@ public class DFTEditor extends JFrame {
 	}
 	
 	public void playSelectedDataInCurrentWindow() {
-		new DisplayPlayTime(this, 50, view.getTimeAxisWidthInMillis());
+		new PlayDataInWindow(this, 50, view.getTimeAxisWidthInMillis());
 	}
 
 	public void drawPlayTime(int offsetInMillis, int refreshRateInMillis) {
@@ -318,7 +334,9 @@ public class DFTEditor extends JFrame {
 	
 	public void openFileInDFTEditor() {
         String fileName = FileTools.PromptForFileOpen(view);
+        String fileNameTrimmed = fileName.substring(0, fileName.length() - 8); // ".mono5ms"
         ReadBinaryFileData(fileName, "mono5ms");
+        DFTFileInput.ReadSelectedFileData(fileNameTrimmed);
         //String fileNameTrimmed = fileName.substring(0, fileName.length() - 4);
         view.repaint();
 	}
@@ -336,6 +354,13 @@ public class DFTEditor extends JFrame {
         JOptionPane.showMessageDialog(this, "Finished exporting all files");
 	}
 	
+	public void saveSelectedToFile() {
+		String fileName = this.getTitle();
+		String fileNameTrimmed = fileName.substring(0, fileName.length() - 8); // ".mono5ms"
+        FileOutput.OutputSelectedToFile(fileNameTrimmed);
+        JOptionPane.showMessageDialog(this, "Finished saving: " + fileName);
+	}
+	
     public DFTEditor() {
     	FileConvert.wavImportAll();
         view = new DFTView();
@@ -349,8 +374,7 @@ public class DFTEditor extends JFrame {
         openFileInDFTEditor();
         selections = new ArrayList<Selection>();
         selections.add(new Selection(DFTEditor.selectionArea, DFTEditor.selectionType));
-        timeToFreqToSelectedData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
-        DFTUtils.testGetConsonantOvertonesBase31();
+        //DFTUtils.testGetConsonantOvertonesBase31();
     }
     
 	private static void createAndShowGUI() {

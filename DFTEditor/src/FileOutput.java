@@ -65,5 +65,27 @@ public class FileOutput {
 		}
 		System.out.println("Finished output of of maximas to: " + fileName + ".maximas");
 	}
+	
+	public static void OutputSelectedToFile(String fileName) {
+	    try {
+	    	DataOutputStream selectedOut = new DataOutputStream(new
+		            BufferedOutputStream(new FileOutputStream(new String(fileName + ".selected"))));
+            for(int time: DFTEditor.timeToFreqToSelectedData.keySet()) {
+            	for(int freq: DFTEditor.timeToFreqToSelectedData.get(time).keySet()) {
+            		FDData data = DFTEditor.timeToFreqToSelectedData.get(time).get(freq);
+            		float amp = (float) data.getLogAmplitude();
+            		selectedOut.writeInt(time);
+            		selectedOut.writeInt(DFTEditor.freqToNote(freq));
+            		selectedOut.writeFloat(amp);
+            	}
+            }
+            selectedOut.close();
+		} catch (Exception e) {
+			System.out.println("Exception in FileOutput.OutputSelectedToFile");
+			e.printStackTrace();
+			System.exit(0);
+		}
+		System.out.println("Finished output of of selected to: " + fileName + ".selected");
+	}
 
 }

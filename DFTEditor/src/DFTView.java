@@ -292,9 +292,9 @@ public class DFTView extends JComponent {
 				return new Color(0.0f, 0.0f, 0.0f);
 			case DATA_AND_MAXIMAS:
 				if(DFTEditor.isMaxima(time, freq)) {
-					red = red / 2.0f + 0.5f;
-					green = green / 2.0f + 0.5f;
-					blue = blue / 2.0f + 0.5f;
+					red = red * 0.6f + 0.4f;
+					green = green * 0.6f + 0.4f;
+					blue = blue * 0.6f + 0.4f;
 				}
 				return new Color(red, green, blue);
 		}
@@ -304,7 +304,7 @@ public class DFTView extends JComponent {
 	
 	private void drawHarmonicsBase31(Graphics g) {
 		if(DFTEditor.drawHarmonicsBaseFreq == -1) return;
-		g.setColor(new Color(1.0f, 1.0f, 1.0f, 0.5f));
+		g.setColor(new Color(1.0f, 1.0f, 1.0f, 0.25f));
 		int currentFreq = DFTEditor.drawHarmonicsBaseFreq;
 		int startX = DFTEditor.leftOffset;
 		int width = getWidth() - DFTEditor.leftOffset;

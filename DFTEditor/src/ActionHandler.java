@@ -55,6 +55,7 @@ public class ActionHandler extends JPanel {
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Save Selected");
+			parent.saveSelectedToFile();
 		}
 	}
 	
@@ -63,12 +64,12 @@ public class ActionHandler extends JPanel {
 		private static final long serialVersionUID = 1L;
 
 		public ExportAction() {
-			super("Export");
+			super("Export Maximas");
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Export");
+			System.out.println("Export Maximas");
 			parent.exportFileInDFTEditor();
 		}
 	}
@@ -78,12 +79,12 @@ public class ActionHandler extends JPanel {
 		private static final long serialVersionUID = 1L;
 
 		public ExportAllAction() {
-			super("Export All");
+			super("Export All Maximas");
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Export All");
+			System.out.println("Export All Maximas");
 			parent.exportAllFiles();
 		}
 	}
@@ -290,6 +291,36 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
+	public class AddSelectionAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public AddSelectionAction() {
+			super("Add Selection");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Add Selection");
+			DFTEditor.deleteSelected = false;
+		}
+	}
+	
+	public class DeleteSelectionAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public DeleteSelectionAction() {
+			super("Delete Selection");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Delete Selection");
+			DFTEditor.deleteSelected = true;
+		}
+	}
+	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -323,7 +354,12 @@ public class ActionHandler extends JPanel {
         selectionAreaMenu.add(new JMenuItem(new LineAreaAction()));
         selectionAreaMenu.add(new JMenuItem(new RectangleAreaAction()));
         selectionAreaMenu.add(new JMenuItem(new TriangleAreaAction()));
+        JMenu addDeleteMenu = new JMenu("Add/Delete");
+        menuBar.add(addDeleteMenu);
+        addDeleteMenu.add(new JMenuItem(new AddSelectionAction()));
+        addDeleteMenu.add(new JMenuItem(new DeleteSelectionAction()));
         return menuBar;
+
 	}
 
 }
