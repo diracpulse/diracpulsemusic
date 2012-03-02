@@ -18,7 +18,7 @@ public class DFTController implements MouseListener, ActionListener {
 	public void mousePressed(MouseEvent e){
 	    int x = e.getX();
 	    int y = e.getY();
-	    if(e.isControlDown()) {
+	    if(e.isShiftDown()) {
 	    	int freqSelected = DFTUtils.screenYToFreq(y);
 	    	if(freqSelected != DFTEditor.drawHarmonicsBaseFreq) {
 	    		DFTEditor.drawHarmonicsBaseFreq = freqSelected;
@@ -29,11 +29,7 @@ public class DFTController implements MouseListener, ActionListener {
 	    	DFTEditor.refreshView();
 	    	return;
 	    }
-	    if(e.isShiftDown()) {
-	    	DFTEditor.clearCurrentSelection();
-	    	DFTEditor.refreshView();
-	    	return;
-	    }
+	    if(e.isControlDown()) DFTEditor.clearCurrentSelection();
 	    FDData data = getFileData(x, y);
 	    if(data != null) {
 	    	System.out.println(data);

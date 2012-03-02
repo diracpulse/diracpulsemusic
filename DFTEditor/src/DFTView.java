@@ -291,11 +291,9 @@ public class DFTView extends JComponent {
 				return new Color(0.0f, 0.0f, 0.0f);
 			case DATA_AND_MAXIMAS:
 				if(DFTEditor.isMaxima(time, freq)) {
-					red = red * 0.6f + 0.4f;
-					green = green * 0.6f + 0.4f;
-					blue = blue * 0.6f + 0.4f;
+					return new Color(red, green, blue);
 				}
-				return new Color(red, green, blue);
+				return new Color(red * 0.5f, green * 0.5f, blue * 0.5f);
 		}
 		// if we're here there's an error
 		return new Color(-1.0f, -1.0f, -1.0f);

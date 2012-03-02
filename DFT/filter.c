@@ -26,7 +26,7 @@ void CreateWindow(double* window, int size, double alpha);
 void CreateFilter(double w0, double w1, int order, double alpha);
 void LPFilter(double freq, int order, double alpha);
 void HPFilter(double freq, int order, double alpha);
-void BPFIlter(double freq, int order, double alpha);
+void BPFilter(double freq, int order, double alpha);
 double DFTFreq(double freq);
 void BlockDFT(double LowTest, double HighTest, const char *TestName);
 

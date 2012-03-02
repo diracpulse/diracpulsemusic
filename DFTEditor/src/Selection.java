@@ -3,7 +3,7 @@ import java.util.ArrayList;
 public class Selection {
 	
 	public enum Area {
-		LINE, RECTANGLE, TRIANGLE;
+		LINE_INTERPOLATE, RECTANGLE, TRIANGLE;
 	}
 
 	// These are used to avoid excess passing of arguments in internal functions
@@ -11,7 +11,7 @@ public class Selection {
 	private ArrayList<FDData> outputData;
 	
 	
-	Area area = Area.LINE;
+	Area area = Area.LINE_INTERPOLATE;
 	public boolean deleteSelected = false;
 	
 	public Selection(Area area, boolean deleteSelected) {
@@ -30,7 +30,7 @@ public class Selection {
 			} else {
 				for(FDData loopData: outputData) DFTEditor.addSelected(loopData);
 			}
-			DFTEditor.newSelection(this.area == Area.LINE);
+			DFTEditor.newSelection(this.area == Area.LINE_INTERPOLATE);
 		}
 	}
 	
@@ -53,7 +53,7 @@ public class Selection {
 	
 	public boolean selectionComplete() {
 		switch(area) {
-			case LINE:
+			case LINE_INTERPOLATE:
 				if(inputData.size() == 2) return true;
 				return false;
 			case RECTANGLE:
@@ -67,7 +67,8 @@ public class Selection {
 	public ArrayList<FDData> getSelectedData() {
 		if(!selectionComplete()) return null;
 		switch(area) {
-			case LINE:
+			case LINE_INTERPOLATE:
+				// false means don't initialize start of next selection with end of previous
 				interpolateData(inputData.get(0), inputData.get(1), false);
 				// Continue line with previous end as start
 				return outputData;
@@ -90,7 +91,9 @@ public class Selection {
 			float currentAmplitude = 0.0f;
 			for(int time = times.lower; time <= times.upper; time++) {
 				if(!DFTEditor.isMaxima(time, DFTEditor.noteToFreq(note))) {
-					if(!DFTEditor.isSelected(time, DFTEditor.noteToFreq(note))) continue;
+					if(!DFTEditor.isSelected(time, DFTEditor.noteToFreq(note))) {
+						if(!(notes.upper == notes.lower)) continue; // line selection
+					}
 				}
 				currentAmplitude = DFTEditor.getAmplitude(time, DFTEditor.noteToFreq(note));
 				try {

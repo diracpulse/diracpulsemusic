@@ -23,7 +23,7 @@ public class DFTEditor extends JFrame {
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToFreqToSelectedData;
 	public static ArrayList<Harmonic> harmonics;
 	public static ArrayList<Selection> selections;
-	public static Selection.Area selectionArea = Selection.Area.LINE;
+	public static Selection.Area selectionArea = Selection.Area.RECTANGLE;
 	public static boolean deleteSelected = false;
 	public static TreeMap<Integer, Integer> floorAmpToCount;
 	public static int xStep = 6;

@@ -29,7 +29,7 @@ const double twoPI = 6.283185307179586476925286766559;
 const double samplingRate = 44100.0;
 const double samplesPerStep = 220.5; // 5ms
 const double notesPerOctave = 31.0;
-const double maxBinStep = 1.0;
+const double maxBinStep = 1.5;
 const double alpha = 5.0;
 
 // Calculated Variables
@@ -39,7 +39,9 @@ int numWavelets = 0;
 // Special Variables
 double roundingFactor = 10.0;
 
+// Function helpers
 double KaiserWindow[MAXDFTWINDOW];
+double initialTaper = 1.0; // used by InitWavelets
 
 struct WaveletInfo {
 	double radianFreq;
@@ -213,8 +215,8 @@ void InitWavelets() {
 	maxDFTLength = 0;
 	maxCyclesPerWindow = maxBinStep / (pow(2.0, 1.0 / notesPerOctave) - 1.0);
 	index = InitWaveletsHelper(maxFreqHz, 240.0, index, 1.0, 1.0);
-	index = InitWaveletsHelper(240.0, 80.0, index, 1.0, 1.55); // bins = 20 @ freq = 80Hz
-	index = InitWaveletsHelper(80.0, 20.0, index, 4.0, sqrt(2.0)); // bins = 10 @ freq = 20Hz
+	index = InitWaveletsHelper(240.0, 80.0, index, initialTaper, 1.55);
+	index = InitWaveletsHelper(80.0, 20.0, index, 2.0, 2.0);
     numWavelets = index;
     // MATRIX OUTPUT
     printf("#_MAXNOTE_\n%d\n", frequencyToNote(maxFreqHz));
@@ -230,12 +232,13 @@ int InitWaveletsHelper(double upperFreqHz, double stopFreqHz, int index, double 
 	int upperNote = frequencyToNote(upperFreqHz);
 	int stopNote = frequencyToNote(stopFreqHz);
     double startLogFreq = log(noteToFrequency(upperNote)) / log(2.0);
+    double taperValue = initialTaper;
     for(note = upperNote; note > stopNote; note--) {
     	double freqInHz = noteToFrequency(note);
     	double samplesPerCycle = samplingRate / freqInHz;
     	double radianFreq = twoPI / samplesPerCycle;
     	double currentLogFreq =  log(freqInHz) / log(2.0);
-    	double taperValue = initialTaper * pow(taperPerOctave, startLogFreq - currentLogFreq);
+    	taperValue = initialTaper * pow(taperPerOctave, startLogFreq - currentLogFreq);
     	double cyclesPerWindow = maxCyclesPerWindow / taperValue;
     	int windowLength = (int) round(cyclesPerWindow * samplesPerCycle);
     	//IMPORTANT: the next 3 lines set cycles per window to an integer (doesn't improve anything)
@@ -256,6 +259,8 @@ int InitWaveletsHelper(double upperFreqHz, double stopFreqHz, int index, double 
     	WaveletInfoArray[index].note = note;
     	index++;
     }
+    //initialTaper = taperValue;
+    //printf("taperValue: %f ", taperValue);
     return index;
 }
 
