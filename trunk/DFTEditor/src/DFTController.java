@@ -29,6 +29,11 @@ public class DFTController implements MouseListener, ActionListener {
 	    	DFTEditor.refreshView();
 	    	return;
 	    }
+	    if(e.isShiftDown()) {
+	    	DFTEditor.clearCurrentSelection();
+	    	DFTEditor.refreshView();
+	    	return;
+	    }
 	    FDData data = getFileData(x, y);
 	    if(data != null) {
 	    	System.out.println(data);
@@ -161,6 +166,6 @@ public class DFTController implements MouseListener, ActionListener {
     		}
     	}
     }
-    
+
 }
 

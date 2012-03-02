@@ -1,1 +1,1 @@
-java -Xms2g -jar DFTEditor.jar
+java -jar DFTEditor.jar

@@ -23,7 +23,6 @@ public class DFTEditor extends JFrame {
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToFreqToSelectedData;
 	public static ArrayList<Harmonic> harmonics;
 	public static ArrayList<Selection> selections;
-	public static Selection.Type selectionType = Selection.Type.DEFAULT;
 	public static Selection.Area selectionArea = Selection.Area.LINE;
 	public static boolean deleteSelected = false;
 	public static TreeMap<Integer, Integer> floorAmpToCount;
@@ -99,6 +98,18 @@ public class DFTEditor extends JFrame {
 		return timeToFreqToSelectedData.get(time).get(freq);
 	}
 	
+	public static void newSelection(boolean setInitialData) {
+		if(selections.isEmpty()) {
+			System.out.println("DFTEditor.newSelection: this function should only be called by a Selection");
+			return;
+		}
+		Selection newSelection = new Selection(selectionArea, deleteSelected);
+		if(setInitialData) {
+			newSelection.addData(getCurrentSelection().getInputData().get(1));
+		}
+		selections.add(newSelection);
+	}
+	
 	public static void addSelected(FDData data) {
 		int time = data.getTime();
 		int freq = DFTEditor.noteToFreq(data.getNote());
@@ -112,44 +123,35 @@ public class DFTEditor extends JFrame {
 	public static void removeSelected(FDData data) {
 		int time = data.getTime();
 		int freq = DFTEditor.noteToFreq(data.getNote());
-		if(!timeToFreqToSelectedData.containsKey(time)) {
-			timeToFreqToSelectedData.put(time, new TreeMap<Integer, FDData>());
-		}
-		// overwrite is OK
+		if(!timeToFreqToSelectedData.containsKey(time)) return;
+		if(!timeToFreqToSelectedData.get(time).containsKey(freq)) return;
 		timeToFreqToSelectedData.get(time).remove(freq);
 	}
 	
 	public static void setSelectionArea(Selection.Area area) {
 		DFTEditor.selectionArea = area;
-		DFTEditor.selections.remove(selections.size() - 1);
-		selections.add(new Selection(DFTEditor.selectionArea, DFTEditor.selectionType));
+		clearCurrentSelection();
 	}
-	
-	public static void setSelectionType(Selection.Type type) {
-		DFTEditor.selectionType = type;
-		DFTEditor.selections.remove(selections.size() - 1);
-		selections.add(new Selection(DFTEditor.selectionArea, DFTEditor.selectionType));
-	}	
 	
 	public static void handleSelection(FDData data) {
 		if(selections.isEmpty()) {
-			selections.add(new Selection(selectionArea, selectionType));
+			selections.add(new Selection(selectionArea, deleteSelected));
 		}
-		int index = selections.size() - 1;
-		if(selections.get(index).selectionComplete()) {
-			System.out.println("DFTEditor.handleSelection: unhandled completed selection");
-			return;
-		}
-		selections.get(index).addData(data);
-		if(selections.get(index).selectionComplete()) {
-			if(deleteSelected) {
-				for(FDData loopData: selections.get(index).getSelectedData()) removeSelected(loopData);
-				selections.add(new Selection(selectionArea, selectionType));
-			} else {
-				for(FDData loopData: selections.get(index).getSelectedData()) addSelected(loopData);
-				selections.add(new Selection(selectionArea, selectionType));				
-			}
-		}
+		selections.get(selections.size() - 1).addData(data);
+		view.repaint();
+	}
+	
+	public static void clearCurrentSelection() {
+		if(selections.isEmpty()) return;
+		selections.remove(selections.size() - 1);
+		selections.add(new Selection(selectionArea, deleteSelected));
+	}
+	
+	public static void undoPreviousSelection() {
+		if(selections.size() < 1) return;
+		selections.get(selections.size() - 2).undo();
+		selections.remove(selections.size() - 2);
+		clearCurrentSelection();
 		view.repaint();
 	}
 	
@@ -377,7 +379,7 @@ public class DFTEditor extends JFrame {
         setSize(1500, 800);
         openFileInDFTEditor();
         selections = new ArrayList<Selection>();
-        selections.add(new Selection(DFTEditor.selectionArea, DFTEditor.selectionType));
+        selections.add(new Selection(DFTEditor.selectionArea, deleteSelected));
         //DFTUtils.testGetConsonantOvertonesBase31();
     }
     
