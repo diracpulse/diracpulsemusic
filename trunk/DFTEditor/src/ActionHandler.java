@@ -272,7 +272,7 @@ public class ActionHandler extends JPanel {
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Line");
-			DFTEditor.setSelectionArea(Selection.Area.LINE);
+			DFTEditor.setSelectionArea(Selection.Area.LINE_INTERPOLATE);
 		}
 	}
 	

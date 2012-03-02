@@ -157,7 +157,7 @@ public class FDEditor extends JFrame {
         add(view);
         setSize(1500, 800);
         initTimeToNoteToData();
-        initTestData();
+        initTestData2();
         mathTools = new MathTools();
         //openFileInFDEditor();
     }
@@ -207,7 +207,11 @@ public class FDEditor extends JFrame {
 	}
 	
 	public void initTimeToNoteToData() {
+		//int timesPerSecond = 1000 / FDData.timeStepInMillis;
+		//int maxTime = timesPerSecond * 60 * 10; // 10 minutes
 		timeToNoteToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
+		// this is done to skipping over silent parts
+		//for(int time = 0; time < maxTime; time++) timeToNoteToData.put(time, new TreeMap<Integer, FDData>());
 	}
 	
 	public void initTestData() {
@@ -217,6 +221,38 @@ public class FDEditor extends JFrame {
 			addDataInterpolate(new FDData(0, 31.0 * 10.0, 12.0), new FDData(300, 31.0 * 10.0, 12.0), true);
 			addDataInterpolate(new FDData(50, 31.0 * 9.0, 11.0), new FDData(150, 31.0 * 10.0, 0.0), true);
 			addDataInterpolate(new FDData(100, 31.0 * 8.0, 10.0), new FDData(1000, 31.0 * 9.0, 0.0), true);
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(null, "Data out of bounds", 
+					"FDEditor.initTestData()", 
+					JOptionPane.ERROR_MESSAGE);
+		}
+		TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToDataClone = SynthTools.copyTreeMap(timeToNoteToData);
+		timeToNoteToData = timeToNoteToDataClone;
+		
+	}
+	
+	public void initTestData2() {
+		double halfStep = 0.5 / 31.0;
+		if(!test) return;
+		try {
+			// flat harmonics in between steps
+			addDataInterpolate(new FDData(0, 31.0 * 6.0 + halfStep, 12.0),
+							   new FDData(200, 31.0 * 6.0 + halfStep, 0.0), true);
+			addDataInterpolate(new FDData(0, 31.0 * 8.0 + halfStep, 12.0), 
+					           new FDData(200, 31.0 * 8.0 + halfStep, 12.0), true);
+			addDataInterpolate(new FDData(0, 31.0 * 10.0 + halfStep, 12.0), 
+					           new FDData(200, 31.0 * 10.0 + halfStep, 0.0), true);
+			addDataInterpolate(new FDData(0, 31.0 * 12.0 + halfStep, 12.0), 
+					           new FDData(200, 31.0 * 12.0 + halfStep, 12.0), true);
+			// harmonics through one full step
+			addDataInterpolate(new FDData(250, 31.0 * 7.0, 12.0),
+							   new FDData(400, 31.0 * 7.0 + 1, 0.0), true);
+			addDataInterpolate(new FDData(250, 31.0 * 9.0, 12.0), 
+							   new FDData(400, 31.0 * 9.0 + 1, 12.0), true);
+			addDataInterpolate(new FDData(250, 31.0 * 11.0, 12.0), 
+							   new FDData(400, 31.0 * 11.0 + 1, 0.0), true);
+			addDataInterpolate(new FDData(250, 31.0 * 13.0, 12.0), 
+							   new FDData(400, 31.0 * 13.0 + 1, 12.0), true);
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(null, "Data out of bounds", 
 					"FDEditor.initTestData()", 
@@ -332,6 +368,7 @@ public class FDEditor extends JFrame {
 		}
 		TreeMap<Integer, FDData> noteToData = timeToNoteToData.get(data.getTime());
 		noteToData.put(data.getNote(), data);
+		//checkForSilence(data);
 	}
 	
 	// returns true if data already exists
@@ -340,6 +377,14 @@ public class FDEditor extends JFrame {
 		TreeMap<Integer, FDData> noteToData = timeToNoteToData.get(data.getTime());
 		if(!noteToData.containsKey(data.getNote())) return false;
 		return true;
+	}
+	
+	public static void checkForSilence(FDData data) {
+		for(int time = 0; time < data.getTime(); time++) {
+			if(!timeToNoteToData.containsKey(time))  {
+				timeToNoteToData.put(time, new TreeMap<Integer, FDData>());
+			}
+		}
 	}
 	
 }
