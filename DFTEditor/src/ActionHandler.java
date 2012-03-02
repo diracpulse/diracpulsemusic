@@ -198,6 +198,21 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
+	public class UndoSelectionAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public UndoSelectionAction() {
+			super("Undo Selection");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Undo Selection");
+			DFTEditor.undoPreviousSelection();
+		}
+	}
+	
 	public class DataAndMaximasViewAction extends AbstractAction {
 
 		private static final long serialVersionUID = 270072643328180860L;
@@ -318,6 +333,7 @@ public class ActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Delete Selection");
 			DFTEditor.deleteSelected = true;
+			DFTEditor.clearCurrentSelection();
 		}
 	}
 	
@@ -344,6 +360,9 @@ public class ActionHandler extends JPanel {
         viewMenu.add(new JMenuItem(new ViewPixels3Action()));    
         viewMenu.add(new JMenuItem(new ViewDigits1Action()));
         viewMenu.add(new JMenuItem(new ViewDigits2Action())); 
+        JMenu editMenu = new JMenu("Edit");
+        editMenu.add(new JMenuItem(new UndoSelectionAction()));
+        menuBar.add(editMenu);
         JMenu dataViewMenu = new JMenu("DataView");
         menuBar.add(dataViewMenu);
         dataViewMenu.add(new JMenuItem(new DataAndMaximasViewAction()));

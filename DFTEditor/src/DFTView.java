@@ -44,8 +44,8 @@ public class DFTView extends JComponent {
 		return dataView;
 	}
 	
-	private static View view = View.Pixels1; 
-	private static DataView dataView = DataView.MAXIMAS_ONLY; 
+	private static View view = View.Pixels3; 
+	private static DataView dataView = DataView.DATA_ONLY; 
 	
 	public static int getXStep() {
     	switch(view) {

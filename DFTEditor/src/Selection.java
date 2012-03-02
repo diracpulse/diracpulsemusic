@@ -1,14 +1,9 @@
 import java.util.ArrayList;
-import java.util.TreeMap;
 
 public class Selection {
 	
 	public enum Area {
-		LINE, RECTANGLE, PURE_INTERPOLATE, TRIANGLE;
-	}
-	
-	public enum Type {
-		DEFAULT; //, HARMONIC, GRANULAR;
+		LINE, RECTANGLE, TRIANGLE;
 	}
 
 	// These are used to avoid excess passing of arguments in internal functions
@@ -17,19 +12,39 @@ public class Selection {
 	
 	
 	Area area = Area.LINE;
-	Type type = Type.DEFAULT;
-	public boolean fillGaps = true;
 	public boolean deleteSelected = false;
 	
-	public Selection(Area area, Type type) {
+	public Selection(Area area, boolean deleteSelected) {
 		this.area = area;
-		this.type = type;
+		this.deleteSelected = deleteSelected;
 		inputData = new ArrayList<FDData>();
 		outputData = new ArrayList<FDData>();
 	}
 	
 	public void addData(FDData input) {
 		inputData.add(input);
+		if(selectionComplete()) {
+			getSelectedData();
+			if(deleteSelected) {
+				for(FDData loopData: outputData) DFTEditor.removeSelected(loopData);
+			} else {
+				for(FDData loopData: outputData) DFTEditor.addSelected(loopData);
+			}
+			DFTEditor.newSelection(this.area == Area.LINE);
+		}
+	}
+	
+	public void undo() {
+		if(selectionComplete()) {
+			getSelectedData();
+			if(deleteSelected) {
+				for(FDData loopData: outputData) DFTEditor.addSelected(loopData);
+			} else {
+				for(FDData loopData: outputData) DFTEditor.removeSelected(loopData);
+			}
+		} else {
+			System.out.println("Selection.undo(): cannot undo incomplete selection");
+		}
 	}
 	
 	public ArrayList<FDData> getInputData() {
@@ -43,10 +58,7 @@ public class Selection {
 				return false;
 			case RECTANGLE:
 				if(inputData.size() == 2) return true;
-				return false;
-			case PURE_INTERPOLATE:
-				if(inputData.size() == 2) return true;
-				return false;				
+				return false;		
 		}
 		System.out.println("Selection.selectionComplete() SelectionType unknown");
 		return false;
@@ -56,13 +68,11 @@ public class Selection {
 		if(!selectionComplete()) return null;
 		switch(area) {
 			case LINE:
-				getLINEData();
+				interpolateData(inputData.get(0), inputData.get(1), false);
+				// Continue line with previous end as start
 				return outputData;
 			case RECTANGLE:
 				getRECTANGLEData();
-				return outputData;
-			case PURE_INTERPOLATE:
-				interpolateData(inputData.get(0), inputData.get(1), true);
 				return outputData;
 				
 		}
@@ -70,46 +80,7 @@ public class Selection {
 		return null;
 	}
 
-	private void getLINEData() {
-		TreeMap<Integer, FDData> internalData = new TreeMap<Integer, FDData>();
-		DFTGeometry.SortedPair times = 
-			new  DFTGeometry.SortedPair(inputData.get(0).getTime(), inputData.get(1).getTime());
-		DFTGeometry.SortedPair notes = 
-			new  DFTGeometry.SortedPair(inputData.get(0).getNote(), inputData.get(1).getNote());
-		for(int time = times.lower; time <= times.upper; time++) {
-			float maxAmplitude = 0.0f;
-			float currentAmplitude = 0.0f;
-			int noteAtMaximum = -1;
-			for(int note = notes.lower; note <= notes.upper; note++) {
-				if(DFTView.getDataView() != DFTView.DataView.MAXIMAS_ONLY) {
-					currentAmplitude = DFTEditor.getAmplitude(time, DFTEditor.noteToFreq(note));
-				} else {
-					if(!DFTEditor.isMaxima(time, DFTEditor.noteToFreq(note))) continue;
-					currentAmplitude = DFTEditor.getAmplitude(time, DFTEditor.noteToFreq(note));
-				}
-			// WEAKNESS: if two or more freqs have same amplitude, highest one is used
-				if(currentAmplitude >= maxAmplitude) {
-					maxAmplitude = currentAmplitude;
-					noteAtMaximum = note;
-				}
-			}
-			try {
-				if(noteAtMaximum != -1) {
-					internalData.put(time, new FDData(time, noteAtMaximum, maxAmplitude));
-				}
-			} catch (Exception e) {
-				System.out.println("Selection.getFLATData: error adding FDData");
-			}
-		}
-		if(fillGaps && (internalData.size() > 1)) {
-			fillGaps(new ArrayList<FDData>(internalData.values()));
-			return;
-		} else {
-			outputData =  new ArrayList<FDData>(internalData.values());
-		}
-	}
-	
-	// Adds all Maxima data in a rectangular region
+	// Adds all Maxima and Selected data in a rectangular region
 	private void getRECTANGLEData() {
 		DFTGeometry.SortedPair times = 
 			new  DFTGeometry.SortedPair(inputData.get(0).getTime(), inputData.get(1).getTime());
@@ -118,7 +89,9 @@ public class Selection {
 		for(int note = notes.lower; note <= notes.upper; note++) {
 			float currentAmplitude = 0.0f;
 			for(int time = times.lower; time <= times.upper; time++) {
-				if(!DFTEditor.isMaxima(time, DFTEditor.noteToFreq(note))) continue;
+				if(!DFTEditor.isMaxima(time, DFTEditor.noteToFreq(note))) {
+					if(!DFTEditor.isSelected(time, DFTEditor.noteToFreq(note))) continue;
+				}
 				currentAmplitude = DFTEditor.getAmplitude(time, DFTEditor.noteToFreq(note));
 				try {
 					outputData.add(new FDData(time, note, currentAmplitude));
@@ -127,27 +100,8 @@ public class Selection {
 				}
 			}
 		}
-	}
-	
-	private void fillGaps(ArrayList<FDData> internalData) {
-		if(internalData.size() < 2) {
-			System.out.println("Selection.fillGaps: internalData < 2");
-		}
-		FDData currentValue = internalData.get(0);
-		FDData nextValue = null;
-		boolean skipFirst = true;
-		for(FDData loopData: internalData) {
-			if(skipFirst) {
-				skipFirst = false;
-				continue;
-			}
-			nextValue = loopData;
-			interpolateData(currentValue, nextValue, false);
-			currentValue = nextValue;
-		}
-		outputData.add(currentValue);
-	}
-	
+	}	
+
 	// Note adding end is to used to avoid duplicates in getRECTANGLEData 
 	private void interpolateData(FDData start, FDData end, boolean addEnd) {
 		int addEndVal = 0;
