@@ -18,10 +18,11 @@ public class DFTEditor extends JFrame {
 	public static JToolBar navigationBar = null;
 	
 	//public static TreeMap<Integer, TreeMap<Integer, Float>> timeToFreqToAmp;
-	private static float[][] amplitudes; // amplitude = amplitudes[time][freq]
-	private static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima;
+	public static float[][] amplitudes; // amplitude = amplitudes[time][freq]
+	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima;
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToFreqToSelectedData;
-	public static ArrayList<Harmonic> harmonics;
+	//public static ArrayList<Harmonic> harmonics;
+	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic;
 	public static ArrayList<Selection> selections;
 	public static Selection.Area selectionArea = Selection.Area.RECTANGLE;
 	public static boolean deleteSelected = false;
@@ -53,6 +54,7 @@ public class DFTEditor extends JFrame {
 	public static int maxTime;
 	// harmonic display variables
 	public static int drawHarmonicsBaseFreq = -1; // -1 means don't display
+	public static Random randomIDGenerator;
 	
 	
 	// IMPORTANT: In order to display data with upper frequencies above lower frequencies:
@@ -180,78 +182,11 @@ public class DFTEditor extends JFrame {
 		view.repaint();
 	}
 	
-	// This function reads from a binary file
-	public void ReadBinaryFileData(String fileName, String type) {
-		if(!type.equals("mono5ms")) {
-			System.out.println("DFTEditor.ReadBinaryFileData: unsupported format");
-			System.exit(0);
-		}
-		this.setTitle("Loading: " + fileName);
-		//timeToFreqToAmp = new TreeMap<Integer, TreeMap<Integer, Float>>();
-		floorAmpToCount = new TreeMap<Integer, Integer>();
-		ArrayList<Float> matrixVals = new ArrayList<Float>();
-		DataInputStream in = null;
-		maxAmplitude = 0.0f;
-		minAmplitude = 15.0f;
-		minScreenNote = freqsPerOctave * 100;
-		maxScreenNote = 0;
-		maxTime = 0;
-		float amp;
-	    try {
-	    	in = new DataInputStream(new
-	                BufferedInputStream(new FileInputStream(new String(fileName))));
-		} catch (FileNotFoundException nf) {
-			System.out.println("DFTEditor: " + fileName + ".[suffix] not found");
-			return;
-		}
-		try {
-			maxScreenNote = in.readInt();
-			minScreenNote = in.readInt();
-			while(true) {
-				amp = in.readFloat();
-				matrixVals.add(amp);
-				if(amp > maxAmplitude) {
-					maxAmplitude = amp;
-				}
-				if(amp < minAmplitude) {
-					minAmplitude = amp;
-				}
-				int floorAmp = (int) Math.floor(amp);
-				int number = 0;
-				if(floorAmpToCount.containsKey(floorAmp)) {
-					number = floorAmpToCount.get(floorAmp);
-				}
-				number++;
-				floorAmpToCount.put(floorAmp, number);
-				// End floopAmp count
-			}
-		} catch (IOException e) {
-			if(e instanceof EOFException) {
-				System.out.println("Finished reading from: " + fileName);
-			} else {
-				System.out.println("DFTEditor: error reading from: " + fileName);
-			}
-		}
-		int matrixValsSize = matrixVals.size();
-		maxScreenFreq = maxScreenNote - minScreenNote;
-		maxTime = matrixValsSize / (maxScreenFreq + 1);
-		amplitudes = new float[maxTime + 1][maxScreenFreq + 1];
-		int index = 0;
-		for(int time = 0; time < maxTime; time++) {
-			for(int freq = 0; freq <= maxScreenFreq; freq++) {
-				if(index < matrixValsSize) amplitudes[time][freq] = matrixVals.get(index);
-				index++;
-			}
-		}
-		//System.out.println("maxtrixVals div size: " + matrixValsSize / msfplus1 + "index: " + index / msfplus1);
-		//System.out.println("maxtrixVals mod size: " + matrixValsSize % msfplus1 + "index: " + index % msfplus1);
-		//calculateAmpSum();
-		//calculateMaxAmpAtFreq();
-		printFloorAmpCount();
-		calculateTimeToFreqsAtMaxima();
-		this.setTitle(fileName);
+	public static long getRandomID() {
+		return randomIDGenerator.nextLong();
 	}
 	
+
 	// NOTE: maxima test is not performed for freq = 0 and freq = maxFreq
 	public void calculateTimeToFreqsAtMaxima() {
 		timeToFreqsAtMaxima = new TreeMap<Integer, TreeSet<Integer>>();
@@ -341,7 +276,7 @@ public class DFTEditor extends JFrame {
 	public void openFileInDFTEditor() {
         String fileName = FileTools.PromptForFileOpen(view);
         String fileNameTrimmed = fileName.substring(0, fileName.length() - 8); // ".mono5ms"
-        ReadBinaryFileData(fileName, "mono5ms");
+        FileInput.ReadBinaryFileData(this, fileName, "mono5ms");
         DFTFileInput.ReadSelectedFileData(fileNameTrimmed);
         //String fileNameTrimmed = fileName.substring(0, fileName.length() - 4);
         view.repaint();
@@ -380,6 +315,8 @@ public class DFTEditor extends JFrame {
         openFileInDFTEditor();
         selections = new ArrayList<Selection>();
         selections.add(new Selection(DFTEditor.selectionArea, deleteSelected));
+        randomIDGenerator = new Random();
+        harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
         //DFTUtils.testGetConsonantOvertonesBase31();
     }
     

@@ -214,9 +214,9 @@ void InitWavelets() {
 	//if(debug) printf("InitWavelets\n");
 	maxDFTLength = 0;
 	maxCyclesPerWindow = maxBinStep / (pow(2.0, 1.0 / notesPerOctave) - 1.0);
-	index = InitWaveletsHelper(maxFreqHz, 240.0, index, 1.0, 1.0);
-	index = InitWaveletsHelper(240.0, 80.0, index, initialTaper, 1.55);
-	index = InitWaveletsHelper(80.0, 20.0, index, 2.0, 2.0);
+	index = InitWaveletsHelper(maxFreqHz, 2000.0, index, 1.0, 1.0);
+	index = InitWaveletsHelper(2000.0, 20.0, index, 1.0, sqrt(2.0));
+	//index = InitWaveletsHelper(80.0, 20.0, index, 2.0, 2.0);
     numWavelets = index;
     // MATRIX OUTPUT
     printf("#_MAXNOTE_\n%d\n", frequencyToNote(maxFreqHz));

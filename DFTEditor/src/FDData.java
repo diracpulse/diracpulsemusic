@@ -23,6 +23,7 @@ public class FDData {
 	private int note = 31 * 4; // out of bounds stored at 16Hz
 	private double noteFraction = 0.0; // frequency = 2^(note/31) + 2^(noteFraction/31);
 	private double logAmplitude = minLogAmplitude;
+	private long HarmonicID = 1L;
 	
 	public FDData(int time, double noteComplete, double logAmplitude) throws Exception {
 		int note = (int) Math.round(noteComplete);
@@ -64,6 +65,14 @@ public class FDData {
 		this.logAmplitude = logAmplitude;
 		this.type = type;
 	}
+	
+	public void setHarmonicID(long id) {
+		this.HarmonicID = id;
+	}
+	
+	public long getHarmonicID() {
+		return this.HarmonicID;
+	}	
 	
 	public int getTime() {
 		return time;
