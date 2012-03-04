@@ -43,7 +43,7 @@ class SynthTools {
 		// Find number of samples needed
 		int endSampleOffset = 0;
 		System.out.println("SynthTools.playFileData harmonics created");
-		for(Harmonic harmonic: DFTEditor.harmonics) {
+		for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonic.values()) {
 			//System.out.println("SynthTools.playFileData harmonic.endSampleOffset = " + harmonic.getEndSampleOffset());
 			if(harmonic.getEndSampleOffset() > endSampleOffset) {
 				endSampleOffset = harmonic.getEndSampleOffset();
@@ -55,7 +55,7 @@ class SynthTools {
 		PCMData = new double[endSampleOffset + 1];
 		System.out.println("End Sample Offset " + endSampleOffset);
 		for(int i= 0; i <= endSampleOffset; i++) PCMData[i] = 0.0;
-		for(Harmonic harmonic: DFTEditor.harmonics) {
+		for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonic.values()) {
 			Double[] HarmonicPCMData = harmonic.getPCMData();
 			int startSample = harmonic.getStartSampleOffset();
 			int endSample = startSample + HarmonicPCMData.length - 1;
@@ -86,12 +86,13 @@ class SynthTools {
 	static void createHarmonics(TreeMap<Integer, TreeMap<Integer, FDData>> input) {
 		// create a copy of input because algorithm removes keys after added to harmonics
 		//TreeMap<Integer, TreeMap<Integer, FDData>> input = copyTreeMap(saveInput);
-		DFTEditor.harmonics= new ArrayList<Harmonic>(); 
+		DFTEditor.harmonicIDToHarmonic = new TreeMap<Long, Harmonic>(); 
 		while(!input.isEmpty()) {
 			int inputTime = input.firstKey();
 			// loop through all frequencies at current time 
 			while(!input.get(inputTime).isEmpty()) {
-				Harmonic currentHarmonic = new Harmonic();
+				long id = DFTEditor.getRandomID();
+				Harmonic currentHarmonic = new Harmonic(id);
 				// ARBITRARY: start at lowest note
 				int currentNote = input.get(inputTime).firstKey();
 				int harmonicTime = inputTime;
@@ -123,7 +124,7 @@ class SynthTools {
 					}
 					break;
 				}
-				DFTEditor.harmonics.add(currentHarmonic);
+				DFTEditor.harmonicIDToHarmonic.put(id, currentHarmonic);
 			} // while(!input.get(inputTime).isEmpty())
 			input.remove(inputTime);
 			inputTime++;

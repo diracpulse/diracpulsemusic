@@ -36,7 +36,7 @@ public class FileOutput {
 				System.out.println("minmax: " + minmaxFileName);
 			}
 			for(String exportFileName: exportFileNames) {
-				parent.ReadBinaryFileData(exportFileName + ".mono5ms", "mono5ms");
+				FileInput.ReadBinaryFileData(parent, exportFileName + ".mono5ms", "mono5ms");
 				OutputMaximasToFile(exportFileName);
 			}
 		} catch (Exception e) {

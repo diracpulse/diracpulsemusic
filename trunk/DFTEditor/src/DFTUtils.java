@@ -1,19 +1,6 @@
 import java.awt.*;
-import java.util.*;
 
 public class DFTUtils {
-
-	// needed by TBSView.DrawAmpSums and TBSView.DrawMaxAmpAtFreq 
-	public static float getMaxValue(TreeMap<Integer, Float> values, int startVal, int step) {
-		float maxValue = 0.0f;
-		int endVal = startVal + step;
-		for(int val = startVal; val < endVal; val++) {
-			if (values.containsKey(val)) {
-				if(values.get(val) > maxValue) maxValue = values.get(val);
-			}
-		}
-		return maxValue;
-	}
 	
 	public static int getConsonantOvertonesBase31(int index) {
 		int[] first3 = {31, 18, 13};
