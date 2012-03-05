@@ -30,7 +30,7 @@ public class DFTUtils {
 	public static int screenXToTime(int screenX) {
 		if(screenX < DFTEditor.leftOffset) return -1;
 		screenX -= DFTEditor.leftOffset;
-		int time = screenX / DFTView.getXStep() + DFTEditor.leftX;
+		int time = (int) Math.round(screenX / DFTView.getXStep() + DFTEditor.leftX);
 		return time;
 	}
 	
@@ -38,21 +38,21 @@ public class DFTUtils {
 	public static int screenYToFreq(int screenY) {
 		if(screenY < DFTEditor.upperOffset) return -1;
 		screenY -= DFTEditor.upperOffset;
-		int freq = screenY / DFTView.getYStep() + DFTEditor.upperY;
+		int freq = (int) Math.round(screenY / DFTView.getYStep() + DFTEditor.upperY);
 		return freq;
 	}
 	
 	// returns -1 if screenX is LEFT of data area
 	public static int timeToScreenX(int time) {
 		if(time < DFTEditor.leftX) return -1;
-		int screenX = DFTEditor.leftOffset + ((time - DFTEditor.leftX) * DFTView.getXStep());
+		int screenX = (int) Math.round(DFTEditor.leftOffset + ((time - DFTEditor.leftX) * DFTView.getXStep()));
 		return screenX;
 	}
 	
 	// returns -1 if screenY is ABOVE data area
 	public static int freqToScreenY(int freq) {
 		if(freq < DFTEditor.upperY) return -1;
-		int screenY = DFTEditor.upperOffset + ((freq - DFTEditor.upperY) * DFTView.getYStep());
+		int screenY = (int) Math.round(DFTEditor.upperOffset + ((freq - DFTEditor.upperY) * DFTView.getYStep()));
 		return screenY;
 	}
 
@@ -102,7 +102,7 @@ public class DFTUtils {
 		Color black = new Color(0.0f, 0.0f, 0.0f);
 		// int lowerScreenY = screenY + topYStep;				
 		g.setColor(b);
-		g.fillRect(screenX, screenY, DFTView.getXStep(), DFTView.getYStep());;
+		g.fillRect(screenX, screenY, (int) DFTView.getXStep(), (int) DFTView.getYStep());;
 		SevenSegmentSmall(g, black, screenX, screenY, digitVal);
 		// SevenSegmentSmall(g, black, b, screenX, lowerScreenY, fractionVal);
 		// g.setColor(black);
@@ -115,7 +115,7 @@ public class DFTUtils {
 		Color black = new Color(0.0f, 0.0f, 0.0f);
 		int lowerScreenY = screenY + DFTEditor.yStep;
 		g.setColor(b);
-		g.fillRect(screenX, screenY, DFTView.getXStep(), DFTView.getYStep());;
+		g.fillRect(screenX, screenY, (int) DFTView.getXStep(), (int) DFTView.getYStep());;
 		SevenSegmentSmall(g, black, screenX, screenY, digitVal);
 		SevenSegmentSmall(g, black, screenX, lowerScreenY, fractionVal);
 		// g.setColor(black);
