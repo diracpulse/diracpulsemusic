@@ -97,6 +97,7 @@ void LoadSamplesFromFile(FILE *stream, int centerIndex) {
 
 void SingleDFT(int waveletIndex, int startIndex, int endIndex) {
 	//if(debug) printf("SingleDFT\n");
+	if(waveletIndex == 0) return;
 	int index = 0;
 	int maxIndex = endIndex - startIndex;
 	int maxIndexWavelet = WaveletInfoArray[waveletIndex].length;
@@ -138,6 +139,7 @@ void SingleDFT(int waveletIndex, int startIndex, int endIndex) {
 
 void SampleArrayIndex(int waveletIndex) {
 	//if(debug) printf("SampleArrayIndex\n");
+	//#HACK: unknown noise source at top wavelet
 	if (maxDFTLength == 0) return;
 	int DFTLength = WaveletInfoArray[waveletIndex].length;
 	int startIndex;
@@ -219,7 +221,7 @@ void InitWavelets() {
 	//index = InitWaveletsHelper(80.0, 20.0, index, 2.0, 2.0);
     numWavelets = index;
     // MATRIX OUTPUT
-    printf("#_MAXNOTE_\n%d\n", frequencyToNote(maxFreqHz));
+    printf("#_MAXNOTE_\n%d\n", frequencyToNote(maxFreqHz) - 1); // #HACK skip first wavelet
     printf("#_MINNOTE_\n%d\n", frequencyToNote(minFreqHz) + 1); // stops before last note
     //printf("%d\n", numWavelets, maxDFTLength);
     CalculateWavelets();

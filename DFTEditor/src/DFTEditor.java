@@ -2,7 +2,6 @@
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
-import java.io.*;
 
 public class DFTEditor extends JFrame {
 	
@@ -27,11 +26,10 @@ public class DFTEditor extends JFrame {
 	public static Selection.Area selectionArea = Selection.Area.RECTANGLE;
 	public static boolean deleteSelected = false;
 	public static TreeMap<Integer, Integer> floorAmpToCount;
-	public static int xStep = 6;
+	public static int xStep = 6; // one digit
 	public static int yStep = 9; // one digit;
-	public static int topYStep = 8; // used by DrawUpperTimes
 	public static int leftOffset = xStep * 6; // start of first data cell
-	public static int upperOffset = topYStep * 8; // start of first data cell
+	public static int upperOffset = yStep * 6; // start of first data cell
 	public static int leftX = 0; // index of freq in leftmost data cell
 	public static int upperY = 0; // index of time in uppermost data cell
 	public static int timeStepInMillis = FDData.timeStepInMillis; // time in ms = time * timeStepInMillis
@@ -111,7 +109,7 @@ public class DFTEditor extends JFrame {
 		}
 		selections.add(newSelection);
 	}
-	
+		
 	public static void addSelected(FDData data) {
 		int time = data.getTime();
 		int freq = DFTEditor.noteToFreq(data.getNote());
@@ -186,6 +184,43 @@ public class DFTEditor extends JFrame {
 		return randomIDGenerator.nextLong();
 	}
 	
+	public static void autoSelect() {
+		// add all maximas
+		TreeMap<Integer, ArrayList<Integer>> unselect = new TreeMap<Integer, ArrayList<Integer>>();
+		for(int time: timeToFreqsAtMaxima.keySet()) {
+			for(int freq:  timeToFreqsAtMaxima.get(time)) {
+				FDData data = null;
+				try {
+					data = new FDData(time, freqToNote(freq), amplitudes[time][freq]);
+				} catch (Exception e){
+					System.out.println("DFTEditor.autoSelect(): unable to create FDData");
+				}
+				addSelected(data);
+			}
+		}
+		// refreshView();
+		// create Harmonics from selected
+		SynthTools.createHarmonics(timeToFreqToSelectedData);
+		for(int time: timeToFreqToSelectedData.keySet()) {
+			for(int freq: timeToFreqToSelectedData.get(time).keySet()) {
+				FDData data = timeToFreqToSelectedData.get(time).get(freq);
+				long harmonicID = data.getHarmonicID();
+				Harmonic harmonic = harmonicIDToHarmonic.get(harmonicID);
+				// have to put in unselect to avoid ConcurrentModificationException
+				if(!harmonic.isSynthesized()) {
+					if(!unselect.containsKey(time)) unselect.put(time, new ArrayList<Integer>());
+					unselect.get(time).add(freq);
+				}
+			}
+		}
+		// unselect data that is not played
+		for(int time: unselect.keySet()) {
+			for(int freq: unselect.get(time)) {
+				timeToFreqToSelectedData.get(time).remove(freq);
+			}
+		}
+		refreshView();
+	}
 
 	// NOTE: maxima test is not performed for freq = 0 and freq = maxFreq
 	public void calculateTimeToFreqsAtMaxima() {

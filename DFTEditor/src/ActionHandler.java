@@ -337,6 +337,21 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
+	public class AutoSelectAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public AutoSelectAction() {
+			super("Auto Select");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Auto Select");
+			DFTEditor.autoSelect();
+		}
+	}
+	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -377,8 +392,10 @@ public class ActionHandler extends JPanel {
         menuBar.add(addDeleteMenu);
         addDeleteMenu.add(new JMenuItem(new AddSelectionAction()));
         addDeleteMenu.add(new JMenuItem(new DeleteSelectionAction()));
+        JMenu selectMenu = new JMenu("Select");
+        menuBar.add(selectMenu);
+        selectMenu.add(new JMenuItem(new AutoSelectAction()));
         return menuBar;
-
 	}
 
 }

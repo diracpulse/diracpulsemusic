@@ -11,7 +11,7 @@ public class Harmonic {
 	private boolean useVibrato = false;
 	private TreeMap<Integer, FDData> timeToData = new TreeMap<Integer, FDData>();
 	private double maxLogAmplitude = 0.0;
-	private double minAmplitudeThreshold = 10.0;
+	private double minLogAmplitudeThreshold = 10.0;
 	private long harmonicID;
 	
 	public Harmonic(long id) {
@@ -93,7 +93,7 @@ public class Harmonic {
 			//System.out.println("Harmonics.getPCMData: number of data points < 4");
 			return getDummyArray();
 		}
-		if(maxLogAmplitude < minAmplitudeThreshold) return getDummyArray();
+		if(maxLogAmplitude < minLogAmplitudeThreshold) return getDummyArray();
 		double minLogFreq = 16.0; // 65kHz
 		ArrayList<Double> sampleTimes = new ArrayList<Double>();
 		ArrayList<Double> logAmps = new ArrayList<Double>();
@@ -207,6 +207,7 @@ public class Harmonic {
 		}
 		if(Math.abs(deltaNoteSum) < 31.0) {
 			try {
+				
 				int averageNote = (int) Math.round(noteSum / timeToData.size());
 				for(int time: timeToData.keySet()) {
 					FDData data = timeToData.get(time);
@@ -220,8 +221,8 @@ public class Harmonic {
 	}
 	
 	public boolean isSynthesized() {
-		if(getPCMData(false) == null) return false;
-		return true; // if here, dummy array returned
+		if(getPCMData(false) == null) return true;
+		return false; // if here, dummy array returned
 	}
 
 	public boolean minimumCyclesExceeded(double minLogFreq, double endTime) {
