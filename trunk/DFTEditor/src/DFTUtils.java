@@ -70,19 +70,31 @@ public class DFTUtils {
 		}
 		return returnVal;
 	}
-	
-	public static void DrawIntegerHorizonal(Graphics g, Color b, int screenX, int screenY, int numdigits, int value) {
+
+	// b = background color, f = foreground color. numdigits needed for space ahead of value 
+	public static void DrawIntegerHorizontal(Graphics g, Color b, Color f, int screenX, int screenY, int numdigits, int value) {
 		for(int digitPlace = (int) Math.round(Math.pow(10, numdigits)); digitPlace >= 1; digitPlace /= 10) {
 			int digitVal = (int) Math.floor(value / digitPlace);
 			value -= digitVal * digitPlace;
-			Color f = new Color(1.0f, 1.0f, 1.0f);
-			//Color b = new Color(0.0f, 0.0f, 0.0f);
 			g.setColor(b);
 			g.fillRect(screenX, screenY, 6, 8);
-			DFTUtils.SevenSegmentSmall(g, f, b, screenX, 
+			DFTUtils.SevenSegmentSmall(g, f, screenX, 
 			                           screenY, 
 			                           digitVal);
-			screenX += DFTView.getXStep();
+			screenX += DFTEditor.xStep;
+		}
+	}
+	
+	public static void DrawIntegerVertical(Graphics g, Color b, Color f, int screenX, int screenY, int numdigits, int value) {
+		for(int digitPlace = (int) Math.round(Math.pow(10, numdigits)); digitPlace >= 1; digitPlace /= 10) {
+			int digitVal = (int) Math.floor(value / digitPlace);
+			value -= digitVal * digitPlace;
+			g.setColor(b);
+			g.fillRect(screenX, screenY, 6, 8);
+			DFTUtils.SevenSegmentSmall(g, f, screenX, 
+			                           screenY, 
+			                           digitVal);
+			screenY += DFTEditor.yStep;
 		}
 	}
 	
@@ -91,7 +103,7 @@ public class DFTUtils {
 		// int lowerScreenY = screenY + topYStep;				
 		g.setColor(b);
 		g.fillRect(screenX, screenY, DFTView.getXStep(), DFTView.getYStep());;
-		SevenSegmentSmall(g, black, b, screenX, screenY, digitVal);
+		SevenSegmentSmall(g, black, screenX, screenY, digitVal);
 		// SevenSegmentSmall(g, black, b, screenX, lowerScreenY, fractionVal);
 		// g.setColor(black);
 		// int bottomScreenY = screenY + yStep - 1;
@@ -104,8 +116,8 @@ public class DFTUtils {
 		int lowerScreenY = screenY + DFTEditor.yStep;
 		g.setColor(b);
 		g.fillRect(screenX, screenY, DFTView.getXStep(), DFTView.getYStep());;
-		SevenSegmentSmall(g, black, b, screenX, screenY, digitVal);
-		SevenSegmentSmall(g, black, b, screenX, lowerScreenY, fractionVal);
+		SevenSegmentSmall(g, black, screenX, screenY, digitVal);
+		SevenSegmentSmall(g, black, screenX, lowerScreenY, fractionVal);
 		// g.setColor(black);
 		// int bottomScreenY = screenY + yStep - 1;
 		// g.drawLine(screenX, bottomScreenY, screenX + xStep, bottomScreenY);
@@ -121,7 +133,7 @@ public class DFTUtils {
 	// Color f = forground (segment) color
 	// Color g = background (segment block) color
 	// int digitVal = digit to display (0 - 9)
-	public static void SevenSegmentSmall(Graphics g, Color f, Color b, int x, int y, int digitVal) {
+	public static void SevenSegmentSmall(Graphics g, Color f, int x, int y, int digitVal) {
 		int[] segments;
 		int[][] digits = {	{1, 1, 0, 1, 1, 1, 1},
 							{0, 1, 0, 1, 0, 0, 0},

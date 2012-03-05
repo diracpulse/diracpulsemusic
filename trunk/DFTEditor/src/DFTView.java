@@ -80,95 +80,47 @@ public class DFTView extends JComponent {
 	}	
 	
 	public void drawUpperTimes(Graphics g) {
-		int iTime;
-		int digitPlace;
-		int digitVal;
-		boolean leading0;
-		Color f;
-		Color b;
-		Color blank = new Color(0.0f, 0.0f, 0.0f);
-		int screenX;
-		int screenY;
-		int xStep = DFTEditor.xStep + DFTEditor.xStep % getXStep();
-		int timeStep = xStep / getXStep();
-		int startTime = DFTEditor.leftX;
-		int endTime = DFTEditor.leftX + (getWidth() - DFTEditor.leftOffset) / xStep * timeStep;
-		for(int time = startTime; time < endTime; time += timeStep) {
-			iTime = time * DFTEditor.timeStepInMillis;
-			leading0 = true;
-			int yOffset = 1;
-			for(digitPlace = 1000000; digitPlace >= 1; digitPlace /= 10) {
-				digitVal = iTime / digitPlace;
-				if((digitVal == 0) && leading0 && (digitPlace != 1)) {
-					yOffset++;
-					continue;
-				}
-				leading0 = false;
-				iTime -= digitVal * digitPlace;
-				if(digitPlace >= 1000) {
-					b = new Color(1.0f, 1.0f, 1.0f);
-					f = new Color(0.0f, 0.0f, 0.0f);
-				} else {
-					f = new Color(1.0f, 1.0f, 1.0f);
-					b = new Color(0.0f, 0.0f, 0.0f);					
-				}
-				if(time >= DFTEditor.maxTime) {
-					f = blank;
-					b = blank;
-				}
-				screenX = DFTEditor.leftOffset + ((time - startTime) / timeStep) * xStep;
-				screenY = yOffset * DFTEditor.topYStep;
-				g.setColor(b);
-				g.fillRect(screenX, screenY, 6, 8);				
-				DFTUtils.SevenSegmentSmall(g, f, b, screenX, screenY, digitVal);
-				yOffset++;
-			}
+		int intDigits = 3;
+		int decimalStartY = intDigits * DFTEditor.yStep;
+		int endTime = DFTEditor.leftX + getWidth() / getXStep();
+		int timeStep = DFTEditor.xStep / getXStep() + DFTEditor.xStep % getXStep();
+		int screenX = DFTEditor.leftOffset;
+		Color white = new Color(0.0f, 0.0f, 0.0f);
+		Color black = new Color(1.0f, 1.0f, 1.0f);
+		for(int time = DFTEditor.leftX; time <= endTime; time += timeStep) {
+			if(time >= DFTEditor.maxTime) return;
+			int millis = time * FDData.timeStepInMillis;
+			int intVal = millis / 1000;
+			int decimalVal = millis - intVal * 1000;
+			DFTUtils.DrawIntegerVertical(g, white, black, screenX, 0, 2, intVal);
+			DFTUtils.DrawIntegerVertical(g, black, white, screenX, decimalStartY, 2, decimalVal);
+			screenX += DFTEditor.xStep;
+			//System.out.println("drawUpperTimes " + intVal + " " + decimalVal);
 		}
 	}
-
 
 	public void drawLeftFreqs(Graphics g) {
-		int note;
-		int digitPlace;
-		int digitVal;
-		Color f;
-		Color b;
-		Color blank = new Color(0.0f, 0.0f, 0.0f);
-		// ADJUST FROM 2 DIGITS TO 1
-		int mainYStep = DFTEditor.yStep;
-		if(view == View.Digits2) mainYStep *= 2;
-		int yStep = mainYStep + mainYStep % getYStep();
-		int freqStep = yStep / getYStep();
-		int startFreq = DFTEditor.upperY;
-		int freqRange = (getHeight() - DFTEditor.upperOffset) / yStep * freqStep;
-		int endFreq = startFreq + freqRange;
-		for(int freq = startFreq; freq < endFreq; freq += freqStep) {
-			note = DFTEditor.freqToNote(freq);
-			int xOffset = 1;
-			double freqsPerOctave = (double) DFTEditor.freqsPerOctave;
-			double dFreq = (double) note;
-			float freqInHz = (float) Math.pow(2.0, dFreq / freqsPerOctave);			
-			for(digitPlace = 10000; digitPlace >= 1; digitPlace /= 10) {
-				digitVal = (int) Math.floor(freqInHz / digitPlace);
-				freqInHz -= digitVal * digitPlace;
-				f = new Color(1.0f, 1.0f, 1.0f);
-				b = new Color(0.0f, 0.0f, 0.0f);
-				if(freq >= (DFTEditor.maxScreenFreq)) {
-					f = blank;
-					b = blank;
-				}
-				int screenX = xOffset * DFTEditor.xStep;
-				int screenY = DFTEditor.upperOffset + ((freq - startFreq) / freqStep) * yStep;
-				g.setColor(b);
-				g.fillRect(screenX, screenY, 6, 8);
-				DFTUtils.SevenSegmentSmall(g, f, b, screenX, 
-				                           screenY, 
-				                           digitVal);
-				xOffset++;
-			}
+		int freqStep = DFTEditor.yStep / getYStep() + DFTEditor.yStep % getYStep();
+		int deltaScreenY = DFTEditor.yStep;
+		int screenY = DFTEditor.upperOffset;
+		int endFreq = DFTEditor.upperY + getHeight() / getYStep();
+		// handle digits > 1
+		if(DFTEditor.yStep < getYStep()) {
+			freqStep = 1;
+			deltaScreenY = getYStep();
+		}
+		Color white = new Color(0.0f, 0.0f, 0.0f);
+		Color black = new Color(1.0f, 1.0f, 1.0f);
+		for(int freq = DFTEditor.upperY; freq < endFreq; freq += freqStep) {
+			if(freq >= DFTEditor.maxScreenFreq) return;
+			double note = (double) DFTEditor.freqToNote(freq);
+			int freqInHz = (int) Math.round(Math.pow(2.0, note / FDData.noteBase));
+			DFTUtils.DrawIntegerHorizontal(g, white, black, 0, screenY, 4, freqInHz);
+			screenY += deltaScreenY;
+			//System.out.println("drawUpperTimes " + intVal + " " + decimalVal);
 		}
 	}
-		
+	
 	public void drawFileData(Graphics g, boolean scaleLines) {
 		// clear old data
 		g.setColor(new Color(0.0f, 0.0f, 0.0f));

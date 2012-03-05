@@ -82,10 +82,10 @@ class SynthTools {
 		ap.start();
 	}
 
-
-	static void createHarmonics(TreeMap<Integer, TreeMap<Integer, FDData>> input) {
+	// create Harmonics from saveInput, sets ID of FDData
+	static void createHarmonics(TreeMap<Integer, TreeMap<Integer, FDData>> saveInput) {
 		// create a copy of input because algorithm removes keys after added to harmonics
-		//TreeMap<Integer, TreeMap<Integer, FDData>> input = copyTreeMap(saveInput);
+		TreeMap<Integer, TreeMap<Integer, FDData>> input = copyTreeMap(saveInput);
 		DFTEditor.harmonicIDToHarmonic = new TreeMap<Long, Harmonic>(); 
 		while(!input.isEmpty()) {
 			int inputTime = input.firstKey();
@@ -101,24 +101,33 @@ class SynthTools {
 					//sleep(10);
 					// check for data at [currentNote,time+1]
 					if(input.get(harmonicTime).containsKey(currentNote)) {
-						currentHarmonic.addData(input.get(harmonicTime).get(currentNote));
+						FDData data = input.get(harmonicTime).get(currentNote);
+						data.setHarmonicID(id);
+						currentHarmonic.addData(data);
 						input.get(harmonicTime).remove(currentNote);
+						DFTEditor.addSelected(data);
 						harmonicTime++;
 						continue;
 					}					
 					// check for data at [currentNote+1,time+1]
 					currentNote++;
 					if(input.get(harmonicTime).containsKey(currentNote)) {
-						currentHarmonic.addData(input.get(harmonicTime).get(currentNote));
+						FDData data = input.get(harmonicTime).get(currentNote);
+						data.setHarmonicID(id);
+						currentHarmonic.addData(data);
 						input.get(harmonicTime).remove(currentNote);
+						DFTEditor.addSelected(data);
 						harmonicTime++;
 						continue;
 					}
 					// check for data at [currentNote-1,time-1]
 					currentNote -= 2;
 					if(input.get(harmonicTime).containsKey(currentNote)) {
-						currentHarmonic.addData(input.get(harmonicTime).get(currentNote));
+						FDData data = input.get(harmonicTime).get(currentNote);
+						data.setHarmonicID(id);
+						currentHarmonic.addData(data);
 						input.get(harmonicTime).remove(currentNote);
+						DFTEditor.addSelected(data);
 						harmonicTime++;
 						continue;
 					}
