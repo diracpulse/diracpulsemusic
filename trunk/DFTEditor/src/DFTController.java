@@ -87,13 +87,16 @@ public class DFTController implements MouseListener, ActionListener {
 	}
 	
 	public static FDData getFileData(int mouseX, int mouseY) {
+		FDData returnVal = null;
 		//if(mouseX < DFTEditor.leftOffset || mouseY < DFTEditor.upperOffset) return null;
-		int xStep = DFTView.getXStep();
-		int yStep = DFTView.getYStep();
-		int time = (mouseX - DFTEditor.leftOffset) / xStep + DFTEditor.leftX;
-		int freq = (mouseY - DFTEditor.upperOffset) / yStep + DFTEditor.upperY;
-		//int realFreq = DFTEditor.maxRealFreq - freq;
-		FDData returnVal = DFTUtils.getValue(time, freq);
+		if((DFTView.getXStep() >= 1.0) && (DFTView.getXStep() >= 1.0)) {
+			int xStep = (int) DFTView.getXStep();
+			int yStep = (int) DFTView.getYStep();
+			int time = (mouseX - DFTEditor.leftOffset) / xStep + DFTEditor.leftX;
+			int freq = (mouseY - DFTEditor.upperOffset) / yStep + DFTEditor.upperY;
+			//int realFreq = DFTEditor.maxRealFreq - freq;
+			returnVal = DFTUtils.getValue(time, freq);
+		}
 		if(returnVal != null) {
 			System.out.println("Selected: " + returnVal.getTimeInMillis() + " " + returnVal.getFrequencyInHz() + " " + returnVal.getLogAmplitude());
 		}
