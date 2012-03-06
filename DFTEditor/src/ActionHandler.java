@@ -198,6 +198,22 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
+	public class ViewMusicAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public ViewMusicAction() {
+			super("Music");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("View Music");
+			DFTView.setView(DFTView.View.Music);
+			DFTEditor.view.repaint();
+		}
+	}
+	
 	public class UndoSelectionAction extends AbstractAction {
 
 		private static final long serialVersionUID = 1L;
@@ -352,6 +368,21 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
+	public class FlattenHarmonicsAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public FlattenHarmonicsAction() {
+			super("Flatten Harmonics");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Flatten Harmonics");
+			DFTEditor.flattenHarmonics();
+		}
+	}
+	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -369,7 +400,8 @@ public class ActionHandler extends JPanel {
         playMenu.add(new JMenuItem(new PlayHarmonicsAction()));
         playMenu.add(new JMenuItem(new PlayWAVAction()));
         JMenu viewMenu = new JMenu("View");
-        menuBar.add(viewMenu);        
+        menuBar.add(viewMenu);
+        viewMenu.add(new JMenuItem(new ViewMusicAction())); 
         viewMenu.add(new JMenuItem(new ViewPixels1Action()));
         viewMenu.add(new JMenuItem(new ViewPixels2Action()));
         viewMenu.add(new JMenuItem(new ViewPixels3Action()));    
@@ -395,6 +427,9 @@ public class ActionHandler extends JPanel {
         JMenu selectMenu = new JMenu("Select");
         menuBar.add(selectMenu);
         selectMenu.add(new JMenuItem(new AutoSelectAction()));
+        JMenu harmonicsMenu = new JMenu("Harmonics");
+        menuBar.add(harmonicsMenu);
+        harmonicsMenu.add(new JMenuItem(new FlattenHarmonicsAction()));
         return menuBar;
 	}
 

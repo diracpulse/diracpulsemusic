@@ -95,6 +95,7 @@ public class DFTEditor extends JFrame {
 	}
 	
 	public static FDData getSelected(int time, int freq) {
+		if(!isSelected(time, freq)) return null;
 		return timeToFreqToSelectedData.get(time).get(freq);
 	}
 	
@@ -127,7 +128,26 @@ public class DFTEditor extends JFrame {
 		if(!timeToFreqToSelectedData.get(time).containsKey(freq)) return;
 		timeToFreqToSelectedData.get(time).remove(freq);
 	}
-	
+		
+	public static void flattenHarmonics() {
+		timeToFreqToSelectedData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
+		for(Harmonic harmonic: harmonicIDToHarmonic.values()) {
+			harmonic.flattenHarmonic();
+			for(FDData data: harmonic.getAllData()) {
+				int time = data.getTime();
+				int freq = noteToFreq(data.getNote());
+				if(isSelected(time, freq)) {
+					if(getSelected(time, freq).getLogAmplitude() < data.getLogAmplitude()) {
+						addSelected(data);
+					}
+					continue;
+				}
+				addSelected(data);
+			}
+		}
+		refreshView();
+	}
+
 	public static void setSelectionArea(Selection.Area area) {
 		DFTEditor.selectionArea = area;
 		clearCurrentSelection();
@@ -179,7 +199,7 @@ public class DFTEditor extends JFrame {
 	public static void refreshView() {
 		view.repaint();
 	}
-	
+
 	public static long getRandomID() {
 		return randomIDGenerator.nextLong();
 	}

@@ -61,17 +61,9 @@ public class Harmonic {
 		return length;
 	}
 	
-	public ArrayList<FDData> getAllData(int pass) {
-		if(pass == 0) {
-			flattenHarmonic();
-			return new ArrayList<FDData>(timeToData.values());
-		}
-		if(pass == 1) {
-			if(isSynthesized() == true) return new ArrayList<FDData>();
-			return new ArrayList<FDData>(timeToData.values());
-		}
-		System.out.println("Harmonic.getData(int pass): pass out of bounds:" + pass);
-		return null;
+	public ArrayList<FDData> getAllData() {
+		if(isSynthesized()) return new ArrayList<FDData>(timeToData.values());
+		return new ArrayList<FDData>();
 	}	
 	
 	// used to avoid null pointer for small harmonics
@@ -186,38 +178,32 @@ public class Harmonic {
 		return new LogLinear(vibratoTimesArray, vibratoValuesArray);
 	}
 	
-	private void flattenHarmonic() {
+	public void flattenHarmonic() {
+		TreeMap<Integer, FDData> newTimeToData = new TreeMap<Integer, FDData>();
 		if(timeToData.size() < 2) return;
-		double prevNote = -1;
-		double deltaNoteSum = 0.0;
-		double noteSum = -1.0;
-		boolean firstPass = true;
-		for(int time: timeToData.keySet()) {
-			double note = timeToData.get(time).getNote();
-			if(firstPass) {
-				prevNote = note;
-				noteSum = note;
-				firstPass = false;
-				continue; // might not need this
-			} else {
-				noteSum += note;
-				deltaNoteSum += note - prevNote;
-				prevNote = note;
-			}
+		int noteSum = 0;
+		int maxNote = 0;
+		int minNote = Integer.MAX_VALUE;
+		for(FDData data: timeToData.values()) {
+			int note = data.getNote();
+			if(note < minNote) minNote = note;
+			if(note > maxNote) maxNote = note;
+			noteSum += note;
 		}
-		if(Math.abs(deltaNoteSum) < 31.0) {
+		if((maxNote - minNote) > 31) return;
+		int averageNote = noteSum / (timeToData.size());
+		for(int time: timeToData.keySet()) {
 			try {
-				
-				int averageNote = (int) Math.round(noteSum / timeToData.size());
-				for(int time: timeToData.keySet()) {
-					FDData data = timeToData.get(time);
-					float logAmp = (float) data.getLogAmplitude();
-					timeToData.put(time, new FDData(time, averageNote, logAmp));
-				}
+				FDData data = timeToData.get(time);
+				float logAmp = (float) data.getLogAmplitude();
+				FDData newData = new FDData(time, averageNote, logAmp);
+				newData.setHarmonicID(this.harmonicID);
+				newTimeToData.put(time, newData);
 			} catch (Exception e) {
 				System.out.println("Error in Harmonic.flattenHarmonic(): " + e.getMessage());
 			}
 		}
+		timeToData = newTimeToData;
 	}
 	
 	public boolean isSynthesized() {
