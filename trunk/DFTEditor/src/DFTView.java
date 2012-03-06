@@ -50,6 +50,8 @@ public class DFTView extends JComponent {
 	
 	public static double getXStep() {
     	switch(view) {
+    	case Music:
+    		return 0.5;
     	case Digits1:
     		return DFTEditor.xStep;
     	case Digits2:
@@ -66,6 +68,8 @@ public class DFTView extends JComponent {
 	
 	public static double getYStep() {
     	switch(view) {
+    	case Music:
+    		return 2;
     	case Digits1:
     		return DFTEditor.yStep;
     	case Digits2:
@@ -130,8 +134,13 @@ public class DFTView extends JComponent {
 		g.fillRect(DFTEditor.leftOffset, DFTEditor.upperOffset, getWidth(), getHeight());
 		drawLeftFreqs(g);
 		drawUpperTimes(g);		
-		if((view != View.Digits1) && (view != View.Digits2)) {
+		if((view == View.Digits1) || (view == View.Digits2)) {
 			drawFileDataAsPixels(g);
+			return;
+		}
+		if(view == View.Music) {
+			drawFileDataAsMusic(g);
+			System.out.println("DFTView.drawFileData Music Finished");
 			return;
 		}
 		int startTime = DFTEditor.leftX;
@@ -166,7 +175,27 @@ public class DFTView extends JComponent {
 	}
 	
 	public void drawFileDataAsMusic(Graphics g) {
-		
+		int timeStep = (int) Math.round(1.0 / getXStep());
+		int startTime = DFTEditor.leftX;
+		int endTime = (int) Math.round(startTime + ((getWidth() - DFTEditor.leftOffset) * timeStep));
+		int startFreq = DFTEditor.upperY;
+		int endFreq = (int) Math.round(startFreq + ((getHeight() - DFTEditor.upperOffset) / getYStep()));
+		for(int time = startTime; time < endTime; time += timeStep) {
+            if(!isXInBounds(time)) break;
+            for(int freq = startFreq; freq < endFreq; freq++) {
+                if(!isYInBounds(freq)) break;
+        		FDData data = DFTUtils.getMaxDataInTimeRange(time, time + timeStep, freq);
+        		if(data == null) continue;
+        		float logAmplitude = (float) data.getLogAmplitude();
+        		Color b = getColor(logAmplitude);
+        		g.setColor(b);
+        		int screenX = DFTEditor.leftOffset + (time - startTime) / timeStep;
+        		int screenY = (int) Math.round(DFTEditor.upperOffset + (freq - startFreq) * getYStep());
+        		//System.out.println(screenX + " " + screenY + " " + logAmplitude);
+        		//drawAmplitude(g, screenX, screenY, logAmplitude, b);
+        		g.drawRect(screenX, screenY, 2, 2);
+            }
+		}	
 	}
 	
 	public void drawAmplitude(Graphics g, int screenX, int screenY, float currentVal, Color b) {
@@ -219,6 +248,25 @@ public class DFTView extends JComponent {
         		}
             }
 		}
+	}
+	
+	private Color getColor(double logAmplitude) {
+		float ampRange = DFTEditor.maxAmplitude - DFTEditor.minAmplitude;
+		float currentVal = (float) logAmplitude;
+		currentVal -= DFTEditor.minAmplitude;
+		currentVal /= ampRange;
+		if(currentVal < 0.0f) currentVal = 0.0f;
+		if(currentVal > 1.0f) currentVal = 1.0f;
+		float red = currentVal;
+		float green = 0.0f;
+		float blue = 1.0f - currentVal;
+		if(red >= 0.5f) {
+			green = (1.0f - red) * 2.0f;
+		} else {
+			green = red * 2.0f;
+		}
+		//return new Color(1.0f, 1.0f, 1.0f, 0.75f);
+		return new Color(red, green, blue, 0.75f);
 	}
 	
 	private Color getColor(int time, int freq) {
