@@ -11,7 +11,7 @@ public class Harmonic {
 	private boolean useVibrato = false;
 	private TreeMap<Integer, FDData> timeToData = new TreeMap<Integer, FDData>();
 	private double maxLogAmplitude = 0.0;
-	private double minLogAmplitudeThreshold = 10.0;
+	//
 	private long harmonicID;
 	
 	public Harmonic(long id) {
@@ -85,7 +85,7 @@ public class Harmonic {
 			//System.out.println("Harmonics.getPCMData: number of data points < 4");
 			return getDummyArray();
 		}
-		if(maxLogAmplitude < minLogAmplitudeThreshold) return getDummyArray();
+		if(maxLogAmplitude < DFTEditor.minLogAmplitudeThreshold) return getDummyArray();
 		double minLogFreq = 16.0; // 65kHz
 		ArrayList<Double> sampleTimes = new ArrayList<Double>();
 		ArrayList<Double> logAmps = new ArrayList<Double>();

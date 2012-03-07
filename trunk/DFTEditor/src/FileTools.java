@@ -40,6 +40,7 @@ public class FileTools {
 		
 		public boolean accept(File f) {
 			if(f.getName().contains(".mono5ms")) return true;
+			if(f.isDirectory()) return true;
 			return false;
 		}
 		

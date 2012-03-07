@@ -383,6 +383,23 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
+	public class SelectCutoffAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+		private int logCutoff;
+		
+		public SelectCutoffAction(int logCutoff) {
+			super("Cutoff = " + logCutoff);
+			this.logCutoff = logCutoff;
+		}
+		
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Cutoff = " + logCutoff);
+			DFTEditor.minLogAmplitudeThreshold = logCutoff;
+		}		
+		
+	}
+	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -430,6 +447,11 @@ public class ActionHandler extends JPanel {
         JMenu harmonicsMenu = new JMenu("Harmonics");
         menuBar.add(harmonicsMenu);
         harmonicsMenu.add(new JMenuItem(new FlattenHarmonicsAction()));
+        JMenu cutoffMenu = new JMenu("Cutoff");
+        menuBar.add(cutoffMenu);
+        for(int logCutoff = 12; logCutoff > 2; logCutoff--) {
+        	cutoffMenu.add(new SelectCutoffAction(logCutoff));
+        }
         return menuBar;
 	}
 
