@@ -22,6 +22,7 @@ public class DFTEditor extends JFrame {
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToFreqToSelectedData;
 	//public static ArrayList<Harmonic> harmonics;
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic;
+	public static double minLogAmplitudeThreshold = 10.0; // used by autoSelect
 	public static ArrayList<Selection> selections;
 	public static Selection.Area selectionArea = Selection.Area.RECTANGLE;
 	public static boolean deleteSelected = false;
