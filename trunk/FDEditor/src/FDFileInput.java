@@ -18,7 +18,7 @@ public class FDFileInput {
 	
 	// This function reads from a binary file
 	public static void ReadBinaryFileData(String fileName) {
-		FDEditor.timeToNoteToData.clear();
+		FDEditor.clearCurrentData();
 		DataInputStream in = null;
 	    try {
 	    	in = new DataInputStream(new
@@ -33,7 +33,8 @@ public class FDFileInput {
 				int time = in.readInt();
 				int note = in.readInt();
 				float amp = in.readFloat();
-				FDData data = new FDData(time, note, amp);
+				long id = in.readLong();
+				FDData data = new FDData(time, note, amp, id);
 				//System.out.println(data);
 				FDEditor.addData(data);
 			}

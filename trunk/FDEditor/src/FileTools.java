@@ -39,12 +39,12 @@ public class FileTools {
 		public MaximasFilter() {};
 		
 		public boolean accept(File f) {
-			if(f.getName().contains(".maximas")) return true;
+			if(f.getName().contains(".selected")) return true;
 			return false;
 		}
 		
 		public String getDescription() {
-			return new String(".maximas files");
+			return new String(".selected files");
 		}
 	}
 

@@ -2,6 +2,22 @@ import java.awt.*;
 import java.util.*;
 
 public class FDUtils {
+	
+	public static FDData getMaxDataInTimeRange(int startTime, int endTime, int note) {
+		FDData returnVal = FDEditor.getSelected(startTime, note);
+		for(int time = startTime + 1; time < endTime; time++) {
+			FDData currentVal =  FDEditor.getSelected(time, note);
+			if(currentVal == null) continue;
+			if(returnVal == null) {
+				returnVal = currentVal;
+				continue;
+			}
+			if(currentVal.getLogAmplitude() > returnVal.getLogAmplitude()) {
+				returnVal = currentVal;
+			}
+		}
+		return returnVal;
+	}
 
 	public static void DrawIntegerHorizontal(Graphics g, Color b, Color f, int screenX, int screenY, int numdigits, int value) {
 		for(int digitPlace = (int) Math.round(Math.pow(10, numdigits - 1)); digitPlace >= 1; digitPlace /= 10) {
@@ -12,7 +28,7 @@ public class FDUtils {
 			FDUtils.SevenSegmentSmall(g, f, b, screenX, 
 			                           screenY, 
 			                           digitVal);
-			screenX += FDEditor.segmentWidth;
+			screenX += FDEditor.xStep;
 		}
 	}
 	
@@ -25,7 +41,7 @@ public class FDUtils {
 			FDUtils.SevenSegmentSmall(g, f, b, screenX, 
 			                           screenY, 
 			                           digitVal);
-			screenY += FDEditor.segmentHeight;
+			screenY += FDEditor.yStep;
 		}
 	}
 	
@@ -33,7 +49,7 @@ public class FDUtils {
 		Color black = new Color(0.0f, 0.0f, 0.0f);
 		// int lowerScreenY = screenY + topYStep;				
 		g.setColor(b);
-		g.fillRect(screenX, screenY, FDEditor.segmentWidth, FDEditor.segmentHeight);;
+		g.fillRect(screenX, screenY, FDEditor.xStep, FDEditor.yStep);;
 		SevenSegmentSmall(g, black, b, screenX, screenY, digitVal);
 		// SevenSegmentSmall(g, black, b, screenX, lowerScreenY, fractionVal);
 		// g.setColor(black);
@@ -44,9 +60,9 @@ public class FDUtils {
 	//This takes two vertical lines, digitVal is above fraction val 
 	public static void DrawSegmentData(Graphics g, Color b, int screenX, int screenY, int digitVal, int fractionVal) {
 		Color black = new Color(0.0f, 0.0f, 0.0f);
-		int lowerScreenY = screenY + FDEditor.segmentHeight / 2;			
+		int lowerScreenY = screenY + FDEditor.yStep / 2;			
 		g.setColor(b);
-		g.fillRect(screenX, screenY, FDEditor.segmentWidth, FDEditor.segmentHeight);;
+		g.fillRect(screenX, screenY, FDEditor.xStep, FDEditor.yStep);;
 		SevenSegmentSmall(g, black, b, screenX, screenY, digitVal);
 		SevenSegmentSmall(g, black, b, screenX, lowerScreenY, fractionVal);
 		// g.setColor(black);
