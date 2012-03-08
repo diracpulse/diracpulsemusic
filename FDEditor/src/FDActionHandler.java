@@ -53,23 +53,6 @@ public class FDActionHandler extends JPanel {
 		}
 	}
 
-	public class ImportAction extends AbstractAction {
-
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -6834381863812182615L;
-
-		public ImportAction() {
-			super("Import");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Import");
-		}
-	}
-	
 	public class PlayAllAction extends AbstractAction {
 
 		/**
@@ -84,29 +67,13 @@ public class FDActionHandler extends JPanel {
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Play\n");
-			SynthTools.playFileData(parent);
-		}
-	}
-	
-	public class ViewHarmonicsAction extends AbstractAction {
-
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -9196870261707581557L;
-
-		public ViewHarmonicsAction() {
-			super("View Harmonics");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("View Harmonics\n");
-			parent.displayHarmonicsInFDEditor();
+			FDEditor.playSelectedDataInCurrentWindow(parent);
 		}
 	}
 	
 	public class TestAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
 
 		public TestAction() {
 			super("Test");
@@ -127,15 +94,11 @@ public class FDActionHandler extends JPanel {
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
         fileMenu.add(new OpenAction());
-        fileMenu.add(new ImportAction());
         fileMenu.add(new ExitAction());
         //Create the Play menu
         JMenu playMenu = new JMenu("Play");
         menuBar.add(playMenu);        
         playMenu.add(new JMenuItem(new PlayAllAction()));
-        JMenu viewMenu = new JMenu("View");
-        viewMenu.add(new ViewHarmonicsAction());
-        menuBar.add(viewMenu);
         JMenu testMenu = new JMenu("Test");
         testMenu.add(new TestAction());
         menuBar.add(testMenu);

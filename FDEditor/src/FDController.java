@@ -95,12 +95,8 @@ public class FDController implements MouseListener, ActionListener {
 	}
 	
     public void actionPerformed(ActionEvent e) {
-    	if("Add Data".equals(e.getActionCommand())) {
-    		handleDataCreationAction();
-    		return;
-    	}
-        int apOldUpperY = FDEditor.startNoteIndex;
-        int apOldLeftX = FDEditor.startTimeIndex;
+        int apOldUpperY = FDEditor.upperY;
+        int apOldLeftX = FDEditor.leftX;
         // Frequency values have reverse sign due to screen display
         if ("F+31".equals(e.getActionCommand())) adjustY(-31);
         if ("F-31".equals(e.getActionCommand())) adjustY(31);
@@ -122,54 +118,24 @@ public class FDController implements MouseListener, ActionListener {
         if ("-10s".equals(e.getActionCommand())) adjustX(-10000 / FDEditor.timeStepInMillis);
         if ("-30s".equals(e.getActionCommand())) adjustX(-30000 / FDEditor.timeStepInMillis);
     	if ("-1min".equals(e.getActionCommand())) adjustX(-60000 / FDEditor.timeStepInMillis);
-        if((apOldUpperY != FDEditor.startNoteIndex) || (apOldLeftX != FDEditor.startTimeIndex)) {
+        if((apOldUpperY != FDEditor.upperY) || (apOldLeftX != FDEditor.leftX)) {
         	FDEditor.view.repaint();
         }
     }
-    
-    public void handleDataCreationAction() {
-    	String startTime = FDEditor.startTimeTextField.getText();
-       	String startOctave = FDEditor.startOctaveTextField.getText();
-    	String startNoteOffset = FDEditor.startNoteOffsetTextField.getText();
-    	String startLogAmplitude = FDEditor.startLogAmplitudeTextField.getText();
-    	String endTime = FDEditor.endTimeTextField.getText();
-       	String endOctave = FDEditor.endOctaveTextField.getText();
-    	String endNoteOffset = FDEditor.endNoteOffsetTextField.getText();
-    	String endLogAmplitude = FDEditor.endLogAmplitudeTextField.getText();
-    	System.out.println("Start Time: " + startTime);
-       	System.out.println("Start Octave: " + startOctave);
-    	System.out.println("Start Note Offset: " + startNoteOffset);
-    	System.out.println("Start Amplitude: " + startLogAmplitude);
-    	System.out.println("End Time: " + endTime);
-       	System.out.println("End Octave: " + endOctave);
-    	System.out.println("End Note Offset: " + endNoteOffset);
-    	System.out.println("End Amplitude: " + endLogAmplitude);
-    	ArrayList<String> startData = new ArrayList<String>();
-    	ArrayList<String> endData = new ArrayList<String>();
-    	startData.add(startTime);
-    	startData.add(startOctave);
-    	startData.add(startNoteOffset);
-    	startData.add(startLogAmplitude);
-    	endData.add(endTime);
-    	endData.add(endOctave);
-    	endData.add(endNoteOffset);
-    	endData.add(endLogAmplitude);
-    	FDEditor.addDataInterpolate(startData, endData, false);
-    }
-    
+
     private void adjustY(int deltaY) {
     	if(deltaY > 0) {
     		int maxY = 1000000; // (FDEditor.maxRealFreq - FDEditor.minRealFreq);
-    		if((FDEditor.startNoteIndex + deltaY) < maxY) {
-    			FDEditor.startNoteIndex += deltaY;
+    		if((FDEditor.upperY + deltaY) < maxY) {
+    			FDEditor.upperY += deltaY;
     		} else {
-    			FDEditor.startNoteIndex = maxY;
+    			FDEditor.upperY = maxY;
     		}
     	} else {
-    		if((FDEditor.startNoteIndex + deltaY) > 0) {
-    			FDEditor.startNoteIndex += deltaY;
+    		if((FDEditor.upperY + deltaY) > 0) {
+    			FDEditor.upperY += deltaY;
     		} else {
-    			FDEditor.startNoteIndex = 0;
+    			FDEditor.upperY = 0;
     		}
     	}
     }
@@ -177,16 +143,16 @@ public class FDController implements MouseListener, ActionListener {
     private void adjustX(int deltaX) {
     	if(deltaX > 0) {
     		int maxX = 1000000; //FDEditor.maxTime;
-    		if((FDEditor.startTimeIndex + deltaX) < maxX) {
-    			FDEditor.startTimeIndex += deltaX;
+    		if((FDEditor.leftX + deltaX) < maxX) {
+    			FDEditor.leftX += deltaX;
     		} else {
-    			FDEditor.startTimeIndex = maxX;
+    			FDEditor.leftX = maxX;
     		}
     	} else {
-    		if((FDEditor.startTimeIndex + deltaX) > 0) {
-    			FDEditor.startTimeIndex += deltaX;
+    		if((FDEditor.leftX + deltaX) > 0) {
+    			FDEditor.leftX += deltaX;
     		} else {
-    			FDEditor.startTimeIndex = 0;
+    			FDEditor.leftX = 0;
     		}
     	}
     }

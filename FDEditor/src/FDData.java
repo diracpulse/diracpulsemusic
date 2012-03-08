@@ -23,6 +23,7 @@ public class FDData {
 	private int note = 31 * 4; // out of bounds stored at 16Hz
 	private double noteFraction = 0.0; // frequency = 2^(note/31) + 2^(noteFraction/31);
 	private double logAmplitude = minLogAmplitude;
+	private long harmonicID = 1L;
 	
 	public FDData(int time, double noteComplete, double logAmplitude) throws Exception {
 		int note = (int) Math.round(noteComplete);
@@ -47,6 +48,18 @@ public class FDData {
 		this.logAmplitude = logAmplitude;
 	}
 	
+	public FDData(int time, int note, float logAmplitude, long id) throws Exception {
+		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
+		if(!withinBounds(time, note, 0.0, logAmplitude)) {
+			throw new Exception("FDData [" + time + "|" + note + "|" + logAmplitude + "]");
+		}
+		this.time = time;
+		this.note = note;
+		this.noteFraction = 0.0;
+		this.logAmplitude = logAmplitude;
+		this.harmonicID = id;
+	}
+	
 	public FDData(int time, int note, double noteFraction, double logAmplitude) throws Exception {
 		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
 		if(!withinBounds(time, note, noteFraction, logAmplitude)) throw new Exception();
@@ -65,8 +78,20 @@ public class FDData {
 		this.type = type;
 	}
 	
+	public void setHarmonicID(long id) {
+		this.harmonicID = id;
+	}
+	
+	public long getHarmonicID() {
+		return this.harmonicID;
+	}	
+	
 	public int getTime() {
 		return time;
+	}
+	
+	public int getTimeInMillis() {
+		return time * FDData.timeStepInMillis;
 	}
 	
 	public int getNote() {
@@ -93,7 +118,11 @@ public class FDData {
 		return type;
 	}
 	
-	public double getFrequency(int note, double noteFraction) {
+	public double getFrequencyInHz() {
+		return getFrequencyInHz(this.note, this.noteFraction);
+	}
+	
+	private double getFrequencyInHz(int note, double noteFraction) {
 		double exponent = (note + noteFraction) / noteBase;
 		double frequency = Math.pow(2.0, exponent);
 		return frequency;
@@ -105,7 +134,7 @@ public class FDData {
 		if(time > maxTime) return false;
 		if(logAmplitude < minLogAmplitude) return false;
 		if(logAmplitude > maxLogAmplitude) return false;
-		double frequency = getFrequency(note, noteFraction);
+		double frequency = getFrequencyInHz(note, noteFraction);
 		if(frequency < minFrequencyInHz) return false;
 		if(frequency > maxFrequencyInHz) return false;
 		return true;

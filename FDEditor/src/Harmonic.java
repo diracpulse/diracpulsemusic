@@ -1,32 +1,42 @@
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.TreeMap;
 
 
 public class Harmonic {
 
-	private int minTimeStep = 4; // 4 * 5.0ms = 20ms
+	private int minTimeStep = 1; // 4 * 5.0ms = 20ms
 	private double minCycles = 2;
 	private boolean applyTaper = true; // not in use currently
 	private boolean overwrite = true; // not in use currently
+	private boolean useVibrato = false;
 	private TreeMap<Integer, FDData> timeToData = new TreeMap<Integer, FDData>();
+	private double maxLogAmplitude = 0.0;
+	//
+	private long harmonicID;
 	
-	public Harmonic() {
+	public Harmonic(long id) {
+		this.harmonicID = id;
 	}
 	
-	// returns true if data already exists at that time
-	public boolean addData(FDData data) {
+	public long getHarmonicID() {
+		return this.harmonicID;
+	}
+	
+	// returns FDData with harmonicID set
+	public FDData addData(FDData data) {
 		//System.out.println(data);
+		data.setHarmonicID(this.harmonicID);
+		if(data.getLogAmplitude() > maxLogAmplitude) maxLogAmplitude = data.getLogAmplitude();
 		if(!timeToData.containsKey(data.getTime())) {
 			timeToData.put(data.getTime(), data);
-			return false;
+			return data;
 		}
 		// data already exists at that time
 		if(overwrite) {
 			timeToData.put(data.getTime(), data);
 		}
 		System.out.println("Harmonic.addData(): Duplicate data at time = " + data.getTime());
-		return true;
+		return data;
 	}
 	
 	public boolean containsData() {
@@ -51,17 +61,9 @@ public class Harmonic {
 		return length;
 	}
 	
-	public ArrayList<FDData> getAllData(int pass) {
-		if(pass == 0) {
-			flattenHarmonic();
-			return new ArrayList<FDData>(timeToData.values());
-		}
-		if(pass == 1) {
-			if(isNoise() == true) return new ArrayList<FDData>();
-			return new ArrayList<FDData>(timeToData.values());
-		}
-		System.out.println("Harmonic.getData(int pass): pass out of bounds:" + pass);
-		return null;
+	public ArrayList<FDData> getAllData() {
+		if(isSynthesized()) return new ArrayList<FDData>(timeToData.values());
+		return new ArrayList<FDData>();
 	}	
 	
 	// used to avoid null pointer for small harmonics
@@ -83,6 +85,7 @@ public class Harmonic {
 			//System.out.println("Harmonics.getPCMData: number of data points < 4");
 			return getDummyArray();
 		}
+		if(maxLogAmplitude < FDEditor.minLogAmplitudeThreshold) return getDummyArray();
 		double minLogFreq = 16.0; // 65kHz
 		ArrayList<Double> sampleTimes = new ArrayList<Double>();
 		ArrayList<Double> logAmps = new ArrayList<Double>();
@@ -118,10 +121,16 @@ public class Harmonic {
 		logFreqsArray = logFreqs.toArray(logFreqsArray);
 		LogLinear ampEnvelope = new LogLinear(sampleTimesArray, logAmpsArray);
 		LogLinear freqEnvelope = new LogLinear(sampleTimesArray, logFreqsArray);
+		LogLinear vibrato = null;
+		if(useVibrato) vibrato = getVibrato(sampleTimesArray, logFreqsArray);
 		double currentPhase = 0.0;
 		for(int currentSample = 0; currentSample < ampEnvelope.getNumSamples(); currentSample++) {
 			double amplitude = ampEnvelope.getSample(currentSample);
 			double frequency = freqEnvelope.getSample(currentSample);
+			if(useVibrato) {
+				double vibratoVal = vibrato.getSample(currentSample);
+				frequency *= vibratoVal;
+			}
 			double deltaPhase = (frequency / SynthTools.sampleRate) * SynthTools.twoPI;
 			PCMData.add(amplitude * Math.sin(currentPhase));
 			//System.out.println(PCMData.get(PCMData.size() - 1));
@@ -134,47 +143,77 @@ public class Harmonic {
 		return returnVal;
 	}
 	
-	private void flattenHarmonic() {
-		if(timeToData.size() < 2) return;
-		double prevNote = -1;
-		double deltaNoteSum = 0.0;
-		double noteSum = -1.0;
-		boolean firstPass = true;
-		for(int time: timeToData.keySet()) {
-			double note = timeToData.get(time).getNote();
-			if(firstPass) {
-				prevNote = note;
-				noteSum = note;
-				firstPass = false;
-				continue; // might not need this
-			} else {
-				noteSum += note;
-				deltaNoteSum += note - prevNote;
-				prevNote = note;
-			}
+	private static LogLinear getVibrato(Double[] sampleTimes, Double[] logFreqs) {
+		double maxVibrato = 1.0 / (FDData.noteBase);
+		ArrayList<Double> vibratoTimes = new ArrayList<Double>();
+		ArrayList<Double> vibratoValues = new ArrayList<Double>();
+		double minLogFreq = logFreqs[0];
+		for(double logFreq: logFreqs) if(logFreq < minLogFreq) minLogFreq = logFreq;
+		double minFreqInHz = Math.pow(2.0, minLogFreq);
+		double samplesPerCycle = SynthTools.sampleRate / minFreqInHz;
+		double timePerCycle = samplesPerCycle / SynthTools.timeToSample;
+		double timeStep = timePerCycle * 4.0;
+		// System.out.println("minFreqInHz" + minFreqInHz + " timePerCycle " + timePerCycle);
+		// make sure we leave at least one cycle length at the end
+		double endTime = sampleTimes[sampleTimes.length - 1] - timeStep;
+		// System.out.println("EndTime" + endTime);
+		for(double time = 0; time < endTime; time += timeStep) {
+			double value = (Math.random() - 0.5) * 2.0 * maxVibrato;
+			vibratoTimes.add(time);
+			vibratoValues.add(value);
+			//System.out.println(time + " " + value);
 		}
-		if(Math.abs(deltaNoteSum) < 31.0) {
+		// harmonic should be at least one cycle, but just in case
+		if(vibratoTimes.size() < 1) {
+			//System.out.println("Error in dephase");
+			vibratoTimes.add(0.0);
+			vibratoValues.add(0.0);
+		}
+		vibratoTimes.add(sampleTimes[sampleTimes.length - 1]);
+		vibratoValues.add(0.0);
+		Double[] vibratoValuesArray = new Double[vibratoValues.size() - 1];
+		Double[] vibratoTimesArray = new Double[vibratoTimes.size() - 1];
+		vibratoValuesArray = vibratoValues.toArray(vibratoValuesArray);
+		vibratoTimesArray = vibratoTimes.toArray(vibratoTimesArray);
+		return new LogLinear(vibratoTimesArray, vibratoValuesArray);
+	}
+	
+	public void flattenHarmonic() {
+		TreeMap<Integer, FDData> newTimeToData = new TreeMap<Integer, FDData>();
+		if(timeToData.size() < 2) return;
+		int noteSum = 0;
+		int maxNote = 0;
+		int minNote = Integer.MAX_VALUE;
+		for(FDData data: timeToData.values()) {
+			int note = data.getNote();
+			if(note < minNote) minNote = note;
+			if(note > maxNote) maxNote = note;
+			noteSum += note;
+		}
+		if((maxNote - minNote) > 31) return;
+		int averageNote = noteSum / (timeToData.size());
+		for(int time: timeToData.keySet()) {
 			try {
-				int averageNote = (int) Math.round(noteSum / timeToData.size());
-				for(int time: timeToData.keySet()) {
-					FDData data = timeToData.get(time);
-					float logAmp = (float) data.getLogAmplitude();
-					timeToData.put(time, new FDData(time, averageNote, logAmp));
-				}
+				FDData data = timeToData.get(time);
+				float logAmp = (float) data.getLogAmplitude();
+				FDData newData = new FDData(time, averageNote, logAmp);
+				newData.setHarmonicID(this.harmonicID);
+				newTimeToData.put(time, newData);
 			} catch (Exception e) {
 				System.out.println("Error in Harmonic.flattenHarmonic(): " + e.getMessage());
 			}
 		}
+		timeToData = newTimeToData;
 	}
 	
-	public boolean isNoise() {
-		if(getPCMData(false) == null) return false;
-		return true; // if here, dummy array returned
+	public boolean isSynthesized() {
+		if(getPCMData(false) == null) return true;
+		return false; // if here, dummy array returned
 	}
 
 	public boolean minimumCyclesExceeded(double minLogFreq, double endTime) {
 		double cycleLength = SynthTools.sampleRate / Math.pow(FDData.logBase, minLogFreq);
-		double lengthInSamples = endTime * FDEditor.timeStepInMillis * (SynthTools.sampleRate / 1000.0);
+		double lengthInSamples = endTime * FDData.timeStepInMillis * (SynthTools.sampleRate / 1000.0);
 		double lengthInCycles = lengthInSamples / cycleLength;
 		if(lengthInCycles <= minCycles) return false;
 		return true;
