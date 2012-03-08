@@ -27,7 +27,8 @@ public class DFTFileInput {
 				int time = in.readInt();
 				int note = in.readInt();
 				float amp = in.readFloat();
-				FDData data = new FDData(time, note, amp);
+				long id = in.readLong();
+				FDData data = new FDData(time, note, amp, id);
 				//System.out.println(data);
 				DFTEditor.addSelected(data);
 			}
