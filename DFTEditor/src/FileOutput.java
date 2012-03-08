@@ -77,6 +77,7 @@ public class FileOutput {
             		selectedOut.writeInt(time);
             		selectedOut.writeInt(DFTEditor.freqToNote(freq));
             		selectedOut.writeFloat(amp);
+            		selectedOut.writeLong(data.getHarmonicID());
             	}
             }
             selectedOut.close();
