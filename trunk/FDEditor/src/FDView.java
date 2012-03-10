@@ -18,77 +18,58 @@ public class FDView extends JComponent {
 	private static boolean drawPlaying = false;
 	private static int offsetInMillis;
 	
-	public static double getXStep() {
-    	return 4;
-	}
-	
-	public static double getYStep() {
-		return 4;
-	}
-	
+	public static int timesPerPixel = 2;
+	public static int minPixelsPerNote = 2;
+
 	public void drawUpperTimes(Graphics g) {
 		int intDigits = 3;
 		int decimalStartY = intDigits * FDEditor.yStep;
-		int endTime = (int) Math.round(FDEditor.leftX + getWidth() / getXStep());
-		double timeStep = (double) FDEditor.xStep / (double) getXStep();
-		int screenX = FDEditor.leftOffset;
+		int endTime = FDUtils.pixelXToTimeRange(getWidth()).getLower();		
 		Color white = new Color(0.0f, 0.0f, 0.0f);
 		Color black = new Color(1.0f, 1.0f, 1.0f);
-		for(double dTime = FDEditor.leftX; dTime <= endTime; dTime += timeStep) {
-			int time = (int) Math.round(dTime);
-			if(time >= FDEditor.maxTime) return;
-			int millis = time * FDData.timeStepInMillis;
-			int intVal = millis / 1000;
-			int decimalVal = millis - intVal * 1000;
+		for(int time = FDEditor.leftX; time <= endTime; time += timesPerPixel) {
+			if(time > FDEditor.maxTime) return;
+			if(!FDUtils.timeToDrawSegment(time)) continue;
+			int screenX = FDUtils.timeToPixelX(time);
+            int millis = time * FDData.timeStepInMillis;
+            int intVal = millis / 1000;
+            int decimalVal = millis - intVal * 1000;
 			FDUtils.DrawIntegerVertical(g, white, black, screenX, 0, 3, intVal);
 			FDUtils.DrawIntegerVertical(g, black, white, screenX, decimalStartY, 3, decimalVal);
-			screenX += FDEditor.xStep;
 			//System.out.println("drawUpperTimes " + intVal + " " + decimalVal);
 		}
 	}
 
-	public void drawLeftFreqs(Graphics g) {
-		double dFreqStep = (double) FDEditor.yStep / (double) getYStep();
-		int deltaScreenY = FDEditor.yStep;
-		int screenY = FDEditor.upperOffset;
-		int endFreq = (int) Math.round(FDEditor.upperY + getHeight() / getYStep());
-		// handle digits > 1
-		if(FDEditor.yStep < getYStep()) {
-			dFreqStep = 1.0;
-			deltaScreenY = (int) getYStep();
-		}
+	public void drawLeftNotes(Graphics g) {
 		Color white = new Color(0.0f, 0.0f, 0.0f);
 		Color black = new Color(1.0f, 1.0f, 1.0f);
-		for(double dFreq = FDEditor.upperY; dFreq < endFreq; dFreq += dFreqStep) {
-			int freq = (int) Math.round(dFreq);
-			if(freq >= FDEditor.maxNote - FDEditor.minNote) return;
-			int note = FDEditor.freqToNote(freq);
+		int endNote = FDUtils.pixelYToNote(getHeight());
+		if(endNote == -1) endNote = FDEditor.minNote;
+		int startNote = FDEditor.maxNote - FDEditor.upperY;
+		for(int note = startNote; note > endNote; note--) {
+			if(!FDUtils.noteToDrawSegment(note)) continue;
+			int screenY = FDUtils.noteToPixelY(note);
 			int freqInHz = (int) Math.round(Math.pow(2.0, note / FDData.noteBase));
 			FDUtils.DrawIntegerHorizontal(g, white, black, 0, screenY, 5, freqInHz);
-			screenY += deltaScreenY;
-			//System.out.println("drawUpperTimes " + intVal + " " + decimalVal);
 		}
 	}
 	
 	public void drawFileData(Graphics g) {
-		drawLeftFreqs(g);
+		drawLeftNotes(g);
 		drawUpperTimes(g);
-		int timeStep = 1;
-		int startTime = FDEditor.leftX;
-		int endTime = (int) Math.round(startTime + ((getWidth() - FDEditor.leftOffset) * timeStep));
-		int startFreq = FDEditor.upperY;
-		int endFreq = (int) Math.round(startFreq + ((getHeight() - FDEditor.upperOffset) / getYStep()));
-		for(int time = 0; time < 1000; time++) {
-            //if(!isXInBounds(time)) break;
-            for(int freq = 0; freq < 200; freq++) {
-                //if(!isYInBounds(freq)) break;
-        		FDData data = FDEditor.getSelected(time, FDEditor.freqToNote(freq)); //FDUtils.getMaxDataInTimeRange(time, time + timeStep, FDEditor.freqToNote(freq));
+		int endTime = FDUtils.pixelXToTimeRange(getWidth()).getLower();
+		int startNote = FDEditor.maxNote - FDEditor.upperY;
+		int endNote = FDUtils.pixelYToNote(getHeight());
+		if(endNote == -1) endNote = FDEditor.minNote;
+		for(int time = FDEditor.leftX; time <= endTime; time += timesPerPixel) {
+			for(int note = startNote; note > endNote; note--) {
+        		FDData data = FDEditor.getSelected(time, note);
         		if(data == null) continue;
         		float logAmplitude = (float) data.getLogAmplitude();
         		Color b = getColor(logAmplitude);
         		g.setColor(b);
-        		int screenX = FDEditor.leftOffset + (time - startTime) / timeStep;
-        		int screenY = (int) Math.round(FDEditor.upperOffset + (freq - startFreq) * getYStep());
+        		int screenX = FDUtils.timeToPixelX(time);
+        		int screenY = FDUtils.noteToPixelY(note);
         		//System.out.println(screenX + " " + screenY + " " + logAmplitude);
         		//drawAmplitude(g, screenX, screenY, logAmplitude, b);
         		g.drawRect(screenX, screenY, 2, 2);
@@ -122,7 +103,7 @@ public class FDView extends JComponent {
 	}
 	
 	public int getTimeAxisWidthInMillis() {
-   		double millisPerPixel = (double) FDData.timeStepInMillis / (double) getXStep();
+   		double millisPerPixel = (double) FDData.timeStepInMillis * timesPerPixel;
    		return (int) Math.round(getWidth() * millisPerPixel);
 	}
 	
@@ -140,7 +121,7 @@ public class FDView extends JComponent {
 		
     protected void paintComponent(Graphics g) {
     	if(drawPlaying) {
-    		double millisPerPixel = (double) FDData.timeStepInMillis / (double) getXStep();
+    		double millisPerPixel = (double) FDData.timeStepInMillis * timesPerPixel;
     		int startX = (int) Math.round((double) FDView.offsetInMillis / millisPerPixel + FDEditor.leftOffset);
     		g.drawImage(bi, 0, 0, null);
        		g.setColor(new Color(0.5f, 0.5f, 0.5f, 0.75f));
