@@ -3,6 +3,81 @@ import java.util.*;
 
 public class FDUtils {
 	
+	public static int timesPerPixel = FDView.timesPerPixel;
+	public static int minPixelsPerNote = FDView.minPixelsPerNote;
+	
+	public static class Range {
+		
+		int lower;
+		int upper;
+		
+		public Range(int val1, int val2) {
+			if(val1 < val2) {
+				lower = val1;
+				upper = val2;
+			} else {
+				lower = val2;
+				upper = val1;				
+			}
+		}
+		
+		public int getLower() {
+			return upper;
+		}
+		
+		public int getUpper() {
+			return upper;
+		}
+	}
+
+	public static int noteToPixelY(int note) {
+		int maxNote = FDEditor.maxNote - FDEditor.upperY;
+		int pixelY = FDEditor.upperOffset;
+		if(note > maxNote || note < FDEditor.minNote) return -1;
+		for(int loopNote = maxNote; loopNote >= FDEditor.minNote; loopNote--) {
+			if(note == loopNote) return pixelY;
+			if(FDEditor.averageNoteToHarmonicID.containsKey(loopNote)) {
+				pixelY += FDEditor.yStep;
+			} else {
+				pixelY += minPixelsPerNote;
+			}
+		}
+		return -1;
+	}
+	
+	public static boolean noteToDrawSegment(int note) {
+		if(FDEditor.averageNoteToHarmonicID.containsKey(note)) return true;
+		return false;
+	}
+	
+	public static int pixelYToNote(int pixelY) {
+		if(pixelY < FDEditor.upperOffset) return -1;
+		int testNote = FDEditor.maxNote - FDEditor.upperY;
+		int testPixelY = noteToPixelY(testNote);
+		while(testPixelY < pixelY) {
+			testNote--;
+			testPixelY = noteToPixelY(testNote);
+			if(testPixelY == -1) return -1;
+		}
+		return testNote + 1;
+	}
+	
+	public static int timeToPixelX(int time) {
+		return (time - FDEditor.leftX) / timesPerPixel + FDEditor.leftOffset;
+	}
+	
+	public static boolean timeToDrawSegment(int time) {
+		if(time % (timesPerPixel * FDEditor.xStep) == 0) return true;
+		return false;
+	}
+	
+	public static FDUtils.Range pixelXToTimeRange(int pixelX) {
+		pixelX -= FDEditor.leftOffset;
+		int startTime = (pixelX - FDEditor.leftX) * timesPerPixel;
+		int endTime = startTime + FDEditor.xStep * timesPerPixel - 1;
+		return new FDUtils.Range(startTime, endTime);
+	}
+
 	public static FDData getMaxDataInTimeRange(int startTime, int endTime, int note) {
 		FDData returnVal = FDEditor.getSelected(startTime, note);
 		for(int time = startTime + 1; time < endTime; time++) {

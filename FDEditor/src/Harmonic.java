@@ -253,4 +253,14 @@ public class Harmonic {
 		return out.toString();
 	}
 	
+	public int getAverageNote() {
+		double noteSum = 0;
+		double numNotes = 0;
+		for(FDData data: timeToData.values()) {
+			noteSum += data.getNote();
+			numNotes += 1.0;
+		}
+		return (int) Math.round(noteSum / numNotes);
+	}
+	
 }

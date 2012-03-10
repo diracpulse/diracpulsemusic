@@ -21,6 +21,7 @@ public class FDEditor extends JFrame {
 	public static JToolBar navigationBar;
 	
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic;
+	public static TreeMap<Integer, ArrayList<Long>> averageNoteToHarmonicID;
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToData;
 	public static ArrayList<Harmonic>  harmonics;
 	public static double minLogAmplitudeThreshold = 0.0;
@@ -84,6 +85,7 @@ public class FDEditor extends JFrame {
 	public void openFileInFDEditor() {
         fileName = FileTools.PromptForFileOpen(view);
         FDFileInput.ReadBinaryFileData(fileName);
+        initAverageNoteToHarmonicID();
         this.setTitle(fileName);
         view.repaint();
 	}
@@ -193,7 +195,8 @@ public class FDEditor extends JFrame {
 	}
 
 	public static void playSelectedDataInCurrentWindow(FDEditor parent) {
-		new PlayDataInWindow(parent, 50, view.getTimeAxisWidthInMillis());
+		int endTime = leftX + view.getTimeAxisWidthInMillis() / timeStepInMillis;
+		new PlayDataInWindow(parent, leftX, endTime, 50, view.getTimeAxisWidthInMillis());
 	}
 
 	public static void drawPlayTime(int offsetInMillis, int refreshRateInMillis) {
@@ -212,5 +215,15 @@ public class FDEditor extends JFrame {
 	public static int freqToNote(int freq) {
 		return maxNote - freq;
 	}
-	
+
+	public static void initAverageNoteToHarmonicID() {
+		averageNoteToHarmonicID = new TreeMap<Integer, ArrayList<Long>>();
+		for(Harmonic harmonic: harmonicIDToHarmonic.values()) {
+			int averageNote = harmonic.getAverageNote();
+			if(!averageNoteToHarmonicID.containsKey(averageNote)) {
+				averageNoteToHarmonicID.put(averageNote, new ArrayList<Long>());
+			}
+			averageNoteToHarmonicID.get(averageNote).add(harmonic.getHarmonicID());
+		}
+	}
 }
