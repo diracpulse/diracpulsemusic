@@ -277,6 +277,22 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
+	public class HarmonicsViewAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public HarmonicsViewAction() {
+			super("Harmonics");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Harmonics");
+			DFTView.setDataView(DFTView.DataView.HARMONICS);
+			DFTEditor.view.repaint();
+		}
+	}
+	
 	public class LineAreaAction extends AbstractAction {
 
 		private static final long serialVersionUID = 1L;
@@ -432,6 +448,7 @@ public class ActionHandler extends JPanel {
         dataViewMenu.add(new JMenuItem(new DataAndMaximasViewAction()));
         dataViewMenu.add(new JMenuItem(new MaximasViewAction()));
         dataViewMenu.add(new JMenuItem(new DataViewAction()));
+        dataViewMenu.add(new JMenuItem(new HarmonicsViewAction()));
         JMenu selectionAreaMenu = new JMenu("SelectionArea");
         menuBar.add(selectionAreaMenu);
         selectionAreaMenu.add(new JMenuItem(new LineAreaAction()));

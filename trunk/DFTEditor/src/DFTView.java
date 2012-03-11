@@ -34,7 +34,8 @@ public class DFTView extends JComponent {
 	public enum DataView {
 		DATA_ONLY,
 		MAXIMAS_ONLY,
-		DATA_AND_MAXIMAS;
+		DATA_AND_MAXIMAS,
+		HARMONICS;
 	}
 	
 	public static void setDataView(DataView v) {
@@ -187,7 +188,12 @@ public class DFTView extends JComponent {
         		FDData data = DFTUtils.getMaxDataInTimeRange(time, time + timeStep, freq);
         		if(data == null) continue;
         		float logAmplitude = (float) data.getLogAmplitude();
-        		Color b = getColor(logAmplitude);
+        		Color b = null;
+        		if(dataView == DataView.HARMONICS) {
+        			b = getColor(data.getHarmonicID());
+        		} else {
+        			b = getColor(logAmplitude);
+        		}
         		g.setColor(b);
         		int screenX = DFTEditor.leftOffset + (time - startTime) / timeStep;
         		int screenY = (int) Math.round(DFTEditor.upperOffset + (freq - startFreq) * getYStep());
@@ -297,13 +303,19 @@ public class DFTView extends JComponent {
 				if(DFTEditor.isMaxima(time, freq)) return new Color(red, green, blue);
 				return new Color(0.0f, 0.0f, 0.0f);
 			case DATA_AND_MAXIMAS:
-				if(DFTEditor.isMaxima(time, freq)) {
-					return new Color(red, green, blue);
-				}
-				return new Color(red * 0.5f, green * 0.5f, blue * 0.5f);
+				if(DFTEditor.isMaxima(time, freq)) return new Color(red, green, blue);
+			case HARMONICS:
+				return new Color(0.0f, 0.0f, 0.0f);
 		}
 		// if we're here there's an error
 		return new Color(-1.0f, -1.0f, -1.0f);
+	}
+	
+	private Color getColor(long harmonicID) {
+		int red = (int) harmonicID % 128;
+		int green = (int) (harmonicID / 128) % 128;
+		int blue = (int) (harmonicID / (128 * 128)) % 128;
+		return new Color(red + 128, green + 128, blue + 128);
 	}
 	
 	private void drawHarmonicsBase31(Graphics g) {
