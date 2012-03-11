@@ -87,6 +87,38 @@ public class FDActionHandler extends JPanel {
 		}
 	}
 	
+	public class ViewAmplitudesAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public ViewAmplitudesAction() {
+			super("Amplitudes");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("View Amplitudes");
+			FDView.dataView = FDView.DataView.AMPLITUDES;
+			FDEditor.refreshView();
+		}
+	}
+	
+	public class ViewHarmonicsAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public ViewHarmonicsAction() {
+			super("Harmonics");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("View Harmonics");
+			FDView.dataView = FDView.DataView.HARMONICS;
+			FDEditor.refreshView();
+		}
+	}
+	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -99,9 +131,10 @@ public class FDActionHandler extends JPanel {
         JMenu playMenu = new JMenu("Play");
         menuBar.add(playMenu);        
         playMenu.add(new JMenuItem(new PlayAllAction()));
-        JMenu testMenu = new JMenu("Test");
-        testMenu.add(new TestAction());
-        menuBar.add(testMenu);
+        JMenu viewMenu = new JMenu("View");
+        viewMenu.add(new ViewAmplitudesAction());
+        viewMenu.add(new ViewHarmonicsAction());
+        menuBar.add(viewMenu);
         return menuBar;
 	}
 

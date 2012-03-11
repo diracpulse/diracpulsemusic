@@ -9,6 +9,7 @@ class SynthTools {
 	static double twoPI = 2.0 * Math.PI;
 	static double timeToSample = sampleRate * (FDData.timeStepInMillis * 1.0 / 1000.0);
 	static double[] PCMData = null;
+	static int deltaHarmonic = 1;
 	static DFTEditor parent;
 	
 	static void initSelectedRegion(DFTEditor parentVal) {
@@ -131,6 +132,27 @@ class SynthTools {
 						harmonicTime++;
 						continue;
 					}
+					if(deltaHarmonic == 1) break;
+					currentNote += 3;
+					if(input.get(harmonicTime).containsKey(currentNote)) {
+						FDData data = input.get(harmonicTime).get(currentNote);
+						data.setHarmonicID(id);
+						currentHarmonic.addData(data);
+						input.get(harmonicTime).remove(currentNote);
+						DFTEditor.addSelected(data);
+						harmonicTime++;
+						continue;
+					}
+					currentNote -= 4;
+					if(input.get(harmonicTime).containsKey(currentNote)) {
+						FDData data = input.get(harmonicTime).get(currentNote);
+						data.setHarmonicID(id);
+						currentHarmonic.addData(data);
+						input.get(harmonicTime).remove(currentNote);
+						DFTEditor.addSelected(data);
+						harmonicTime++;
+						continue;
+					}				
 					break;
 				}
 				DFTEditor.harmonicIDToHarmonic.put(id, currentHarmonic);

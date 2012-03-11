@@ -11,6 +11,14 @@ public class FDView extends JComponent {
 	/**
 	 * 
 	 */
+
+	public enum DataView {
+		HARMONICS,
+		AMPLITUDES;
+	}
+	
+	public static DataView dataView = DataView.AMPLITUDES;
+	
 	private static final long serialVersionUID = 2964004162144513754L;
 	
 	private static BufferedImage bi;
@@ -65,18 +73,22 @@ public class FDView extends JComponent {
 			for(int note = startNote; note > endNote; note--) {
         		FDData data = FDEditor.getSelected(time, note);
         		if(data == null) continue;
-        		float logAmplitude = (float) data.getLogAmplitude();
-        		Color b = getColor(logAmplitude);
+        		Color b = null;
+        		if(dataView == DataView.AMPLITUDES) {
+        			b = getColor(data.getLogAmplitude());
+        		}
+        		if(dataView == DataView.HARMONICS) {
+        			b = getColor(data.getHarmonicID());
+        		}
         		g.setColor(b);
         		int screenX = FDUtils.timeToPixelX(time);
         		int screenY = FDUtils.noteToPixelY(note);
         		//System.out.println(screenX + " " + screenY + " " + logAmplitude);
         		//drawAmplitude(g, screenX, screenY, logAmplitude, b);
-        		g.drawRect(screenX, screenY, 2, 2);
+        		g.fillRect(screenX, screenY, 1, FDEditor.yStep);
             }
 		}	
 	}
-	
 
 	private Color getColor(double logAmplitude) {
 		float ampRange = (float) (FDEditor.getMaxAmplitude() - FDEditor.getMinAmplitude());
@@ -95,6 +107,13 @@ public class FDView extends JComponent {
 		}
 		//return new Color(1.0f, 1.0f, 1.0f, 0.75f);
 		return new Color(red, green, blue, 0.75f);
+	}
+	
+	private Color getColor(long harmonicID) {
+		int red = (int) harmonicID % 128;
+		int green = (int) (harmonicID / 128) % 128;
+		int blue = (int) (harmonicID / (128 * 128)) % 128;
+		return new Color(red + 128, green + 128, blue + 128);
 	}
 	
 	public void drawPlayTime(int offsetInMillis, int refreshInMillis) {
