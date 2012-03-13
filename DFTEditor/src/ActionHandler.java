@@ -64,12 +64,12 @@ public class ActionHandler extends JPanel {
 		private static final long serialVersionUID = 1L;
 
 		public ExportAction() {
-			super("Export Maximas");
+			super("Export Selected");
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Export Maximas");
+			System.out.println("Export Selected");
 			parent.exportFileInDFTEditor();
 		}
 	}
@@ -79,12 +79,12 @@ public class ActionHandler extends JPanel {
 		private static final long serialVersionUID = 1L;
 
 		public ExportAllAction() {
-			super("Export All Maximas");
+			super("Export All Selected");
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Export All Maximas");
+			System.out.println("Export All Selected");
 			parent.exportAllFiles();
 		}
 	}
@@ -412,6 +412,9 @@ public class ActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Cutoff = " + logCutoff);
 			DFTEditor.minLogAmplitudeThreshold = logCutoff;
+		    DFTEditor.autoSelect();
+		    DFTEditor.view.repaint();
+		    parent.playSelectedDataInCurrentWindow();
 		}		
 		
 	}

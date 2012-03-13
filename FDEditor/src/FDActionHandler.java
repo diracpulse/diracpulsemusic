@@ -119,6 +119,22 @@ public class FDActionHandler extends JPanel {
 		}
 	}
 	
+	public class FlattenAllHarmonicsAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public FlattenAllHarmonicsAction() {
+			super("Flatten All");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Flatten All Harmonics");
+			FDEditor.flattenAllHarmonics();
+			FDEditor.refreshView();
+		}
+	}
+	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -135,6 +151,9 @@ public class FDActionHandler extends JPanel {
         viewMenu.add(new ViewAmplitudesAction());
         viewMenu.add(new ViewHarmonicsAction());
         menuBar.add(viewMenu);
+        JMenu harmonicsMenu = new JMenu("Harmonics");
+        harmonicsMenu.add(new FlattenAllHarmonicsAction());
+        menuBar.add(harmonicsMenu);
         return menuBar;
 	}
 
