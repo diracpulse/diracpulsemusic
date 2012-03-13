@@ -5,7 +5,7 @@ import java.util.TreeMap;
 public class Harmonic {
 
 	private int minTimeStep = 1; // 4 * 5.0ms = 20ms
-	private double minCycles = 2;
+	private double minCycles = 2.0;
 	private boolean applyTaper = true; // not in use currently
 	private boolean overwrite = true; // not in use currently
 	private boolean useVibrato = false;

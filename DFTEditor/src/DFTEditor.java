@@ -335,9 +335,9 @@ public class DFTEditor extends JFrame {
         FileInput.ReadBinaryFileData(this, fileName, "mono5ms");
         DFTFileInput.ReadSelectedFileData(fileNameTrimmed);
         //String fileNameTrimmed = fileName.substring(0, fileName.length() - 4);
-        autoSelect();
+        //autoSelect();
         view.repaint();
-        playSelectedDataInCurrentWindow();
+        //playSelectedDataInCurrentWindow();
 	}
 
 	public void exportFileInDFTEditor() {
