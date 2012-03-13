@@ -14,7 +14,7 @@ public class FileTools {
         int returnVal = fc.showOpenDialog(c);
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
         	File file = fc.getSelectedFile();
-            return file.getName();
+        	return fc.getCurrentDirectory() + "/" + file.getName();
     	} else {
 	    	System.exit(0);
     	}
