@@ -101,7 +101,7 @@ public class FDEditor extends JFrame {
         controller.setView(view);
         add(view);
         setSize(1500, 800);
-        //openFileInFDEditor();
+        openFileInFDEditor();
     }
     
 	private static void createAndShowGUI() {
@@ -214,6 +214,12 @@ public class FDEditor extends JFrame {
 	
 	public static int freqToNote(int freq) {
 		return maxNote - freq;
+	}
+	
+	public static void flattenAllHarmonics() {
+		for(long harmonicID: harmonicIDToHarmonic.keySet()) {
+			harmonicIDToHarmonic.get(harmonicID).flattenHarmonic();
+		}
 	}
 
 	public static void initAverageNoteToHarmonicID() {

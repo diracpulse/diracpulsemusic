@@ -2,16 +2,17 @@ import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 public class FileOutput {
 	
 	// This function reads from a (newly created) .mono5ms file
-	public static void minmaxExportAll(DFTEditor parent) {
+	public static void selectedExportAll(DFTEditor parent) {
 		try {
 		//runProcess();
 			TreeSet<String> mono5msFileNames = new TreeSet<String>();
-			TreeSet<String> minmaxFileNames = new TreeSet<String>();
+			TreeSet<String> selectedFileNames = new TreeSet<String>();
 			TreeSet<String> exportFileNames = new TreeSet<String>();
 			File dataDir = new File(".");
 			File[] dataFiles = dataDir.listFiles();
@@ -21,49 +22,29 @@ public class FileOutput {
 					String fileNameTrimmed = fileName.substring(0, fileName.length() - 8);
 					mono5msFileNames.add(fileNameTrimmed);
 				}
-				if(fileName.endsWith(".minmax")) {
+				if(fileName.endsWith(".selected")) {
 					String fileNameTrimmed = fileName.substring(0, fileName.length() - 7);
-					minmaxFileNames.add(fileNameTrimmed);
+					selectedFileNames.add(fileNameTrimmed);
 				}
 			}
 			for(String mono5msFileName: mono5msFileNames) {
 				System.out.println("mono5ms: " + mono5msFileName);
-				if(!minmaxFileNames.contains(mono5msFileName)) {
+				if(!selectedFileNames.contains(mono5msFileName)) {
 					exportFileNames.add(mono5msFileName);
 				}
 			}
-			for(String minmaxFileName: minmaxFileNames) {
-				System.out.println("minmax: " + minmaxFileName);
+			for(String selectedFileName: selectedFileNames) {
+				System.out.println("selected: " + selectedFileName);
 			}
 			for(String exportFileName: exportFileNames) {
 				FileInput.ReadBinaryFileData(parent, exportFileName + ".mono5ms", "mono5ms");
-				OutputMaximasToFile(exportFileName);
+				DFTEditor.timeToFreqToSelectedData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
+				DFTEditor.autoSelect();
+				OutputSelectedToFile(exportFileName);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-	
-	
-	public static void OutputMaximasToFile(String fileName) {
-	    try {
-	    	DataOutputStream maximasOut = new DataOutputStream(new
-		            BufferedOutputStream(new FileOutputStream(new String(fileName + ".maximas"))));
-            for(int time: DFTEditor.timesWithMaxima()) {
-            	for(int freq: DFTEditor.maximasAtTime(time)) {
-            		float amp = DFTEditor.getAmplitude(time, freq);
-            		maximasOut.writeInt(time);
-            		maximasOut.writeInt(DFTEditor.freqToNote(freq));
-            		maximasOut.writeFloat(amp);
-            	}
-            }
-            maximasOut.close();
-		} catch (Exception e) {
-			System.out.println("Exception in FileOutput.OutputMaximasToFile");
-			e.printStackTrace();
-			System.exit(0);
-		}
-		System.out.println("Finished output of of maximas to: " + fileName + ".maximas");
 	}
 	
 	public static void OutputSelectedToFile(String fileName) {

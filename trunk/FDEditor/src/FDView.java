@@ -59,6 +59,9 @@ public class FDView extends JComponent {
 			int screenY = FDUtils.noteToPixelY(note);
 			int freqInHz = (int) Math.round(Math.pow(2.0, note / FDData.noteBase));
 			FDUtils.DrawIntegerHorizontal(g, white, black, 0, screenY, 5, freqInHz);
+			int screenX = 6 * FDEditor.xStep - 1;
+			int displayNote = note % FDData.noteBase;
+			FDUtils.DrawIntegerHorizontal(g, white, black, screenX, screenY, 2, displayNote);
 		}
 	}
 	

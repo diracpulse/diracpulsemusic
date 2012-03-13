@@ -22,7 +22,7 @@ public class DFTEditor extends JFrame {
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToFreqToSelectedData;
 	//public static ArrayList<Harmonic> harmonics;
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic;
-	public static double minLogAmplitudeThreshold = 10.0; // used by autoSelect
+	public static double minLogAmplitudeThreshold = 7.0; // used by autoSelect
 	public static ArrayList<Selection> selections;
 	public static Selection.Area selectionArea = Selection.Area.RECTANGLE;
 	public static boolean deleteSelected = false;
@@ -335,19 +335,21 @@ public class DFTEditor extends JFrame {
         FileInput.ReadBinaryFileData(this, fileName, "mono5ms");
         DFTFileInput.ReadSelectedFileData(fileNameTrimmed);
         //String fileNameTrimmed = fileName.substring(0, fileName.length() - 4);
+        autoSelect();
         view.repaint();
+        playSelectedDataInCurrentWindow();
 	}
 
 	public void exportFileInDFTEditor() {
         //String fileName = FileTools.PromptForFileSave(view);
 		String fileName = this.getTitle();
 		String fileNameTrimmed = fileName.substring(0, fileName.length() - 8); // ".mono5ms"
-        FileOutput.OutputMaximasToFile(fileNameTrimmed);
+        FileOutput.OutputSelectedToFile(fileNameTrimmed);
         JOptionPane.showMessageDialog(this, "Finished exporting: " + fileName);
 	}
 	
 	public void exportAllFiles() {
-        FileOutput.minmaxExportAll(this);
+        FileOutput.selectedExportAll(this);
         JOptionPane.showMessageDialog(this, "Finished exporting all files");
 	}
 	
@@ -368,11 +370,11 @@ public class DFTEditor extends JFrame {
         view.addMouseListener(controller);
         add(view);
         setSize(1500, 800);
-        openFileInDFTEditor();
         selections = new ArrayList<Selection>();
         selections.add(new Selection(DFTEditor.selectionArea, deleteSelected));
         randomIDGenerator = new Random();
         harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
+        openFileInDFTEditor();
         //DFTUtils.testGetConsonantOvertonesBase31();
     }
     

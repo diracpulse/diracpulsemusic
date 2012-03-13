@@ -39,7 +39,7 @@ public class FDUtils {
 			if(FDEditor.averageNoteToHarmonicID.containsKey(loopNote)) {
 				pixelY += FDEditor.yStep;
 			} else {
-				pixelY += minPixelsPerNote;
+				//pixelY += minPixelsPerNote;
 			}
 		}
 		return -1;
