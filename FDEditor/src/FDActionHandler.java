@@ -67,9 +67,27 @@ public class FDActionHandler extends JPanel {
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Play\n");
-			FDEditor.playSelectedDataInCurrentWindow(parent);
+			FDEditor.playDataInCurrentWindow(parent);
 		}
 	}
+	
+	public class PlaySelectedAction extends AbstractAction {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -9196870261707581557L;
+
+		public PlaySelectedAction() {
+			super("Play Selected");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Play Selected\n");
+			FDEditor.playSelectedDataInCurrentWindow(parent);
+		}
+	}	
 	
 	public class TestAction extends AbstractAction {
 		
@@ -119,6 +137,38 @@ public class FDActionHandler extends JPanel {
 		}
 	}
 	
+	public class ViewSelectedAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public ViewSelectedAction() {
+			super("Selected");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("View Selected");
+			FDView.dataView = FDView.DataView.SELECTED;
+			FDEditor.refreshView();
+		}
+	}
+	
+	public class ViewSelectedOnlyAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public ViewSelectedOnlyAction() {
+			super("Selected Only");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("View Selected Only");
+			FDView.dataView = FDView.DataView.SELECTED_ONLY;
+			FDEditor.refreshView();
+		}
+	}
+	
 	public class FlattenAllHarmonicsAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
@@ -130,7 +180,7 @@ public class FDActionHandler extends JPanel {
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Flatten All Harmonics");
-			FDEditor.flattenAllHarmonics();
+			FDEditor.flattenHarmonics();
 			FDEditor.refreshView();
 		}
 	}
@@ -147,9 +197,12 @@ public class FDActionHandler extends JPanel {
         JMenu playMenu = new JMenu("Play");
         menuBar.add(playMenu);        
         playMenu.add(new JMenuItem(new PlayAllAction()));
+        playMenu.add(new JMenuItem(new PlaySelectedAction()));
         JMenu viewMenu = new JMenu("View");
         viewMenu.add(new ViewAmplitudesAction());
         viewMenu.add(new ViewHarmonicsAction());
+        viewMenu.add(new ViewSelectedAction());
+        viewMenu.add(new ViewSelectedOnlyAction());
         menuBar.add(viewMenu);
         JMenu harmonicsMenu = new JMenu("Harmonics");
         harmonicsMenu.add(new FlattenAllHarmonicsAction());

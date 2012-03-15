@@ -219,14 +219,15 @@ public class Harmonic {
 		return true;
 	}
 	
-	public int getTaperLength() {
+	public double getTaperLength() {
 		FDData endData = timeToData.lastEntry().getValue();
 		double endLogAmp = endData.getLogAmplitude();
-		int taperLength = 0;
+		double taperLength = 0;
 		if(endLogAmp > 0.0) {
 			double endLogFreq = endData.getNoteComplete() / FDData.noteBase;
 			double cycleLength = SynthTools.sampleRate / Math.pow(FDData.logBase, endLogFreq);
-			taperLength =  (int) Math.ceil(endLogAmp * cycleLength);
+			//taperLength =  (int) Math.ceil(endLogAmp * cycleLength);
+			taperLength = cycleLength;
 			taperLength /= SynthTools.timeToSample; 
 		}
 		//System.out.println("Harmonic.getTaperLength: " + taperLength);

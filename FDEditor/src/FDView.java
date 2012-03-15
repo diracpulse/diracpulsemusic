@@ -14,7 +14,9 @@ public class FDView extends JComponent {
 
 	public enum DataView {
 		HARMONICS,
-		AMPLITUDES;
+		AMPLITUDES,
+		SELECTED,
+		SELECTED_ONLY;
 	}
 	
 	public static DataView dataView = DataView.AMPLITUDES;
@@ -26,7 +28,7 @@ public class FDView extends JComponent {
 	private static boolean drawPlaying = false;
 	private static int offsetInMillis;
 	
-	public static int timesPerPixel = 2;
+	public static int timesPerPixel = 1;
 	public static int minPixelsPerNote = 2;
 
 	public void drawUpperTimes(Graphics g) {
@@ -74,14 +76,28 @@ public class FDView extends JComponent {
 		if(endNote == -1) endNote = FDEditor.minNote;
 		for(int time = FDEditor.leftX; time <= endTime; time += timesPerPixel) {
 			for(int note = startNote; note > endNote; note--) {
-        		FDData data = FDEditor.getSelected(time, note);
+        		FDData data = FDEditor.getData(time, note);
         		if(data == null) continue;
         		Color b = null;
         		if(dataView == DataView.AMPLITUDES) {
-        			b = getColor(data.getLogAmplitude());
+        			b = getColor(data.getLogAmplitude(), 1.0);
         		}
         		if(dataView == DataView.HARMONICS) {
         			b = getColor(data.getHarmonicID());
+        		}
+        		if(dataView == DataView.SELECTED) {
+        			if(FDEditor.selectedHarmonicIDs.contains(data.getHarmonicID())) {
+        				b = getColor(data.getLogAmplitude(), 1.0);
+        			} else {
+        				b = getColor(data.getLogAmplitude(), 0.5);
+        			}
+        		}
+        		if(dataView == DataView.SELECTED_ONLY) {
+        			if(FDEditor.selectedHarmonicIDs.contains(data.getHarmonicID())) {
+        				b = getColor(data.getLogAmplitude(), 1.0);
+        			} else {
+        				continue;
+        			}        			
         		}
         		g.setColor(b);
         		int screenX = FDUtils.timeToPixelX(time);
@@ -92,8 +108,8 @@ public class FDView extends JComponent {
             }
 		}	
 	}
-
-	private Color getColor(double logAmplitude) {
+	
+	private Color getColor(double logAmplitude, double alpha) {
 		float ampRange = (float) (FDEditor.getMaxAmplitude() - FDEditor.getMinAmplitude());
 		float currentVal = (float) logAmplitude;
 		currentVal -= FDEditor.getMinAmplitude();
@@ -109,7 +125,7 @@ public class FDView extends JComponent {
 			green = red * 2.0f;
 		}
 		//return new Color(1.0f, 1.0f, 1.0f, 0.75f);
-		return new Color(red, green, blue, 0.75f);
+		return new Color(red, green, blue, (float) alpha);
 	}
 	
 	private Color getColor(long harmonicID) {

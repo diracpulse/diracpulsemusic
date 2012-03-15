@@ -23,6 +23,8 @@ public class FDEditor extends JFrame {
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic;
 	public static TreeMap<Integer, ArrayList<Long>> averageNoteToHarmonicID;
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToData;
+	public static TreeSet<Long> selectedHarmonicIDs;
+	public static TreeSet<Integer> selectedNotes;
 	public static ArrayList<Harmonic>  harmonics;
 	public static double minLogAmplitudeThreshold = 0.0;
 	public static String fileName;
@@ -168,6 +170,8 @@ public class FDEditor extends JFrame {
 	public static void clearCurrentData() {
 		timeToNoteToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
 		harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
+		selectedHarmonicIDs = new TreeSet<Long>();
+		selectedNotes = new TreeSet<Integer>();
 	}
 	
 	public static void addData(FDData data) {
@@ -187,16 +191,21 @@ public class FDEditor extends JFrame {
 		harmonicIDToHarmonic.get(harmonicID).addData(data);
 	}
 	
-	public static FDData getSelected(int time, int note) {
+	public static FDData getData(int time, int note) {
 		if(timeToNoteToData == null) return null;
 		if(!timeToNoteToData.containsKey(time)) return null;
 		if(!timeToNoteToData.get(time).containsKey(note)) return null;
 		return timeToNoteToData.get(time).get(note);
 	}
 
+	public static void playDataInCurrentWindow(FDEditor parent) {
+		int endTime = leftX + view.getTimeAxisWidthInMillis() / timeStepInMillis;
+		new PlayDataInWindow(parent, leftX, endTime, 50, view.getTimeAxisWidthInMillis(), false);
+	}
+	
 	public static void playSelectedDataInCurrentWindow(FDEditor parent) {
 		int endTime = leftX + view.getTimeAxisWidthInMillis() / timeStepInMillis;
-		new PlayDataInWindow(parent, leftX, endTime, 50, view.getTimeAxisWidthInMillis());
+		new PlayDataInWindow(parent, leftX, endTime, 50, view.getTimeAxisWidthInMillis(), true);
 	}
 
 	public static void drawPlayTime(int offsetInMillis, int refreshRateInMillis) {
@@ -216,10 +225,27 @@ public class FDEditor extends JFrame {
 		return maxNote - freq;
 	}
 	
-	public static void flattenAllHarmonics() {
-		for(long harmonicID: harmonicIDToHarmonic.keySet()) {
-			harmonicIDToHarmonic.get(harmonicID).flattenHarmonic();
+	public static void flattenHarmonics() {
+		timeToNoteToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
+		for(Harmonic harmonic: harmonicIDToHarmonic.values()) {
+			harmonic.flattenHarmonic();
+			for(FDData data: harmonic.getAllData()) {
+				int time = data.getTime();
+				int note = data.getNote();
+				if(!timeToNoteToData.containsKey(time)) {
+					timeToNoteToData.put(time, new TreeMap<Integer, FDData>());
+				}
+				if(timeToNoteToData.get(time).containsKey(note)) {
+					FDData currentData = timeToNoteToData.get(time).get(note);
+					if(currentData.getLogAmplitude() >= data.getLogAmplitude()) {
+						continue;
+					}
+				}
+				timeToNoteToData.get(time).put(note, data);
+			} 
 		}
+		SynthTools.createHarmonics(timeToNoteToData);
+		refreshView();
 	}
 
 	public static void initAverageNoteToHarmonicID() {
