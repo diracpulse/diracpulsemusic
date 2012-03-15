@@ -46,6 +46,9 @@ public class FDUtils {
 	}
 	
 	public static boolean noteToDrawSegment(int note) {
+		if(FDView.dataView == FDView.DataView.SELECTED_ONLY) {
+			if(FDEditor.selectedHarmonicIDs.contains(note)) return true;
+		}
 		if(FDEditor.averageNoteToHarmonicID.containsKey(note)) return true;
 		return false;
 	}
@@ -79,9 +82,9 @@ public class FDUtils {
 	}
 
 	public static FDData getMaxDataInTimeRange(int startTime, int endTime, int note) {
-		FDData returnVal = FDEditor.getSelected(startTime, note);
+		FDData returnVal = FDEditor.getData(startTime, note);
 		for(int time = startTime + 1; time < endTime; time++) {
-			FDData currentVal =  FDEditor.getSelected(time, note);
+			FDData currentVal =  FDEditor.getData(time, note);
 			if(currentVal == null) continue;
 			if(returnVal == null) {
 				returnVal = currentVal;

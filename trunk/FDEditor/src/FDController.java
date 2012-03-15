@@ -28,18 +28,18 @@ public class FDController implements MouseListener, ActionListener {
 	public void mousePressed(MouseEvent e){
 	    int x = e.getX();
 	    int y = e.getY();
-	    /*
-	    if (view.getView() == DFTView.View.Digits) {
-	    	//harmonicSelection(getFileData(x,y));
+	    int time = FDUtils.pixelXToTimeRange(x).getLower();
+	    int note = FDUtils.pixelYToNote(y);
+	    if(!FDEditor.timeToNoteToData.containsKey(time)) return;
+	    if(!FDEditor.timeToNoteToData.get(time).containsKey(note)) return;
+	    FDData data = FDEditor.timeToNoteToData.get(time).get(note);
+	    long harmonicID = data.getHarmonicID();
+	    if(FDEditor.selectedHarmonicIDs.contains(harmonicID)) {
+	    	FDEditor.selectedHarmonicIDs.remove(harmonicID);
 	    } else {
-	    	DFTModel.TFA selected = getFileData(x, y);
-	    	if(selected != null) {
-	    		System.out.println(selected);
-	    	} else {
-	    		System.out.println(x + " " + y);
-	    	}
+	    	FDEditor.selectedHarmonicIDs.add(harmonicID);
 	    }
-	    */
+	    FDEditor.refreshView();
 	}
 	
 	public void mouseClicked(MouseEvent e){

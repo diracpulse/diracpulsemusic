@@ -180,24 +180,12 @@ public class Harmonic {
 	
 	public void flattenHarmonic() {
 		TreeMap<Integer, FDData> newTimeToData = new TreeMap<Integer, FDData>();
-		if(timeToData.size() < 2) return;
-		int noteSum = 0;
-		int maxNote = 0;
-		int minNote = Integer.MAX_VALUE;
-		for(FDData data: timeToData.values()) {
-			int note = data.getNote();
-			if(note < minNote) minNote = note;
-			if(note > maxNote) maxNote = note;
-			noteSum += note;
-		}
-		if((maxNote - minNote) > 31) return;
-		int averageNote = noteSum / (timeToData.size());
+		int averageNote = getAverageNote();
 		for(int time: timeToData.keySet()) {
 			try {
 				FDData data = timeToData.get(time);
 				float logAmp = (float) data.getLogAmplitude();
-				FDData newData = new FDData(time, averageNote, logAmp);
-				newData.setHarmonicID(this.harmonicID);
+				FDData newData = new FDData(time, averageNote, logAmp, harmonicID);
 				newTimeToData.put(time, newData);
 			} catch (Exception e) {
 				System.out.println("Error in Harmonic.flattenHarmonic(): " + e.getMessage());
@@ -219,14 +207,15 @@ public class Harmonic {
 		return true;
 	}
 	
-	public int getTaperLength() {
+	public double getTaperLength() {
 		FDData endData = timeToData.lastEntry().getValue();
 		double endLogAmp = endData.getLogAmplitude();
-		int taperLength = 0;
+		double taperLength = 0;
 		if(endLogAmp > 0.0) {
 			double endLogFreq = endData.getNoteComplete() / FDData.noteBase;
 			double cycleLength = SynthTools.sampleRate / Math.pow(FDData.logBase, endLogFreq);
-			taperLength =  (int) Math.ceil(endLogAmp * cycleLength);
+			//taperLength =  (int) Math.ceil(endLogAmp * cycleLength);
+			taperLength = cycleLength;
 			taperLength /= SynthTools.timeToSample; 
 		}
 		//System.out.println("Harmonic.getTaperLength: " + taperLength);
