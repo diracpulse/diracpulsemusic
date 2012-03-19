@@ -36,17 +36,17 @@ public class HarmonicsUtils {
 		if(note > maxNote || note < HarmonicsEditor.minNote) return -1;
 		for(int loopNote = maxNote; loopNote >= HarmonicsEditor.minNote; loopNote--) {
 			if(note == loopNote) return pixelY;
-			if(HarmonicsEditor.averageNoteToHarmonicID.containsKey(loopNote)) {
-				pixelY += HarmonicsEditor.yStep;
-			} else {
-				//pixelY += minPixelsPerNote;
+			for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
+				if(harmonic.getAverageNote() == loopNote) pixelY += HarmonicsEditor.yStep;
 			}
 		}
 		return -1;
 	}
 	
 	public static boolean noteToDrawSegment(int note) {
-		if(HarmonicsEditor.averageNoteToHarmonicID.containsKey(note)) return true;
+		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
+			if(harmonic.getAverageNote() == note) return true;
+		}
 		return false;
 	}
 	

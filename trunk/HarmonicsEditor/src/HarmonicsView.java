@@ -57,9 +57,10 @@ public class HarmonicsView extends JComponent {
 		for(int note = startNote; note > endNote; note--) {
 			if(!HarmonicsUtils.noteToDrawSegment(note)) continue;
 			int screenY = HarmonicsUtils.noteToPixelY(note);
+			int screenX = HarmonicsEditor.controlPanelSegments * HarmonicsEditor.xStep;
 			int freqInHz = (int) Math.round(Math.pow(2.0, note / FDData.noteBase));
-			HarmonicsUtils.DrawIntegerHorizontal(g, white, black, 0, screenY, 5, freqInHz);
-			int screenX = 6 * HarmonicsEditor.xStep - 1;
+			HarmonicsUtils.DrawIntegerHorizontal(g, white, black, screenX, screenY, 5, freqInHz);
+			screenX += 6 * HarmonicsEditor.xStep - 1;
 			int displayNote = note % FDData.noteBase;
 			HarmonicsUtils.DrawIntegerHorizontal(g, white, black, screenX, screenY, 2, displayNote);
 		}
@@ -156,11 +157,13 @@ public class HarmonicsView extends JComponent {
     		Graphics2D g2 = bi.createGraphics();
     		super.paintComponent(g);
     		drawFileData(g2);
+    		HarmonicsEditor.controlPanel.paintComponent(g2);
     		g.drawImage(bi, 0, 0, null);
     		return;
     	}
 		super.paintComponent(g);
 		drawFileData(g);
+		HarmonicsEditor.controlPanel.paintComponent(g);
 		return;
     	
     }

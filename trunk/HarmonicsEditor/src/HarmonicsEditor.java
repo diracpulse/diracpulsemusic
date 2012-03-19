@@ -19,12 +19,14 @@ public class HarmonicsEditor extends JFrame {
 	public static HarmonicsController controller;
 	public static HarmonicsActionHandler actionHandler;
 	public static JToolBar navigationBar;
+	public static ControlPanel controlPanel;
 	
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic;
-	public static TreeMap<Integer, ArrayList<Long>> averageNoteToHarmonicID;
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToData;
 	public static ArrayList<Harmonic>  harmonics;
 	public static double minLogAmplitudeThreshold = 0.0;
+	public static int bpm = 120;
+	public static double maxAmplitude = 14.0;
 	public static String fileName;
 	public static MathTools mathTools;
 	
@@ -37,9 +39,10 @@ public class HarmonicsEditor extends JFrame {
 	
 	public static final int xStep = 6;
 	public static final int yStep = 9;
+	public static final int controlPanelSegments = 14;
 	public static final int leftFreqSegments = 8; // used by drawFreqScale
 	public static final int upperTimeSegments = 6; // used by drawTimeScale
-	public static final int leftOffset = xStep * leftFreqSegments; // start of first data cell
+	public static final int leftOffset = xStep * (leftFreqSegments + controlPanelSegments); // start of first data cell
 	public static final int upperOffset = yStep * upperTimeSegments; // start of first data cell
 	public static final int timeStepInMillis = FDData.timeStepInMillis; // timeInMillis = time * timeStepInMillis
 	public static final int noteBase = FDData.noteBase; // frequencyInHz = pow(2.0, (note / noteBase))
@@ -85,7 +88,6 @@ public class HarmonicsEditor extends JFrame {
 	public void openFileInHarmonicsEditor() {
         fileName = FileTools.PromptForFileOpen(view);
         HarmonicsFileInput.ReadBinaryFileData(fileName);
-        initAverageNoteToHarmonicID();
         this.setTitle(fileName);
         view.repaint();
 	}
@@ -101,7 +103,9 @@ public class HarmonicsEditor extends JFrame {
         controller.setView(view);
         add(view);
         setSize(1500, 800);
-        openFileInHarmonicsEditor();
+        controlPanel = new ControlPanel(xStep, yStep);
+        //openFileInHarmonicsEditor();
+        HarmonicsEditor.clearCurrentData();
     }
     
 	private static void createAndShowGUI() {
@@ -131,6 +135,47 @@ public class HarmonicsEditor extends JFrame {
 	
 	public static double getMinAmplitude() {
 		return 0.0;
+	}
+	
+	public static void addBeat(int octave, int note, TreeSet<Integer> overtones, int duration) {
+		int absoluteNote = frequencyInHzToNote(octave) + note;
+		int maxNote = frequencyInHzToNote(FDData.maxFrequencyInHz);
+		double secondsPerBeat = 60.0 / (double) bpm;
+		double maxDuration = (double) 1000.0 / FDData.timeStepInMillis * secondsPerBeat;
+		maxDuration *= 4.0 / duration;
+		try {
+			long harmonicID = randomIDGenerator.nextLong();
+			System.out.println(0 + " " + absoluteNote + " " + maxAmplitude + " " + harmonicID);
+			System.out.println(maxDuration + " " + absoluteNote + " " + 0.0 + " " + harmonicID);
+			FDData start = new FDData(0, absoluteNote, (float) maxAmplitude, harmonicID);
+			FDData end = new FDData((int) maxDuration, absoluteNote, 0.0f, harmonicID);
+			System.out.println(start + " : " + end);
+			addData(start);
+			addData(end);
+			for(int overtone: overtones) {
+				harmonicID = randomIDGenerator.nextLong();
+				int currentNote = absoluteNote + frequencyInHzToNote(overtone);
+				while(currentNote < maxNote) {
+					harmonicID = randomIDGenerator.nextLong();
+					double taper = (currentNote - absoluteNote) / (double) FDData.noteBase;
+					double logAmplitude = maxAmplitude - taper;
+					double currentDuration = maxDuration / taper;
+					start = new FDData(0, currentNote, (float) logAmplitude, harmonicID);
+					end = new FDData((int) currentDuration, currentNote, 0.0f, harmonicID);
+					System.out.println(start + " : " + end);
+					addData(start);
+					addData(end);
+					currentNote += 31.0;
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("HarmonicsEditor.addBeat() error creating data:" + e.getMessage());
+		}
+		refreshView();
+	}
+	
+	public static int frequencyInHzToNote(double freqInHz) {
+		return (int) Math.round(Math.log(freqInHz)/Math.log(2.0) * (double) FDData.noteBase);
 	}
 
 	// returns true if data already exists in interpolated region
@@ -222,14 +267,4 @@ public class HarmonicsEditor extends JFrame {
 		}
 	}
 
-	public static void initAverageNoteToHarmonicID() {
-		averageNoteToHarmonicID = new TreeMap<Integer, ArrayList<Long>>();
-		for(Harmonic harmonic: harmonicIDToHarmonic.values()) {
-			int averageNote = harmonic.getAverageNote();
-			if(!averageNoteToHarmonicID.containsKey(averageNote)) {
-				averageNoteToHarmonicID.put(averageNote, new ArrayList<Long>());
-			}
-			averageNoteToHarmonicID.get(averageNote).add(harmonic.getHarmonicID());
-		}
-	}
 }
