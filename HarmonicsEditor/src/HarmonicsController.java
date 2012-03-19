@@ -28,18 +28,12 @@ public class HarmonicsController implements MouseListener, ActionListener {
 	public void mousePressed(MouseEvent e){
 	    int x = e.getX();
 	    int y = e.getY();
-	    /*
-	    if (view.getView() == DFTView.View.Digits) {
-	    	//harmonicSelection(getFileData(x,y));
-	    } else {
-	    	DFTModel.TFA selected = getFileData(x, y);
-	    	if(selected != null) {
-	    		System.out.println(selected);
-	    	} else {
-	    		System.out.println(x + " " + y);
-	    	}
+	    if(x < HarmonicsEditor.leftOffset) {
+	    	HarmonicsEditor.controlPanel.handleMouseClick(x, y);
+	    	return;
 	    }
-	    */
+	    int time = HarmonicsUtils.pixelXToTimeRange(x).getLower();
+	    int note = HarmonicsUtils.pixelYToNote(y);
 	}
 	
 	public void mouseClicked(MouseEvent e){

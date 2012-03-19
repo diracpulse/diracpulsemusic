@@ -16,7 +16,7 @@ public class FileTools {
         	File file = fc.getSelectedFile();
             return fc.getCurrentDirectory() + "/" + file.getName();
     	} else {
-	    	System.exit(0);
+	    	//System.exit(0);
     	}
     	return "";
 	}
@@ -29,7 +29,7 @@ public class FileTools {
         	File file = fc.getSelectedFile();
             return file.getName();
     	} else {
-	    	System.exit(0);
+	    	//System.exit(0);
     	}
     	return "";
 	}
