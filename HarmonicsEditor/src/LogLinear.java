@@ -1,3 +1,7 @@
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.TreeSet;
+
 
 class LogLinear {
 
@@ -49,6 +53,29 @@ class LogLinear {
 	
 	public int getNumSamples() {
 		return numSamples;
+	}
+	
+	public static ArrayList<FDData> dataInterpolate(ArrayList<FDData> input) {
+		ArrayList<FDData> output = new ArrayList<FDData>();
+		int lowerTime = input.get(0).getTime();
+		double lowerValue = input.get(0).getLogAmplitude();
+		FDData currentData = input.get(0);
+		for(int index = 1; index < input.size(); index++) {
+			int upperTime = input.get(index).getTime();
+			double upperValue = input.get(index).getLogAmplitude();
+			double slope = (upperValue - lowerValue) / (upperTime - lowerTime);
+			for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
+				double value = lowerValue + (timeIndex - lowerTime) * slope;
+				try {
+					output.add(new FDData(timeIndex, currentData.getNote(), value, currentData.getHarmonicID()));
+				} catch (Exception e) {
+					System.out.println("LogLinear.dataInterpolate(): error creating data");
+					return null;
+				}
+				currentData = input.get(index);
+			}
+		}
+		return output;
 	}
 
 }

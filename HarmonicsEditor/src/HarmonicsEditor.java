@@ -22,7 +22,7 @@ public class HarmonicsEditor extends JFrame {
 	public static ControlPanel controlPanel;
 	
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic;
-	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToData;
+	//public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToData;
 	public static ArrayList<Harmonic>  harmonics;
 	public static double minLogAmplitudeThreshold = 0.0;
 	public static int bpm = 120;
@@ -211,7 +211,6 @@ public class HarmonicsEditor extends JFrame {
 	}
 	
 	public static void clearCurrentData() {
-		timeToNoteToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
 		harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
 	}
 	
@@ -222,23 +221,12 @@ public class HarmonicsEditor extends JFrame {
 		if(note > maxNote) maxNote = note;
 		if(note < minNote) minNote = note;
 		long harmonicID = data.getHarmonicID();
-		if(!timeToNoteToData.containsKey(time)) {
-			timeToNoteToData.put(time, new TreeMap<Integer, FDData>());
-		}
 		if(!harmonicIDToHarmonic.containsKey(harmonicID)) {
 			harmonicIDToHarmonic.put(harmonicID, new Harmonic(harmonicID));
 		}
-		timeToNoteToData.get(time).put(note, data);
 		harmonicIDToHarmonic.get(harmonicID).addData(data);
 	}
 	
-	public static FDData getSelected(int time, int note) {
-		if(timeToNoteToData == null) return null;
-		if(!timeToNoteToData.containsKey(time)) return null;
-		if(!timeToNoteToData.get(time).containsKey(note)) return null;
-		return timeToNoteToData.get(time).get(note);
-	}
-
 	public static void playSelectedDataInCurrentWindow(HarmonicsEditor parent) {
 		int endTime = leftX + view.getTimeAxisWidthInMillis() / timeStepInMillis;
 		new PlayDataInWindow(parent, leftX, endTime, 50, view.getTimeAxisWidthInMillis());

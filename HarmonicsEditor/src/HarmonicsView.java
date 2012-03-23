@@ -26,8 +26,10 @@ public class HarmonicsView extends JComponent {
 	private static boolean drawPlaying = false;
 	private static int offsetInMillis;
 	
-	public static int timesPerPixel = 2;
-	public static int minPixelsPerNote = 2;
+	//public static int timesPerPixel = 2;
+	public static int digits = 2;
+	public static int pixelsPerTime = HarmonicsEditor.xStep;
+	public static int pixelsPerNote = HarmonicsEditor.yStep * digits;
 
 	public void drawUpperTimes(Graphics g) {
 		int intDigits = 3;
@@ -35,7 +37,7 @@ public class HarmonicsView extends JComponent {
 		int endTime = HarmonicsUtils.pixelXToTimeRange(getWidth()).getLower();		
 		Color white = new Color(0.0f, 0.0f, 0.0f);
 		Color black = new Color(1.0f, 1.0f, 1.0f);
-		for(int time = HarmonicsEditor.leftX; time <= endTime; time += timesPerPixel) {
+		for(int time = HarmonicsEditor.leftX; time <= endTime; time++) {
 			if(time > HarmonicsEditor.maxTime) return;
 			if(!HarmonicsUtils.timeToDrawSegment(time)) continue;
 			int screenX = HarmonicsUtils.timeToPixelX(time);
@@ -69,32 +71,41 @@ public class HarmonicsView extends JComponent {
 	public void drawFileData(Graphics g) {
 		drawLeftNotes(g);
 		drawUpperTimes(g);
+		int startTime = HarmonicsEditor.leftX;
 		int endTime = HarmonicsUtils.pixelXToTimeRange(getWidth()).getLower();
 		int startNote = HarmonicsEditor.maxNote - HarmonicsEditor.upperY;
 		int endNote = HarmonicsUtils.pixelYToNote(getHeight());
 		if(endNote == -1) endNote = HarmonicsEditor.minNote;
-		for(int time = HarmonicsEditor.leftX; time <= endTime; time += timesPerPixel) {
-			for(int note = startNote; note > endNote; note--) {
-        		FDData data = HarmonicsEditor.getSelected(time, note);
-        		if(data == null) continue;
-        		Color b = null;
-        		if(dataView == DataView.AMPLITUDES) {
-        			b = getColor(data.getLogAmplitude());
-        		}
-        		if(dataView == DataView.HARMONICS) {
-        			b = getColor(data.getHarmonicID());
-        		}
-        		g.setColor(b);
-        		int screenX = HarmonicsUtils.timeToPixelX(time);
-        		int screenY = HarmonicsUtils.noteToPixelY(note);
-        		//System.out.println(screenX + " " + screenY + " " + logAmplitude);
-        		//drawAmplitude(g, screenX, screenY, logAmplitude, b);
-        		g.fillRect(screenX, screenY, 1, HarmonicsEditor.yStep);
-            }
-		}	
+		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
+			FDData start = harmonic.getStart();
+			FDData end = harmonic.getEnd();
+			int note = harmonic.getAverageNote();
+			//if(end.getTime() < startTime) continue;
+			//if(start.getTime() > endTime) continue;
+			//if(note < startNote || note > endNote) continue;
+			int screenY =  HarmonicsUtils.noteToPixelY(note);
+			//System.out.println(harmonic);
+			for(FDData data: harmonic.getAllData()) {
+				double logAmplitude = data.getLogAmplitude();
+				int screenX = HarmonicsUtils.timeToPixelX(data.getTime());
+				Color b = getColor(data.getLogAmplitude());
+				if(!harmonic.containsData(data)) {
+					// data is interpolated
+					b = getColor(data.getLogAmplitude(), 0.5f);
+				}
+				//g.setColor(b);
+				//g.fillRect(screenX, screenY, HarmonicsEditor.xStep, HarmonicsEditor.yStep);
+				HarmonicsUtils.DrawAmplitudeVertical(g, b, screenX, screenY, 2, logAmplitude);
+				
+			}
+		}
+	}
+	
+	private Color getColor(double logAmplitude) {
+		return getColor(logAmplitude, 1.0f);
 	}
 
-	private Color getColor(double logAmplitude) {
+	private Color getColor(double logAmplitude, float alpha) {
 		float ampRange = (float) (HarmonicsEditor.getMaxAmplitude() - HarmonicsEditor.getMinAmplitude());
 		float currentVal = (float) logAmplitude;
 		currentVal -= HarmonicsEditor.getMinAmplitude();
@@ -110,7 +121,7 @@ public class HarmonicsView extends JComponent {
 			green = red * 2.0f;
 		}
 		//return new Color(1.0f, 1.0f, 1.0f, 0.75f);
-		return new Color(red, green, blue, 0.75f);
+		return new Color(red, green, blue, alpha);
 	}
 	
 	private Color getColor(long harmonicID) {
@@ -126,25 +137,13 @@ public class HarmonicsView extends JComponent {
 	}
 	
 	public int getTimeAxisWidthInMillis() {
-   		double millisPerPixel = (double) FDData.timeStepInMillis * timesPerPixel;
+   		double millisPerPixel = (double) FDData.timeStepInMillis / pixelsPerTime;
    		return (int) Math.round(getWidth() * millisPerPixel);
 	}
 	
-	// See also HarmonicsEditor.getAmplitude()
-	private boolean isYInBounds(int y) {
-		if(y > HarmonicsEditor.maxNote - HarmonicsEditor.minNote) return false;
-		return true;
-	}
-	
-	// See also HarmonicsEditor.getAmplitude()
-	private boolean isXInBounds(int x) {
-		if(x > HarmonicsEditor.maxTime) return false;
-		return true;
-	}
-		
     protected void paintComponent(Graphics g) {
     	if(drawPlaying) {
-    		double millisPerPixel = (double) FDData.timeStepInMillis * timesPerPixel;
+    		double millisPerPixel = (double) FDData.timeStepInMillis / pixelsPerTime;
     		int startX = (int) Math.round((double) HarmonicsView.offsetInMillis / millisPerPixel + HarmonicsEditor.leftOffset);
     		g.drawImage(bi, 0, 0, null);
        		g.setColor(new Color(0.5f, 0.5f, 0.5f, 0.75f));
