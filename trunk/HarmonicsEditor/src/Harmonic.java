@@ -62,8 +62,24 @@ public class Harmonic {
 	}
 	
 	public ArrayList<FDData> getAllData() {
-		if(isSynthesized()) return new ArrayList<FDData>(timeToData.values());
-		return new ArrayList<FDData>();
+		return new ArrayList<FDData>(timeToData.values());
+	}
+	
+	public ArrayList<FDData> getAllDataInterpolated() {
+		return LogLinear.dataInterpolate(getAllData());
+	}
+	
+	public boolean containsData(FDData data) {
+		if(timeToData.containsKey(data.getTime())) return true;
+		return false;
+	}
+	
+	public FDData getStart() {
+		return timeToData.get(timeToData.firstKey());
+	}
+	
+	public FDData getEnd() {
+		return timeToData.get(timeToData.lastKey());
 	}	
 	
 	// used to avoid null pointer for small harmonics

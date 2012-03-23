@@ -3,8 +3,8 @@ import java.util.*;
 
 public class HarmonicsUtils {
 	
-	public static int timesPerPixel = HarmonicsView.timesPerPixel;
-	public static int minPixelsPerNote = HarmonicsView.minPixelsPerNote;
+	public static int pixelsPerTime = HarmonicsView.pixelsPerTime;
+	public static int pixelsPerNote = HarmonicsView.pixelsPerNote;
 	
 	public static class Range {
 		
@@ -37,7 +37,7 @@ public class HarmonicsUtils {
 		for(int loopNote = maxNote; loopNote >= HarmonicsEditor.minNote; loopNote--) {
 			if(note == loopNote) return pixelY;
 			for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
-				if(harmonic.getAverageNote() == loopNote) pixelY += HarmonicsEditor.yStep;
+				if(harmonic.getAverageNote() == loopNote) pixelY += HarmonicsView.pixelsPerNote;
 			}
 		}
 		return -1;
@@ -63,35 +63,37 @@ public class HarmonicsUtils {
 	}
 	
 	public static int timeToPixelX(int time) {
-		return (time - HarmonicsEditor.leftX) / timesPerPixel + HarmonicsEditor.leftOffset;
+		return (time - HarmonicsEditor.leftX) * pixelsPerTime + HarmonicsEditor.leftOffset;
 	}
 	
 	public static boolean timeToDrawSegment(int time) {
-		if(time % (timesPerPixel * HarmonicsEditor.xStep) == 0) return true;
-		return false;
+		//if(time % (HarmonicsEditor.xStep) == 0) return true;
+		return true;
 	}
 	
 	public static HarmonicsUtils.Range pixelXToTimeRange(int pixelX) {
 		pixelX -= HarmonicsEditor.leftOffset;
-		int startTime = (pixelX - HarmonicsEditor.leftX) * timesPerPixel;
-		int endTime = startTime + HarmonicsEditor.xStep * timesPerPixel - 1;
+		int startTime = (pixelX - HarmonicsEditor.leftX) / pixelsPerTime;
+		int endTime = startTime + HarmonicsEditor.xStep / pixelsPerTime - 1;
 		return new HarmonicsUtils.Range(startTime, endTime);
 	}
-
-	public static FDData getMaxDataInTimeRange(int startTime, int endTime, int note) {
-		FDData returnVal = HarmonicsEditor.getSelected(startTime, note);
-		for(int time = startTime + 1; time < endTime; time++) {
-			FDData currentVal =  HarmonicsEditor.getSelected(time, note);
-			if(currentVal == null) continue;
-			if(returnVal == null) {
-				returnVal = currentVal;
-				continue;
-			}
-			if(currentVal.getLogAmplitude() > returnVal.getLogAmplitude()) {
-				returnVal = currentVal;
-			}
+	
+	public static void DrawAmplitudeVertical(Graphics g, Color b, int screenX, int screenY, int numDigits, double value) {
+		double dIntVal = Math.floor(value);
+		double dFractionVal = value - dIntVal;
+		if(dIntVal > 9) dIntVal -= 10.0;
+		int intVal = (int) Math.round(dIntVal);
+		int fractionVal = (int) Math.round(dFractionVal * 10.0);
+		if(numDigits == 1) {
+			DrawSegmentData(g, b, screenX, screenY, intVal);
+			g.fillRect(screenX, screenY, HarmonicsEditor.xStep, HarmonicsEditor.yStep);
+			return;
 		}
-		return returnVal;
+		if(numDigits == 2) {
+			DrawSegmentData(g, b, screenX, screenY, intVal, fractionVal);
+			return;
+		}
+		System.out.println("HarmonicsUtils.drawAmplitudeHorizontal: invalid number of digits");
 	}
 
 	public static void DrawIntegerHorizontal(Graphics g, Color b, Color f, int screenX, int screenY, int numdigits, int value) {
@@ -119,30 +121,23 @@ public class HarmonicsUtils {
 			screenY += HarmonicsEditor.yStep;
 		}
 	}
-	
+
 	public static void DrawSegmentData(Graphics g, Color b, int screenX, int screenY, int digitVal) {
 		Color black = new Color(0.0f, 0.0f, 0.0f);
 		// int lowerScreenY = screenY + topYStep;				
 		g.setColor(b);
-		g.fillRect(screenX, screenY, HarmonicsEditor.xStep, HarmonicsEditor.yStep);;
+		g.fillRect(screenX, screenY, HarmonicsEditor.xStep, HarmonicsEditor.yStep);
 		SevenSegmentSmall(g, black, b, screenX, screenY, digitVal);
-		// SevenSegmentSmall(g, black, b, screenX, lowerScreenY, fractionVal);
-		// g.setColor(black);
-		// int bottomScreenY = screenY + yStep - 1;
-		// g.drawLine(screenX, bottomScreenY, screenX + xStep, bottomScreenY);
 	}
 	
 	//This takes two vertical lines, digitVal is above fraction val 
 	public static void DrawSegmentData(Graphics g, Color b, int screenX, int screenY, int digitVal, int fractionVal) {
 		Color black = new Color(0.0f, 0.0f, 0.0f);
-		int lowerScreenY = screenY + HarmonicsEditor.yStep / 2;			
+		int lowerScreenY = screenY + pixelsPerNote / 2;			
 		g.setColor(b);
-		g.fillRect(screenX, screenY, HarmonicsEditor.xStep, HarmonicsEditor.yStep);;
+		g.fillRect(screenX, screenY, HarmonicsEditor.xStep, pixelsPerNote);
 		SevenSegmentSmall(g, black, b, screenX, screenY, digitVal);
 		SevenSegmentSmall(g, black, b, screenX, lowerScreenY, fractionVal);
-		// g.setColor(black);
-		// int bottomScreenY = screenY + yStep - 1;
-		// g.drawLine(screenX, bottomScreenY, screenX + xStep, bottomScreenY);
 	}
 	
 		// (x, y) = (left, top)
