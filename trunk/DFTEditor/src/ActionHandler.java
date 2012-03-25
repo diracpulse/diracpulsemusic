@@ -58,22 +58,7 @@ public class ActionHandler extends JPanel {
 			parent.saveSelectedToFile();
 		}
 	}
-	
-	public class ExportAction extends AbstractAction {
-
-		private static final long serialVersionUID = 1L;
-
-		public ExportAction() {
-			super("Export Selected");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Export Selected");
-			parent.exportFileInDFTEditor();
-		}
-	}
-	
+		
 	public class ExportAllAction extends AbstractAction {
 
 		private static final long serialVersionUID = 1L;
@@ -427,7 +412,6 @@ public class ActionHandler extends JPanel {
         menuBar.add(fileMenu);
         fileMenu.add(new OpenAction());
         fileMenu.add(new SaveSelectedAction());
-        fileMenu.add(new ExportAction());
         fileMenu.add(new ExportAllAction());
         fileMenu.add(new ExitAction());
         //Create the Play menu

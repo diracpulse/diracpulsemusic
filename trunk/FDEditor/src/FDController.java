@@ -28,7 +28,7 @@ public class FDController implements MouseListener, ActionListener {
 	public void mousePressed(MouseEvent e){
 	    int x = e.getX();
 	    int y = e.getY();
-	    int time = FDUtils.pixelXToTimeRange(x).getLower();
+	    int time = FDUtils.pixelXToTime(x);
 	    int note = FDUtils.pixelYToNote(y);
 	    if(!FDEditor.timeToNoteToData.containsKey(time)) return;
 	    if(!FDEditor.timeToNoteToData.get(time).containsKey(note)) return;

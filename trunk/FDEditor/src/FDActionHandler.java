@@ -35,6 +35,23 @@ public class FDActionHandler extends JPanel {
 			parent.openFileInFDEditor();
 		}
 	}	
+	
+	public class SaveAction extends AbstractAction {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
+		public SaveAction() {
+			super("Save Selected Harmonics");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			parent.saveSelectedHarmonicsToFile();
+		}
+	}	
 
 	public class ExitAction extends AbstractAction {
 
@@ -192,6 +209,7 @@ public class FDActionHandler extends JPanel {
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
         fileMenu.add(new OpenAction());
+        fileMenu.add(new SaveAction());
         fileMenu.add(new ExitAction());
         //Create the Play menu
         JMenu playMenu = new JMenu("Play");

@@ -1,5 +1,6 @@
 
 import javax.swing.*;
+
 import java.awt.*;
 import java.util.*;
 import java.io.*;
@@ -134,38 +135,6 @@ public class FDEditor extends JFrame {
 	public static double getMinAmplitude() {
 		return 0.0;
 	}
-
-	// returns true if data already exists in interpolated region
-	// does not perform bounds checking
-	public static void addHarmonicInterpolate(FDData start, FDData end, boolean overwrite) {
-		FDData dataPoint;
-		ArrayList<FDData> interpolatedData = new ArrayList<FDData>();
-		if(start.getTime() > end.getTime()) {
-			FDData temp = start;
-			start = end;
-			end = temp;
-			System.out.println("FDEditor.addDataInterpolate start,end exchanged");
-		}
-		double deltaTime = end.getTime() - start.getTime();
-		double deltaLogAmplitude = end.getLogAmplitude() - start.getLogAmplitude();
-		double deltaNote = end.getNoteComplete() - start.getNoteComplete();
-		for(int time = start.getTime(); time <= end.getTime(); time++) {
-			double elapsedTime = time - start.getTime();
-			double logAmplitude = start.getLogAmplitude() + deltaLogAmplitude * elapsedTime / deltaTime;
-			double dNote = start.getNoteComplete() + deltaNote * elapsedTime / deltaTime;
-			int note = (int) Math.round(dNote);
-			double noteFraction = dNote - note;
-			try {
-				dataPoint = new FDData(time, note, noteFraction, logAmplitude);
-			} catch (Exception e) {
-				JOptionPane.showMessageDialog(null, "Data out of bounds", 
-													"FDEditor.addDataInterpolate(Numerical Args)", 
-													JOptionPane.ERROR_MESSAGE);
-				return;
-			}
-			interpolatedData.add(dataPoint);		
-		}
-	}
 	
 	public static void clearCurrentData() {
 		timeToNoteToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
@@ -257,5 +226,12 @@ public class FDEditor extends JFrame {
 			}
 			averageNoteToHarmonicID.get(averageNote).add(harmonic.getHarmonicID());
 		}
+	}
+	
+	public void saveSelectedHarmonicsToFile() {
+		String fileName = this.getTitle();
+		String fileNameTrimmed = fileName.substring(0, fileName.length() - 9); // ".selected"
+        FDFileOutput.OutputHarmonicsToFile(fileNameTrimmed);
+        JOptionPane.showMessageDialog(this, "Finished saving: " + fileNameTrimmed + ".harmonics");
 	}
 }
