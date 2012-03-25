@@ -3,7 +3,7 @@ import java.util.*;
 
 public class FDUtils {
 	
-	public static int timesPerPixel = FDView.timesPerPixel;
+	public static int pixelsPerTime = FDView.pixelsPerTime;
 	public static int minPixelsPerNote = FDView.minPixelsPerNote;
 	
 	public static class Range {
@@ -39,7 +39,7 @@ public class FDUtils {
 			if(FDEditor.averageNoteToHarmonicID.containsKey(loopNote)) {
 				pixelY += FDEditor.yStep;
 			} else {
-				//pixelY += minPixelsPerNote;
+				pixelY += minPixelsPerNote;
 			}
 		}
 		return -1;
@@ -66,19 +66,21 @@ public class FDUtils {
 	}
 	
 	public static int timeToPixelX(int time) {
-		return (time - FDEditor.leftX) / timesPerPixel + FDEditor.leftOffset;
+		return (time - FDEditor.leftX) * pixelsPerTime + FDEditor.leftOffset;
 	}
 	
 	public static boolean timeToDrawSegment(int time) {
-		if(time % (timesPerPixel * FDEditor.xStep) == 0) return true;
+		if((FDEditor.xStep % pixelsPerTime) != 0) {
+			System.out.println("FDUtils.timeToDrawSegement: pixelsPerTime must be whole divisor of xStep");
+		}
+		if(time % (FDEditor.xStep / pixelsPerTime) == 0) return true;
 		return false;
 	}
 	
-	public static FDUtils.Range pixelXToTimeRange(int pixelX) {
+	public static int pixelXToTime(int pixelX) {
 		pixelX -= FDEditor.leftOffset;
-		int startTime = (pixelX - FDEditor.leftX) * timesPerPixel;
-		int endTime = startTime + FDEditor.xStep * timesPerPixel - 1;
-		return new FDUtils.Range(startTime, endTime);
+		int time = (pixelX - FDEditor.leftX) / pixelsPerTime;
+		return time;
 	}
 
 	public static FDData getMaxDataInTimeRange(int startTime, int endTime, int note) {

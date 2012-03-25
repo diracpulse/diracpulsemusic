@@ -39,13 +39,13 @@ public class FileTools {
 		public MaximasFilter() {};
 		
 		public boolean accept(File f) {
-			if(f.getName().contains(".selected")) return true;
+			if(f.getName().contains(".harmonics")) return true;
 			if(f.isDirectory()) return true;
 			return false;
 		}
 		
 		public String getDescription() {
-			return new String(".selected files");
+			return new String(".harmonics files");
 		}
 	}
 

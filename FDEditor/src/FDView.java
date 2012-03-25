@@ -28,16 +28,16 @@ public class FDView extends JComponent {
 	private static boolean drawPlaying = false;
 	private static int offsetInMillis;
 	
-	public static int timesPerPixel = 1;
-	public static int minPixelsPerNote = 2;
+	public static int pixelsPerTime = 2;
+	public static int minPixelsPerNote = 0; // used to create blank space between notes
 
 	public void drawUpperTimes(Graphics g) {
 		int intDigits = 3;
 		int decimalStartY = intDigits * FDEditor.yStep;
-		int endTime = FDUtils.pixelXToTimeRange(getWidth()).getLower();		
+		int endTime = FDUtils.pixelXToTime(getWidth());		
 		Color white = new Color(0.0f, 0.0f, 0.0f);
 		Color black = new Color(1.0f, 1.0f, 1.0f);
-		for(int time = FDEditor.leftX; time <= endTime; time += timesPerPixel) {
+		for(int time = FDEditor.leftX; time <= endTime; time++) {
 			if(time > FDEditor.maxTime) return;
 			if(!FDUtils.timeToDrawSegment(time)) continue;
 			int screenX = FDUtils.timeToPixelX(time);
@@ -70,11 +70,11 @@ public class FDView extends JComponent {
 	public void drawFileData(Graphics g) {
 		drawLeftNotes(g);
 		drawUpperTimes(g);
-		int endTime = FDUtils.pixelXToTimeRange(getWidth()).getLower();
+		int endTime = FDUtils.pixelXToTime(getWidth());
 		int startNote = FDEditor.maxNote - FDEditor.upperY;
 		int endNote = FDUtils.pixelYToNote(getHeight());
 		if(endNote == -1) endNote = FDEditor.minNote;
-		for(int time = FDEditor.leftX; time <= endTime; time += timesPerPixel) {
+		for(int time = FDEditor.leftX; time <= endTime; time++) {
 			for(int note = startNote; note > endNote; note--) {
         		FDData data = FDEditor.getData(time, note);
         		if(data == null) continue;
@@ -104,7 +104,7 @@ public class FDView extends JComponent {
         		int screenY = FDUtils.noteToPixelY(note);
         		//System.out.println(screenX + " " + screenY + " " + logAmplitude);
         		//drawAmplitude(g, screenX, screenY, logAmplitude, b);
-        		g.fillRect(screenX, screenY, 1, FDEditor.yStep);
+        		g.fillRect(screenX, screenY, pixelsPerTime, FDEditor.yStep);
             }
 		}	
 	}
@@ -141,7 +141,7 @@ public class FDView extends JComponent {
 	}
 	
 	public int getTimeAxisWidthInMillis() {
-   		double millisPerPixel = (double) FDData.timeStepInMillis * timesPerPixel;
+   		double millisPerPixel = (double) FDData.timeStepInMillis / pixelsPerTime;
    		return (int) Math.round(getWidth() * millisPerPixel);
 	}
 	
@@ -159,7 +159,7 @@ public class FDView extends JComponent {
 		
     protected void paintComponent(Graphics g) {
     	if(drawPlaying) {
-    		double millisPerPixel = (double) FDData.timeStepInMillis * timesPerPixel;
+    		double millisPerPixel = (double) FDData.timeStepInMillis / pixelsPerTime;
     		int startX = (int) Math.round((double) FDView.offsetInMillis / millisPerPixel + FDEditor.leftOffset);
     		g.drawImage(bi, 0, 0, null);
        		g.setColor(new Color(0.5f, 0.5f, 0.5f, 0.75f));
