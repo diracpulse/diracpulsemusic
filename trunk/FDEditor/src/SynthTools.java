@@ -31,7 +31,7 @@ class SynthTools {
 		}
 		PCMData = new double[dataLength + 1];
 		System.out.println("End Sample Offset " + endSampleOffset);
-		for(int i= 0; i <= endSampleOffset; i++) PCMData[i] = 0.0;
+		for(int i= 0; i <= dataLength; i++) PCMData[i] = 0.0;
 		for(Harmonic harmonic: FDEditor.harmonicIDToHarmonic.values()) {
 			if(selectedOnly) {
 				if(!FDEditor.selectedHarmonicIDs.contains(harmonic.getHarmonicID())) continue;
@@ -43,6 +43,7 @@ class SynthTools {
 			//System.out.println("SynthTools.playFileData endSample = " + endSample);
 			//System.out.println("SynthTools.playFileData HarmonicPCMData.length = " + HarmonicPCMData.length);
 			for(int currentSample = startSample; currentSample < endSample - 1; currentSample++) {
+				if(currentSample > dataLength) break;
 				PCMData[currentSample] += HarmonicPCMData[currentSample - startSample];
 				if(currentSample % 441 == 0) {
 					//System.out.println(currentSample + ":" + PCMData[currentSample]);

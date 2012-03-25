@@ -56,7 +56,7 @@ public class HarmonicsView extends JComponent {
 		int endNote = HarmonicsUtils.pixelYToNote(getHeight());
 		if(endNote == -1) endNote = HarmonicsEditor.minNote;
 		int startNote = HarmonicsEditor.maxNote - HarmonicsEditor.upperY;
-		for(int note = startNote; note > endNote; note--) {
+		for(int note = startNote; note >= endNote; note--) {
 			if(!HarmonicsUtils.noteToDrawSegment(note)) continue;
 			int screenY = HarmonicsUtils.noteToPixelY(note);
 			int screenX = HarmonicsEditor.controlPanelSegments * HarmonicsEditor.xStep;
@@ -69,6 +69,8 @@ public class HarmonicsView extends JComponent {
 	}
 	
 	public void drawFileData(Graphics g) {
+		HarmonicsUtils.compileNoteToPixelY();
+		System.out.println("Finished Compiling");
 		drawLeftNotes(g);
 		drawUpperTimes(g);
 		int startTime = HarmonicsEditor.leftX;
@@ -77,15 +79,18 @@ public class HarmonicsView extends JComponent {
 		int endNote = HarmonicsUtils.pixelYToNote(getHeight());
 		if(endNote == -1) endNote = HarmonicsEditor.minNote;
 		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
+			System.out.println(harmonic.getAverageNote());
 			FDData start = harmonic.getStart();
 			FDData end = harmonic.getEnd();
+			if(start.getTime() > endTime || end.getTime() < startTime) continue;
 			int note = harmonic.getAverageNote();
 			//if(end.getTime() < startTime) continue;
 			//if(start.getTime() > endTime) continue;
 			//if(note < startNote || note > endNote) continue;
+			if(note > startNote) continue;
 			int screenY =  HarmonicsUtils.noteToPixelY(note);
 			//System.out.println(harmonic);
-			for(FDData data: harmonic.getAllData()) {
+			for(FDData data: harmonic.getAllDataInterpolated()) {
 				double logAmplitude = data.getLogAmplitude();
 				int screenX = HarmonicsUtils.timeToPixelX(data.getTime());
 				Color b = getColor(data.getLogAmplitude());
@@ -137,11 +142,12 @@ public class HarmonicsView extends JComponent {
 	}
 	
 	public int getTimeAxisWidthInMillis() {
-   		double millisPerPixel = (double) FDData.timeStepInMillis / pixelsPerTime;
+   		double millisPerPixel = (double) FDData.timeStepInMillis / (double) pixelsPerTime;
    		return (int) Math.round(getWidth() * millisPerPixel);
 	}
 	
     protected void paintComponent(Graphics g) {
+    	System.out.println("Paint Component");
     	if(drawPlaying) {
     		double millisPerPixel = (double) FDData.timeStepInMillis / pixelsPerTime;
     		int startX = (int) Math.round((double) HarmonicsView.offsetInMillis / millisPerPixel + HarmonicsEditor.leftOffset);

@@ -60,6 +60,18 @@ public class FDData {
 		this.harmonicID = id;
 	}
 	
+	public FDData(int time, int note, double logAmplitude, long id) throws Exception {
+		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
+		if(!withinBounds(time, note, 0.0, logAmplitude)) {
+			throw new Exception("FDData [" + time + "|" + note + "|" + logAmplitude + "]");
+		}
+		this.time = time;
+		this.note = note;
+		this.noteFraction = 0.0;
+		this.logAmplitude = logAmplitude;
+		this.harmonicID = id;
+	}
+	
 	public FDData(int time, int note, double noteFraction, double logAmplitude) throws Exception {
 		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
 		if(!withinBounds(time, note, noteFraction, logAmplitude)) throw new Exception();
@@ -106,6 +118,14 @@ public class FDData {
 		return note + noteFraction;
 	}
 	
+	public static int getMaxNote() {
+		return (int) Math.round(Math.log(maxFrequencyInHz)/Math.log(2.0) * (double) noteBase);
+	}
+	
+	public static int getMinNote() {
+		return (int) Math.round(Math.log(minFrequencyInHz)/Math.log(2.0) * (double) noteBase);
+	}
+	
 	public double getLogAmplitude() {
 		return logAmplitude;
 	}
@@ -141,7 +161,7 @@ public class FDData {
 	}
 	
 	public String toString() {
-		return "[" + getTime() + "|" + getNote() + "|" + getLogAmplitude() + "]";
+		return "[" + getTime() + "|" + getNote() + "|" + getLogAmplitude() + "|" + harmonicID + "]";
 	}
 	
 }

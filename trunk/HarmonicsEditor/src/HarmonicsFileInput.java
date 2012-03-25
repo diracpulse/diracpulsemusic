@@ -37,6 +37,7 @@ public class HarmonicsFileInput {
 				FDData data = new FDData(time, note, amp, id);
 				//System.out.println(data);
 				HarmonicsEditor.addData(data);
+				//System.out.println(data);
 			}
 		} catch (Exception e) {
 			if(e instanceof EOFException) {

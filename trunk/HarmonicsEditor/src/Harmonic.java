@@ -174,7 +174,7 @@ public class Harmonic {
 		double endTime = sampleTimes[sampleTimes.length - 1] - timeStep;
 		// System.out.println("EndTime" + endTime);
 		for(double time = 0; time < endTime; time += timeStep) {
-			double value = (Math.random() - 0.5) * 2.0 * maxVibrato;
+			double value = Math.sin(time / 0.25) * maxVibrato;
 			vibratoTimes.add(time);
 			vibratoValues.add(value);
 			//System.out.println(time + " " + value);
