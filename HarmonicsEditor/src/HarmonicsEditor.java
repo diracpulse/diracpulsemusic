@@ -22,6 +22,7 @@ public class HarmonicsEditor extends JFrame {
 	public static ControlPanel controlPanel;
 	
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic;
+	public static TreeSet<Integer> averageNotes;
 	//public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToData;
 	public static ArrayList<Harmonic>  harmonics;
 	public static double minLogAmplitudeThreshold = 0.0;
@@ -46,7 +47,7 @@ public class HarmonicsEditor extends JFrame {
 	public static final int upperOffset = yStep * upperTimeSegments; // start of first data cell
 	public static final int timeStepInMillis = FDData.timeStepInMillis; // timeInMillis = time * timeStepInMillis
 	public static final int noteBase = FDData.noteBase; // frequencyInHz = pow(2.0, (note / noteBase))
-	public static Random randomIDGenerator = new Random();
+	public static Random randomGenerator = new Random();
 
 	public JMenuBar createMenuBar() {
         HarmonicsActionHandler actionHandler = new HarmonicsActionHandler(this);
@@ -89,7 +90,8 @@ public class HarmonicsEditor extends JFrame {
         fileName = FileTools.PromptForFileOpen(view);
         HarmonicsFileInput.ReadBinaryFileData(fileName);
         this.setTitle(fileName);
-        view.repaint();
+        System.out.println("Hello");
+        //view.repaint();
 	}
 	
     public HarmonicsEditor() {
@@ -137,79 +139,146 @@ public class HarmonicsEditor extends JFrame {
 		return 0.0;
 	}
 	
-	public static void addBeat(int octave, int note, TreeSet<Integer> overtones, int duration) {
-		int absoluteNote = frequencyInHzToNote(octave) + note;
+	public static int[] getRandomChord() {
+		int randIndex = randomGenerator.nextInt(10);
+		switch(randIndex) {
+			case 0:
+				return new int[] {6, 7, 8};
+			case 1:
+				return new int[] {7, 6, 8};
+			case 2:
+				return new int[] {6, 7, 10};
+			case 3:
+				return new int[] {7, 6, 10};
+			case 4:
+				return new int[] {8, 10, 6};
+			case 5:
+				return new int[] {8, 10, 7};
+			case 6:
+				return new int[] {10, 8, 6};
+			case 7:
+				return new int[] {10, 8, 7};
+			case 8:
+				return new int[] {13, 10};
+			case 9:
+				return new int[] {10, 13};
+		}
+		return null;
+	}
+	
+	public static int[] getRandomConsonantChord() {
+		int randIndex = randomGenerator.nextInt(6);
+		switch(randIndex) {
+			case 0:
+				return new int[] {13, 8};
+			case 1:
+				return new int[] {8, 13};
+			case 2:
+				return new int[] {8, 10};
+			case 3:
+				return new int[] {10, 8};
+			case 4:
+				return new int[] {13, 10};
+			case 5:
+				return new int[] {10, 13};
+		}
+		return null;
+	}
+	
+	public static void randomLoop(HarmonicsEditor parent) {
+		harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
+		int centerNote = frequencyInHzToNote(350.0);
+		int duration = 100;
+		int numBeats = 3;
+		for(int time = 0; time < duration * numBeats; time += duration) {
+			int note = centerNote + randomGenerator.nextInt(13);
+			int[] chords = getRandomChord();
+			addBeat(time, note, chords, duration);
+		}
+		playSelectedDataInCurrentWindow(parent);
+	}
+	
+	public static void addBeat(int startTime, int baseNote, int[] chords, int duration) {
 		int maxNote = frequencyInHzToNote(FDData.maxFrequencyInHz);
-		double secondsPerBeat = 60.0 / (double) bpm;
-		double maxDuration = (double) 1000.0 / FDData.timeStepInMillis * secondsPerBeat;
-		maxDuration *= 4.0 / duration;
-		try {
-			long harmonicID = randomIDGenerator.nextLong();
-			System.out.println(0 + " " + absoluteNote + " " + maxAmplitude + " " + harmonicID);
-			System.out.println(maxDuration + " " + absoluteNote + " " + 0.0 + " " + harmonicID);
-			FDData start = new FDData(0, absoluteNote, (float) maxAmplitude, harmonicID);
-			FDData end = new FDData((int) maxDuration, absoluteNote, 0.0f, harmonicID);
-			System.out.println(start + " : " + end);
-			addData(start);
-			addData(end);
-			for(int overtone: overtones) {
-				harmonicID = randomIDGenerator.nextLong();
-				int currentNote = absoluteNote + frequencyInHzToNote(overtone);
-				while(currentNote < maxNote) {
-					harmonicID = randomIDGenerator.nextLong();
-					double taper = (currentNote - absoluteNote) / (double) FDData.noteBase;
-					double logAmplitude = maxAmplitude - taper;
-					double currentDuration = maxDuration / taper;
-					start = new FDData(0, currentNote, (float) logAmplitude, harmonicID);
-					end = new FDData((int) currentDuration, currentNote, 0.0f, harmonicID);
-					System.out.println(start + " : " + end);
-					addData(start);
-					addData(end);
-					currentNote += 31.0;
-				}
-			}
-		} catch (Exception e) {
-			System.out.println("HarmonicsEditor.addBeat() error creating data:" + e.getMessage());
+		int minNote = frequencyInHzToNote(40.0);
+		int endTime = startTime + duration;
+		int currentChord = 0;
+		int lowestNote = baseNote;
+		while(lowestNote >= minNote) lowestNote -= 31;
+		lowestNote += 31;
+		synthBassWithOvertones(startTime, endTime, lowestNote, baseNote, 14.0);
+		synthNoteWithOvertones(startTime, endTime, baseNote, maxNote, 14.0);
+		for(int chord: chords) {
+			currentChord += chord;
+			int note = baseNote + currentChord;
+			synthNoteWithOvertones(startTime, endTime, note, maxNote, 14.0);
 		}
 		refreshView();
+	}
+	
+	public static void synthNoteWithOvertones(int startTime, int endTime, int baseNote, int endNote, double maxAmplitude) {
+		int note = baseNote;
+		int attackTime = 2;
+		int releaseTime = 4;
+		int sustainTime = 6;
+		try {
+			while(note < endNote) {
+				long harmonicID = randomGenerator.nextLong();
+				double taper = (note - baseNote) / (double) FDData.noteBase;
+				if(taper > maxAmplitude) continue;
+				double logAmplitude = maxAmplitude - taper;
+				double currentDuration = (endTime - startTime) / (1 + taper); // (1 + taper);
+				int currentEndTime = startTime +  (int) Math.round(currentDuration);
+				FDData start = new FDData(startTime, note, 0.0, harmonicID);
+				FDData attack = new FDData(startTime + attackTime, note, logAmplitude, harmonicID);
+				FDData release = new FDData(startTime + releaseTime, note, logAmplitude - 1.0, harmonicID);
+				FDData sustain = new FDData(currentEndTime - 4, note, logAmplitude - 1.0, harmonicID);
+				FDData end = new FDData(currentEndTime, note, 0.0f, harmonicID);
+				int formantNote = note + 15;
+				if(formantNote < endNote) {
+					//long formantID = randomGenerator.nextLong();
+					//addData(new FDData(startTime, formantNote, logAmplitude, formantID));
+					//addData(new FDData(startTime + 4, formantNote, 0.0, formantID));
+				}
+				System.out.println(start + " : " + ":" + attack + ":" + release + ":" + end);
+				addData(start);
+				addData(attack);
+				//addData(release);
+				//addData(sustain);
+				addData(end);
+				note += 31;
+			}
+		} catch (Exception e) {
+			System.out.println("HarmonicsEditor.synthNoteWithOvertones() error creating data:" + e.getMessage());
+		}
+	}
+	
+	public static void synthBassWithOvertones(int startTime, int endTime, int baseNote, int endNote, double maxAmplitude) {
+		int note = baseNote;
+		try {
+			while(note < endNote) {
+				long harmonicID = randomGenerator.nextLong();
+				double taper = (note - baseNote) / (double) FDData.noteBase;
+				if(taper > maxAmplitude) continue;
+				double logAmplitude = maxAmplitude - taper;
+				double currentDuration = (endTime - startTime) / (1 + taper); // (1 + taper);
+				FDData start = new FDData(startTime, note, logAmplitude, harmonicID);
+				int currentEndTime = startTime +  (int) Math.round(currentDuration);
+				logAmplitude /= 2.0;
+				FDData end = new FDData(currentEndTime, note, logAmplitude, harmonicID);
+				addData(start);
+				addData(end);
+				note += 31;
+			}
+		} catch (Exception e) {
+			System.out.println("HarmonicsEditor.synthNoteWithOvertones() error creating data:" + e.getMessage());
+		}
 	}
 	
 	public static int frequencyInHzToNote(double freqInHz) {
 		return (int) Math.round(Math.log(freqInHz)/Math.log(2.0) * (double) FDData.noteBase);
 	}
 
-	// returns true if data already exists in interpolated region
-	// does not perform bounds checking
-	public static void addHarmonicInterpolate(FDData start, FDData end, boolean overwrite) {
-		FDData dataPoint;
-		ArrayList<FDData> interpolatedData = new ArrayList<FDData>();
-		if(start.getTime() > end.getTime()) {
-			FDData temp = start;
-			start = end;
-			end = temp;
-			System.out.println("FDEditor.addDataInterpolate start,end exchanged");
-		}
-		double deltaTime = end.getTime() - start.getTime();
-		double deltaLogAmplitude = end.getLogAmplitude() - start.getLogAmplitude();
-		double deltaNote = end.getNoteComplete() - start.getNoteComplete();
-		for(int time = start.getTime(); time <= end.getTime(); time++) {
-			double elapsedTime = time - start.getTime();
-			double logAmplitude = start.getLogAmplitude() + deltaLogAmplitude * elapsedTime / deltaTime;
-			double dNote = start.getNoteComplete() + deltaNote * elapsedTime / deltaTime;
-			int note = (int) Math.round(dNote);
-			double noteFraction = dNote - note;
-			try {
-				dataPoint = new FDData(time, note, noteFraction, logAmplitude);
-			} catch (Exception e) {
-				JOptionPane.showMessageDialog(null, "Data out of bounds", 
-													"FDEditor.addDataInterpolate(Numerical Args)", 
-													JOptionPane.ERROR_MESSAGE);
-				return;
-			}
-			interpolatedData.add(dataPoint);		
-		}
-	}
-	
 	public static void clearCurrentData() {
 		harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
 	}
@@ -229,7 +298,8 @@ public class HarmonicsEditor extends JFrame {
 	
 	public static void playSelectedDataInCurrentWindow(HarmonicsEditor parent) {
 		int endTime = leftX + view.getTimeAxisWidthInMillis() / timeStepInMillis;
-		new PlayDataInWindow(parent, leftX, endTime, 50, view.getTimeAxisWidthInMillis());
+		// HACK: view.getTimeAxisWidthInMillis() * 2; TIMES TWO IS HACK TO PLAY ALL
+		new PlayDataInWindow(parent, leftX, endTime, 50, view.getTimeAxisWidthInMillis() * 2);
 	}
 
 	public static void drawPlayTime(int offsetInMillis, int refreshRateInMillis) {
@@ -242,7 +312,7 @@ public class HarmonicsEditor extends JFrame {
 	}
 
 	public static long getRandomID() {
-		return randomIDGenerator.nextLong();
+		return randomGenerator.nextLong();
 	}
 	
 	public static int freqToNote(int freq) {

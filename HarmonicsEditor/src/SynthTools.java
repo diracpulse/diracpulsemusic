@@ -39,6 +39,7 @@ class SynthTools {
 			//System.out.println("SynthTools.playFileData endSample = " + endSample);
 			//System.out.println("SynthTools.playFileData HarmonicPCMData.length = " + HarmonicPCMData.length);
 			for(int currentSample = startSample; currentSample < endSample - 1; currentSample++) {
+				if(currentSample >= PCMData.length) break;
 				PCMData[currentSample] += HarmonicPCMData[currentSample - startSample];
 				if(currentSample % 441 == 0) {
 					//System.out.println(currentSample + ":" + PCMData[currentSample]);

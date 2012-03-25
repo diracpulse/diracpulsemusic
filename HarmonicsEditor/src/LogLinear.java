@@ -67,12 +67,14 @@ class LogLinear {
 			for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
 				double value = lowerValue + (timeIndex - lowerTime) * slope;
 				try {
-					output.add(new FDData(timeIndex, currentData.getNote(), value, currentData.getHarmonicID()));
+					//System.out.println(timeIndex + " " +  currentData.getNote() + " " + (float) value + " " + currentData.getHarmonicID());
+					output.add(new FDData(timeIndex, currentData.getNote(), (float) value, currentData.getHarmonicID()));
 				} catch (Exception e) {
 					System.out.println("LogLinear.dataInterpolate(): error creating data");
 					return null;
 				}
-				currentData = input.get(index);
+				lowerValue = upperValue;
+				lowerTime = upperTime;
 			}
 		}
 		return output;

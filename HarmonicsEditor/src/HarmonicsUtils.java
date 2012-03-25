@@ -5,6 +5,8 @@ public class HarmonicsUtils {
 	
 	public static int pixelsPerTime = HarmonicsView.pixelsPerTime;
 	public static int pixelsPerNote = HarmonicsView.pixelsPerNote;
+	public static TreeSet<Integer> currentNotes = null;
+	public static TreeMap<Integer, Integer> noteToPixelYMap = null;
 	
 	public static class Range {
 		
@@ -29,18 +31,38 @@ public class HarmonicsUtils {
 			return upper;
 		}
 	}
-
+	
 	public static int noteToPixelY(int note) {
+		if(noteToPixelYMap == null) compileNoteToPixelY();
+		return noteToPixelY(note, true);
+	}
+	
+	public static int noteToPixelY(int note, boolean lookup) {
+		if(lookup) {
+			if(noteToPixelYMap.containsKey(note)) {
+				return noteToPixelYMap.get(note);
+			}
+			return -1;
+		}
 		int maxNote = HarmonicsEditor.maxNote - HarmonicsEditor.upperY;
 		int pixelY = HarmonicsEditor.upperOffset;
 		if(note > maxNote || note < HarmonicsEditor.minNote) return -1;
 		for(int loopNote = maxNote; loopNote >= HarmonicsEditor.minNote; loopNote--) {
-			if(note == loopNote) return pixelY;
-			for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
-				if(harmonic.getAverageNote() == loopNote) pixelY += HarmonicsView.pixelsPerNote;
-			}
+			if(loopNote == note) return pixelY;
+			if(currentNotes.contains(loopNote)) pixelY += HarmonicsView.pixelsPerNote;
 		}
 		return -1;
+	}
+	
+	public static void compileNoteToPixelY() {
+		currentNotes = new TreeSet<Integer>();
+		noteToPixelYMap = new TreeMap<Integer, Integer>();
+		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
+			currentNotes.add(harmonic.getAverageNote());
+		}
+		for(int note = FDData.getMinNote(); note <= FDData.getMaxNote(); note++) {
+			noteToPixelYMap.put(note, noteToPixelY(note, false));
+		}
 	}
 	
 	public static boolean noteToDrawSegment(int note) {

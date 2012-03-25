@@ -8,11 +8,12 @@ public class ControlPanel {
 	private int segmentWidth;
 	private int segmentHeight;
 	private int[] durations = {1, 2, 3, 4, 6, 8, 16};
+	private int[] chords = {6, 7, 8, 10, 13, 18};
 	
 	private int octaveSelected = -1;
 	private int noteSelected = -1;
 	private TreeSet<Integer> overtonesSelected = new TreeSet<Integer>();
-	private int durationSelected = -1;
+	private int durationSelected = 4; // -1;
 	
 	public ControlPanel(int segmentWidth, int segmentHeight) {
 		this.segmentWidth = segmentWidth;
@@ -22,7 +23,7 @@ public class ControlPanel {
 	public void paintComponent(Graphics g) {
 		drawOctaves(g);
 		drawNotes(g);
-		drawOvertones(g);
+		drawChords(g);
 		drawDurations(g);
 	}
 	
@@ -78,7 +79,7 @@ public class ControlPanel {
 		}
 	}
 	
-	public void drawOvertones(Graphics g) {
+	public void drawChords(Graphics g) {
 		Color white = new Color(0.0f, 0.0f, 0.0f);
 		Color black = new Color(1.0f, 1.0f, 1.0f);
 		int screenX = 9 * segmentWidth;
@@ -95,7 +96,7 @@ public class ControlPanel {
 	
 	public void selectOvertone(int y) {
 		int index = y / (segmentHeight * 2);
-		int overtone = 7 - index;
+		int overtone = 2; // 7 - index;
 		if(overtone < 2) {
 			System.out.println("Overtone too low");
 		} else {
@@ -125,27 +126,32 @@ public class ControlPanel {
 			System.out.println("Invalid duration");
 			return;
 		}
-		int duration = durations[index];
+		int duration = 4; // durations[index];
 		durationSelected = duration;
-		HarmonicsEditor.addBeat(octaveSelected, noteSelected, overtonesSelected, durationSelected);
+		overtonesSelected.add(2);
+		//HarmonicsEditor.addBeat(octaveSelected, noteSelected, overtonesSelected, durationSelected);
 		System.out.println("Duration selected: " + duration);
 	}	
 	
 	public void handleMouseClick(int x, int y) {
 		if(x < 6 * segmentWidth) {
 			selectOctave(y);
+			HarmonicsEditor.refreshView();
 			return;
 		}
 		if(x < 9 * segmentWidth) {
 			selectNote(y);
+			HarmonicsEditor.refreshView();
 			return;
 		}
 		if(x < 11 * segmentWidth) {
 			selectOvertone(y);
+			HarmonicsEditor.refreshView();
 			return;
 		}
 		if(x < 14 * segmentWidth) {
 			selectDuration(y);
+			HarmonicsEditor.refreshView();
 			return;
 		}
 		System.out.println("ControlPanel.handleMouseClick: Outside control panel");
