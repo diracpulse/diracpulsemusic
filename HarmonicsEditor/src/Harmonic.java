@@ -145,7 +145,7 @@ public class Harmonic {
 			double frequency = freqEnvelope.getSample(currentSample);
 			if(useVibrato) {
 				double vibratoVal = vibrato.getSample(currentSample);
-				frequency *= vibratoVal;
+				amplitude *= vibratoVal;
 			}
 			double deltaPhase = (frequency / SynthTools.sampleRate) * SynthTools.twoPI;
 			PCMData.add(amplitude * Math.sin(currentPhase));
@@ -160,21 +160,13 @@ public class Harmonic {
 	}
 	
 	private static LogLinear getVibrato(Double[] sampleTimes, Double[] logFreqs) {
-		double maxVibrato = 1.0 / (FDData.noteBase);
+		double maxVibrato = 1.0;
 		ArrayList<Double> vibratoTimes = new ArrayList<Double>();
 		ArrayList<Double> vibratoValues = new ArrayList<Double>();
-		double minLogFreq = logFreqs[0];
-		for(double logFreq: logFreqs) if(logFreq < minLogFreq) minLogFreq = logFreq;
-		double minFreqInHz = Math.pow(2.0, minLogFreq);
-		double samplesPerCycle = SynthTools.sampleRate / minFreqInHz;
-		double timePerCycle = samplesPerCycle / SynthTools.timeToSample;
-		double timeStep = timePerCycle * 4.0;
-		// System.out.println("minFreqInHz" + minFreqInHz + " timePerCycle " + timePerCycle);
-		// make sure we leave at least one cycle length at the end
-		double endTime = sampleTimes[sampleTimes.length - 1] - timeStep;
+		double endTime = sampleTimes[sampleTimes.length - 1];
 		// System.out.println("EndTime" + endTime);
-		for(double time = 0; time < endTime; time += timeStep) {
-			double value = Math.sin(time / 0.25) * maxVibrato;
+		for(double time = 0; time < endTime; time += 1.0) {
+			double value = Math.abs(Math.sin(time / 2.0) * maxVibrato);
 			vibratoTimes.add(time);
 			vibratoValues.add(value);
 			//System.out.println(time + " " + value);
