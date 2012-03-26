@@ -206,61 +206,25 @@ public class HarmonicsEditor extends JFrame {
 		int lowestNote = baseNote;
 		while(lowestNote >= minNote) lowestNote -= 31;
 		lowestNote += 31;
-		synthBassWithOvertones(startTime, endTime, lowestNote, baseNote, 14.0);
-		synthNoteWithOvertones(startTime, endTime, baseNote, maxNote, 14.0);
+		synthNoteWithOvertones(startTime, endTime, lowestNote, lowestNote, baseNote, 14.0);
+		synthNoteWithOvertones(startTime, endTime, baseNote, baseNote, maxNote, 14.0);
 		for(int chord: chords) {
 			currentChord += chord;
 			int note = baseNote + currentChord;
-			synthNoteWithOvertones(startTime, endTime, note, maxNote, 14.0);
+			synthNoteWithOvertones(startTime, endTime, note, baseNote, maxNote, 14.0);
 		}
 		refreshView();
 	}
 	
-	public static void synthNoteWithOvertones(int startTime, int endTime, int baseNote, int endNote, double maxAmplitude) {
-		int note = baseNote;
-		int attackTime = 2;
-		int releaseTime = 4;
-		int sustainTime = 6;
+
+	public static void synthNoteWithOvertones(int startTime, int endTime, int currentNote, int baseNote, int endNote, double maxAmplitude) {
+		int note = currentNote;
 		try {
 			while(note < endNote) {
 				long harmonicID = randomGenerator.nextLong();
-				double taper = (note - baseNote) / (double) FDData.noteBase;
+				double taper = 0.25 * (note - baseNote) / (double) FDData.noteBase;
 				if(taper > maxAmplitude) continue;
-				double logAmplitude = maxAmplitude - taper;
-				double currentDuration = (endTime - startTime) / (1 + taper); // (1 + taper);
-				int currentEndTime = startTime +  (int) Math.round(currentDuration);
-				FDData start = new FDData(startTime, note, 0.0, harmonicID);
-				FDData attack = new FDData(startTime + attackTime, note, logAmplitude, harmonicID);
-				FDData release = new FDData(startTime + releaseTime, note, logAmplitude - 1.0, harmonicID);
-				FDData sustain = new FDData(currentEndTime - 4, note, logAmplitude - 1.0, harmonicID);
-				FDData end = new FDData(currentEndTime, note, 0.0f, harmonicID);
-				int formantNote = note + 15;
-				if(formantNote < endNote) {
-					//long formantID = randomGenerator.nextLong();
-					//addData(new FDData(startTime, formantNote, logAmplitude, formantID));
-					//addData(new FDData(startTime + 4, formantNote, 0.0, formantID));
-				}
-				System.out.println(start + " : " + ":" + attack + ":" + release + ":" + end);
-				addData(start);
-				addData(attack);
-				//addData(release);
-				//addData(sustain);
-				addData(end);
-				note += 31;
-			}
-		} catch (Exception e) {
-			System.out.println("HarmonicsEditor.synthNoteWithOvertones() error creating data:" + e.getMessage());
-		}
-	}
-	
-	public static void synthBassWithOvertones(int startTime, int endTime, int baseNote, int endNote, double maxAmplitude) {
-		int note = baseNote;
-		try {
-			while(note < endNote) {
-				long harmonicID = randomGenerator.nextLong();
-				double taper = (note - baseNote) / (double) FDData.noteBase;
-				if(taper > maxAmplitude) continue;
-				double logAmplitude = maxAmplitude - taper;
+				double logAmplitude = maxAmplitude - (4.0 * taper);
 				double currentDuration = (endTime - startTime) / (1 + taper); // (1 + taper);
 				FDData start = new FDData(startTime, note, logAmplitude, harmonicID);
 				int currentEndTime = startTime +  (int) Math.round(currentDuration);
