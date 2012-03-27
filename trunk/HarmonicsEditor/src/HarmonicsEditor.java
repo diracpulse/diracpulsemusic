@@ -199,6 +199,8 @@ public class HarmonicsEditor extends JFrame {
 	}
 	
 	public static void addBeat(int startTime, int baseNote, int[] chords, int duration) {
+		double bassAmplitude = 14.0;
+		double trebleAmplitude = 12.0;
 		int maxNote = frequencyInHzToNote(FDData.maxFrequencyInHz);
 		int minNote = frequencyInHzToNote(40.0);
 		int endTime = startTime + duration;
@@ -206,36 +208,106 @@ public class HarmonicsEditor extends JFrame {
 		int lowestNote = baseNote;
 		while(lowestNote >= minNote) lowestNote -= 31;
 		lowestNote += 31;
-		synthNoteWithOvertones(startTime, endTime, lowestNote, lowestNote, baseNote, 14.0);
-		synthNoteWithOvertones(startTime, endTime, baseNote, baseNote, maxNote, 14.0);
+		synthNoteWithOvertones(startTime, endTime, lowestNote, lowestNote, baseNote, 16.0, 12.0, false);
+		synthNoteWithOvertones(startTime, endTime, lowestNote + 31 + 18, lowestNote, baseNote, 14.0, 10.0, false);
+		//synthNoteWithOvertones(startTime, endTime, lowestNote + 31 + 18, lowestNote, baseNote, 9.0);
+		//addFlanking(startTime, endTime, lowestNote, 16.0, 14.0);
+		//addFlanking(startTime, endTime, lowestNote + 31, 16.0, 14.0);
+		synthNoteWithOvertones(startTime, endTime, baseNote, baseNote, maxNote, 12.0, 8.0, false);
+		synthNoteWithOvertones(startTime, endTime, baseNote + 31 + 18, baseNote, maxNote, 10.0, 8.0, false);
+		//synthNoteWithOvertones(startTime, endTime, baseNote + 31 + 18, baseNote, maxNote, 9.0);
+		//addFlanking(startTime, endTime, baseNote, 12.0, 6.0);
+		//addFlanking(startTime, endTime, baseNote + 31, 12.0, 6.0);
 		for(int chord: chords) {
 			currentChord += chord;
 			int note = baseNote + currentChord;
-			synthNoteWithOvertones(startTime, endTime, note, baseNote, maxNote, 14.0);
+			synthNoteWithOvertones(startTime, endTime, note, baseNote, maxNote, 12.0, 8.0, false);
+			synthNoteWithOvertones(startTime, endTime, note + 31 + 18 , baseNote, maxNote, 10.0, 8.0, false);
+			//addFlanking(startTime, endTime, note, 10.0, 4.0);
+			//addFlanking(startTime, endTime, note + 31, 10.0, 4.0);
 		}
 		refreshView();
 	}
 	
-
-	public static void synthNoteWithOvertones(int startTime, int endTime, int currentNote, int baseNote, int endNote, double maxAmplitude) {
+	public static void synthSingleNote(int startTime, int endTime, int note, double maxAmplitude, double minAmplitude) {
+		try {
+			long harmonicID =  randomGenerator.nextLong();
+			int duration = endTime - startTime;
+			FDData start = new FDData(startTime, note, minAmplitude, harmonicID);
+			FDData attack = new FDData(startTime + 10, note, maxAmplitude, harmonicID);	
+			FDData end = new FDData(endTime - 4, note, maxAmplitude, harmonicID);
+			addData(start);
+			addData(attack);
+			addData(end);
+		} catch (Exception e) {
+			System.out.println("HarmonicsEditor.synthNoteWithOvertones() error creating data:" + e.getMessage());
+		}		
+	}
+	
+	public static void synthSingleFormant(int startTime, int note, int baseNote, double maxAmplitude) {
+		try {
+			if(note < (9 * 31)) return;
+			long harmonicID = randomGenerator.nextLong();
+			double maxDuration = 10;
+			double taperAmplitudeMultiple = 1.0;
+			double taperDurationMultiple = 1.0;
+			double taper = 0.25 * (note - baseNote) / (double) FDData.noteBase;
+			taper = Math.pow(taper, 3.0);
+			double startAmplitude = maxAmplitude - (taperAmplitudeMultiple * taper);
+			if(startAmplitude < 2.0) return;
+			double endAmplitude = 0.0;
+			double currentDuration = maxDuration / (1 + taperDurationMultiple * taper);
+			if(currentDuration < 10) currentDuration = 10;
+			int currentEndTime = (int) Math.round(startTime + currentDuration * 2);
+			FDData start = new FDData(startTime, note, startAmplitude - 4, harmonicID);
+			FDData attack = new FDData(startTime + 2, note, startAmplitude, harmonicID);
+			FDData end = new FDData(currentEndTime, note, endAmplitude, harmonicID);
+			addData(start);
+			//addData(attack);
+			addData(end);
+		} catch (Exception e) {
+			System.out.println("HarmonicsEditor.synthNoteWithOvertones() error creating data:" + e.getMessage());
+		}	
+	}
+	
+	public static void synthNoteWithOvertones(int startTime, int endTime, int currentNote, int baseNote, int endNote,
+			                                  double maxAmplitude, double minAmplitude, boolean useTaper) {
 		int note = currentNote;
+		double taperAmplitudeMultiple = 3.0;
+		double taperDurationMultiple = 0.0;
+		if(useTaper) taperDurationMultiple = 1.0;
+		double deltaAmplitude = maxAmplitude - minAmplitude;
 		try {
 			while(note < endNote) {
-				long harmonicID = randomGenerator.nextLong();
 				double taper = 0.25 * (note - baseNote) / (double) FDData.noteBase;
-				if(taper > maxAmplitude) continue;
-				double logAmplitude = maxAmplitude - (4.0 * taper);
-				double currentDuration = (endTime - startTime) / (1 + taper); // (1 + taper);
-				FDData start = new FDData(startTime, note, logAmplitude, harmonicID);
+				taper = Math.pow(taper, 3.0);
+				double startAmplitude = maxAmplitude - (taperAmplitudeMultiple * taper);
+				if(startAmplitude < 2.0) break;
+				double endAmplitude = startAmplitude - deltaAmplitude;
+				if(endAmplitude < 0.0) endAmplitude = 0.0;
+				double currentDuration = (endTime - startTime) / (1 + taperDurationMultiple * taper); // (1 + taper);
 				int currentEndTime = startTime +  (int) Math.round(currentDuration);
-				logAmplitude /= 2.0;
-				FDData end = new FDData(currentEndTime, note, logAmplitude, harmonicID);
-				addData(start);
-				addData(end);
+				synthSingleFormant(startTime, note - 1, baseNote, startAmplitude);
+				synthSingleNote(startTime, currentEndTime, note, startAmplitude, endAmplitude);
+				synthSingleFormant(startTime, note + 1, baseNote, startAmplitude);
+				addFlanking(startTime, currentEndTime, note, startAmplitude, endAmplitude);
 				note += 31;
 			}
 		} catch (Exception e) {
 			System.out.println("HarmonicsEditor.synthNoteWithOvertones() error creating data:" + e.getMessage());
+		}
+	}
+	
+	public static void addFlanking(int startTime, int endTime, int note, double maxAmplitude, double minAmplitude) {
+		try {
+			double startAmplitude = maxAmplitude - 4;
+			double endAmplitude = minAmplitude - 4;
+			if(startAmplitude < 3.5) return;
+			if(endAmplitude < 0.0) endAmplitude = 0.0;
+			synthSingleNote(startTime, endTime, note + 2, startAmplitude, endAmplitude);
+			synthSingleNote(startTime, endTime, note - 2, startAmplitude, endAmplitude);
+		} catch (Exception e) {
+			System.out.println("HarmonicsEditor.addFlanking() error creating data:" + e.getMessage());
 		}
 	}
 	

@@ -70,7 +70,7 @@ public class HarmonicsView extends JComponent {
 	
 	public void drawFileData(Graphics g) {
 		HarmonicsUtils.compileNoteToPixelY();
-		System.out.println("Finished Compiling");
+		//System.out.println("Finished Compiling");
 		drawLeftNotes(g);
 		drawUpperTimes(g);
 		int startTime = HarmonicsEditor.leftX;
@@ -79,7 +79,7 @@ public class HarmonicsView extends JComponent {
 		int endNote = HarmonicsUtils.pixelYToNote(getHeight());
 		if(endNote == -1) endNote = HarmonicsEditor.minNote;
 		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
-			System.out.println(harmonic.getAverageNote());
+			//System.out.println(harmonic.getAverageNote());
 			FDData start = harmonic.getStart();
 			FDData end = harmonic.getEnd();
 			if(start.getTime() > endTime || end.getTime() < startTime) continue;
@@ -147,7 +147,7 @@ public class HarmonicsView extends JComponent {
 	}
 	
     protected void paintComponent(Graphics g) {
-    	System.out.println("Paint Component");
+    	//System.out.println("Paint Component");
     	if(drawPlaying) {
     		double millisPerPixel = (double) FDData.timeStepInMillis / pixelsPerTime;
     		int startX = (int) Math.round((double) HarmonicsView.offsetInMillis / millisPerPixel + HarmonicsEditor.leftOffset);
