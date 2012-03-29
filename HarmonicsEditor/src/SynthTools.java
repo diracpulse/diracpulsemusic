@@ -49,7 +49,7 @@ class SynthTools {
 		for(int i= 0; i <= endSampleOffset; i += 100) {
 			//System.out.println(i + "!" + PCMData[i]);
 		}
-		JOptionPane.showMessageDialog(parent, "Ready To Play");
+		//JOptionPane.showMessageDialog(parent, "Ready To Play");
 	}
 	
 	public static void playWindow() {
