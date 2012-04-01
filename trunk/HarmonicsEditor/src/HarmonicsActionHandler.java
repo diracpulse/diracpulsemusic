@@ -150,6 +150,21 @@ public class HarmonicsActionHandler extends JPanel {
 		}
 	}
 	
+	public class LoadInstrumentAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public LoadInstrumentAction() {
+			super("Load Instrument");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Load Instrument");
+			parent.loadInstrument();
+		}
+	}
+	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -171,7 +186,10 @@ public class HarmonicsActionHandler extends JPanel {
         menuBar.add(harmonicsMenu);
         JMenu loopMenu = new JMenu("Loop");
         loopMenu.add(new RandomLoopAction());
-        menuBar.add(loopMenu);       
+        menuBar.add(loopMenu);
+        JMenu instrumentMenu = new JMenu("Instrument");
+        instrumentMenu.add(new LoadInstrumentAction());
+        menuBar.add(instrumentMenu);       
         return menuBar;
 	}
 

@@ -35,7 +35,8 @@ public class Harmonic {
 		if(overwrite) {
 			timeToData.put(data.getTime(), data);
 		}
-		System.out.println("Harmonic.addData(): Duplicate data at time = " + data.getTime());
+		//System.out.println("Harmonic.addData(): Duplicate data at time = " + data.getTime());
+		System.out.print("|");
 		return data;
 	}
 	
@@ -262,6 +263,10 @@ public class Harmonic {
 		return out.toString();
 	}
 	
+	public double getMaxLogAmplitude() {
+		return maxLogAmplitude;
+	}
+	
 	public int getAverageNote() {
 		double noteSum = 0;
 		double numNotes = 0;
@@ -270,6 +275,27 @@ public class Harmonic {
 			numNotes += 1.0;
 		}
 		return (int) Math.round(noteSum / numNotes);
+	}
+	
+	public int getStartTime() {
+		return timeToData.firstKey();
+	}
+	
+	public ArrayList<FDData> scaledHarmonic(int newStartTime, int newEndTime, int deltaNote, long harmonicID) {
+		TreeMap<Integer, FDData> newTimeToData = new TreeMap<Integer, FDData>();
+		int deltaTime = newStartTime - getStartTime();
+		try {
+			for(FDData data: timeToData.values()) {
+				int time = data.getTime() + deltaTime;
+				int note = data.getNote() + deltaNote;
+				if(time > newEndTime) break;
+				FDData newData = new FDData(time, note, data.getLogAmplitude(), harmonicID);
+				newTimeToData.put(data.getTime(), newData);
+			}
+		} catch (Exception e) {
+			System.out.println("Harmonic.scaleNotes: Error creating data");
+		}
+		return new ArrayList<FDData>(newTimeToData.values());
 	}
 	
 }
