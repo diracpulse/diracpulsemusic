@@ -1,23 +1,151 @@
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
 
 public class SoftSynth {
+	
+	public static TreeMap<Long, Harmonic> harmonicIDToInstrumentHarmonic = null;
+	public static TreeMap<Integer, TreeMap<Integer, Harmonic>> timeToNoteToHarmonic = null;
+	public static TreeSet<Long> harmonicIDs;
+	
+	public static void initLoop() {
+		timeToNoteToHarmonic = new TreeMap<Integer, TreeMap<Integer, Harmonic>>();
+		harmonicIDs = new TreeSet<Long>();
+	}
 	
 	public static void addBeat(int startTime, int baseNote, int[] chords, int duration) {
 		int maxNote = HarmonicsEditor.frequencyInHzToNote(FDData.maxFrequencyInHz);
 		int minNote = HarmonicsEditor.frequencyInHzToNote(40.0);
 		int endTime = startTime + duration;
+		int lowestNote = maxNote;
 		int currentChord = 0;
-		int lowestNote = baseNote;
 		while(lowestNote >= minNote) lowestNote -= 31;
 		lowestNote += 31;
-		double amplitude = 14.0;
-		synthNoteWithOvertones(startTime, endTime, lowestNote, baseNote, amplitude);
-		synthNoteWithOvertones(startTime, endTime, baseNote, maxNote, amplitude);
+		synthInstrument(startTime, endTime, baseNote);
 		for(int chord: chords) {
 			currentChord += chord;
 			int note = baseNote + currentChord;
-			synthNoteWithOvertones(startTime, endTime, note, maxNote, amplitude);
+			synthInstrument(startTime, endTime, note);
 		}
+		removeDissonance(startTime);
+		//addDataToHarmonicsEditor(startTime);
 		HarmonicsEditor.refreshView();
+	}
+	
+	public static void synthInstrument(int startTime, int endTime, int note) {
+		TreeMap<Integer, Harmonic> noteToHarmonic = new TreeMap<Integer, Harmonic>();
+		if(!timeToNoteToHarmonic.containsKey(startTime)) {
+			timeToNoteToHarmonic.put(startTime, new TreeMap<Integer, Harmonic>());
+		}
+		for(Harmonic harmonic: getCopyOfHarmonicIDToInstrumentHarmonic().values()) {
+			noteToHarmonic.put(harmonic.getAverageNote(), harmonic);
+		}
+		int firstNote = noteToHarmonic.firstKey();
+		int deltaNote = note - firstNote;
+		ArrayList<Harmonic> values = new ArrayList<Harmonic>(noteToHarmonic.values());
+		for(Harmonic harmonicKeep: values) {
+			Harmonic harmonic = harmonicKeep; //copyHarmonic(harmonicKeep);
+			long harmonicID = HarmonicsEditor.getRandomID();
+			ArrayList<FDData> harmonicData = harmonic.scaledHarmonic(startTime, endTime, deltaNote, harmonicID);
+			Harmonic newHarmonic = new Harmonic(harmonicID);
+			for(FDData data: harmonicData) newHarmonic.addData(data);			
+			timeToNoteToHarmonic.get(startTime).put(newHarmonic.getAverageNote(), newHarmonic);
+			//System.out.println("synth note: " + newHarmonic.getAverageNote());
+		}
+		/*
+		for(int loopNote: noteToHarmonic.keySet()) {
+			if(timeToNoteToHarmonic.get(startTime).containsKey(loopNote)) {
+				Harmonic previous = timeToNoteToHarmonic.get(startTime).get(loopNote);
+				Harmonic current = noteToHarmonic.get(loopNote);
+				if(current.getMaxLogAmplitude() > previous.getMaxLogAmplitude()) {
+					timeToNoteToHarmonic.get(startTime).put(loopNote, current);
+				}
+			} else {
+				timeToNoteToHarmonic.get(startTime).put(loopNote, noteToHarmonic.get(loopNote));
+			}
+		}
+		*/
+	}
+	
+	public static void removeDissonance(int startTime) {
+		int time = startTime;
+		TreeSet<Integer> notesCopy = new TreeSet<Integer>();
+		for(int note: timeToNoteToHarmonic.get(time).keySet()) {
+			notesCopy.add(note);
+		}
+		int prevNote = -1;
+		int currentNote = -1;
+		for(int note: notesCopy) {
+			prevNote = currentNote;
+			currentNote = note;
+			Harmonic prevHarmonic = timeToNoteToHarmonic.get(time).get(prevNote);
+			Harmonic currentHarmonic = timeToNoteToHarmonic.get(time).get(currentNote);
+			if((currentNote - prevNote) < 2) {
+				System.out.println("dissonance");
+				if(prevHarmonic.getMaxLogAmplitude() > currentHarmonic.getMaxLogAmplitude()) {
+					System.out.println("lower");
+					timeToNoteToHarmonic.get(time).remove(currentNote);
+					currentNote = prevNote;
+					continue;
+				} else {
+					System.out.println("upper");
+					timeToNoteToHarmonic.get(time).remove(prevNote);
+					continue;
+				}
+			}
+		}
+	}
+	
+	public static Harmonic copyHarmonic(Harmonic harmonic) {
+		Harmonic returnVal = new Harmonic(HarmonicsEditor.getRandomID());
+		try {
+			for(FDData data: harmonic.getAllData()) {
+				returnVal.addData(new FDData(data.getTime(), data.getNote(), data.getLogAmplitude(), returnVal.getHarmonicID()));
+			}
+		} catch (Exception e) {
+			System.out.println("SoftSynth.copyHarmonic: Error creating data");
+		}
+		return returnVal;
+	}
+	
+	public static TreeMap<Long, Harmonic> getCopyOfHarmonicIDToInstrumentHarmonic() {
+		TreeMap<Long, Harmonic> copyOfHarmonicIDToInstrumentHarmonic = new TreeMap<Long, Harmonic>();
+		for(Long harmonicID: harmonicIDToInstrumentHarmonic.keySet()) {
+			copyOfHarmonicIDToInstrumentHarmonic.put(harmonicID, harmonicIDToInstrumentHarmonic.get(harmonicID));
+		}
+		return copyOfHarmonicIDToInstrumentHarmonic;
+	}
+	
+	public static void addDataToHarmonicsEditor() {
+		for(int time: timeToNoteToHarmonic.keySet()) {
+			harmonicIDs = new TreeSet<Long>();
+			for(Harmonic harmonic: timeToNoteToHarmonic.get(time).values()) {
+				long harmonicID = harmonic.getHarmonicID();
+				if(harmonicIDs.contains(harmonicID)) {
+					System.out.println("Duplicate");
+					continue;
+				} else {
+					System.out.println("New");
+				}
+				harmonicIDs.add(harmonicID);
+				System.out.println(harmonic.getHarmonicID());
+				for(FDData data: harmonic.getAllData()) {
+					HarmonicsEditor.addData(data);
+				}
+			}
+		}
+	}
+	
+	public static boolean checkHarmonicID(long harmonicID) {
+		if(harmonicIDs.contains(harmonicID)) {
+			System.out.println("Duplicate!");
+			return true;
+		} else {
+			harmonicIDs.add(harmonicID);
+			return false;
+		}
 	}
 
 	public static void synthSingleNote(int startTime, int endTime, int note, double amplitude) {

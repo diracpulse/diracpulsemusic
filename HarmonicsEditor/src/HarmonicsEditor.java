@@ -94,6 +94,11 @@ public class HarmonicsEditor extends JFrame {
         //view.repaint();
 	}
 	
+	public void loadInstrument() {
+		openFileInHarmonicsEditor();
+		SoftSynth.harmonicIDToInstrumentHarmonic = harmonicIDToHarmonic;
+	}
+	
     public HarmonicsEditor() {
         view = new HarmonicsView();
         view.setBackground(Color.black);
@@ -186,7 +191,8 @@ public class HarmonicsEditor extends JFrame {
 	}
 	
 	public static void randomLoop(HarmonicsEditor parent) {
-		harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
+		clearCurrentData();
+		SoftSynth.initLoop();
 		int centerNote = frequencyInHzToNote(350.0);
 		int duration = 100;
 		int numBeats = 3;
@@ -195,6 +201,7 @@ public class HarmonicsEditor extends JFrame {
 			int[] chords = getRandomChord();
 			SoftSynth.addBeat(time, note, chords, duration);
 		}
+		SoftSynth.addDataToHarmonicsEditor();
 		playSelectedDataInCurrentWindow(parent);
 	}
 
