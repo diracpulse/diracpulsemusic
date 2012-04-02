@@ -281,6 +281,23 @@ public class Harmonic {
 		return timeToData.firstKey();
 	}
 	
+	public void adjustAmplitudes(double deltaAmplitude) {
+		for(int time: timeToData.keySet()) {
+			FDData data = timeToData.get(time);
+			double logAmplitude = data.getLogAmplitude();
+			logAmplitude += deltaAmplitude;
+			if(logAmplitude < 0.0) logAmplitude = 0.0;
+			if(logAmplitude > FDData.maxLogAmplitude) logAmplitude = FDData.maxLogAmplitude;
+			FDData newData = null;
+			try {
+				newData = new FDData(data.getTime(), data.getNote(), logAmplitude, data.getHarmonicID());
+			} catch (Exception e) {
+				System.out.println("Harmonics.adjustAmplitudes: error creating data");
+			}
+			timeToData.put(time, newData);
+		}
+	}
+	
 	public ArrayList<FDData> scaledHarmonic(int newStartTime, int newEndTime, int deltaNote, long harmonicID) {
 		TreeMap<Integer, FDData> newTimeToData = new TreeMap<Integer, FDData>();
 		int deltaTime = newStartTime - getStartTime();

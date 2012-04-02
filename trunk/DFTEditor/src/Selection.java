@@ -3,7 +3,7 @@ import java.util.ArrayList;
 public class Selection {
 	
 	public enum Area {
-		LINE_INTERPOLATE, RECTANGLE, TRIANGLE;
+		LINE_INTERPOLATE, RECTANGLE, TRIANGLE, ALL;
 	}
 
 	// These are used to avoid excess passing of arguments in internal functions
@@ -58,7 +58,10 @@ public class Selection {
 				return false;
 			case RECTANGLE:
 				if(inputData.size() == 2) return true;
-				return false;		
+				return false;
+			case ALL:
+				if(inputData.size() == 2) return true;
+				return false;
 		}
 		System.out.println("Selection.selectionComplete() SelectionType unknown");
 		return false;
@@ -75,7 +78,9 @@ public class Selection {
 			case RECTANGLE:
 				getRECTANGLEData();
 				return outputData;
-				
+			case ALL:
+				getALLData();
+				return outputData;
 		}
 		System.out.println("Selection.getSelectedData() SelectionType unknown");
 		return null;
@@ -100,6 +105,24 @@ public class Selection {
 					outputData.add(new FDData(time, note, currentAmplitude));
 				} catch (Exception e) {
 					System.out.println("Selection.getRECTANGLEData: error adding FDData");
+				}
+			}
+		}
+	}
+	
+	private void getALLData() {
+		DFTGeometry.SortedPair times = 
+			new  DFTGeometry.SortedPair(inputData.get(0).getTime(), inputData.get(1).getTime());
+		DFTGeometry.SortedPair notes = 
+			new  DFTGeometry.SortedPair(inputData.get(0).getNote(), inputData.get(1).getNote());
+		for(int note = notes.lower; note <= notes.upper; note++) {
+			float currentAmplitude = 0.0f;
+			for(int time = times.lower; time <= times.upper; time++) {
+				currentAmplitude = DFTEditor.getAmplitude(time, DFTEditor.noteToFreq(note));
+				try {
+					outputData.add(new FDData(time, note, currentAmplitude));
+				} catch (Exception e) {
+					System.out.println("Selection.getALLData: error adding FDData");
 				}
 			}
 		}

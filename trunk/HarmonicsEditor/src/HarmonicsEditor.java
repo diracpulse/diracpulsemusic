@@ -99,6 +99,17 @@ public class HarmonicsEditor extends JFrame {
 		SoftSynth.harmonicIDToInstrumentHarmonic = harmonicIDToHarmonic;
 	}
 	
+	public void loadKickDrum() {
+		openFileInHarmonicsEditor();
+		SoftSynth.harmonicIDToKickDrumHarmonic = harmonicIDToHarmonic;
+	}
+	
+	public void loadHighFreq() {
+		openFileInHarmonicsEditor();
+		for(Harmonic harmonic: harmonicIDToHarmonic.values()) harmonic.adjustAmplitudes(-1.5);
+		SoftSynth.harmonicIDToHighFreqHarmonic = harmonicIDToHarmonic;
+	}
+
     public HarmonicsEditor() {
         view = new HarmonicsView();
         view.setBackground(Color.black);
@@ -194,12 +205,24 @@ public class HarmonicsEditor extends JFrame {
 		clearCurrentData();
 		SoftSynth.initLoop();
 		int centerNote = frequencyInHzToNote(350.0);
-		int duration = 100;
-		int numBeats = 3;
-		for(int time = 0; time < duration * numBeats; time += duration) {
+		int duration = 80;
+		int numBeats = 4;
+		int repeat = randomGenerator.nextInt(numBeats - 1);
+		int beat = 0;
+		boolean useHighFreq = true;
+		while(beat < numBeats) {
 			int note = centerNote + randomGenerator.nextInt(13);
 			int[] chords = getRandomChord();
-			SoftSynth.addBeat(time, note, chords, duration);
+			useHighFreq = false;
+			if(beat % 2 == 0) useHighFreq = true;
+			SoftSynth.addBeat(beat * duration, note, chords, duration, useHighFreq);
+			if(beat == repeat) {
+				beat++;
+				useHighFreq = false;
+				if(beat % 2 == 0) useHighFreq = true;
+				SoftSynth.addBeat(beat * duration, note, chords, duration, useHighFreq);
+			}
+			beat++;
 		}
 		SoftSynth.addDataToHarmonicsEditor();
 		playSelectedDataInCurrentWindow(parent);

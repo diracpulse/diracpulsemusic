@@ -323,6 +323,21 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
+	public class AllAreaAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public AllAreaAction() {
+			super("All");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("All");
+			DFTEditor.setSelectionArea(Selection.Area.ALL);
+		}
+	}
+	
 	public class AddSelectionAction extends AbstractAction {
 
 		private static final long serialVersionUID = 1L;
@@ -441,6 +456,7 @@ public class ActionHandler extends JPanel {
         selectionAreaMenu.add(new JMenuItem(new LineAreaAction()));
         selectionAreaMenu.add(new JMenuItem(new RectangleAreaAction()));
         selectionAreaMenu.add(new JMenuItem(new TriangleAreaAction()));
+        selectionAreaMenu.add(new JMenuItem(new AllAreaAction()));
         JMenu addDeleteMenu = new JMenu("Add/Delete");
         menuBar.add(addDeleteMenu);
         addDeleteMenu.add(new JMenuItem(new AddSelectionAction()));
