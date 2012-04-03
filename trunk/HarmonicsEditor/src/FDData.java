@@ -96,7 +96,11 @@ public class FDData {
 	
 	public long getHarmonicID() {
 		return this.harmonicID;
-	}	
+	}
+	
+	public void setLogAmplitude(double logAmplitude) {
+		this.logAmplitude = logAmplitude;
+	}
 	
 	public int getTime() {
 		return time;

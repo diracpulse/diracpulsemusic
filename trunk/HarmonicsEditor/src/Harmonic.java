@@ -298,6 +298,14 @@ public class Harmonic {
 		}
 	}
 	
+	public void addCompression(double ratio, double maxLogAmplitude) {
+		for(FDData data: timeToData.values()) {
+			double logAmplitude = data.getLogAmplitude();
+			logAmplitude += (maxLogAmplitude - logAmplitude) / ratio;
+			data.setLogAmplitude(logAmplitude);
+		}
+	}
+	
 	public ArrayList<FDData> scaledHarmonic(int newStartTime, int newEndTime, int deltaNote, long harmonicID) {
 		TreeMap<Integer, FDData> newTimeToData = new TreeMap<Integer, FDData>();
 		int deltaTime = newStartTime - getStartTime();
@@ -306,6 +314,7 @@ public class Harmonic {
 				int time = data.getTime() + deltaTime;
 				int note = data.getNote() + deltaNote;
 				if(time > newEndTime) break;
+				if(note >= FDData.getMaxNote()) break;
 				FDData newData = new FDData(time, note, data.getLogAmplitude(), harmonicID);
 				newTimeToData.put(data.getTime(), newData);
 			}
