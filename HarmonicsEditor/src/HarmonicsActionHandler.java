@@ -150,6 +150,21 @@ public class HarmonicsActionHandler extends JPanel {
 		}
 	}
 	
+	public class RandomTripletsAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public RandomTripletsAction() {
+			super("Random Triplets");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Random Triplets");
+			HarmonicsEditor.randomTriplets(parent);
+		}
+	}
+	
 	public class LoadInstrumentAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
@@ -195,6 +210,21 @@ public class HarmonicsActionHandler extends JPanel {
 		}
 	}
 	
+	public class LoadBassSynthAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public LoadBassSynthAction() {
+			super("Load Bass Synth");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Load Bass Synth");
+			parent.loadBassSynth();
+		}
+	}
+	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -216,11 +246,13 @@ public class HarmonicsActionHandler extends JPanel {
         menuBar.add(harmonicsMenu);
         JMenu loopMenu = new JMenu("Loop");
         loopMenu.add(new RandomLoopAction());
+        loopMenu.add(new RandomTripletsAction());
         menuBar.add(loopMenu);
         JMenu instrumentMenu = new JMenu("Instrument");
         instrumentMenu.add(new LoadInstrumentAction());
         instrumentMenu.add(new LoadKickDrumAction());
         instrumentMenu.add(new LoadHighFreqAction());
+        instrumentMenu.add(new LoadBassSynthAction());
         menuBar.add(instrumentMenu);       
         return menuBar;
 	}

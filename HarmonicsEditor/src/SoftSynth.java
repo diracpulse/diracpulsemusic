@@ -9,6 +9,7 @@ public class SoftSynth {
 	public static TreeMap<Long, Harmonic> harmonicIDToInstrumentHarmonic = null;
 	public static TreeMap<Long, Harmonic> harmonicIDToKickDrumHarmonic = null;
 	public static TreeMap<Long, Harmonic> harmonicIDToHighFreqHarmonic = null;
+	public static TreeMap<Long, Harmonic> harmonicIDToBassSynthHarmonic = null;
 	public static TreeMap<Integer, TreeMap<Integer, Harmonic>> timeToNoteToHarmonic = null;
 	public static TreeSet<Long> harmonicIDs;
 	
@@ -25,6 +26,7 @@ public class SoftSynth {
 		int currentChord = 0;
 		while(lowestNote >= minNote) lowestNote -= 31;
 		lowestNote += 31;
+		//synthInstrument(startTime, endTime, lowestNote, harmonicIDToBassSynthHarmonic, true);
 		synthInstrument(startTime, endTime, baseNote, harmonicIDToInstrumentHarmonic, true);
 		for(int chord: chords) {
 			currentChord += chord;
@@ -33,7 +35,7 @@ public class SoftSynth {
 		}
 		synthInstrument(startTime, endTime, -1, harmonicIDToKickDrumHarmonic, true);
 		if(useHighFreq) {
-			synthInstrument(startTime, endTime, -1, harmonicIDToHighFreqHarmonic, false);
+			//synthInstrument(startTime, endTime, -1, harmonicIDToHighFreqHarmonic, false);
 		}
 		removeDissonance(startTime);
 		HarmonicsEditor.refreshView();
@@ -79,6 +81,7 @@ public class SoftSynth {
 			Harmonic currentHarmonic = timeToNoteToHarmonic.get(time).get(currentNote);
 			if((currentNote - prevNote) < 2) {
 				System.out.println("dissonance");
+				if(prevHarmonic == null || currentHarmonic == null) break;
 				if(prevHarmonic.getMaxLogAmplitude() > currentHarmonic.getMaxLogAmplitude()) {
 					System.out.println("lower");
 					timeToNoteToHarmonic.get(time).remove(currentNote);
