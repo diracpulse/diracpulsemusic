@@ -10,6 +10,7 @@ public class SoftSynth {
 	public static TreeMap<Long, Harmonic> harmonicIDToKickDrumHarmonic = null;
 	public static TreeMap<Long, Harmonic> harmonicIDToHighFreqHarmonic = null;
 	public static TreeMap<Long, Harmonic> harmonicIDToBassSynthHarmonic = null;
+	public static TreeMap<Long, Harmonic> harmonicIDToSnareHarmonic = null;
 	public static TreeMap<Integer, TreeMap<Integer, Harmonic>> timeToNoteToHarmonic = null;
 	public static TreeSet<Long> harmonicIDs;
 	
@@ -26,7 +27,7 @@ public class SoftSynth {
 		int currentChord = 0;
 		while(lowestNote >= minNote) lowestNote -= 31;
 		lowestNote += 31;
-		//synthInstrument(startTime, endTime, lowestNote, harmonicIDToBassSynthHarmonic, true);
+		synthInstrument(startTime, endTime, lowestNote, harmonicIDToBassSynthHarmonic, true);
 		synthInstrument(startTime, endTime, baseNote, harmonicIDToInstrumentHarmonic, true);
 		for(int chord: chords) {
 			currentChord += chord;
@@ -35,7 +36,9 @@ public class SoftSynth {
 		}
 		synthInstrument(startTime, endTime, -1, harmonicIDToKickDrumHarmonic, true);
 		if(useHighFreq) {
-			//synthInstrument(startTime, endTime, -1, harmonicIDToHighFreqHarmonic, false);
+			synthInstrument(startTime, endTime, -1, harmonicIDToHighFreqHarmonic, false);
+		} else {
+			synthInstrument(startTime, endTime, -1, harmonicIDToSnareHarmonic, true);
 		}
 		removeDissonance(startTime);
 		HarmonicsEditor.refreshView();

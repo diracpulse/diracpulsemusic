@@ -18,7 +18,8 @@ public class PlayDataInWindow implements ActionListener {
 		this.refreshRateInMillis = refreshRateInMillis;
 		this.endTimeInMillis = endTimeInMillis;
 		timer = new Timer(refreshRateInMillis, this);
-		SynthTools.createPCMData(parent, HarmonicsEditor.leftX, endTimeInMillis / HarmonicsEditor.timeStepInMillis);
+		SynthTools.createPCMData(parent);
+		//SynthTools.createPCMData(parent, HarmonicsEditor.leftX, endTimeInMillis / HarmonicsEditor.timeStepInMillis);
         timer.setInitialDelay(0);
         timer.start();
 	}
