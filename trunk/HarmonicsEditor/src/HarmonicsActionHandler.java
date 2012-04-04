@@ -150,18 +150,18 @@ public class HarmonicsActionHandler extends JPanel {
 		}
 	}
 	
-	public class RandomTripletsAction extends AbstractAction {
+	public class RandomQuadAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
 
-		public RandomTripletsAction() {
-			super("Random Triplets");
+		public RandomQuadAction() {
+			super("Random Quad");
 		}
-
+ 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Random Triplets");
-			HarmonicsEditor.randomTriplets(parent);
+			System.out.println("Random Quad");
+			HarmonicsEditor.randomQuad(parent);
 		}
 	}
 	
@@ -225,6 +225,21 @@ public class HarmonicsActionHandler extends JPanel {
 		}
 	}
 	
+	public class LoadSnareAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public LoadSnareAction() {
+			super("Load Snare");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Load Snare");
+			parent.loadSnare();
+		}
+	}
+	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -246,13 +261,14 @@ public class HarmonicsActionHandler extends JPanel {
         menuBar.add(harmonicsMenu);
         JMenu loopMenu = new JMenu("Loop");
         loopMenu.add(new RandomLoopAction());
-        loopMenu.add(new RandomTripletsAction());
+        loopMenu.add(new RandomQuadAction());
         menuBar.add(loopMenu);
         JMenu instrumentMenu = new JMenu("Instrument");
         instrumentMenu.add(new LoadInstrumentAction());
         instrumentMenu.add(new LoadKickDrumAction());
         instrumentMenu.add(new LoadHighFreqAction());
         instrumentMenu.add(new LoadBassSynthAction());
+        instrumentMenu.add(new LoadSnareAction());
         menuBar.add(instrumentMenu);       
         return menuBar;
 	}

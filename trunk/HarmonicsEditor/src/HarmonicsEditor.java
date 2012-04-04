@@ -97,7 +97,7 @@ public class HarmonicsEditor extends JFrame {
 	
 	public void loadInstrument() {
 		openFileInHarmonicsEditor();
-		for(Harmonic harmonic: harmonicIDToHarmonic.values()) harmonic.adjustAmplitudes(0.0);
+		for(Harmonic harmonic: harmonicIDToHarmonic.values()) harmonic.adjustAmplitudes(1.0);
 		SoftSynth.harmonicIDToInstrumentHarmonic = harmonicIDToHarmonic;
 	}
 	
@@ -109,14 +109,20 @@ public class HarmonicsEditor extends JFrame {
 	
 	public void loadHighFreq() {
 		openFileInHarmonicsEditor();
-		for(Harmonic harmonic: harmonicIDToHarmonic.values()) harmonic.adjustAmplitudes(0.0);
+		for(Harmonic harmonic: harmonicIDToHarmonic.values()) harmonic.adjustAmplitudes(1.0);
 		SoftSynth.harmonicIDToHighFreqHarmonic = harmonicIDToHarmonic;
 	}
 	
 	public void loadBassSynth() {
 		openFileInHarmonicsEditor();
-		for(Harmonic harmonic: harmonicIDToHarmonic.values()) harmonic.adjustAmplitudes(1.0);
+		for(Harmonic harmonic: harmonicIDToHarmonic.values()) harmonic.adjustAmplitudes(-2.0);
 		SoftSynth.harmonicIDToBassSynthHarmonic = harmonicIDToHarmonic;
+	}
+	
+	public void loadSnare() {
+		openFileInHarmonicsEditor();
+		for(Harmonic harmonic: harmonicIDToHarmonic.values()) harmonic.adjustAmplitudes(-1.0);
+		SoftSynth.harmonicIDToSnareHarmonic = harmonicIDToHarmonic;
 	}
 
     public HarmonicsEditor() {
@@ -190,6 +196,39 @@ public class HarmonicsEditor extends JFrame {
 		return null;
 	}
 	
+	public static int getNote(int index) {
+		int sign = 1;
+		if(index < 0) {
+			sign = -1;
+			index *= -1;
+		}
+		switch(index) {
+		case 0:
+			return 0;
+		case 1:
+			return 1 * sign;
+		case 2:
+			return 2 * sign;
+		case 3:
+			return 3 * sign;
+		case 4:
+			return 4 * sign;
+		case 5:
+			return 5 * sign;
+		case 6:
+			return 6 * sign;
+		case 7:
+			return 7 * sign;
+		case 8:
+			return 8 * sign;
+		case 9:
+			return 10 * sign;
+		case 10:
+			return 13 * sign;
+	}
+	return 18;
+	}
+	
 	public static int[] getRandomConsonantChord() {
 		int randIndex = randomGenerator.nextInt(6);
 		switch(randIndex) {
@@ -228,19 +267,23 @@ public class HarmonicsEditor extends JFrame {
 		}
 	}
 	
-	public static void randomTriplets(HarmonicsEditor parent) {
-		int arraySize = 5;
+	public static void randomQuad(HarmonicsEditor parent) {
+		int arraySize = 7;
 		int numArrays = 0;
-		String fileName = "Triplets" + System.currentTimeMillis() + ".txt";
-		NestedTreeMap ntm = new NestedTreeMap();
+		String fileName = "Quad" + System.currentTimeMillis() + ".txt";
+		NestedHashMap ntm = new NestedHashMap();
 		for(int chord1 = 0; chord1 < 10; chord1 += 2) {
-			for(int chord2 = 0; chord2 < 10; chord2 += 2) {
-				for(int chord3 = 0; chord3 <= 10; chord3 += 2) {
-					for(int deltaNote1 = -13; deltaNote1 <= 13; deltaNote1++) {
-						for(int deltaNote2 = -13; deltaNote2 <= 13; deltaNote2++) {
-							int[] array = new int[]{chord1,chord2,chord2,deltaNote1,deltaNote2};
-							ntm.addArray(array);
-							numArrays++;
+			for(int chord2 = 1; chord2 < 10; chord2 += 2) {
+				for(int chord3 = 0; chord3 < 10; chord3 += 2) {
+					for(int chord4 = 1; chord4 < 10; chord4 += 2) {
+						for(int deltaNote1 = -10; deltaNote1 <= 10; deltaNote1++) {
+							for(int deltaNote2 = -10; deltaNote2 <= 10; deltaNote2++) {
+								for(int deltaNote3 = -10; deltaNote3 <= 10; deltaNote3++) {
+									int[] array = new int[]{chord1,chord2,chord3,chord4,deltaNote1,deltaNote2,deltaNote3};
+									ntm.addArray(array);
+									numArrays++;
+								}
+							}
 						}
 					}
 				}
@@ -248,18 +291,20 @@ public class HarmonicsEditor extends JFrame {
 		}
 		int loopIndex = 0;
 		while(loopIndex < numArrays) {
-			ArrayList<Integer> randomTriplet = ntm.getRandomArray();
-			if(randomTriplet.size() < arraySize) continue;
+			ArrayList<Integer> randomQuad = ntm.getRandomArray();
+			if(randomQuad.size() < arraySize) continue;
 			loopIndex++;
-			int chord1 = randomTriplet.get(0);
-			int chord2 = randomTriplet.get(1);
-			int chord3 = randomTriplet.get(2);
-			int deltaNote1 = randomTriplet.get(3);
-			int deltaNote2 = randomTriplet.get(4);
+			int chord1 = randomQuad.get(0);
+			int chord2 = randomQuad.get(1);
+			int chord3 = randomQuad.get(2);
+			int chord4 = randomQuad.get(3);
+			int deltaNote1 = randomQuad.get(4);
+			int deltaNote2 = randomQuad.get(5);
+			int deltaNote3 = randomQuad.get(6);
 			StringBuffer loopDescriptor = new StringBuffer();
-			for(int index = 0; index < arraySize; index++) loopDescriptor.append(randomTriplet.get(index) + " ");
+			for(int index = 0; index < arraySize; index++) loopDescriptor.append(randomQuad.get(index) + " ");
 			System.out.println(loopDescriptor);
-			synthTriplet(chord1, chord2, chord3, deltaNote1, deltaNote2);
+			synthQuad(chord1, chord2, chord3, chord4, deltaNote1, deltaNote2, deltaNote3);
 			SoftSynth.addDataToHarmonicsEditor();
 			playSelectedDataInCurrentWindow(parent);
 			int choice = JOptionPane.showConfirmDialog(parent, loopDescriptor);
@@ -278,16 +323,19 @@ public class HarmonicsEditor extends JFrame {
 		}
 	}
 	
-	public static void synthTriplet(int chord1, int chord2, int chord3, int deltaNote1, int deltaNote2) {
+	public static void synthQuad(int chord1, int chord2, int chord3, int chord4, 
+								 int deltaNote1, int deltaNote2, int deltaNote3) {
 		clearCurrentData();
 		SoftSynth.initLoop();
 		int duration = 75;
-		int note1 = frequencyInHzToNote(440.0) + randomGenerator.nextInt(12) - 6;
-		int note2 = note1 + deltaNote1;
-		int note3 = note2 + deltaNote2;
-		SoftSynth.addBeat(0, note1, getChord(chord1), duration, true);
+		int note1 = frequencyInHzToNote(440.0); // + randomGenerator.nextInt(12) - 6;
+		int note2 = note1 + getNote(deltaNote1);
+		int note3 = note2 + getNote(deltaNote2);
+		int note4 = note3 + getNote(deltaNote3);
+		SoftSynth.addBeat(0, note1, getChord(chord1), duration, false);
 		SoftSynth.addBeat(duration, note2, getChord(chord2), duration, true);
-		SoftSynth.addBeat(duration * 2, note3, getChord(chord3), duration, true);
+		SoftSynth.addBeat(duration * 2, note3, getChord(chord3), duration, false);
+		SoftSynth.addBeat(duration * 3, note4, getChord(chord4), duration, true);
 	}
 	
 	public static String repeatRandomLoop(HarmonicsEditor parent) {

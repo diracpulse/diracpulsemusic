@@ -13,6 +13,10 @@ class SynthTools {
 	static double[] PCMData = null;
 	static HarmonicsEditor parent;
 
+	static void createPCMData(HarmonicsEditor parent) {
+		PCMData = FastSynth.synthHarmonics(new ArrayList<Harmonic>(parent.harmonicIDToHarmonic.values()));
+	}
+	
 	static void createPCMData(HarmonicsEditor parent, int startTime, int endTime) {
 		int startSampleOffset = (int) Math.round(startTime * timeToSample);
 		int endSampleOffset = (int) Math.round(endTime * timeToSample);
