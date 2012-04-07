@@ -5,7 +5,7 @@ public class FastSynth {
 	
 	public static int numSamples = 0;
 	private static double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
-	private static final double[] sharedPCMData = new double[(int) (SynthTools.sampleRate * 4)];
+	private static double[] sharedPCMData;
 	
 	public static double[] synthHarmonics(ArrayList<Harmonic> harmonics) {
 		initSharedPCMData(harmonics);
@@ -16,10 +16,11 @@ public class FastSynth {
 	private static void initSharedPCMData(ArrayList<Harmonic> harmonics) {
 		double maxEndTime = 0;
 		for(Harmonic harmonic: harmonics) {
-			double harmonicEndTime = harmonic.getEndTime() + harmonic.getTaperLength();
+			double harmonicEndTime = Math.ceil(harmonic.getEndTime() + harmonic.getTaperLength());
 			if(harmonicEndTime > maxEndTime) maxEndTime = harmonicEndTime;
 		}
 		int numSamples = (int) Math.ceil(maxEndTime * timeToSample);
+		sharedPCMData = new double[numSamples];
 		for(int index = 0; index < numSamples; index++) sharedPCMData[index] = 0.0;
 	}
 	
@@ -38,7 +39,15 @@ public class FastSynth {
 	
 	private static void synthHarmonicFlat(Harmonic harmonic) {
 		ArrayList<FDData> dataArray = harmonic.getAllData();
-		
+		FDData taperData = null;
+		FDData endData = dataArray.get(dataArray.size() - 1);
+		int harmonicEndTime = (int) Math.ceil(harmonic.getEndTime() + harmonic.getTaperLength());
+		try {
+			taperData = new FDData(harmonicEndTime, endData.getNote(), 0.0, endData.getHarmonicID());
+		} catch (Exception e) {
+			System.out.println("FastSynth.synthHarmonicFlat: Error creating taper data");
+		}
+		dataArray.add(taperData);
 		int maxArrayIndex = dataArray.size();
 		double currentPhase = 0.0;
 		double averageFreq = Math.pow(2.0, (double) harmonic.getAverageNote() / (double) FDData.noteBase);
@@ -58,9 +67,5 @@ public class FastSynth {
 			}	
 		}
 	}
-	
-	private static void getTaper() {
-		
-	}
-	
+
 }

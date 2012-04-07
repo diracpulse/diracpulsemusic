@@ -285,6 +285,12 @@ public class Harmonic {
 		return timeToData.lastKey();
 	}
 	
+	public void setAllHarmonicIDsEqual() {
+		for(FDData data: timeToData.values()) {
+			data.setHarmonicID(harmonicID);
+		}
+	}
+	
 	public void adjustAmplitudes(double deltaAmplitude) {
 		for(int time: timeToData.keySet()) {
 			FDData data = timeToData.get(time);
@@ -302,9 +308,10 @@ public class Harmonic {
 		}
 	}
 	
-	public void addCompression(double ratio, double maxLogAmplitude) {
+	public void addCompressionWithLimiter(double ratio, double maxLogAmplitude) {
 		for(FDData data: timeToData.values()) {
 			double logAmplitude = data.getLogAmplitude();
+			if(logAmplitude > maxLogAmplitude) logAmplitude = maxLogAmplitude;
 			logAmplitude += (maxLogAmplitude - logAmplitude) / ratio;
 			data.setLogAmplitude(logAmplitude);
 		}

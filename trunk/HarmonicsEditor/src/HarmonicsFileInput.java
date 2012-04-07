@@ -1,8 +1,10 @@
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.TreeMap;
@@ -46,6 +48,33 @@ public class HarmonicsFileInput {
 				System.out.println("FileInput error: " + e.getMessage());
 			}
 		}
+	}
+	
+	public static ArrayList<String> ReadTextFileData(String fileName) {
+		ArrayList<String> returnVal = new ArrayList<String>();
+		BufferedReader in = null;
+		String line = " "; // dummy non-null value
+	    try {
+	    	in = new BufferedReader(new FileReader(fileName));
+		} catch (FileNotFoundException nf) {
+			System.out.println("FileInput: " + fileName + ".[suffix] not found");
+			return returnVal; // return empty string if file not found
+		}
+		try {
+			// loop is terminated by EOFException
+			while(line != null) {
+				line = in.readLine();
+				returnVal.add(line);
+				System.out.println(line);
+			}
+		} catch (Exception e) {
+			if(e instanceof EOFException) {
+				System.out.println("Finished reading from: " + fileName);
+			} else {
+				System.out.println("FileInput error: " + e.getMessage());
+			}
+		}
+		return returnVal;
 	}
 	
 }
