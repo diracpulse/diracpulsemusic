@@ -150,6 +150,51 @@ public class HarmonicsActionHandler extends JPanel {
 		}
 	}
 	
+	public class NonRandomDoubletAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public NonRandomDoubletAction() {
+			super("Nonrandom Doublet");
+		}
+ 
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Nonrandom Doublet");
+			Loop.nonRandomDoublet(parent);
+		}
+	}
+	
+	public class RandomDoubletAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public RandomDoubletAction() {
+			super("Random Doublet");
+		}
+ 
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Random Doublet");
+			Loop.randomDoublet(parent);
+		}
+	}
+	
+	public class RandomTripletAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public RandomTripletAction() {
+			super("Random Triplet");
+		}
+ 
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Random Triplet");
+			Loop.randomTriplet(parent);
+		}
+	}
+	
 	public class RandomQuadAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
@@ -161,7 +206,7 @@ public class HarmonicsActionHandler extends JPanel {
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Random Quad");
-			HarmonicsEditor.randomQuad(parent);
+			Loop.randomQuad(parent);
 		}
 	}
 	
@@ -261,6 +306,9 @@ public class HarmonicsActionHandler extends JPanel {
         menuBar.add(harmonicsMenu);
         JMenu loopMenu = new JMenu("Loop");
         loopMenu.add(new RandomLoopAction());
+        loopMenu.add(new RandomTripletAction());
+        loopMenu.add(new NonRandomDoubletAction());
+        loopMenu.add(new RandomDoubletAction());
         loopMenu.add(new RandomQuadAction());
         menuBar.add(loopMenu);
         JMenu instrumentMenu = new JMenu("Instrument");

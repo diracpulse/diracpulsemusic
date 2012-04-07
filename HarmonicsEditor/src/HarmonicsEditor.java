@@ -90,26 +90,42 @@ public class HarmonicsEditor extends JFrame {
 	public void openFileInHarmonicsEditor() {
         fileName = FileTools.PromptForFileOpen(view);
         HarmonicsFileInput.ReadBinaryFileData(fileName);
+        removeNullHarmonics();
         this.setTitle(fileName);
         System.out.println("Hello");
         //view.repaint();
 	}
 	
+	public void removeNullHarmonics() {
+		for(long harmonicID: harmonicIDToHarmonic.keySet()) {
+			if(harmonicIDToHarmonic.get(harmonicID) == null) {
+				System.out.println("null found");
+				harmonicIDToHarmonic.remove(harmonicID);
+				continue;
+			}
+			if(!harmonicIDToHarmonic.get(harmonicID).containsData()) {
+				System.out.println("emptyHarmonicFound");
+				harmonicIDToHarmonic.remove(harmonicID);
+				continue;
+			}		
+		}
+	}
+	
 	public void loadInstrument() {
 		openFileInHarmonicsEditor();
-		for(Harmonic harmonic: harmonicIDToHarmonic.values()) harmonic.adjustAmplitudes(1.0);
+		for(Harmonic harmonic: harmonicIDToHarmonic.values()) harmonic.adjustAmplitudes(0.0);
 		SoftSynth.harmonicIDToInstrumentHarmonic = harmonicIDToHarmonic;
 	}
 	
 	public void loadKickDrum() {
 		openFileInHarmonicsEditor();
-		for(Harmonic harmonic: harmonicIDToHarmonic.values()) harmonic.adjustAmplitudes(2.0);
+		for(Harmonic harmonic: harmonicIDToHarmonic.values()) harmonic.adjustAmplitudes(0.0);
 		SoftSynth.harmonicIDToKickDrumHarmonic = harmonicIDToHarmonic;
 	}
 	
 	public void loadHighFreq() {
 		openFileInHarmonicsEditor();
-		for(Harmonic harmonic: harmonicIDToHarmonic.values()) harmonic.adjustAmplitudes(1.0);
+		for(Harmonic harmonic: harmonicIDToHarmonic.values()) harmonic.adjustAmplitudes(-2.0);
 		SoftSynth.harmonicIDToHighFreqHarmonic = harmonicIDToHarmonic;
 	}
 	
@@ -248,17 +264,17 @@ public class HarmonicsEditor extends JFrame {
 		return null;
 	}
 	
-	public static void randomLoop(HarmonicsEditor parent) {
-		String loopDescriptor = repeatRandomLoop(parent);
+	public static void repeatRandomLoop(HarmonicsEditor parent) {
+		String loopDescriptor = randomLoop(parent);
 		while(true) {
 			int choice = JOptionPane.showConfirmDialog(parent, "Save Loop");
 			switch (choice) {
 			case JOptionPane.YES_OPTION:
 				HarmonicsFileOutput.OutputStringToFile("loops.txt", loopDescriptor);
-				loopDescriptor = repeatRandomLoop(parent);
+				loopDescriptor = randomLoop(parent);
 				break;
 			case JOptionPane.NO_OPTION:
-				loopDescriptor = repeatRandomLoop(parent);
+				loopDescriptor = randomLoop(parent);
 				break;
 			case JOptionPane.CANCEL_OPTION:
 				playSelectedDataInCurrentWindow(parent);
@@ -267,84 +283,14 @@ public class HarmonicsEditor extends JFrame {
 		}
 	}
 	
-	public static void randomQuad(HarmonicsEditor parent) {
-		int arraySize = 7;
-		int numArrays = 0;
-		String fileName = "Quad" + System.currentTimeMillis() + ".txt";
-		NestedHashMap ntm = new NestedHashMap();
-		for(int chord1 = 0; chord1 < 10; chord1 += 2) {
-			for(int chord2 = 1; chord2 < 10; chord2 += 2) {
-				for(int chord3 = 0; chord3 < 10; chord3 += 2) {
-					for(int chord4 = 1; chord4 < 10; chord4 += 2) {
-						for(int deltaNote1 = -10; deltaNote1 <= 10; deltaNote1++) {
-							for(int deltaNote2 = -10; deltaNote2 <= 10; deltaNote2++) {
-								for(int deltaNote3 = -10; deltaNote3 <= 10; deltaNote3++) {
-									int[] array = new int[]{chord1,chord2,chord3,chord4,deltaNote1,deltaNote2,deltaNote3};
-									ntm.addArray(array);
-									numArrays++;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		int loopIndex = 0;
-		while(loopIndex < numArrays) {
-			ArrayList<Integer> randomQuad = ntm.getRandomArray();
-			if(randomQuad.size() < arraySize) continue;
-			loopIndex++;
-			int chord1 = randomQuad.get(0);
-			int chord2 = randomQuad.get(1);
-			int chord3 = randomQuad.get(2);
-			int chord4 = randomQuad.get(3);
-			int deltaNote1 = randomQuad.get(4);
-			int deltaNote2 = randomQuad.get(5);
-			int deltaNote3 = randomQuad.get(6);
-			StringBuffer loopDescriptor = new StringBuffer();
-			for(int index = 0; index < arraySize; index++) loopDescriptor.append(randomQuad.get(index) + " ");
-			System.out.println(loopDescriptor);
-			synthQuad(chord1, chord2, chord3, chord4, deltaNote1, deltaNote2, deltaNote3);
-			SoftSynth.addDataToHarmonicsEditor();
-			playSelectedDataInCurrentWindow(parent);
-			int choice = JOptionPane.showConfirmDialog(parent, loopDescriptor);
-			switch (choice) {
-				case JOptionPane.YES_OPTION:
-					HarmonicsFileOutput.OutputStringToFile(fileName, loopDescriptor.toString() + "Y\n");
-					break;
-				case JOptionPane.NO_OPTION:
-					HarmonicsFileOutput.OutputStringToFile(fileName, loopDescriptor.toString() + "N\n");
-					break;
-				case JOptionPane.CANCEL_OPTION:
-					HarmonicsFileOutput.OutputStringToFile(fileName, loopDescriptor.toString() + "C\n");
-					playSelectedDataInCurrentWindow(parent);
-					break;
-			}
-		}
-	}
-	
-	public static void synthQuad(int chord1, int chord2, int chord3, int chord4, 
-								 int deltaNote1, int deltaNote2, int deltaNote3) {
-		clearCurrentData();
-		SoftSynth.initLoop();
-		int duration = 75;
-		int note1 = frequencyInHzToNote(440.0); // + randomGenerator.nextInt(12) - 6;
-		int note2 = note1 + getNote(deltaNote1);
-		int note3 = note2 + getNote(deltaNote2);
-		int note4 = note3 + getNote(deltaNote3);
-		SoftSynth.addBeat(0, note1, getChord(chord1), duration, false);
-		SoftSynth.addBeat(duration, note2, getChord(chord2), duration, true);
-		SoftSynth.addBeat(duration * 2, note3, getChord(chord3), duration, false);
-		SoftSynth.addBeat(duration * 3, note4, getChord(chord4), duration, true);
-	}
-	
-	public static String repeatRandomLoop(HarmonicsEditor parent) {
+
+	public static String randomLoop(HarmonicsEditor parent) {
 		clearCurrentData();
 		SoftSynth.initLoop();
 		StringBuffer returnVal = new StringBuffer();
 		int centerNote = frequencyInHzToNote(350.0);
-		int duration = 80;
-		int numBeats = 2;
+		int duration = 75;
+		int numBeats = 4;
 		int repeat = randomGenerator.nextInt(numBeats - 1);
 		int beat = 0;
 		boolean useRepeat = false;
@@ -371,19 +317,6 @@ public class HarmonicsEditor extends JFrame {
 		//JOptionPane.showConfirmDialog(parent, "Ready To Play");
 		returnVal.append("\n");
 		return returnVal.toString();
-	}
-
-	
-	public static void addCompression(double ratio) {
-		double maxLogAmplitude = 0.0;
-		for(Harmonic harmonic: harmonicIDToHarmonic.values()) {
-			if(harmonic.getMaxLogAmplitude() > maxLogAmplitude) {
-				maxLogAmplitude = harmonic.getMaxLogAmplitude();
-			}
-		}
-		for(Harmonic harmonic: harmonicIDToHarmonic.values()) {
-			harmonic.addCompression(ratio, maxLogAmplitude);
-		}	
 	}
 
 	public static int frequencyInHzToNote(double freqInHz) {

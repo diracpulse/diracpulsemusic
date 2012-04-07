@@ -57,6 +57,7 @@ class LogLinear {
 	
 	public static ArrayList<FDData> dataInterpolate(ArrayList<FDData> input) {
 		ArrayList<FDData> output = new ArrayList<FDData>();
+		if(input.isEmpty()) return output;
 		int lowerTime = input.get(0).getTime();
 		double lowerValue = input.get(0).getLogAmplitude();
 		FDData currentData = input.get(0);

@@ -12,6 +12,12 @@ public class NestedHashMap {
 		data = new HashMap<Integer, NestedHashMap>();
 	}
 	
+	public boolean isEmpty() {
+		if(data == null) return true;
+		if(data.size() == 0) return true;
+		return false;
+	}
+	
 	public void addArray(int[] array) {
 		if(array == null) {
 			System.out.println("Error: NestedTreeMap.addArray: null array");
@@ -29,6 +35,43 @@ public class NestedHashMap {
 		data.get(key).addArray(subArray);
 	}
 	
+	public boolean removeArray(int[] array) {
+		return removeArray(array, 0);
+	}
+	
+	// returns true if key in current level does not have children
+	public boolean removeArray(int[] array, int index) {
+		if(index > array.length - 1) {
+			System.out.println("NestedTreeMap.removeArray: Array too long");
+			return false;
+		}
+		int key = array[index];
+		if(!data.containsKey(key)) {
+			System.out.println("NestedTreeMap.removeArray: Array does not exist in map");
+			return false;
+		}
+		if(isTerminal(key)) {
+			//System.out.println("NestedTreeMap.removeArray: isTerminal ");
+			//printArray(array);
+			data.remove(key);
+			if(data.isEmpty()) return true;
+			return false;
+		}
+		if(data.get(key).removeArray(array, index + 1)) {
+			//System.out.println("NestedTreeMap.removeArray: nested call " + index);
+			data.remove(key);
+			if(data.isEmpty()) return true;
+			return false;
+		}
+		//System.out.println("NestedTreeMap.removeArray: should not reach end of recursive call");
+		return false;
+	}
+	
+	public static void printArray(int[] array) {
+		for(int index: array) System.out.print(index + " ");
+		System.out.println();
+	}
+
 	public ArrayList<Integer> getRandomArray() {
 		ArrayList<Integer> returnVal = new ArrayList<Integer>();
 		int numKeys = data.size();
