@@ -276,7 +276,7 @@ public class Harmonic {
 		}
 		return (int) Math.round(noteSum / numNotes);
 	}
-	
+
 	public int getStartTime() {
 		return timeToData.firstKey();
 	}
@@ -317,17 +317,16 @@ public class Harmonic {
 		}
 	}
 	
-	public ArrayList<FDData> scaledHarmonic(int newStartTime, int newEndTime, int deltaNote, long harmonicID) {
+	public ArrayList<FDData> scaledHarmonic(int deltaTime, int endTime, int deltaNote, long harmonicID) {
 		TreeMap<Integer, FDData> newTimeToData = new TreeMap<Integer, FDData>();
-		int deltaTime = newStartTime - getStartTime();
 		try {
 			for(FDData data: timeToData.values()) {
 				int time = data.getTime() + deltaTime;
 				int note = data.getNote() + deltaNote;
-				if(time > newEndTime) break;
-				if(note >= FDData.getMaxNote()) break;
+				if(time > endTime) break;
+				if(note >= FDData.getMaxNote()) continue;
 				FDData newData = new FDData(time, note, data.getLogAmplitude(), harmonicID);
-				newTimeToData.put(data.getTime(), newData);
+				newTimeToData.put(time, newData);
 			}
 		} catch (Exception e) {
 			System.out.println("Harmonic.scaleNotes: Error creating data");

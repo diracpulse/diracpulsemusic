@@ -13,73 +13,72 @@ public class SoftSynth {
 	public static TreeMap<Long, Harmonic> harmonicIDToHighFreqHarmonic = null;
 	public static TreeMap<Long, Harmonic> harmonicIDToBassSynthHarmonic = null;
 	public static TreeMap<Long, Harmonic> harmonicIDToSnareHarmonic = null;
-	public static TreeMap<Integer, TreeMap<Integer, Harmonic>> timeToNoteToHarmonic = null;
+	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic = null;
 	public static TreeSet<Long> harmonicIDs;
 	public static final double logAmplitudeLimit = 12.0;
 	
 	public static void initLoop() {
-		timeToNoteToHarmonic = new TreeMap<Integer, TreeMap<Integer, Harmonic>>();
+		harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
 		harmonicIDs = new TreeSet<Long>();
 	}
 	
 	public static void addBeat(int startTime, int baseNote, int[] chords, int duration, boolean useHighFreq) {
 		int maxNote = HarmonicsEditor.frequencyInHzToNote(FDData.maxFrequencyInHz);
 		int minNote = HarmonicsEditor.frequencyInHzToNote(40.0);
-		int endTime = startTime + duration;
+		int endTime = startTime + duration - 1;
 		int lowestNote = maxNote;
 		int currentChord = 0;
 		while(lowestNote >= minNote) lowestNote -= 31;
 		lowestNote += 31;
-		double maxAmplitude = 0.0;
-		for(Harmonic harmonic: harmonicIDToInstrumentHarmonic.values()) {
-			if(harmonic.getMaxLogAmplitude() > maxAmplitude) maxAmplitude = harmonic.getMaxLogAmplitude();
+		double maxLogAmplitude = 0.0;
+		// Synth Main Instrument
+		if(harmonicIDToInstrumentHarmonic != null) {
+			synthInstrument(startTime, endTime, baseNote, harmonicIDToInstrumentHarmonic, true);
+			for(int chord: chords) {
+				currentChord += chord;
+				int note = baseNote + currentChord;
+				synthInstrument(startTime, endTime, note, harmonicIDToInstrumentHarmonic, true);
+			}
+			// find Max Amplitude for bass synth (otherwise 0)
+			for(Harmonic harmonic: harmonicIDToInstrumentHarmonic.values()) {
+				if(harmonic.getMaxLogAmplitude() > maxLogAmplitude) maxLogAmplitude = harmonic.getMaxLogAmplitude();
+			}
 		}
+		// Synth Bass Instrument
 		if(harmonicIDToBassSynthHarmonic != null) {
 			synthInstrument(startTime, endTime, lowestNote, harmonicIDToBassSynthHarmonic, true);
 		} else {
-			synthNoteWithOvertones(startTime, startTime + duration, lowestNote, baseNote, maxAmplitude);
+			synthNoteWithOvertones(startTime, endTime, lowestNote, baseNote, 16.0);
 		}
-		if(harmonicIDToInstrumentHarmonic != null) {
-			synthInstrument(startTime, endTime, baseNote, harmonicIDToInstrumentHarmonic, true);
-		} else {
-			System.out.println("No Main Instrument Selected");
-			return;
-		}
-		for(int chord: chords) {
-			currentChord += chord;
-			int note = baseNote + currentChord;
-			// Already checked for null above
-			synthInstrument(startTime, endTime, note, harmonicIDToInstrumentHarmonic, true);
-		}
+		// Synth Noise Sources
 		if(harmonicIDToKickDrumHarmonic != null) {
 			synthInstrument(startTime, endTime, -1, harmonicIDToKickDrumHarmonic, true);
 		}
 		if(useHighFreq) {
 			if(harmonicIDToHighFreqHarmonic != null) {
 				synthInstrument(startTime, endTime, -1, harmonicIDToHighFreqHarmonic, false);
-				removeDissonance(startTime);
-			} else {
-				removeDissonance(startTime);
 			}
 		} else {
 			if(harmonicIDToSnareHarmonic != null) {
-				removeDissonance(startTime);
 				synthInstrument(startTime, endTime, -1, harmonicIDToSnareHarmonic, false);
-			} else {
-				removeDissonance(startTime);
 			}
 		}
-		//removeDissonance(startTime);
+		//fitHarmonicsToChords(startTime, endTime, lowestNote, baseNote, chords);
+		//removeDissonance(startTime, endTime);
 		HarmonicsEditor.refreshView();
 	}
 	
 	public static void synthInstrument(int startTime, int endTime, int note, TreeMap<Long, Harmonic> harmonics, boolean overwrite) {
-		if(!timeToNoteToHarmonic.containsKey(startTime)) {
-			timeToNoteToHarmonic.put(startTime, new TreeMap<Integer, Harmonic>());
-		}
 		TreeMap<Integer, Harmonic> noteToHarmonic = new TreeMap<Integer, Harmonic>();
+		// Merge any harmonics with the same note in the instrument
 		for(Harmonic harmonic: harmonics.values()) {
-			noteToHarmonic.put(harmonic.getAverageNote(), harmonic);
+			if(!noteToHarmonic.containsKey(harmonic.getAverageNote())) {
+				noteToHarmonic.put(harmonic.getAverageNote(), harmonic);
+			} else {
+				Harmonic h1 = noteToHarmonic.get(harmonic.getAverageNote());
+				Harmonic newHarmonic = mergeHarmonics(h1, harmonic);
+				noteToHarmonic.put(harmonic.getAverageNote(), newHarmonic);
+			}
 		}
 		int firstNote = noteToHarmonic.firstKey();
 		int deltaNote = 0;
@@ -94,14 +93,7 @@ public class SoftSynth {
 			ArrayList<FDData> harmonicData = harmonic.scaledHarmonic(startTime, endTime, deltaNote, harmonicID);
 			Harmonic newHarmonic = new Harmonic(harmonicID);
 			for(FDData data: harmonicData) newHarmonic.addData(data);
-			int newNote = newHarmonic.getAverageNote();
-			if(timeToNoteToHarmonic.get(startTime).containsKey(newNote)) {
-				Harmonic currentHarmonic = timeToNoteToHarmonic.get(startTime).get(newNote);
-				Harmonic mergedHarmonic = mergeHarmonics(currentHarmonic, newHarmonic);
-				timeToNoteToHarmonic.get(startTime).put(newNote, mergedHarmonic);
-			} else {
-				timeToNoteToHarmonic.get(startTime).put(newNote, newHarmonic);
-			}
+			harmonicIDToHarmonic.put(harmonicID, newHarmonic);
 		}
 	}
 
@@ -142,84 +134,41 @@ public class SoftSynth {
 					returnVal.addData(timeToData1.get(time));
 				}
 			} else {
-				// timeToData1.containsKey(time) == false, so must be just data2
-				returnVal.addData(timeToData2.get(time));
+				if(timeToData2.containsKey(time)) {
+					returnVal.addData(timeToData2.get(time));
+				} else {
+					//returnVal.addData(getData(time, note, 0.0, harmonicID));
+				}
 			}
 		}
 		returnVal.setAllHarmonicIDsEqual();
 		return returnVal;
 	}
 	
-	public static void removeDissonance(int startTime) {
-		int time = startTime;
-		TreeSet<Integer> notesCopy = new TreeSet<Integer>();
-		for(int note: timeToNoteToHarmonic.get(time).keySet()) {
-			notesCopy.add(note);
-		}
-		int prevNote = -1;
-		int currentNote = -1;
-		for(int note: notesCopy) {
-			prevNote = currentNote;
-			currentNote = note;
-			Harmonic prevHarmonic = timeToNoteToHarmonic.get(time).get(prevNote);
-			Harmonic currentHarmonic = timeToNoteToHarmonic.get(time).get(currentNote);
-			if((currentNote - prevNote) < 2) {
-				System.out.println("dissonance");
-				if(prevHarmonic == null || currentHarmonic == null) break;
-				if(prevHarmonic.getMaxLogAmplitude() > currentHarmonic.getMaxLogAmplitude()) {
-					System.out.println("lower");
-					timeToNoteToHarmonic.get(time).remove(currentNote);
-					currentNote = prevNote;
-					continue;
-				} else {
-					System.out.println("upper");
-					timeToNoteToHarmonic.get(time).remove(prevNote);
-					continue;
-				}
-			}
-		}
-	}
-	
-	public static Harmonic copyHarmonic(Harmonic harmonic) {
-		Harmonic returnVal = new Harmonic(HarmonicsEditor.getRandomID());
+	public static FDData getData(int time, int note, double logAmplitude, long harmonicID) {
+		FDData returnVal = null;
 		try {
-			for(FDData data: harmonic.getAllData()) {
-				returnVal.addData(new FDData(data.getTime(), data.getNote(), data.getLogAmplitude(), returnVal.getHarmonicID()));
-			}
+			returnVal = new FDData(time, note, 0.0, harmonicID);
 		} catch (Exception e) {
-			System.out.println("SoftSynth.copyHarmonic: Error creating data");
+			System.out.println("SoftSynth.mergeHarmonics: Error creating data");
 		}
 		return returnVal;
 	}
-		
-	public static void addDataToHarmonicsEditor() {
-		for(int time: timeToNoteToHarmonic.keySet()) {
-			harmonicIDs = new TreeSet<Long>();
-			for(Harmonic harmonic: timeToNoteToHarmonic.get(time).values()) {
-				harmonic.addCompressionWithLimiter(4.0, 14.0);
-				long harmonicID = harmonic.getHarmonicID();
-				if(harmonicIDs.contains(harmonicID)) {
-					System.out.println("Duplicate");
-					continue;
-				} else {
-					System.out.println("New");
-				}
-				harmonicIDs.add(harmonicID);
-				System.out.println(harmonic.getHarmonicID());
-				for(FDData data: harmonic.getAllData()) {
-					HarmonicsEditor.addData(data);
-				}
-			}
-		}
-	}
 	
-	public static boolean checkHarmonicID(long harmonicID) {
-		if(harmonicIDs.contains(harmonicID)) {
-			System.out.println("Duplicate!");
-			return true;
-		} else {
+
+	public static void addDataToHarmonicsEditor() {
+		harmonicIDs = new TreeSet<Long>();
+		for(Harmonic harmonic: harmonicIDToHarmonic.values()) {
+			harmonic.addCompressionWithLimiter(4.0, 14.0);
+			long harmonicID = harmonic.getHarmonicID();
+			if(harmonicIDs.contains(harmonicID)) {
+				System.out.println("Duplicate");
+				continue;
+			}
 			harmonicIDs.add(harmonicID);
-			return false;
+			for(FDData data: harmonic.getAllData()) {
+				HarmonicsEditor.addData(data);
+			}
 		}
 	}
 
@@ -236,7 +185,7 @@ public class SoftSynth {
 			harmonic.addData(end);
 			TreeMap<Long, Harmonic> harmonicsArg = new TreeMap<Long, Harmonic>();
 			harmonicsArg.put(harmonicID, harmonic);
-			synthInstrument(startTime, endTime, note, harmonicsArg, true);
+			synthInstrument(0, endTime, note, harmonicsArg, true);
 		} catch (Exception e) {
 			System.out.println("HarmonicsEditor.synthNoteWithOvertones() error creating data:" + e.getMessage());
 		}		
@@ -257,59 +206,5 @@ public class SoftSynth {
 			System.out.println("HarmonicsEditor.synthNoteWithOvertones() error creating data:" + e.getMessage());
 		}
 	}
-	
-	
-	public static void synthFormants(int startTime, int note, double maxAmplitude) {
-		try {
-			double taperAmplitudeMultiple = 1.0;
-			double oddHarmonicAddition = -2.0;
-			double evenHarmonicAddition = -4.0;
-			int prevNote = note - 3;
-			int harmonic = 2;
-			while((harmonic * HarmonicsEditor.noteToFrequencyInHz(note)) < FDData.maxFrequencyInHz) {
-				int currentNote = HarmonicsEditor.frequencyInHzToNote(HarmonicsEditor.noteToFrequencyInHz(note) * harmonic);
-				if((currentNote - 3) < prevNote) {
-					harmonic++;
-					continue;
-				}
-				long harmonicID = HarmonicsEditor.getRandomID();
-				double taper = (currentNote - note) / (double) FDData.noteBase;
-				taper = Math.pow(taper, 1.0);
-				double amplitude = maxAmplitude - (taperAmplitudeMultiple * taper);
-				if(harmonic % 2 == 1) {
-					amplitude += oddHarmonicAddition;
-				} else {
-					amplitude += evenHarmonicAddition;
-				}
-				if(amplitude < 0) {
-					harmonic++;
-					continue;
-				}
-				FDData start = new FDData(startTime, currentNote, amplitude, harmonicID);
-				FDData attack = new FDData(startTime + 2, currentNote, amplitude, harmonicID);
-				FDData end = new FDData(startTime + 10, currentNote, 0.0, harmonicID);
-				HarmonicsEditor.addData(start);
-				HarmonicsEditor.addData(attack);
-				HarmonicsEditor.addData(end);
-				harmonic++;
-				prevNote = currentNote;
-			}
-		} catch (Exception e) {
-			System.out.println("HarmonicsEditor.synthNoteWithOvertones() error creating data:" + e.getMessage());
-		}	
-	}
-	
-	public static void addFlanking(int startTime, int endTime, int note, double maxAmplitude, double minAmplitude) {
-		try {
-			double startAmplitude = maxAmplitude - 4;
-			double endAmplitude = minAmplitude - 4;
-			if(startAmplitude < 3.0) return;
-			if(endAmplitude < 0.0) endAmplitude = 0.0;
-			//synthSingleNote(startTime, endTime, note + 1, startAmplitude, endAmplitude);
-			//synthSingleNote(startTime, endTime, note - 1, startAmplitude, endAmplitude);
-		} catch (Exception e) {
-			System.out.println("HarmonicsEditor.addFlanking() error creating data:" + e.getMessage());
-		}
-	}
-	
+
 }
