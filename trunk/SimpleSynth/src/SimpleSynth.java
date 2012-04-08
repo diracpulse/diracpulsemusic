@@ -61,8 +61,9 @@ public class SimpleSynth {
 	}
 	
 	public static void main(String[] args) {
-		randomGenerator = new Random();
-		genArrays();
+		//randomGenerator = new Random();
+		//genArrays();
+		Stats.printStatistics();
 		System.exit(0);
 	}
 	

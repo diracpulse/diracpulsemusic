@@ -135,8 +135,10 @@ public class Loop {
 			synthTriplet(chord1, chord2, chord3, deltaNote1, deltaNote2);
 			SoftSynth.addDataToHarmonicsEditor();
 			HarmonicsEditor.playSelectedDataInCurrentWindow(parent);
-			String fileString = loopDescriptor.toString() + getRating(parent, loopDescriptor.toString()); 
-			HarmonicsFileOutput.OutputStringToFile(fileName, fileString + "\n");
+			String fileString = loopDescriptor.toString();
+			Integer rating = getRating(parent, loopDescriptor.toString());
+			if(rating == null) return;
+			HarmonicsFileOutput.OutputStringToFile(fileName, fileString + " " + rating + "\n");
 		}
 	}
 	
