@@ -40,7 +40,7 @@ public class FDData {
 	public FDData(int time, int note, float logAmplitude) throws Exception {
 		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
 		if(!withinBounds(time, note, 0.0, logAmplitude)) {
-			throw new Exception("FDData [" + time + "|" + note + "|" + logAmplitude + "]");
+			throw new Exception();
 		}
 		this.time = time;
 		this.note = note;
@@ -51,7 +51,8 @@ public class FDData {
 	public FDData(int time, int note, float logAmplitude, long id) throws Exception {
 		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
 		if(!withinBounds(time, note, 0.0, logAmplitude)) {
-			throw new Exception("FDData [" + time + "|" + note + "|" + logAmplitude + "]");
+			System.out.println("ERROR: FDData [" + time + "|" + note + "|" + logAmplitude + "|" + id + "]");
+			throw new Exception();
 		}
 		this.time = time;
 		this.note = note;
@@ -63,7 +64,8 @@ public class FDData {
 	public FDData(int time, int note, double logAmplitude, long id) throws Exception {
 		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
 		if(!withinBounds(time, note, 0.0, logAmplitude)) {
-			throw new Exception("FDData [" + time + "|" + note + "|" + logAmplitude + "]");
+			System.out.println("ERROR: FDData [" + time + "|" + note + "|" + logAmplitude + "|" + id + "]");
+			throw new Exception();
 		}
 		this.time = time;
 		this.note = note;
