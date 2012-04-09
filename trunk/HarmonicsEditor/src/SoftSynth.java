@@ -29,7 +29,6 @@ public class SoftSynth {
 		int currentChord = 0;
 		while(lowestNote >= minNote) lowestNote -= 31;
 		lowestNote += 31;
-		double maxLogAmplitude = 0.0;
 		// Synth Main Instrument
 		if(harmonicIDToInstrumentHarmonic != null) {
 			synthInstrument(startTime, endTime, baseNote, harmonicIDToInstrumentHarmonic, true);
@@ -38,18 +37,21 @@ public class SoftSynth {
 				int note = baseNote + currentChord;
 				synthInstrument(startTime, endTime, note, harmonicIDToInstrumentHarmonic, true);
 			}
-			// find Max Amplitude for bass synth (otherwise 0)
-			for(Harmonic harmonic: harmonicIDToInstrumentHarmonic.values()) {
-				if(harmonic.getMaxLogAmplitude() > maxLogAmplitude) maxLogAmplitude = harmonic.getMaxLogAmplitude();
+		} else {
+			synthNoteWithOvertones(startTime, endTime, baseNote, maxNote, 14.0);
+			for(int chord: chords) {
+				currentChord += chord;
+				int note = baseNote + currentChord;
+				synthNoteWithOvertones(startTime, endTime, note, maxNote, 14.0);
 			}
 		}
 		// Synth Bass Instrument
 		if(harmonicIDToBassSynthHarmonic != null) {
 			synthInstrument(startTime, endTime, lowestNote, harmonicIDToBassSynthHarmonic, true);
 		} else {
-			synthNoteWithOvertones(startTime, endTime, lowestNote, baseNote, 16.0);
+			synthNoteWithOvertones(startTime, endTime, lowestNote, baseNote, 14.0);
 		}
-		//fitHarmonicsToChords(startTime, lowestNote, chords, true);
+		fitHarmonicsToChords(startTime, lowestNote, chords, true);
 		// Synth Noise Sources
 		if(harmonicIDToKickDrumHarmonic != null) {
 			synthInstrument(startTime, endTime, -1, harmonicIDToKickDrumHarmonic, true);
@@ -95,7 +97,7 @@ public class SoftSynth {
 		for(Harmonic harmonic: harmonics) {
 			int note = harmonic.getAverageNote();
 			if(noteToHarmonic.containsKey(note)) {
-				System.out.println("SoftSynth.fitHarmonicsToChords: duplicate note");
+				//System.out.println("SoftSynth.fitHarmonicsToChords: duplicate note");
 				noteToHarmonic.put(note, mergeHarmonics(noteToHarmonic.get(note), harmonic));
 			}
 			noteToHarmonic.put(note, harmonic);
@@ -129,7 +131,7 @@ public class SoftSynth {
 			beatStartTimeToHarmonics.put(startTime, new ArrayList<Harmonic>(noteToHarmonic.values()));
 		}
 	}
-	
+		
 	public static Harmonic mergeHarmonics(ArrayList<Harmonic> harmonics, int mergeNote) {
 		if(harmonics.size() == 0) return null;
 		long harmonicID = HarmonicsEditor.getRandomID();
@@ -183,7 +185,7 @@ public class SoftSynth {
 				if(timeToData2.containsKey(time)) {
 					returnVal.addData(timeToData2.get(time));
 				} else {
-					//returnVal.addData(getData(time, note, 0.0, harmonicID));
+					returnVal.addData(getData(time, h1.getAverageNote(), 0.0, harmonicID));
 				}
 			}
 		}
@@ -218,9 +220,9 @@ public class SoftSynth {
 		try {
 			long harmonicID =  HarmonicsEditor.getRandomID();
 			int attackTime = startTime + 2;
-			FDData start = new FDData(startTime, note, amplitude / 2.0, harmonicID);
+			FDData start = new FDData(startTime, note, amplitude - 2.0, harmonicID);
 			FDData attack = new FDData(attackTime, note, amplitude, harmonicID);
-			FDData end = new FDData(endTime, note, amplitude -2.0, harmonicID);
+			FDData end = new FDData(endTime, note, amplitude - 2.0, harmonicID);
 			Harmonic harmonic = new Harmonic(harmonicID);
 			harmonic.addData(start);
 			harmonic.addData(attack);
@@ -235,13 +237,15 @@ public class SoftSynth {
 
 	public static void synthNoteWithOvertones(int startTime, int endTime, int minNote, int maxNote, double maxAmplitude) {
 		int note = minNote;
+		int duration = endTime - startTime;
 		try {
 			while(note < maxNote) {
 				double taper = (note - minNote) / (double) FDData.noteBase;
-				taper = Math.pow(taper, 1.25);
+				taper = Math.pow(taper, 1.5);
 				double currentAmplitude = maxAmplitude - taper;
+				int currentEndTime = startTime + duration; // (int) Math.round(duration / (taper * 0.25 + 1.0));
 				if(currentAmplitude < 2.0) break;
-				synthSingleNote(startTime, endTime, note, currentAmplitude);
+				synthSingleNote(startTime, currentEndTime, note, currentAmplitude);
 				note += 31;
 			}	
 		} catch (Exception e) {

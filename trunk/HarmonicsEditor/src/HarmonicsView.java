@@ -69,6 +69,7 @@ public class HarmonicsView extends JComponent {
 	}
 	
 	public void drawFileData(Graphics g) {
+		if(HarmonicsEditor.harmonicIDToHarmonic == null) return;
 		HarmonicsUtils.compileNoteToPixelY();
 		//System.out.println("Finished Compiling");
 		drawLeftNotes(g);
