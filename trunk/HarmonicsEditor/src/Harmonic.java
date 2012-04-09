@@ -317,7 +317,23 @@ public class Harmonic {
 		}
 	}
 	
-	public ArrayList<FDData> scaledHarmonic(int deltaTime, int endTime, int deltaNote, long harmonicID) {
+	public ArrayList<FDData> getScaledAverageNote(int newAverageNote) {
+		TreeMap<Integer, FDData> newTimeToData = new TreeMap<Integer, FDData>();
+		int deltaNote = newAverageNote - getAverageNote();
+		try {
+			for(FDData data: timeToData.values()) {
+				int note = data.getNote() + deltaNote;
+				if(note >= FDData.getMaxNote()) continue;
+				FDData newData = new FDData(data.getTime(), note, data.getLogAmplitude(), harmonicID);
+				newTimeToData.put(data.getTime(), newData);
+			}
+		} catch (Exception e) {
+			System.out.println("Harmonic.scaleNotes: Error creating data");
+		}
+		return new ArrayList<FDData>(newTimeToData.values());
+	}
+	
+	public ArrayList<FDData> getScaledHarmonic(int deltaTime, int endTime, int deltaNote, long harmonicID) {
 		TreeMap<Integer, FDData> newTimeToData = new TreeMap<Integer, FDData>();
 		try {
 			for(FDData data: timeToData.values()) {
