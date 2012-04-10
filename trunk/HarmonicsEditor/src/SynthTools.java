@@ -14,7 +14,10 @@ class SynthTools {
 	static HarmonicsEditor parent;
 
 	static void createPCMData(HarmonicsEditor parent) {
-		PCMData = FastSynth.synthHarmonics(new ArrayList<Harmonic>(parent.harmonicIDToHarmonic.values()));
+		//PCMData = FastSynth.synthHarmonics(new ArrayList<Harmonic>(parent.harmonicIDToHarmonic.values()));
+		if(HarmonicsEditor.harmonicIDToHarmonic == null || HarmonicsEditor.harmonicIDToHarmonic.isEmpty()) return;
+		PCMData = HarmonicsFileOutput.SynthFDDataExternally(
+				new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonic.values()));
 	}
 	
 	static void createPCMData(HarmonicsEditor parent, int startTime, int endTime) {
@@ -57,6 +60,7 @@ class SynthTools {
 	}
 	
 	public static void playWindow() {
+		if(PCMData == null) return;
 		AudioPlayer ap = new AudioPlayer(parent, PCMData, 1.0);
 		ap.start();
 	}
