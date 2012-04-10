@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -28,7 +29,14 @@ public class HarmonicsFileOutput {
 		}
 	}
 	
-	public static double[] SynthFDDataExternally(ArrayList<FDData> allData) {
+	public static double[] SynthFDDataExternally(ArrayList<Harmonic> harmonics) {
+		int index = 0;
+		ArrayList<FDData> allData = new ArrayList<FDData>();
+		for(Harmonic harmonic: harmonics) {
+			for(FDData data: harmonic.getAllData()) {
+				allData.add(data);
+			}
+		}
 		ByteBuffer littleEndian = ByteBuffer.allocate(allData.size() * (4 + 4 + 8 + 8));
 		littleEndian.order(ByteOrder.LITTLE_ENDIAN);
 		for(FDData data: allData) {
@@ -48,35 +56,35 @@ public class HarmonicsFileOutput {
 		}
 		System.out.println("OutputFDDataToFile: Finished Writing Data");
 		try {
+			String lineIn;
 			Process p = Runtime.getRuntime().exec("synth");
+			BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			while ((lineIn = stdInput.readLine()) != null) System.out.println(lineIn);
 			p.waitFor();
 		} catch (Exception e) {
 			System.out.println("OutputFDDataToFile: Error running synth");
 		}
-		File file = new File("synthOutput.dat");
-		long length = file.length();
-		byte[] fileInput = new byte[(int) length];
-		DataInputStream selectedIn = null;
+		//File file = new File("synthOutput.dat");
+		long length = 0;
+		byte[] fileInput = null;
 	    try {
-	    	selectedIn = new DataInputStream(new
+	    	DataInputStream selectedIn = new DataInputStream(new
 	    			BufferedInputStream(new FileInputStream("synthOutput.dat")));
-	    } catch (Exception e) {
-	    	System.out.println("Error Opening File");
-	    	return null;
-	    }
-	    try {
+	    	length = selectedIn.available();
+	    	fileInput = new byte[(int) length];
 	    	selectedIn.readFully(fileInput);
-            selectedIn.close();
+	    	selectedIn.close();
 		} catch (Exception e) {
 			System.out.println("Exception in FileOutput.OutputSelectedToFile");
 		}
-		littleEndian = ByteBuffer.allocate((int) length);
-		littleEndian.order(ByteOrder.LITTLE_ENDIAN);
-		littleEndian.put(fileInput);
-		int numSamples = (int) (length / 8);
-		double[] returnVal = new double[numSamples];
-		for(int index = 0; index < numSamples; index++) {
-			returnVal[index] = littleEndian.getDouble();
+		int numDoubles = (int) length / 8;
+		ByteBuffer littleEndian2 = ByteBuffer.allocate((int)length);
+		littleEndian2.order(ByteOrder.LITTLE_ENDIAN);
+		littleEndian2.put(fileInput);
+		littleEndian2.position(0);
+		double[] returnVal = new double[numDoubles];
+		for(index = 0; index < numDoubles; index++) {
+			returnVal[index] = littleEndian2.getDouble();
 		}
 		return returnVal;
 	}

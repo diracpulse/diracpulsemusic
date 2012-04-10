@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define MAXSAMPLES 441000
-#define MAXDATA 3100
+#define MAXSAMPLES (44100 * 60 * 5)
+#define MAXDATA (31 * 10 * 200 * 60)
 
 int numFDData = 0;
 int maxSample = 0;
@@ -29,24 +29,38 @@ struct FDData {
 	long harmonicID;
 } FDDataArray[MAXDATA];
 
-int *timeIn;
-int *noteIn;
-double *logAmplitudeIn;
-long *harmonicIDIn;
+int timeIn;
+int noteIn;
+double logAmplitudeIn;
+long harmonicIDIn;
 
 
+void printFDData(struct FDData data, int index) {
+	printf("FDData: ");
+	printf("index: %d ", index);
+	int time = data.time;
+	int note = data.note;
+	double logAmplitude = data.logAmplitude;
+	long harmonicID = data.harmonicID;
+	printf("t: %d ", time);
+	printf("n: %d ", note);
+	printf("la: %e ", logAmplitude);
+	printf("hID: %li ", harmonicID);
+	printf("\n");
+}
 
 void LoadDataFromFile(FILE *stream, int offset, int index) {
-	fseek(stream, (long) offset, 0);
+	//printf("LoadDataFromFile");
+	fseek(stream, offset, SEEK_SET);
 	fread((void *) &timeIn, sizeof(int), 1, stream);
 	fread((void *) &noteIn, sizeof(int), 1, stream);
 	fread((void *) &logAmplitudeIn, sizeof(double), 1, stream);
 	fread((void *) &harmonicIDIn, sizeof(long), 1, stream);
-	FDDataArray[index].time = *timeIn;
-	FDDataArray[index].note = *noteIn;
-	FDDataArray[index].logAmplitude = *logAmplitudeIn;
-	FDDataArray[index].harmonicID = *harmonicIDIn;
-	dAverageNote += (double) FDDataArray[index].note;
+	FDDataArray[index].time = timeIn;
+	FDDataArray[index].note = noteIn;
+	FDDataArray[index].logAmplitude = logAmplitudeIn;
+	FDDataArray[index].harmonicID = harmonicIDIn;
+	//printFDData(FDDataArray[index], index);
 }
 
 void WriteDataToFile(FILE *stream) {
@@ -54,13 +68,17 @@ void WriteDataToFile(FILE *stream) {
 }
 
 int ReadAllData(FILE *stream) {
+	//printf("ReadAllData\n");
 	fseek(stream, 0, SEEK_END);
 	inputFileLength = (int) ftell(stream);
+	//printf("inputFileLength %d\n", inputFileLength);
 	int offset;
 	int index = 0;
+	fseek(stream, 0, SEEK_SET);
 	for(offset = 0; offset < inputFileLength; offset += (4 + 4 + 8 + 8)) {
 		LoadDataFromFile(stream, offset, index);
 		index++;
+		//printf("index %d\n", index);
 	}
 	numFDData = index;
 	return 0;
@@ -72,7 +90,7 @@ void Normalize() {
 	for(arrayIndex = 0; arrayIndex < maxSample; arrayIndex++) {
 		if(sampleArray[arrayIndex] > maxAmplitude) maxAmplitude = sampleArray[arrayIndex];
 	}
-	if(maxAmplitude == 0) {
+	if(maxAmplitude == 0.0) {
 		printf("No Sample Data\n");
 		return;
 	}
@@ -82,22 +100,25 @@ void Normalize() {
 }
 
 void SynthHarmonicFlat(int startIndex, int endIndex) {
+	//printf("startIndex: %d endIndex: %d\n", startIndex, endIndex);
 	int arrayIndex;
 	int timeIndex;
 	int maxArrayIndex = numFDData;
 	double currentPhase = 0.0;
-	int averageNote = round(dAverageNote / (double) numFDData);
-	double averageFreq = pow(2.0, (double) averageNote / notesPerOctave);
-	double deltaPhase = (averageFreq / sampleRate) * twoPI;
-	for(arrayIndex = startIndex; arrayIndex < endIndex - 1; arrayIndex++) {
+	for(arrayIndex = startIndex; arrayIndex < endIndex; arrayIndex++) {
+		double averageNote = (double) FDDataArray[arrayIndex].note + (double) FDDataArray[arrayIndex + 1].note;
+		averageNote /= 2.0;
+		double freqInHz = pow(2.0, (double) averageNote / (double) notesPerOctave);
+		double deltaPhase = (freqInHz / sampleRate) * twoPI;
 		int lowerTime = round(FDDataArray[arrayIndex].time * timeToSample);
 		int upperTime = round(FDDataArray[arrayIndex + 1].time * timeToSample);
 		if(upperTime > maxSample) maxSample = upperTime;
 		double lowerLogAmplitude = FDDataArray[arrayIndex].logAmplitude;
 		double upperLogAmplitude = FDDataArray[arrayIndex + 1].logAmplitude;
 		double slope = (upperLogAmplitude - lowerLogAmplitude) / (upperTime - lowerTime);
+		//printf("lt: %d ut: %d s: %f fih: %f dp: %f\n", lowerTime, upperTime, slope, freqInHz, deltaPhase);
 		for(timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
-			double logAmplitude = lowerLogAmplitude + (timeIndex - lowerTime) * slope;
+			double logAmplitude = lowerLogAmplitude + ((double) timeIndex - (double) lowerTime) * slope;
 			double amplitude = exp(logAmplitude * log2val);
 			sampleArray[timeIndex] += sin(currentPhase) * amplitude;
 			currentPhase += deltaPhase;
@@ -149,7 +170,7 @@ int main(int argc, char *argv[])
 	}
 	ReadAllData(input);
 	SynthAllData();
-	Normalize();
+	//Normalize();
 	WriteDataToFile(output);
 	fclose(input);
 	fclose(output);
