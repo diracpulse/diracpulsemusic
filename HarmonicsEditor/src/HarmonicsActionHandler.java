@@ -206,7 +206,7 @@ public class HarmonicsActionHandler extends JPanel {
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Random Quad");
-			Loop.randomQuad(parent);
+			Loop.synthRandomLoopRepeat(parent);
 		}
 	}
 	

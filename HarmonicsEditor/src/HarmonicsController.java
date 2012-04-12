@@ -32,8 +32,9 @@ public class HarmonicsController implements MouseListener, ActionListener {
 	    	HarmonicsEditor.controlPanel.handleMouseClick(x, y);
 	    	return;
 	    }
-	    int time = HarmonicsUtils.pixelXToTimeRange(x).getLower();
+	    int time = HarmonicsUtils.pixelXToTime(x);
 	    int note = HarmonicsUtils.pixelYToNote(y);
+	    System.out.println("Mouse Pressed: time:" + time + " note:" + note);
 	}
 	
 	public void mouseClicked(MouseEvent e){
