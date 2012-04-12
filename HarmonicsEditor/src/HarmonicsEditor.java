@@ -288,26 +288,29 @@ public class HarmonicsEditor extends JFrame {
 		SoftSynth.initLoop();
 		StringBuffer returnVal = new StringBuffer();
 		int centerNote = frequencyInHzToNote(350.0);
-		int duration = 75;
-		int numBeats = 4;
-		int repeat = randomGenerator.nextInt(numBeats - 1);
+		int currentTime = 0; 
+		int minDuration = 50;
+		int maxDuration = 100;
+		int[] beatDurations = new int[] {100, 75, 75, 100};
+		int repeat = randomGenerator.nextInt(beatDurations.length - 1);
 		int beat = 0;
 		boolean useRepeat = false;
 		boolean useHighFreq = false;
-		while(beat < numBeats) {
+		for(int duration: beatDurations) {
 			int note = centerNote + randomGenerator.nextInt(26) - 13;
 			int randomChordIndex = randomGenerator.nextInt(10);
 			returnVal.append(note + "," + randomChordIndex + "|");
 			int[] chords = getChord(randomChordIndex);
 			useHighFreq = false;
 			if(beat % 2 == 1) useHighFreq = true;
-			SoftSynth.addBeat(beat * duration, note, chords, duration, useHighFreq);
+			SoftSynth.addBeat(currentTime, note, chords, duration, useHighFreq);
 			if(beat == repeat && useRepeat) {
 				beat++;
 				useHighFreq = false;
 				if(beat % 2 == 1) useHighFreq = true;
-				SoftSynth.addBeat(beat * duration, note, chords, duration, useHighFreq);
+				SoftSynth.addBeat(currentTime, note, chords, duration, useHighFreq);
 			}
+			currentTime += duration;
 			beat++;
 		}
 		SoftSynth.addDataToHarmonicsEditor();
