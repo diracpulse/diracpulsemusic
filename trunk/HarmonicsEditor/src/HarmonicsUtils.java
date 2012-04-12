@@ -84,20 +84,17 @@ public class HarmonicsUtils {
 		return testNote + 1;
 	}
 	
-	public static int timeToPixelX(int time) {
-		return (time - HarmonicsEditor.leftX) * pixelsPerTime + HarmonicsEditor.leftOffset;
-	}
-	
 	public static boolean timeToDrawSegment(int time) {
-		//if(time % (HarmonicsEditor.xStep) == 0) return true;
 		return true;
 	}
 	
-	public static HarmonicsUtils.Range pixelXToTimeRange(int pixelX) {
+	public static int timeToPixelX(int time) {
+		return (time - HarmonicsEditor.leftX) * pixelsPerTime + HarmonicsEditor.leftOffset;
+	}
+		
+	public static int pixelXToTime(int pixelX) {
 		pixelX -= HarmonicsEditor.leftOffset;
-		int startTime = (pixelX - HarmonicsEditor.leftX) / pixelsPerTime;
-		int endTime = startTime + HarmonicsEditor.xStep / pixelsPerTime - 1;
-		return new HarmonicsUtils.Range(startTime, endTime);
+		return (pixelX / pixelsPerTime) + HarmonicsEditor.leftX;
 	}
 	
 	public static void DrawAmplitudeVertical(Graphics g, Color b, int screenX, int screenY, int numDigits, double value) {

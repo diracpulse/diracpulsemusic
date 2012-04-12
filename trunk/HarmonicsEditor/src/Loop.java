@@ -1,8 +1,38 @@
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
 import javax.swing.JOptionPane;
+import javax.swing.Timer;
 
-public class Loop {
+public class Loop implements ActionListener {
+	
+	public static class Beat {
+		
+		int baseNote;
+		int[] chord;
+		int duration;
+		
+		public Beat(int baseNote, int[] chord, int duration) {
+			this.baseNote = baseNote;
+			this.chord = new int[chord.length];
+			for(int index = 0; index < chord.length; index++) this.chord[index] = chord[index];
+			this.duration = duration;
+		}
+		
+		public int getBaseNote() {
+			return baseNote;
+		}
+		
+		public int[] getChord() {
+			return chord;
+		}
+		
+		public int getDuration() {
+			return duration; 
+		}
+		
+	}
 	
 	public static void nonRandomDoublet(HarmonicsEditor parent) {
 		String fileName = "Doublet" + System.currentTimeMillis() + ".txt";
@@ -97,8 +127,8 @@ public class Loop {
 		SoftSynth.initLoop();
 		int duration = 75;
 		int note2 = baseNote + deltaNote1;
-		SoftSynth.addBeat(0, baseNote, HarmonicsEditor.getChord(chord1), duration, false);
-		SoftSynth.addBeat(duration, note2, HarmonicsEditor.getChord(chord2), duration, true);
+		SoftSynth.addBeat(0, baseNote, getChord(chord1), duration, false);
+		SoftSynth.addBeat(duration, note2, getChord(chord2), duration, true);
 	}
 	
 	public static void randomTriplet(HarmonicsEditor parent) {
@@ -149,81 +179,89 @@ public class Loop {
 		int note1 = HarmonicsEditor.frequencyInHzToNote(440.0) + HarmonicsEditor.randomGenerator.nextInt(12) - 6;
 		int note2 = note1 + deltaNote1;
 		int note3 = note2 + deltaNote2;
-		SoftSynth.addBeat(0, note1, HarmonicsEditor.getChord(chord1), duration, false);
-		SoftSynth.addBeat(duration, note2, HarmonicsEditor.getChord(chord2), duration, true);
-		SoftSynth.addBeat(duration * 2, note3, HarmonicsEditor.getChord(chord3), duration, false);
+		SoftSynth.addBeat(0, note1, getChord(chord1), duration, false);
+		SoftSynth.addBeat(duration, note2, getChord(chord2), duration, true);
+		SoftSynth.addBeat(duration * 2, note3, getChord(chord3), duration, false);
 	}
 	
-	
-	public static void randomQuad(HarmonicsEditor parent) {
-		int arraySize = 7;
-		int numArrays = 0;
-		String fileName = "Quad" + System.currentTimeMillis() + ".txt";
-		NestedHashMap ntm = new NestedHashMap();
-		for(int chord1 = 0; chord1 < 10; chord1 += 2) {
-			for(int chord2 = 1; chord2 < 10; chord2 += 2) {
-				for(int chord3 = 0; chord3 < 10; chord3 += 2) {
-					for(int chord4 = 1; chord4 < 10; chord4 += 2) {
-						for(int deltaNote1 = -10; deltaNote1 <= 10; deltaNote1++) {
-							for(int deltaNote2 = -10; deltaNote2 <= 10; deltaNote2++) {
-								for(int deltaNote3 = -10; deltaNote3 <= 10; deltaNote3++) {
-									int[] array = new int[]{chord1,chord2,chord3,chord4,deltaNote1,deltaNote2,deltaNote3};
-									ntm.addArray(array);
-									numArrays++;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		int loopIndex = 0;
-		while(loopIndex < numArrays) {
-			ArrayList<Integer> randomQuad = ntm.getRandomArray();
-			if(randomQuad.size() < arraySize) continue;
-			loopIndex++;
-			int chord1 = randomQuad.get(0);
-			int chord2 = randomQuad.get(1);
-			int chord3 = randomQuad.get(2);
-			int chord4 = randomQuad.get(3);
-			int deltaNote1 = randomQuad.get(4);
-			int deltaNote2 = randomQuad.get(5);
-			int deltaNote3 = randomQuad.get(6);
-			StringBuffer loopDescriptor = new StringBuffer();
-			for(int index = 0; index < arraySize; index++) loopDescriptor.append(randomQuad.get(index) + " ");
-			System.out.println(loopDescriptor);
-			synthQuad(chord1, chord2, chord3, chord4, deltaNote1, deltaNote2, deltaNote3);
-			SoftSynth.addDataToHarmonicsEditor();
-			HarmonicsEditor.playSelectedDataInCurrentWindow(parent);
-			int choice = JOptionPane.showConfirmDialog(parent, loopDescriptor);
-			switch (choice) {
-				case JOptionPane.YES_OPTION:
-					HarmonicsFileOutput.OutputStringToFile(fileName, loopDescriptor.toString() + "Y\n");
-					break;
-				case JOptionPane.NO_OPTION:
-					HarmonicsFileOutput.OutputStringToFile(fileName, loopDescriptor.toString() + "N\n");
-					break;
-				case JOptionPane.CANCEL_OPTION:
-					HarmonicsFileOutput.OutputStringToFile(fileName, loopDescriptor.toString() + "C\n");
-					HarmonicsEditor.playSelectedDataInCurrentWindow(parent);
-					break;
-			}
-		}
+	public static void synthRandomLoopRepeat(HarmonicsEditor parent) {
+		synthRandomLoop(parent, 4);
+		new Loop(parent);
 	}
 	
-	public static void synthQuad(int chord1, int chord2, int chord3, int chord4, 
-								 int deltaNote1, int deltaNote2, int deltaNote3) {
+	public static void synthRandomLoop(HarmonicsEditor parent, int numBeats) {
+		ArrayList<Beat> loop = new ArrayList<Beat>();
+		int duration = 100;
+		int baseNote = HarmonicsEditor.frequencyInHzToNote(330.0) + HarmonicsEditor.getRandomInt(15);
+		for(int beat = 0; beat < numBeats; beat++) {
+			int chordIndex = HarmonicsEditor.getRandomInt(10);
+			int[] chords = getChord(chordIndex);
+			loop.add(new Beat(baseNote, chords, duration));
+		}
+		synthLoop(loop);
+		SoftSynth.addDataToHarmonicsEditor();
+	}
+
+	public static void synthLoop(ArrayList<Loop.Beat> loop) {
 		HarmonicsEditor.clearCurrentData();
 		SoftSynth.initLoop();
-		int duration = 75;
-		int note1 = HarmonicsEditor.frequencyInHzToNote(440.0); // + randomGenerator.nextInt(12) - 6;
-		int note2 = note1 + HarmonicsEditor.getNote(deltaNote1);
-		int note3 = note2 + HarmonicsEditor.getNote(deltaNote2);
-		int note4 = note3 + HarmonicsEditor.getNote(deltaNote3);
-		SoftSynth.addBeat(0, note1, HarmonicsEditor.getChord(chord1), duration, false);
-		SoftSynth.addBeat(duration, note2, HarmonicsEditor.getChord(chord2), duration, true);
-		SoftSynth.addBeat(duration * 2, note3, HarmonicsEditor.getChord(chord3), duration, false);
-		SoftSynth.addBeat(duration * 3, note4, HarmonicsEditor.getChord(chord4), duration, true);
+		int currentTime = 0;
+		for(Loop.Beat beat: loop) {
+			SoftSynth.addBeat(currentTime, beat.getBaseNote(), beat.getChord(), beat.getDuration(), false);
+			currentTime += beat.getDuration();
+		}
 	}
+	
+	public static int[] getChord(int index) {
+		switch(index) {
+			case 0:
+				return new int[] {6, 7, 8};
+			case 1:
+				return new int[] {7, 6, 8};
+			case 2:
+				return new int[] {6, 7, 10};
+			case 3:
+				return new int[] {7, 6, 10};
+			case 4:
+				return new int[] {8, 10, 6};
+			case 5:
+				return new int[] {8, 10, 7};
+			case 6:
+				return new int[] {10, 8, 6};
+			case 7:
+				return new int[] {10, 8, 7};
+			case 8:
+				return new int[] {13, 10};
+			case 9:
+				return new int[] {10, 13};
+		}
+		return null;
+	}
+	
+	Timer timer = null;
+	HarmonicsEditor parentHE;
+	boolean play = false;
+	
+	Loop(HarmonicsEditor parent) {
+		play = true;
+		parentHE = parent;
+		timer = new Timer(5000, this);
+        timer.setInitialDelay(0);
+        timer.start();
+	}
+
+	
+	public void actionPerformed(ActionEvent e) {
+		if(play) {
+			System.out.println("Timer1");
+			SynthTools.createPCMData(parentHE);
+			SynthTools.playWindow();
+			play = false;
+		}
+		synthRandomLoop(parentHE, 4);
+		System.out.println("Timer2");
+		play = true;
+	}
+	
 	
 }

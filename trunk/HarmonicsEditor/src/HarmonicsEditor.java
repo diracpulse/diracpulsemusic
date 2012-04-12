@@ -118,26 +118,31 @@ public class HarmonicsEditor extends JFrame {
 	public void loadInstrument() {
 		openFileInHarmonicsEditor();
 		SoftSynth.harmonicIDToInstrumentHarmonic = harmonicIDToHarmonic;
+		refreshView();
 	}
 	
 	public void loadKickDrum() {
 		openFileInHarmonicsEditor();
 		SoftSynth.harmonicIDToKickDrumHarmonic = harmonicIDToHarmonic;
+		refreshView();
 	}
 	
 	public void loadHighFreq() {
 		openFileInHarmonicsEditor();
 		SoftSynth.harmonicIDToHighFreqHarmonic = harmonicIDToHarmonic;
+		refreshView();
 	}
 	
 	public void loadBassSynth() {
 		openFileInHarmonicsEditor();
 		SoftSynth.harmonicIDToBassSynthHarmonic = harmonicIDToHarmonic;
+		refreshView();
 	}
 	
 	public void loadSnare() {
 		openFileInHarmonicsEditor();
 		SoftSynth.harmonicIDToSnareHarmonic = harmonicIDToHarmonic;
+		refreshView();
 	}
 
     public HarmonicsEditor() {
@@ -183,32 +188,6 @@ public class HarmonicsEditor extends JFrame {
 	
 	public static double getMinAmplitude() {
 		return 0.0;
-	}
-	
-	public static int[] getChord(int index) {
-		switch(index) {
-			case 0:
-				return new int[] {6, 7, 8};
-			case 1:
-				return new int[] {7, 6, 8};
-			case 2:
-				return new int[] {6, 7, 10};
-			case 3:
-				return new int[] {7, 6, 10};
-			case 4:
-				return new int[] {8, 10, 6};
-			case 5:
-				return new int[] {8, 10, 7};
-			case 6:
-				return new int[] {10, 8, 6};
-			case 7:
-				return new int[] {10, 8, 7};
-			case 8:
-				return new int[] {13, 10};
-			case 9:
-				return new int[] {10, 13};
-		}
-		return null;
 	}
 	
 	public static int getNote(int index) {
@@ -265,21 +244,7 @@ public class HarmonicsEditor extends JFrame {
 	
 	public static void repeatRandomLoop(HarmonicsEditor parent) {
 		String loopDescriptor = randomLoop(parent);
-		while(true) {
-			int choice = JOptionPane.showConfirmDialog(parent, "Save Loop");
-			switch (choice) {
-			case JOptionPane.YES_OPTION:
-				HarmonicsFileOutput.OutputStringToFile("loops.txt", loopDescriptor);
-				loopDescriptor = randomLoop(parent);
-				break;
-			case JOptionPane.NO_OPTION:
-				loopDescriptor = randomLoop(parent);
-				break;
-			case JOptionPane.CANCEL_OPTION:
-				playSelectedDataInCurrentWindow(parent);
-				break;
-			}
-		}
+		System.out.println(loopDescriptor);
 	}
 	
 
@@ -291,7 +256,7 @@ public class HarmonicsEditor extends JFrame {
 		int currentTime = 0; 
 		int minDuration = 50;
 		int maxDuration = 100;
-		int[] beatDurations = new int[] {100, 75, 75, 100};
+		int[] beatDurations = new int[] {100, 100, 100, 100};
 		int repeat = randomGenerator.nextInt(beatDurations.length - 1);
 		int beat = 0;
 		boolean useRepeat = false;
@@ -299,8 +264,8 @@ public class HarmonicsEditor extends JFrame {
 		for(int duration: beatDurations) {
 			int note = centerNote + randomGenerator.nextInt(26) - 13;
 			int randomChordIndex = randomGenerator.nextInt(10);
-			returnVal.append(note + "," + randomChordIndex + "|");
-			int[] chords = getChord(randomChordIndex);
+			returnVal.append(note);
+			int[] chords = Loop.getChord(randomChordIndex);
 			useHighFreq = false;
 			if(beat % 2 == 1) useHighFreq = true;
 			SoftSynth.addBeat(currentTime, note, chords, duration, useHighFreq);
@@ -309,9 +274,11 @@ public class HarmonicsEditor extends JFrame {
 				useHighFreq = false;
 				if(beat % 2 == 1) useHighFreq = true;
 				SoftSynth.addBeat(currentTime, note, chords, duration, useHighFreq);
+				returnVal.append(" " + note);
 			}
 			currentTime += duration;
 			beat++;
+			if(beat < beatDurations.length) returnVal.append("|");
 		}
 		SoftSynth.addDataToHarmonicsEditor();
 		//addCompression(2.0);
@@ -330,7 +297,9 @@ public class HarmonicsEditor extends JFrame {
 	}
 
 	public static void clearCurrentData() {
+		maxTime = 0;
 		harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
+		
 	}
 	
 	public static void addData(FDData data) {

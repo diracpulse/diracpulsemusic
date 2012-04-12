@@ -34,7 +34,7 @@ public class HarmonicsView extends JComponent {
 	public void drawUpperTimes(Graphics g) {
 		int intDigits = 3;
 		int decimalStartY = intDigits * HarmonicsEditor.yStep;
-		int endTime = HarmonicsUtils.pixelXToTimeRange(getWidth()).getLower();		
+		int endTime = HarmonicsUtils.pixelXToTime(getWidth());	
 		Color white = new Color(0.0f, 0.0f, 0.0f);
 		Color black = new Color(1.0f, 1.0f, 1.0f);
 		for(int time = HarmonicsEditor.leftX; time <= endTime; time++) {
@@ -74,9 +74,9 @@ public class HarmonicsView extends JComponent {
 		//System.out.println("Finished Compiling");
 		drawLeftNotes(g);
 		drawUpperTimes(g);
-		int startTime = HarmonicsEditor.leftX;
-		int endTime = HarmonicsUtils.pixelXToTimeRange(getWidth()).getLower();
-		int startNote = HarmonicsEditor.maxNote - HarmonicsEditor.upperY;
+		int startTime = HarmonicsUtils.pixelXToTime(HarmonicsEditor.leftOffset);
+		int endTime = HarmonicsUtils.pixelXToTime(getWidth());
+		int startNote = HarmonicsUtils.pixelYToNote(HarmonicsEditor.upperOffset);
 		int endNote = HarmonicsUtils.pixelYToNote(getHeight());
 		if(endNote == -1) endNote = HarmonicsEditor.minNote;
 		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
@@ -89,11 +89,14 @@ public class HarmonicsView extends JComponent {
 			//if(start.getTime() > endTime) continue;
 			//if(note < startNote || note > endNote) continue;
 			if(note > startNote) continue;
+			if(note < endNote) continue;
 			int screenY =  HarmonicsUtils.noteToPixelY(note);
 			//System.out.println(harmonic);
 			for(FDData data: harmonic.getAllDataInterpolated()) {
 				double logAmplitude = data.getLogAmplitude();
 				int screenX = HarmonicsUtils.timeToPixelX(data.getTime());
+				if(screenX < HarmonicsEditor.leftOffset) continue;
+				if(screenX > getWidth()) continue;
 				Color b = getColor(data.getLogAmplitude());
 				if(!harmonic.containsData(data)) {
 					// data is interpolated
