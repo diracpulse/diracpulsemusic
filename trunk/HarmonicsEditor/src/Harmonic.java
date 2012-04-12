@@ -36,7 +36,7 @@ public class Harmonic {
 			timeToData.put(data.getTime(), data);
 		}
 		//System.out.println("Harmonic.addData(): Duplicate data at time = " + data.getTime());
-		System.out.print("|");
+		System.out.print("|" + data.getTime() + ":" + data.getNote() + ":" + (float) data.getLogAmplitude() + "|");
 		return data;
 	}
 	
@@ -63,7 +63,11 @@ public class Harmonic {
 	}
 	
 	public ArrayList<FDData> getAllData() {
-		return new ArrayList<FDData>(timeToData.values());
+		ArrayList<FDData> returnVal = new ArrayList<FDData>(timeToData.values());
+		if(returnVal.size() == 0) return returnVal;
+		if(getTaperLength() == 0) return returnVal;
+		returnVal.add(getEnd());
+		return returnVal;
 	}
 	
 	public ArrayList<FDData> getAllDataInterpolated() {
@@ -80,7 +84,16 @@ public class Harmonic {
 	}
 	
 	public FDData getEnd() {
-		return timeToData.get(timeToData.lastKey());
+		if(timeToData.isEmpty()) return null;
+		FDData taperData = null;
+		FDData endData = timeToData.get(timeToData.lastKey());
+		int taperTime = endData.getTime() + (int) Math.ceil(getTaperLength());
+		try {
+			taperData = new FDData(taperTime, endData.getNote(), 0.0, harmonicID);
+		} catch (Exception e) {
+			System.out.println("Harmonic.getEnd(): Error creating data");
+		}
+		return taperData;
 	}	
 	
 	// used to avoid null pointer for small harmonics
