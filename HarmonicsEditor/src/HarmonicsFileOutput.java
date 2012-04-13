@@ -89,4 +89,27 @@ public class HarmonicsFileOutput {
 		return returnVal;
 	}
 	
+	public static void OutputSelectedToFile() {
+		String fileName = "loop" + System.currentTimeMillis() + ".saved";
+	    try {
+	    	DataOutputStream selectedOut = new DataOutputStream(new
+		            BufferedOutputStream(new FileOutputStream(fileName)));
+            for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
+            	for(FDData data: harmonic.getAllData()) {
+            		float amp = (float) data.getLogAmplitude();
+            		selectedOut.writeInt(data.getTime());
+            		selectedOut.writeInt(data.getNote());
+            		selectedOut.writeFloat(amp);
+            		selectedOut.writeLong(data.getHarmonicID());
+            	}
+            }
+            selectedOut.close();
+		} catch (Exception e) {
+			System.out.println("Exception in FileOutput.OutputSelectedToFile");
+			e.printStackTrace();
+			System.exit(0);
+		}
+		System.out.println("Finished output of of selected to: " + fileName + ".selected");
+	}
+	
 }

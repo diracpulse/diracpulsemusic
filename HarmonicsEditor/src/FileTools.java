@@ -5,9 +5,9 @@ import javax.swing.filechooser.FileFilter;
 
 public class FileTools {
 
-	public static String PromptForFileOpen(Component c) {
+	public static String PromptForFileOpen(Component c, String extension) {
 	   	JFileChooser fc = new JFileChooser();
-	   	FileTools.MaximasFilter filter = new FileTools.MaximasFilter();
+	   	FileTools.GeneralFilter filter = new FileTools.GeneralFilter(extension);
 		fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 		fc.setCurrentDirectory(new File("."));
 		fc.setFileFilter(filter);
@@ -34,18 +34,22 @@ public class FileTools {
     	return "";
 	}
 	
-	public static class MaximasFilter extends FileFilter {
+	public static class GeneralFilter extends FileFilter {
 		
-		public MaximasFilter() {};
+		String extension;
+		
+		public GeneralFilter(String extension) {
+			this.extension = extension;
+		};
 		
 		public boolean accept(File f) {
-			if(f.getName().contains(".harmonics")) return true;
+			if(f.getName().contains(extension)) return true;
 			if(f.isDirectory()) return true;
 			return false;
 		}
 		
 		public String getDescription() {
-			return new String(".harmonics files");
+			return new String(extension + " files");
 		}
 	}
 

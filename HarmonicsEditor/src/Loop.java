@@ -32,6 +32,25 @@ public class Loop implements ActionListener {
 			return duration; 
 		}
 		
+		public String toString() {
+			StringBuffer returnVal = new StringBuffer();
+			returnVal.append(baseNote);
+			for(int chordVal: chord) returnVal.append(":" + chordVal);
+			returnVal.append(":" + duration);
+			return returnVal.toString();
+		}
+	}
+	
+	public static String getLoopDataString(ArrayList<Beat> loop) {
+		if(loop == null) return null;
+		if(loop.isEmpty()) return "";
+		StringBuffer returnVal = new StringBuffer();
+		returnVal.append(loop.get(0));
+		if(loop.size() == 1) return returnVal.toString() + "\n";
+		for(int index = 1; index < loop.size(); index++) {
+			returnVal.append("|" + loop.get(index));
+		}
+		return returnVal.toString() + "\n";
 	}
 	
 	public static void nonRandomDoublet(HarmonicsEditor parent) {
@@ -191,13 +210,24 @@ public class Loop implements ActionListener {
 	
 	public static void synthRandomLoop(HarmonicsEditor parent, int numBeats) {
 		ArrayList<Beat> loop = new ArrayList<Beat>();
+		ArrayList<Integer> deltaNotes = new ArrayList<Integer>();
+		ArrayList<Integer> chordIndices = new ArrayList<Integer>();
 		int duration = 100;
-		int baseNote = HarmonicsEditor.frequencyInHzToNote(330.0) + HarmonicsEditor.getRandomInt(15);
-		for(int beat = 0; beat < numBeats; beat++) {
-			int chordIndex = HarmonicsEditor.getRandomInt(10);
-			int[] chords = getChord(chordIndex);
-			loop.add(new Beat(baseNote, chords, duration));
+		int centerNote = HarmonicsEditor.frequencyInHzToNote(256.0);
+		for(int index = 0; index < numBeats; index++) {
+			deltaNotes.add(HarmonicsEditor.getRandomInt(30) - 15);
+			chordIndices.add(HarmonicsEditor.getRandomInt(10));
 		}
+		for(int deltaBN = 0; deltaBN < 31; deltaBN += 10) {
+			for(int beat = 0; beat < numBeats; beat++) {
+				int baseNote = centerNote + deltaBN + deltaNotes.get(beat);
+				int chordIndex = chordIndices.get(beat);
+				int[] chords = getChord(chordIndex);
+				loop.add(new Beat(baseNote, chords, duration));
+			}
+			loop.add(new Beat(0, getChord(0), duration));
+		}
+		System.out.print(getLoopDataString(loop));
 		synthLoop(loop);
 		SoftSynth.addDataToHarmonicsEditor();
 	}
@@ -207,7 +237,9 @@ public class Loop implements ActionListener {
 		SoftSynth.initLoop();
 		int currentTime = 0;
 		for(Loop.Beat beat: loop) {
-			SoftSynth.addBeat(currentTime, beat.getBaseNote(), beat.getChord(), beat.getDuration(), false);
+			if(beat.getBaseNote() > 0) {
+				SoftSynth.addBeat(currentTime, beat.getBaseNote(), beat.getChord(), beat.getDuration(), false);
+			}
 			currentTime += beat.getDuration();
 		}
 	}
@@ -245,7 +277,7 @@ public class Loop implements ActionListener {
 	Loop(HarmonicsEditor parent) {
 		play = true;
 		parentHE = parent;
-		timer = new Timer(5000, this);
+		timer = new Timer(30000, this);
         timer.setInitialDelay(0);
         timer.start();
 	}
@@ -253,13 +285,13 @@ public class Loop implements ActionListener {
 	
 	public void actionPerformed(ActionEvent e) {
 		if(play) {
-			System.out.println("Timer1");
+			//System.out.println("Timer1");
 			SynthTools.createPCMData(parentHE);
 			SynthTools.playWindow();
 			play = false;
 		}
 		synthRandomLoop(parentHE, 4);
-		System.out.println("Timer2");
+		//System.out.println("Timer2");
 		play = true;
 	}
 	

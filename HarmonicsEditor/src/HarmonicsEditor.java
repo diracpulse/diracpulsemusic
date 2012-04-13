@@ -87,8 +87,8 @@ public class HarmonicsEditor extends JFrame {
 		navigationBar.add(button);
 	}
 
-	public void openFileInHarmonicsEditor() {
-        fileName = FileTools.PromptForFileOpen(view);
+	public void openFileInHarmonicsEditor(String extension) {
+        fileName = FileTools.PromptForFileOpen(view, extension);
         HarmonicsFileInput.ReadBinaryFileData(fileName);
         //removeNullHarmonics();
         if(harmonicIDToHarmonic.isEmpty()) {
@@ -116,31 +116,31 @@ public class HarmonicsEditor extends JFrame {
 	}
 	
 	public void loadInstrument() {
-		openFileInHarmonicsEditor();
+		openFileInHarmonicsEditor(".harmonics");
 		SoftSynth.harmonicIDToInstrumentHarmonic = harmonicIDToHarmonic;
 		refreshView();
 	}
 	
 	public void loadKickDrum() {
-		openFileInHarmonicsEditor();
+		openFileInHarmonicsEditor(".harmonics");
 		SoftSynth.harmonicIDToKickDrumHarmonic = harmonicIDToHarmonic;
 		refreshView();
 	}
 	
 	public void loadHighFreq() {
-		openFileInHarmonicsEditor();
+		openFileInHarmonicsEditor(".harmonics");
 		SoftSynth.harmonicIDToHighFreqHarmonic = harmonicIDToHarmonic;
 		refreshView();
 	}
 	
 	public void loadBassSynth() {
-		openFileInHarmonicsEditor();
+		openFileInHarmonicsEditor(".harmonics");
 		SoftSynth.harmonicIDToBassSynthHarmonic = harmonicIDToHarmonic;
 		refreshView();
 	}
 	
 	public void loadSnare() {
-		openFileInHarmonicsEditor();
+		openFileInHarmonicsEditor(".harmonics");
 		SoftSynth.harmonicIDToSnareHarmonic = harmonicIDToHarmonic;
 		refreshView();
 	}
