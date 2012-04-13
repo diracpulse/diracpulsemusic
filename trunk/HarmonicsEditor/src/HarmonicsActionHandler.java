@@ -32,24 +32,24 @@ public class HarmonicsActionHandler extends JPanel {
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			parent.openFileInHarmonicsEditor();
+			parent.openFileInHarmonicsEditor(".saved");
 		}
 	}	
 
-	public class ExitAction extends AbstractAction {
+	public class SaveAction extends AbstractAction {
 
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = 6690671099967989664L;
 
-		public ExitAction() {
-			super("Exit");
+		public SaveAction() {
+			super("Save");
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			System.exit(0);
+			HarmonicsFileOutput.OutputSelectedToFile();
 		}
 	}
 
@@ -292,7 +292,7 @@ public class HarmonicsActionHandler extends JPanel {
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
         fileMenu.add(new OpenAction());
-        fileMenu.add(new ExitAction());
+        fileMenu.add(new SaveAction());
         //Create the Play menu
         JMenu playMenu = new JMenu("Play");
         menuBar.add(playMenu);        

@@ -101,6 +101,7 @@ public class FDData {
 	}
 	
 	public void setLogAmplitude(double logAmplitude) {
+		if(logAmplitude < 0.0) logAmplitude = 0;
 		this.logAmplitude = logAmplitude;
 	}
 	
