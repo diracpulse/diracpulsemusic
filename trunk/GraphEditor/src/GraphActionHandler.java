@@ -29,6 +29,48 @@ public class GraphActionHandler extends JPanel {
 			parent.openFileInGraphEditor(".saved");
 		}
 	}	
+	
+	public class ToggleClipZeroAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public ToggleClipZeroAction() {
+			super("Toggle Clip Zero");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			GraphEditor.toggleClipZero();
+		}
+	}	
+	
+	public class OctaveViewAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public OctaveViewAction() {
+			super("Select Octave Range");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			GraphEditor.promptForOctaveView(parent);
+		}
+	}
+	
+	public class ColorViewAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public ColorViewAction() {
+			super("Select Color View");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			GraphEditor.promptForColorView(parent);
+		}
+	}	
 
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
@@ -36,7 +78,16 @@ public class GraphActionHandler extends JPanel {
         //Create the File menu
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
-        fileMenu.add(new OpenAction());    
+        fileMenu.add(new OpenAction());
+        JMenu viewMenu = new JMenu("View");
+        menuBar.add(viewMenu);
+        viewMenu.add(new ToggleClipZeroAction());
+        JMenu octaveMenu = new JMenu("Octave");
+        menuBar.add(octaveMenu);
+        octaveMenu.add(new OctaveViewAction());
+        JMenu colorMenu = new JMenu("Color");
+        menuBar.add(colorMenu);
+        colorMenu.add(new ColorViewAction()); 
         return menuBar;
 	}
 

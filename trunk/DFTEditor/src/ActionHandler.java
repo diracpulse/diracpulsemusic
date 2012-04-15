@@ -419,6 +419,24 @@ public class ActionHandler extends JPanel {
 		
 	}
 	
+	public class SelectMinLengthAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+		private int minLength;
+		
+		public SelectMinLengthAction(int minLength) {
+			super("Min Length = " + minLength);
+			this.minLength = minLength;
+		}
+		
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("MinLength = " + minLength);
+			DFTEditor.minHarmonicLength = minLength;
+		    parent.playSelectedDataInCurrentWindow();
+		}		
+		
+	}
+	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -471,6 +489,11 @@ public class ActionHandler extends JPanel {
         menuBar.add(cutoffMenu);
         for(int logCutoff = 12; logCutoff > 2; logCutoff--) {
         	cutoffMenu.add(new SelectCutoffAction(logCutoff));
+        }
+        JMenu minLengthMenu = new JMenu("MinLength");
+        menuBar.add(minLengthMenu);      
+        for(int minLength = 1; minLength <= 20; minLength++) {
+        	minLengthMenu.add(new SelectMinLengthAction(minLength));
         }
         return menuBar;
 	}

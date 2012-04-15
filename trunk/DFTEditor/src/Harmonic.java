@@ -86,6 +86,9 @@ public class Harmonic {
 			return getDummyArray();
 		}
 		if(maxLogAmplitude < DFTEditor.minLogAmplitudeThreshold) return getDummyArray();
+		int intStartTime = timeToData.firstEntry().getValue().getTime();
+		int intEndTime = timeToData.lastEntry().getValue().getTime();
+		if(intEndTime - intStartTime < DFTEditor.minHarmonicLength) return getDummyArray();
 		double minLogFreq = 16.0; // 65kHz
 		ArrayList<Double> sampleTimes = new ArrayList<Double>();
 		ArrayList<Double> logAmps = new ArrayList<Double>();
