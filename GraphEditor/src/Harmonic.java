@@ -50,10 +50,10 @@ public class Harmonic {
 	}
 	
 	public int getEndSampleOffset() {
-		return getStartSampleOffset() + getLength();
+		return getStartSampleOffset() + getLengthInSamples();
 	}
 	
-	public int getLength() {
+	public int getLengthInSamples() {
 		if(!containsData()) return 0;
 		int startSample = getStartSampleOffset();
 		int endSample = (int) Math.round(timeToData.lastKey() * SynthTools.timeToSample);
@@ -94,7 +94,11 @@ public class Harmonic {
 			System.out.println("Harmonic.getEnd(): Error creating data");
 		}
 		return taperData;
-	}	
+	}
+	
+	public int getLength() {
+		return getEnd().getTime() - getStart().getTime();
+	}
 	
 	// used to avoid null pointer for small harmonics
 	public Double[] getDummyArray() {
