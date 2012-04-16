@@ -6,7 +6,6 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 
-
 public class GraphActionHandler extends JPanel {
 
 	private static final long serialVersionUID = 1L;
@@ -70,7 +69,38 @@ public class GraphActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			GraphEditor.promptForColorView(parent);
 		}
-	}	
+	}
+	
+	public class YViewAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public YViewAction() {
+			super("Select Y View");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			GraphEditor.promptForYView(parent);
+		}
+	}
+
+	public class SelectMinLengthAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+		private int minLength;
+		
+		public SelectMinLengthAction(int minLength) {
+			super("Min Length = " + minLength);
+			this.minLength = minLength;
+		}
+		
+		public void actionPerformed(ActionEvent arg0) {
+			GraphEditor.minHarmonicLength = minLength;
+		    GraphEditor.view.repaint();
+		}		
+		
+	}
 
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
@@ -87,7 +117,15 @@ public class GraphActionHandler extends JPanel {
         octaveMenu.add(new OctaveViewAction());
         JMenu colorMenu = new JMenu("Color");
         menuBar.add(colorMenu);
-        colorMenu.add(new ColorViewAction()); 
+        colorMenu.add(new ColorViewAction());
+        JMenu yViewMenu = new JMenu("YView");
+        menuBar.add(yViewMenu);
+        yViewMenu.add(new YViewAction());
+        JMenu minLengthMenu = new JMenu("MinLength");
+        menuBar.add(minLengthMenu);      
+        for(int minLength = 1; minLength <= 20; minLength++) {
+        	minLengthMenu.add(new SelectMinLengthAction(minLength));
+        }
         return menuBar;
 	}
 

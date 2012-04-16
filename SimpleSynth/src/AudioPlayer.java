@@ -13,7 +13,7 @@ class AudioPlayer {
 	final int channels = 2;
 	final boolean signed = true;
 	final boolean bigEndian = false;
-	final double fullScale = 32000.0;
+	final double fullScale = 32767.0;
 
 	
 	AudioPlayer () {

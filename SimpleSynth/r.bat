@@ -1,1 +1,1 @@
-java -jar SimpleSynth.jar
+java -jar SimpleSynth.jar > out.txt
