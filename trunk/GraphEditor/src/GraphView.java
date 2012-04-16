@@ -8,12 +8,19 @@ import java.util.TreeSet;
 
 public class GraphView extends JComponent {
 
-	public enum DataView {
+	public enum ColorView {
+		AMPLITUDE,
 		FREQUENCY,
 		HARMONICS;
 	}
 	
-	public static DataView dataView = DataView.FREQUENCY;
+	public enum YView {
+		AMPLITUDE,
+		FREQUENCY;
+	}
+
+	public static ColorView colorView = ColorView.FREQUENCY;
+	public static YView yView = YView.AMPLITUDE;
 	
 	private static final long serialVersionUID = 2964004162144513754L;
 	
@@ -22,10 +29,12 @@ public class GraphView extends JComponent {
 	private static boolean drawPlaying = false;
 	
 	public void drawFileData(Graphics g) {
-		double pixelsPerTime = (double) getWidth() / (double) (GraphEditor.maxViewTime - GraphEditor.minViewTime); 
-		double pixelsPerLogAmplitude = (double) getHeight() / (double) GraphEditor.maxLogAmplitude;
+		double pixelsPerTime = (double) getWidth() / (double) (GraphEditor.maxViewTime - GraphEditor.minViewTime);
+		double pixelsPerValue = 1;
+		if(yView == YView.AMPLITUDE) pixelsPerValue = (double) getHeight() / (double) (GraphEditor.maxLogAmplitude - GraphEditor.minLogAmplitude);
+		if(yView == YView.FREQUENCY) pixelsPerValue = (double) getHeight() / (double) (GraphEditor.maxViewNote - GraphEditor.minViewNote);
 		for(Harmonic harmonic: GraphEditor.harmonicIDToHarmonic.values()) {
-			if(harmonic.getLength() < GraphEditor.minLength) continue;
+			if(harmonic.getLength() < GraphEditor.minHarmonicLength) continue;
 			if(harmonic.getAverageNote() < GraphEditor.minViewNote || harmonic.getAverageNote() > GraphEditor.maxViewNote) continue;
 			ArrayList<FDData> hData = new ArrayList<FDData>(harmonic.getAllData());
 			if(hData.size() < 2) continue;
@@ -48,7 +57,9 @@ public class GraphView extends JComponent {
 					continue;
 				}
 				int startX = (int) Math.round(pixelsPerTime * startTime);
-				int startY = (int) Math.round(pixelsPerLogAmplitude * start.getLogAmplitude());
+				int startY = 0;
+				if(yView == YView.AMPLITUDE) startY = (int) Math.round(pixelsPerValue * start.getLogAmplitude() - GraphEditor.minLogAmplitude);
+				if(yView == YView.FREQUENCY) startY = (int) Math.round(pixelsPerValue * (start.getNote() - GraphEditor.minViewNote));
 				startY = getHeight() - startY;
 				int endTime = end.getTime() - GraphEditor.minViewTime;
 				if(endTime < 0) {
@@ -56,12 +67,17 @@ public class GraphView extends JComponent {
 					continue;					
 				}			
 				int endX = (int) Math.round(pixelsPerTime * end.getTime());
-				int endY = (int) Math.round(pixelsPerLogAmplitude * end.getLogAmplitude());		
+				int endY = 1;
+				if(yView == YView.AMPLITUDE) endY = (int) Math.round(pixelsPerValue * end.getLogAmplitude() - GraphEditor.minLogAmplitude);
+				if(yView == YView.FREQUENCY) endY = (int) Math.round(pixelsPerValue * (end.getNote() - GraphEditor.minViewNote));		
 				endY = getHeight() - endY;
-				if(dataView == DataView.FREQUENCY) {
-					g.setColor(getDataColor((start.getNote() + end.getNote()) / 2));
+				if(colorView == ColorView.AMPLITUDE) {
+					g.setColor(getAmplitudeColor((start.getLogAmplitude() + end.getLogAmplitude()) / 2));
 				}
-				if(dataView == DataView.HARMONICS) {
+				if(colorView == ColorView.FREQUENCY) {
+					g.setColor(getFrequencyColor((start.getNote() + end.getNote()) / 2));
+				}
+				if(colorView == ColorView.HARMONICS) {
 					g.setColor(getHarmonicColor(harmonic.getHarmonicID()));
 				}				
 				g.drawLine(startX, startY, endX, endY);
@@ -70,11 +86,34 @@ public class GraphView extends JComponent {
 		}
 	}
 	
-	private Color getDataColor(double note) {
-		return getDataColor(note, 1.0f);
+	private Color getAmplitudeColor(double amplitude) {
+		return getAmplitudeColor(amplitude, 1.0f);
 	}
 
-	private Color getDataColor(double note, float alpha) {
+	private Color getAmplitudeColor(double amplitude, float alpha) {
+		float noteRange = (float) (GraphEditor.maxLogAmplitude - GraphEditor.minLogAmplitude);
+		float currentVal = (float) amplitude;
+		currentVal -= GraphEditor.minLogAmplitude;
+		currentVal /= noteRange;
+		if(currentVal < 0.0f) currentVal = 0.0f;
+		if(currentVal > 1.0f) currentVal = 1.0f;
+		float red = currentVal;
+		float green = 0.0f;
+		float blue = 1.0f - currentVal;
+		if(red >= 0.5f) {
+			green = (1.0f - red) * 2.0f;
+		} else {
+			green = red * 2.0f;
+		}
+		//return new Color(1.0f, 1.0f, 1.0f, 0.75f);
+		return new Color(red, green, blue, alpha);
+	}
+	
+	private Color getFrequencyColor(double note) {
+		return getFrequencyColor(note, 1.0f);
+	}
+
+	private Color getFrequencyColor(double note, float alpha) {
 		float noteRange = (float) (GraphEditor.maxNote - GraphEditor.minNote);
 		float currentVal = (float) note;
 		currentVal -= GraphEditor.minNote;

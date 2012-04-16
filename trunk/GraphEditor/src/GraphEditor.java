@@ -14,21 +14,20 @@ public class GraphEditor extends JFrame {
 	public static GraphController controller;
 	public static GraphActionHandler actionHandler;
 	public static HashMap<Long, Harmonic> harmonicIDToHarmonic;
+	public static int minHarmonicLength = 1;
 	public static int maxTime = 1;
 	public static int minTime = 0;
-	public static int minLength = 20;
 	public static int maxNote = 1;
 	public static int minNote = 0;
 	public static double maxLogAmplitude = 1.0;
 	public static double minLogAmplitude = 0.0;
 	public static boolean minTimeAlwaysZero = true;
-	public static int maxViewTime = 0;
-	public static int minViewTime = 1;
+	public static int minViewTime = 0;
+	public static int maxViewTime = 1;
 	public static int maxViewNote = 0;
 	public static int minViewNote = 1;
 	public static boolean clipZero = false;
 	
-
 	public JMenuBar createMenuBar() {
         GraphActionHandler actionHandler = new GraphActionHandler(this);
         return actionHandler.createMenuBar();
@@ -69,7 +68,7 @@ public class GraphEditor extends JFrame {
 		}
 		if(minTimeAlwaysZero) minTime = 0;
 		minViewTime = minTime;
-		maxViewTime = 200;
+		maxViewTime = maxTime;
 		minViewNote = minNote;
 		maxViewNote = maxNote;
 	}
@@ -131,12 +130,23 @@ public class GraphEditor extends JFrame {
 	}
 	
 	public static void promptForColorView(GraphEditor parent) {
-		Object[] colorData = {"Frequency", "Harmonics"};
+		Object[] colorData = {"Amplitude", "Frequency", "Harmonics"};
 		String choice =  (String) JOptionPane.showInputDialog(parent, "Color Display Select", 
 										"Select Color View", JOptionPane.PLAIN_MESSAGE, null, colorData, 0);
 		if(choice == null) return;
-		if(choice.equals("Frequency")) GraphView.dataView = GraphView.DataView.FREQUENCY;
-		if(choice.equals("Harmonics")) GraphView.dataView = GraphView.DataView.HARMONICS;
+		if(choice.equals("Amplitude")) GraphView.colorView = GraphView.ColorView.AMPLITUDE;
+		if(choice.equals("Frequency")) GraphView.colorView = GraphView.ColorView.FREQUENCY;
+		if(choice.equals("Harmonics")) GraphView.colorView = GraphView.ColorView.HARMONICS;
+		view.repaint();
+	}
+	
+	public static void promptForYView(GraphEditor parent) {
+		Object[] colorData = {"Amplitude", "Frequency"};
+		String choice =  (String) JOptionPane.showInputDialog(parent, "Color Display Select", 
+										"Select Color View", JOptionPane.PLAIN_MESSAGE, null, colorData, 0);
+		if(choice == null) return;
+		if(choice.equals("Amplitude")) GraphView.yView = GraphView.YView.AMPLITUDE;
+		if(choice.equals("Frequency")) GraphView.yView = GraphView.YView.FREQUENCY;
 		view.repaint();
 	}
 
