@@ -18,7 +18,7 @@ public class PlayDataInWindow implements ActionListener {
 		this.refreshRateInMillis = refreshRateInMillis;
 		this.endTimeInMillis = endTimeInMillis;
 		timer = new Timer(refreshRateInMillis, this);
-		SynthTools.initSelectedRegion(parent);
+		SynthTools.createPCMData();
         timer.setInitialDelay(0);
         timer.start();
 	}
@@ -26,7 +26,7 @@ public class PlayDataInWindow implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		//System.out.println(currentOffsetInMillis);
 		if(startPlay) {
-			SynthTools.playSelectedRegion();
+			SynthTools.playPCMData();
 			startPlay = false;
 		}
 		parent.drawPlayTime(currentOffsetInMillis, refreshRateInMillis);

@@ -102,7 +102,7 @@ public class Selection {
 				}
 				currentAmplitude = DFTEditor.getAmplitude(time, DFTEditor.noteToFreq(note));
 				try {
-					outputData.add(new FDData(time, note, currentAmplitude));
+					outputData.add(new FDData(time, note, currentAmplitude, 1L));
 				} catch (Exception e) {
 					System.out.println("Selection.getRECTANGLEData: error adding FDData");
 				}
@@ -120,7 +120,7 @@ public class Selection {
 			for(int time = times.lower; time <= times.upper; time++) {
 				currentAmplitude = DFTEditor.getAmplitude(time, DFTEditor.noteToFreq(note));
 				try {
-					outputData.add(new FDData(time, note, currentAmplitude));
+					outputData.add(new FDData(time, note, currentAmplitude, 1L));
 				} catch (Exception e) {
 					System.out.println("Selection.getALLData: error adding FDData");
 				}
@@ -157,7 +157,7 @@ public class Selection {
 			// note is passed to FDData as noteComplete
 			try {
 				//System.out.println("Selection.interpolateData():" + time + " " + noteVal + " " + ampVal);
-				outputData.add(new FDData(time, noteVal, ampVal));
+				outputData.add(new FDData(time, noteVal, ampVal, 1L));
 			} catch (Exception e) {
 				System.out.println("Selection.interpolateData(): Error creating FDData");
 			}
