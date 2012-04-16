@@ -21,9 +21,10 @@ public class DFTEditor extends JFrame {
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima;
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToFreqToSelectedData;
 	//public static ArrayList<Harmonic> harmonics;
-	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic;
-	public static int minHarmonicLength = 4;
-	public static double minLogAmplitudeThreshold = 3.0; // used by autoSelect
+	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic = null;
+	public static int minHarmonicLength = 1;
+	public static double minLogAmplitudeThreshold = 1.0; // used by autoSelect
+	public static int minLengthThreshold = 1;
 	public static ArrayList<Selection> selections;
 	public static Selection.Area selectionArea = Selection.Area.RECTANGLE;
 	public static boolean deleteSelected = false;
@@ -130,25 +131,6 @@ public class DFTEditor extends JFrame {
 		if(!timeToFreqToSelectedData.get(time).containsKey(freq)) return;
 		timeToFreqToSelectedData.get(time).remove(freq);
 	}
-		
-	public static void flattenHarmonics() {
-		timeToFreqToSelectedData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
-		for(Harmonic harmonic: harmonicIDToHarmonic.values()) {
-			harmonic.flattenHarmonic();
-			for(FDData data: harmonic.getAllData()) {
-				int time = data.getTime();
-				int freq = noteToFreq(data.getNote());
-				if(isSelected(time, freq)) {
-					if(getSelected(time, freq).getLogAmplitude() < data.getLogAmplitude()) {
-						addSelected(data);
-					}
-					continue;
-				}
-				addSelected(data);
-			}
-		}
-		refreshView();
-	}
 
 	public static void setSelectionArea(Selection.Area area) {
 		DFTEditor.selectionArea = area;
@@ -213,7 +195,7 @@ public class DFTEditor extends JFrame {
 			for(int freq:  timeToFreqsAtMaxima.get(time)) {
 				FDData data = null;
 				try {
-					data = new FDData(time, freqToNote(freq), amplitudes[time][freq]);
+					data = new FDData(time, freqToNote(freq), amplitudes[time][freq], 1L);
 				} catch (Exception e){
 					System.out.println("DFTEditor.autoSelect(): unable to create FDData");
 				}
@@ -335,10 +317,12 @@ public class DFTEditor extends JFrame {
         String fileNameTrimmed = fileName.substring(0, fileName.length() - 8); // ".mono5ms"
         FileInput.ReadBinaryFileData(this, fileName, "mono5ms");
         DFTFileInput.ReadSelectedFileData(fileNameTrimmed);
-        //String fileNameTrimmed = fileName.substring(0, fileName.length() - 4);
-        //autoSelect();
+        // Ensure that all previously selected data will be viewable/played
+    	minHarmonicLength = 1;
+    	minLogAmplitudeThreshold = 1.0; // used by autoSelect
+    	autoSelect();
+    	SynthTools.refresh = true;
         view.repaint();
-        //playSelectedDataInCurrentWindow();
 	}
 	
 	public void exportAllFiles() {

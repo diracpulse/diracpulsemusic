@@ -25,7 +25,8 @@ public class FDData {
 	private double logAmplitude = minLogAmplitude;
 	private long harmonicID = 1L;
 	
-	public FDData(int time, double noteComplete, double logAmplitude) throws Exception {
+
+	public FDData(int time, double noteComplete, double logAmplitude, long harmonicID) throws Exception {
 		int note = (int) Math.round(noteComplete);
 		double noteFraction = noteComplete - note;
 		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
@@ -34,21 +35,10 @@ public class FDData {
 		this.note = note;
 		this.noteFraction = noteFraction;
 		this.logAmplitude = logAmplitude;
+		this.harmonicID = harmonicID;
 	}
 	
-	// This contructor is used to input file data
-	public FDData(int time, int note, float logAmplitude) throws Exception {
-		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
-		if(!withinBounds(time, note, 0.0, logAmplitude)) {
-			throw new Exception("FDData [" + time + "|" + note + "|" + logAmplitude + "]");
-		}
-		this.time = time;
-		this.note = note;
-		this.noteFraction = 0.0;
-		this.logAmplitude = logAmplitude;
-	}
-	
-	public FDData(int time, int note, float logAmplitude, long id) throws Exception {
+	public FDData(int time, int note, double logAmplitude, long id) throws Exception {
 		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
 		if(!withinBounds(time, note, 0.0, logAmplitude)) {
 			throw new Exception("FDData [" + time + "|" + note + "|" + logAmplitude + "]");
@@ -59,25 +49,7 @@ public class FDData {
 		this.logAmplitude = logAmplitude;
 		this.harmonicID = id;
 	}
-	
-	public FDData(int time, int note, double noteFraction, double logAmplitude) throws Exception {
-		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
-		if(!withinBounds(time, note, noteFraction, logAmplitude)) throw new Exception();
-		this.time = time;
-		this.note = note;
-		this.noteFraction = noteFraction;
-		this.logAmplitude = logAmplitude;
-	}
-	
-	public FDData(int time, int note, double noteFraction, double logAmplitude, DataType type) throws Exception {
-		if(!withinBounds(time, note, noteFraction, logAmplitude)) throw new Exception();
-		this.time = time;
-		this.note = note;
-		this.noteFraction = noteFraction;
-		this.logAmplitude = logAmplitude;
-		this.type = type;
-	}
-	
+
 	public void setHarmonicID(long id) {
 		this.harmonicID = id;
 	}

@@ -80,7 +80,7 @@ public class DFTUtils {
 		if (freq < 0) freq = 0;		
 		try {
 			int note = DFTEditor.freqToNote(freq);
-			returnVal = new FDData(time, note, DFTEditor.getAmplitude(time, freq));
+			returnVal = new FDData(time, note, DFTEditor.getAmplitude(time, freq), 1L);
 		} catch (Exception e) {
 			System.out.println("DFTUtils.getValue: Error creating FDData");
 		}

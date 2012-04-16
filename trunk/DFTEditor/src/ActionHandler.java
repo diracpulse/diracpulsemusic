@@ -369,36 +369,6 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
-	public class AutoSelectAction extends AbstractAction {
-
-		private static final long serialVersionUID = 1L;
-
-		public AutoSelectAction() {
-			super("Auto Select");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Auto Select");
-			DFTEditor.autoSelect();
-		}
-	}
-	
-	public class FlattenHarmonicsAction extends AbstractAction {
-
-		private static final long serialVersionUID = 1L;
-
-		public FlattenHarmonicsAction() {
-			super("Flatten Harmonics");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Flatten Harmonics");
-			DFTEditor.flattenHarmonics();
-		}
-	}
-	
 	public class SelectCutoffAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
@@ -414,6 +384,7 @@ public class ActionHandler extends JPanel {
 			DFTEditor.minLogAmplitudeThreshold = logCutoff;
 		    DFTEditor.autoSelect();
 		    DFTEditor.view.repaint();
+		    SynthTools.refresh = true;
 		    parent.playSelectedDataInCurrentWindow();
 		}		
 		
@@ -432,6 +403,7 @@ public class ActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("MinLength = " + minLength);
 			DFTEditor.minHarmonicLength = minLength;
+			SynthTools.refresh = true;
 		    parent.playSelectedDataInCurrentWindow();
 		}		
 		
@@ -479,12 +451,6 @@ public class ActionHandler extends JPanel {
         menuBar.add(addDeleteMenu);
         addDeleteMenu.add(new JMenuItem(new AddSelectionAction()));
         addDeleteMenu.add(new JMenuItem(new DeleteSelectionAction()));
-        JMenu selectMenu = new JMenu("Select");
-        menuBar.add(selectMenu);
-        selectMenu.add(new JMenuItem(new AutoSelectAction()));
-        JMenu harmonicsMenu = new JMenu("Harmonics");
-        menuBar.add(harmonicsMenu);
-        harmonicsMenu.add(new JMenuItem(new FlattenHarmonicsAction()));
         JMenu cutoffMenu = new JMenu("Cutoff");
         menuBar.add(cutoffMenu);
         for(int logCutoff = 12; logCutoff > 2; logCutoff--) {

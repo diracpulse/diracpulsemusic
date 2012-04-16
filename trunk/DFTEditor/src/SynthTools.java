@@ -1,8 +1,6 @@
 import java.util.ArrayList;
 import java.util.TreeMap;
 
-import javax.swing.JOptionPane;
-
 class SynthTools {
 	
 	static double sampleRate = 44100.0;
@@ -11,74 +9,15 @@ class SynthTools {
 	static double[] PCMData = null;
 	static int deltaHarmonic = 1;
 	static DFTEditor parent;
-	
-	static void initSelectedRegion(DFTEditor parentVal) {
-		parent = parentVal;
-		TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToSelectedData = 
-			new TreeMap<Integer, TreeMap<Integer, FDData>>();
-		FDData data = null;
-		int startTime = DFTEditor.leftX;
-		int maxTime = startTime + parent.getTimeAxisWidthInMillis() / FDData.timeStepInMillis;
-		for(int time = startTime; time < maxTime; time++) {
-			if(!DFTEditor.timeToFreqToSelectedData.containsKey(time)) continue;
-			timeToNoteToSelectedData.put(time - startTime, new TreeMap<Integer, FDData>());
-			for(int freq: DFTEditor.timeToFreqToSelectedData.get(time).keySet()) {
-				float amplitude = (float) DFTEditor.timeToFreqToSelectedData.get(time).get(freq).getLogAmplitude();
-				try {
-					data = new FDData(time - startTime, DFTEditor.freqToNote(freq), amplitude);
-				} catch (Exception e) {
-					System.out.println("SynthTools.playSelectedRegion: error creating FDData");
-					return;
-				}
-				timeToNoteToSelectedData.get(time - startTime).put(DFTEditor.freqToNote(freq), data);
-			}
-		}
-		System.out.println("StartTime" + startTime);
-		createPCMData(parent, timeToNoteToSelectedData);
+	public static boolean refresh = true;
+
+	static void createPCMData() {
+		createHarmonics(DFTEditor.timeToFreqToSelectedData);
+		PCMData = FileOutput.SynthFDDataExternally(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
 	}
 	
-	static void createPCMData(DFTEditor parent, TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToSelectedData) {
-		long startSynthTimeInMillis = System.currentTimeMillis();
-		System.out.println("SynthTools.playFileData started");
-		createHarmonics(timeToNoteToSelectedData);
-		// Find number of samples needed
-		int endSampleOffset = 0;
-		System.out.println("SynthTools.playFileData harmonics created");
-		for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonic.values()) {
-			//System.out.println("SynthTools.playFileData harmonic.endSampleOffset = " + harmonic.getEndSampleOffset());
-			if(harmonic.getEndSampleOffset() > endSampleOffset) {
-				endSampleOffset = harmonic.getEndSampleOffset();
-				//System.out.println("SynthTools.playFileData endSampleOffset = " + endSampleOffset);
-			}
-		}
-		System.out.println("SynthTools.playFileData endSampleOffset = " + endSampleOffset);
-		// create PCM Data
-		PCMData = new double[endSampleOffset + 1];
-		System.out.println("End Sample Offset " + endSampleOffset);
-		for(int i= 0; i <= endSampleOffset; i++) PCMData[i] = 0.0;
-		for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonic.values()) {
-			Double[] HarmonicPCMData = harmonic.getPCMData();
-			int startSample = harmonic.getStartSampleOffset();
-			int endSample = startSample + HarmonicPCMData.length - 1;
-			//System.out.println("SynthTools.playFileData startSample = " + startSample);
-			//System.out.println("SynthTools.playFileData endSample = " + endSample);
-			//System.out.println("SynthTools.playFileData HarmonicPCMData.length = " + HarmonicPCMData.length);
-			for(int currentSample = startSample; currentSample < endSample - 1; currentSample++) {
-				PCMData[currentSample] += HarmonicPCMData[currentSample - startSample];
-				if(currentSample % 441 == 0) {
-					//System.out.println(currentSample + ":" + PCMData[currentSample]);
-				}
-			}
-		}
-		for(int i= 0; i <= endSampleOffset; i += 100) {
-			//System.out.println(i + "!" + PCMData[i]);
-		}
-		long timeElapsed = System.currentTimeMillis() - startSynthTimeInMillis;
-		System.out.println("Time Elapsed = " + timeElapsed);
-		JOptionPane.showMessageDialog(parent, "Ready To Play");
-	}
-	
-	static void playSelectedRegion() {
+	static void playPCMData() {
+		if(PCMData == null) return;
 		AudioPlayer ap = new AudioPlayer(parent, PCMData, 1.0);
 		ap.start();
 	}
@@ -181,7 +120,6 @@ class SynthTools {
 
 	}
 
-	
 	static TreeMap<Integer, TreeMap<Integer, FDData>> copyTreeMap(TreeMap<Integer, TreeMap<Integer, FDData>> input) {
 		TreeMap<Integer, TreeMap<Integer, FDData>> output = new TreeMap<Integer, TreeMap<Integer, FDData>>();
 		for(Integer time: input.keySet()) {
@@ -189,6 +127,33 @@ class SynthTools {
 			for(Integer note: input.get(time).keySet()) {
 				FDData data = input.get(time).get(note);
 				output.get(time).put(note, data);
+			}
+		}
+		return output;
+	}
+	
+	// Sythesis seems to work OK without interpolating note values
+	public static ArrayList<FDData> interpolateAmplitude(ArrayList<FDData> input) {
+		ArrayList<FDData> output = new ArrayList<FDData>();
+		if(input.isEmpty()) return output;
+		int lowerTime = input.get(0).getTime();
+		double lowerValue = input.get(0).getLogAmplitude();
+		FDData currentData = input.get(0);
+		for(int index = 1; index < input.size(); index++) {
+			int upperTime = input.get(index).getTime();
+			double upperValue = input.get(index).getLogAmplitude();
+			double slope = (upperValue - lowerValue) / (upperTime - lowerTime);
+			for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
+				double value = lowerValue + (timeIndex - lowerTime) * slope;
+				try {
+					//System.out.println(timeIndex + " " +  currentData.getNote() + " " + (float) value + " " + currentData.getHarmonicID());
+					output.add(new FDData(timeIndex, currentData.getNote(), (float) value, currentData.getHarmonicID()));
+				} catch (Exception e) {
+					System.out.println("LogLinear.dataInterpolate(): error creating data");
+					return null;
+				}
+				lowerValue = upperValue;
+				lowerTime = upperTime;
 			}
 		}
 		return output;
