@@ -46,14 +46,34 @@ public class GraphController implements MouseListener, ActionListener {
 	    		if(GraphEditor.timeToLogAmplitudeTimes10ToHarmonicID.containsKey(testTime)) {
 	    			if(GraphEditor.timeToLogAmplitudeTimes10ToHarmonicID.get(testTime).containsKey(logAmplitudeTimes10)) {
 	    				long harmonicID = GraphEditor.timeToLogAmplitudeTimes10ToHarmonicID.get(testTime).get(logAmplitudeTimes10);
-	    				GraphEditor.selectedHarmonicIDs.add(harmonicID);
+		    			if(GraphEditor.selectedHarmonicIDs.contains(harmonicID)) {
+		    				GraphEditor.selectedHarmonicIDs.remove(harmonicID);
+		    			} else {
+		    				GraphEditor.selectedHarmonicIDs.add(harmonicID);
+		    			}
 	    				view.repaint();
 	    				return;
 	    			}
 	    		}
 	    	}
 	    }
-	    
+	    if(GraphView.yView == GraphView.YView.FREQUENCY) {
+	    	int time = GraphUtils.screenXToTime(x);
+	    	System.out.println(GraphUtils.screenYToValue(y));
+	    	int note = (int) Math.round(GraphUtils.screenYToValue(y));
+	    	if(GraphEditor.timeToNoteToHarmonicID.containsKey(time)) {
+	    		if(GraphEditor.timeToNoteToHarmonicID.get(time).containsKey(note)) {
+	    			long harmonicID = GraphEditor.timeToNoteToHarmonicID.get(time).get(note);
+	    			if(GraphEditor.selectedHarmonicIDs.contains(harmonicID)) {
+	    				GraphEditor.selectedHarmonicIDs.remove(harmonicID);
+	    			} else {
+	    				GraphEditor.selectedHarmonicIDs.add(harmonicID);
+	    			}
+	    			view.repaint();
+	    			return;
+	    		}
+	    	}
+	    }
 	}
 	
 	public void mouseClicked(MouseEvent e){

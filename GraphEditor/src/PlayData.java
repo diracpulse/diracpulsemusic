@@ -3,7 +3,12 @@ import java.awt.event.ActionListener;
 import javax.swing.Timer;
 
 
-public class PlayDataInWindow implements ActionListener {
+public class PlayData implements ActionListener {
+	
+	public enum DataType {
+		WINDOW,
+		SEQUENCER;
+	}
 	
 	int currentOffsetInMillis;
 	int refreshRateInMillis;
@@ -12,15 +17,16 @@ public class PlayDataInWindow implements ActionListener {
 	GraphEditor parent;
 	boolean startPlay = true;
 	
-	PlayDataInWindow(GraphEditor parent, int refreshRateInMillis, int endTimeInMillis) {
+	PlayData(GraphEditor parent, int refreshRateInMillis, int endTimeInMillis, DataType type) {
 		this.parent = parent;
 		this.currentOffsetInMillis = 0;
 		this.refreshRateInMillis = refreshRateInMillis;
 		this.endTimeInMillis = endTimeInMillis;
 		timer = new Timer(refreshRateInMillis, this);
-		SynthTools.createPCMData(parent);
+		if(type == DataType.WINDOW) SynthTools.createPCMWindowData(parent);
+		if(type == DataType.SEQUENCER) SynthTools.createPCMSequencerData(parent);
 		//SynthTools.createPCMData(parent, GraphEditor.leftX, endTimeInMillis / GraphEditor.timeStepInMillis);
-        timer.setInitialDelay(2000);
+        timer.setInitialDelay(0);
         timer.start();
 	}
 
