@@ -26,7 +26,10 @@ public class GraphEditor extends JFrame {
 	public static int maxViewTime = 1;
 	public static int maxViewNote = 0;
 	public static int minViewNote = 1;
+	public static double maxViewLogAmplitude = 0.0;
+	public static double minViewLogAmplitude = 1.0;
 	public static boolean clipZero = false;
+	public static double zoomFactor = 2.0;
 	
 	public JMenuBar createMenuBar() {
         GraphActionHandler actionHandler = new GraphActionHandler(this);
@@ -66,11 +69,17 @@ public class GraphEditor extends JFrame {
 			if(harmonic.getAverageNote() > maxNote) maxNote = harmonic.getAverageNote();
 			if(harmonic.getMaxLogAmplitude() > maxLogAmplitude) maxLogAmplitude = harmonic.getMaxLogAmplitude();
 		}
+		resetView();
+	}
+	
+	static void resetView() {
 		if(minTimeAlwaysZero) minTime = 0;
 		minViewTime = minTime;
 		maxViewTime = maxTime;
 		minViewNote = minNote;
 		maxViewNote = maxNote;
+		minViewLogAmplitude = 0.0;
+		maxViewLogAmplitude = maxLogAmplitude;
 	}
 
     public GraphEditor() {
@@ -123,6 +132,8 @@ public class GraphEditor extends JFrame {
 		if(octave == 0 ) {
 			minViewNote = minNote;
 			maxViewNote = maxNote;
+			view.repaint();
+			return;
 		}
 		minViewNote = frequencyInHzToNote(octave);
 		maxViewNote = minViewNote + FDData.noteBase * 2;
@@ -147,6 +158,63 @@ public class GraphEditor extends JFrame {
 		if(choice == null) return;
 		if(choice.equals("Amplitude")) GraphView.yView = GraphView.YView.AMPLITUDE;
 		if(choice.equals("Frequency")) GraphView.yView = GraphView.YView.FREQUENCY;
+		view.repaint();
+	}
+	
+	public static void zoomInX(int x) {
+		double divisor = 2 * zoomFactor;
+		minViewTime = GraphUtils.screenXToTime(x - view.getWidth() / divisor);
+		maxViewTime = GraphUtils.screenXToTime(x + view.getWidth() / divisor);
+		if(minViewTime < 0) {
+			maxViewTime -= minViewTime;
+			minViewTime = 0;
+		}
+		if(maxViewTime > maxTime) {
+			minViewTime += (maxViewTime - maxTime);
+			maxViewTime = maxTime;
+		}
+		view.repaint();
+	}
+	
+	public static void zoomInAmplitude(int y) {
+		double divisor = 2 * zoomFactor;
+		System.out.println(y);
+		minViewLogAmplitude = GraphUtils.screenYToValue(y + view.getHeight() / divisor);
+		maxViewLogAmplitude = GraphUtils.screenYToValue(y - view.getHeight() / divisor);
+		System.out.println(minViewLogAmplitude + " " + maxViewLogAmplitude);
+		if(minViewLogAmplitude < 0) {
+			maxViewLogAmplitude -= minViewLogAmplitude;
+			minViewLogAmplitude = 0;
+		}
+		if(maxViewLogAmplitude > maxLogAmplitude) {
+			minViewLogAmplitude -= (maxViewLogAmplitude - maxLogAmplitude);
+			maxViewLogAmplitude = maxLogAmplitude;
+		}
+		System.out.println(minViewLogAmplitude + " " + maxViewLogAmplitude);
+		view.repaint();
+	}
+	
+	public static void zoomInFrequency(int y) {
+		double divisor = 2 * zoomFactor;
+		minViewNote = (int) Math.round(GraphUtils.screenYToValue(y + view.getHeight() / divisor));
+		maxViewNote = (int) Math.round(GraphUtils.screenYToValue(y - view.getHeight() / divisor));
+		if(minViewNote < 0) {
+			maxViewNote -= minViewNote;
+			minViewNote = 0;
+		}
+		if(maxViewNote > maxNote) {
+			minViewNote -= (maxViewNote - maxNote);
+			maxViewNote = maxNote;
+		}
+		view.repaint();
+	}
+	
+	public static void playDataInCurrentWindow(GraphEditor parent) {
+		new PlayDataInWindow(parent, 50, view.getTimeAxisWidthInMillis());
+	}
+
+	public static void drawPlayTime(int offsetInMillis) {
+		view.drawPlayTime(offsetInMillis);
 		view.repaint();
 	}
 

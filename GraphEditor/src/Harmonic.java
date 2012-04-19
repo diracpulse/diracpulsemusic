@@ -11,6 +11,8 @@ public class Harmonic {
 	private boolean useVibrato = false;
 	private TreeMap<Integer, FDData> timeToData = new TreeMap<Integer, FDData>();
 	private double maxLogAmplitude = 0.0;
+	private int minNote = FDData.getMaxNote();
+	private int maxNote = FDData.getMinNote();
 	//
 	private long harmonicID;
 	
@@ -29,11 +31,15 @@ public class Harmonic {
 		if(data.getLogAmplitude() > maxLogAmplitude) maxLogAmplitude = data.getLogAmplitude();
 		if(!timeToData.containsKey(data.getTime())) {
 			timeToData.put(data.getTime(), data);
+			if(data.getNote() < minNote) minNote = data.getNote();
+			if(data.getNote() > maxNote) maxNote = data.getNote();
 			return data;
 		}
 		// data already exists at that time
 		if(overwrite) {
 			timeToData.put(data.getTime(), data);
+			if(data.getNote() < minNote) minNote = data.getNote();
+			if(data.getNote() > maxNote) maxNote = data.getNote();
 		}
 		//System.out.println("Harmonic.addData(): Duplicate data at time = " + data.getTime());
 		System.out.print("|" + data.getTime() + ":" + data.getNote() + ":" + (float) data.getLogAmplitude() + "|");
@@ -284,6 +290,14 @@ public class Harmonic {
 		return maxLogAmplitude;
 	}
 	
+	public int getMinNote() {
+		return minNote;
+	}
+	
+	public int getMaxNote() {
+		return maxNote;
+	}
+	
 	public int getAverageNote() {
 		double noteSum = 0;
 		double numNotes = 0;
@@ -345,7 +359,7 @@ public class Harmonic {
 				newTimeToData.put(data.getTime(), newData);
 			}
 		} catch (Exception e) {
-			System.out.println("Harmonic.scaleNotes: Error creating data");
+			System.out.println("Harmonic.getScaledAverageNote: Error creating data");
 		}
 		return new ArrayList<FDData>(newTimeToData.values());
 	}
@@ -362,9 +376,28 @@ public class Harmonic {
 				newTimeToData.put(time, newData);
 			}
 		} catch (Exception e) {
-			System.out.println("Harmonic.scaleNotes: Error creating data");
+			System.out.println("Harmonic.getScaledHarmonic: Error creating data");
 		}
 		return new ArrayList<FDData>(newTimeToData.values());
+	}
+	
+	public ArrayList<FDData> getTrimmedHarmonic(int startTime, int endTime) {
+		TreeMap<Integer, FDData> trimmedData = new TreeMap<Integer, FDData>();
+		ArrayList<FDData> returnData = new ArrayList<FDData>();
+		try {
+			for(FDData data: timeToData.values()) {
+				if(data.getTime() < startTime) continue;
+				if(data.getTime() > endTime) break;
+				trimmedData.put(data.getTime(), data);
+			}
+			for(FDData data: trimmedData.values()) {
+				FDData newData = new FDData(data.getTime() - startTime, data.getNote(), data.getLogAmplitude(), data.getHarmonicID());
+				returnData.add(newData);
+			}
+		} catch (Exception e) {
+			System.out.println("Harmonic.getTrimmedHarmonic: Error creating data");
+		}
+		return returnData;
 	}
 	
 }

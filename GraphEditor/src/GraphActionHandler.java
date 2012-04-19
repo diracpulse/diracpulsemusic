@@ -29,6 +29,20 @@ public class GraphActionHandler extends JPanel {
 		}
 	}	
 	
+	public class PlayWindowAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public PlayWindowAction() {
+			super("Play Window");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			GraphEditor.playDataInCurrentWindow(parent);
+		}
+	}
+	
 	public class ToggleClipZeroAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
@@ -43,17 +57,17 @@ public class GraphActionHandler extends JPanel {
 		}
 	}	
 	
-	public class OctaveViewAction extends AbstractAction {
+	public class ZoomResetAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
 
-		public OctaveViewAction() {
-			super("Select Octave Range");
+		public ZoomResetAction() {
+			super("Zoom Reset");
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			GraphEditor.promptForOctaveView(parent);
+			GraphEditor.resetView();
 		}
 	}
 	
@@ -109,12 +123,15 @@ public class GraphActionHandler extends JPanel {
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
         fileMenu.add(new OpenAction());
+        JMenu playMenu = new JMenu("Play");
+        menuBar.add(playMenu);
+        playMenu.add(new PlayWindowAction());
         JMenu viewMenu = new JMenu("View");
         menuBar.add(viewMenu);
         viewMenu.add(new ToggleClipZeroAction());
-        JMenu octaveMenu = new JMenu("Octave");
-        menuBar.add(octaveMenu);
-        octaveMenu.add(new OctaveViewAction());
+        JMenu zoomMenu = new JMenu("Zoom");
+        menuBar.add(zoomMenu);
+        zoomMenu.add(new ZoomResetAction());
         JMenu colorMenu = new JMenu("Color");
         menuBar.add(colorMenu);
         colorMenu.add(new ColorViewAction());
