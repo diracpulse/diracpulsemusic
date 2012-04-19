@@ -43,6 +43,20 @@ public class GraphActionHandler extends JPanel {
 		}
 	}
 	
+	public class PlaySequencerAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public PlaySequencerAction() {
+			super("Play Sequencer");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			GraphEditor.playDataInSequencer(parent);
+		}
+	}
+	
 	public class ToggleClipZeroAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
@@ -54,6 +68,34 @@ public class GraphActionHandler extends JPanel {
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			GraphEditor.toggleClipZero();
+		}
+	}
+	
+	public class ToggleDisplaySelectedAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public ToggleDisplaySelectedAction() {
+			super("Toggle Display Selected");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			GraphEditor.toggleDisplaySelected();
+		}
+	}
+	
+	public class ToggleDisplayUnselectedAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public ToggleDisplayUnselectedAction() {
+			super("Toggle Display Unselected");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			GraphEditor.toggleDisplayUnselected();
 		}
 	}	
 	
@@ -126,9 +168,12 @@ public class GraphActionHandler extends JPanel {
         JMenu playMenu = new JMenu("Play");
         menuBar.add(playMenu);
         playMenu.add(new PlayWindowAction());
+        playMenu.add(new PlaySequencerAction());
         JMenu viewMenu = new JMenu("View");
         menuBar.add(viewMenu);
         viewMenu.add(new ToggleClipZeroAction());
+        viewMenu.add(new ToggleDisplaySelectedAction());
+        viewMenu.add(new ToggleDisplayUnselectedAction());
         JMenu zoomMenu = new JMenu("Zoom");
         menuBar.add(zoomMenu);
         zoomMenu.add(new ZoomResetAction());

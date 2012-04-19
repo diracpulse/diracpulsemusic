@@ -86,7 +86,15 @@ public class GraphView extends JComponent {
 					g.setColor(getHarmonicColor(harmonic.getHarmonicID()));
 				}
 				if(GraphEditor.selectedHarmonicIDs.contains(harmonic.getHarmonicID())) {
-					g.setColor(new Color(1.0f, 1.0f, 1.0f, 1.0f));
+					if(!GraphEditor.displaySelectedHarmonics) {
+						g.setColor(new Color(0.5f, 0.5f, 0.5f, 0.75f));
+					} else {
+						g.setColor(new Color(1.0f, 1.0f, 1.0f, 1.0f));
+					}
+				} else {
+					if(!GraphEditor.displayUnselectedHarmonics) {
+						g.setColor(new Color(0.5f, 0.5f, 0.5f, 0.75f));
+					}
 				}
 				g.drawLine(startX, startY, endX, endY);
 				start = end;

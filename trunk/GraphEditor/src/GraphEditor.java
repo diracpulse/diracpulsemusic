@@ -15,6 +15,7 @@ public class GraphEditor extends JFrame {
 	public static GraphActionHandler actionHandler;
 	public static HashMap<Long, Harmonic> harmonicIDToHarmonic;
 	public static HashMap<Integer, HashMap<Integer, Long>> timeToLogAmplitudeTimes10ToHarmonicID;
+	public static HashMap<Integer, HashMap<Integer, Long>> timeToNoteToHarmonicID;
 	public static HashSet<Long> selectedHarmonicIDs;
 	public static int upperOffset = FDData.noteBase * 2;
 	public static int minHarmonicLength = 1;
@@ -32,6 +33,8 @@ public class GraphEditor extends JFrame {
 	public static double maxViewLogAmplitude = 0.0;
 	public static double minViewLogAmplitude = 1.0;
 	public static boolean clipZero = false;
+	public static boolean displaySelectedHarmonics = true;
+	public static boolean displayUnselectedHarmonics = true;
 	public static double zoomFactor = 2.0;
 	
 	public JMenuBar createMenuBar() {
@@ -50,6 +53,7 @@ public class GraphEditor extends JFrame {
 	static void startReadData() {
 		harmonicIDToHarmonic = new HashMap<Long, Harmonic>();
 		timeToLogAmplitudeTimes10ToHarmonicID = new HashMap<Integer, HashMap<Integer, Long>>();
+		timeToNoteToHarmonicID = new HashMap<Integer, HashMap<Integer, Long>>();
 		selectedHarmonicIDs = new HashSet<Long>();
 		maxTime = FDData.minTime;
 		minTime = FDData.maxTime;
@@ -68,6 +72,10 @@ public class GraphEditor extends JFrame {
 			timeToLogAmplitudeTimes10ToHarmonicID.put(data.getTime(), new HashMap<Integer, Long>());
 		}
 		timeToLogAmplitudeTimes10ToHarmonicID.get(data.getTime()).put(logAmplitudeTimes10, data.getHarmonicID());
+		if(!timeToNoteToHarmonicID.containsKey(data.getTime())) {
+			timeToNoteToHarmonicID.put(data.getTime(), new HashMap<Integer, Long>());
+		}
+		timeToNoteToHarmonicID.get(data.getTime()).put(data.getNote(), data.getHarmonicID());
 	}
 	
 	static void endReadData() {
@@ -127,6 +135,16 @@ public class GraphEditor extends JFrame {
 	
 	public static void toggleClipZero() {
 		clipZero = !clipZero;
+		view.repaint();
+	}
+	
+	public static void toggleDisplaySelected() {
+		displaySelectedHarmonics = !displaySelectedHarmonics;
+		view.repaint();
+	}
+	
+	public static void toggleDisplayUnselected() {
+		displayUnselectedHarmonics = !displayUnselectedHarmonics;
 		view.repaint();
 	}
 	
@@ -224,7 +242,11 @@ public class GraphEditor extends JFrame {
 	}
 	
 	public static void playDataInCurrentWindow(GraphEditor parent) {
-		new PlayDataInWindow(parent, 50, view.getTimeAxisWidthInMillis());
+		new PlayData(parent, 50, view.getTimeAxisWidthInMillis(), PlayData.DataType.WINDOW);
+	}
+	
+	public static void playDataInSequencer(GraphEditor parent) {
+		new PlayData(parent, 50, view.getTimeAxisWidthInMillis(), PlayData.DataType.SEQUENCER);
 	}
 
 	public static void drawPlayTime(int offsetInMillis) {
