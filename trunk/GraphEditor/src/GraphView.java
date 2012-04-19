@@ -27,15 +27,17 @@ public class GraphView extends JComponent {
 	private static BufferedImage bi;
 	private static boolean useImage = true;
 	private static boolean drawPlaying = false;
+	private static int offsetInMillis = 0;
 	
 	public void drawFileData(Graphics g) {
 		double pixelsPerTime = (double) getWidth() / (double) (GraphEditor.maxViewTime - GraphEditor.minViewTime);
 		double pixelsPerValue = 1;
-		if(yView == YView.AMPLITUDE) pixelsPerValue = (double) getHeight() / (double) (GraphEditor.maxLogAmplitude - GraphEditor.minLogAmplitude);
+		if(yView == YView.AMPLITUDE) pixelsPerValue = (double) getHeight() / (double) (GraphEditor.maxViewLogAmplitude - GraphEditor.minViewLogAmplitude);
 		if(yView == YView.FREQUENCY) pixelsPerValue = (double) getHeight() / (double) (GraphEditor.maxViewNote - GraphEditor.minViewNote);
 		for(Harmonic harmonic: GraphEditor.harmonicIDToHarmonic.values()) {
 			if(harmonic.getLength() < GraphEditor.minHarmonicLength) continue;
 			if(harmonic.getAverageNote() < GraphEditor.minViewNote || harmonic.getAverageNote() > GraphEditor.maxViewNote) continue;
+			if(harmonic.getMaxLogAmplitude() < GraphEditor.minViewLogAmplitude) continue;
 			ArrayList<FDData> hData = new ArrayList<FDData>(harmonic.getAllData());
 			if(hData.size() < 2) continue;
 			FDData start = hData.get(0);
@@ -51,24 +53,24 @@ public class GraphView extends JComponent {
 						continue;
 					}
 				}
-				int startTime = start.getTime() - GraphEditor.minViewTime;
-				if(startTime > GraphEditor.maxViewTime) {
+				if(start.getTime() > GraphEditor.maxViewTime) {
 					start = end;
 					continue;
 				}
-				int startX = (int) Math.round(pixelsPerTime * startTime);
+				int windowStartTime = start.getTime() - GraphEditor.minViewTime;
+				int startX = (int) Math.round(pixelsPerTime * windowStartTime);
 				int startY = 0;
-				if(yView == YView.AMPLITUDE) startY = (int) Math.round(pixelsPerValue * start.getLogAmplitude() - GraphEditor.minLogAmplitude);
+				if(yView == YView.AMPLITUDE) startY = (int) Math.round(pixelsPerValue * (start.getLogAmplitude() - GraphEditor.minViewLogAmplitude));
 				if(yView == YView.FREQUENCY) startY = (int) Math.round(pixelsPerValue * (start.getNote() - GraphEditor.minViewNote));
 				startY = getHeight() - startY;
-				int endTime = end.getTime() - GraphEditor.minViewTime;
-				if(endTime < 0) {
+				if(end.getTime() < GraphEditor.minViewTime) {
 					start = end;
 					continue;					
-				}			
-				int endX = (int) Math.round(pixelsPerTime * end.getTime());
+				}
+				int windowEndTime = end.getTime() - GraphEditor.minViewTime;
+				int endX = (int) Math.round(pixelsPerTime * windowEndTime);
 				int endY = 1;
-				if(yView == YView.AMPLITUDE) endY = (int) Math.round(pixelsPerValue * end.getLogAmplitude() - GraphEditor.minLogAmplitude);
+				if(yView == YView.AMPLITUDE) endY = (int) Math.round(pixelsPerValue * (end.getLogAmplitude() - GraphEditor.minViewLogAmplitude));
 				if(yView == YView.FREQUENCY) endY = (int) Math.round(pixelsPerValue * (end.getNote() - GraphEditor.minViewNote));		
 				endY = getHeight() - endY;
 				if(colorView == ColorView.AMPLITUDE) {
@@ -91,9 +93,9 @@ public class GraphView extends JComponent {
 	}
 
 	private Color getAmplitudeColor(double amplitude, float alpha) {
-		float noteRange = (float) (GraphEditor.maxLogAmplitude - GraphEditor.minLogAmplitude);
+		float noteRange = (float) (GraphEditor.maxViewLogAmplitude - GraphEditor.minViewLogAmplitude);
 		float currentVal = (float) amplitude;
-		currentVal -= GraphEditor.minLogAmplitude;
+		currentVal -= GraphEditor.minViewLogAmplitude;
 		currentVal /= noteRange;
 		if(currentVal < 0.0f) currentVal = 0.0f;
 		if(currentVal > 1.0f) currentVal = 1.0f;
@@ -114,7 +116,7 @@ public class GraphView extends JComponent {
 	}
 
 	private Color getFrequencyColor(double note, float alpha) {
-		float noteRange = (float) (GraphEditor.maxNote - GraphEditor.minNote);
+		float noteRange = (float) (GraphEditor.maxViewNote - GraphEditor.minViewNote);
 		float currentVal = (float) note;
 		currentVal -= GraphEditor.minNote;
 		currentVal /= noteRange;
@@ -139,14 +141,24 @@ public class GraphView extends JComponent {
 		return new Color(red + 192, green + 192, blue + 192);
 	}
 	
+	public void drawPlayTime(int offsetInMillis) {
+		drawPlaying = true;
+		GraphView.offsetInMillis = offsetInMillis;
+	}
+	
+	public int getTimeAxisWidthInMillis() {
+   		return (GraphEditor.maxViewTime - GraphEditor.minViewTime) * FDData.timeStepInMillis;
+	}
+	
     protected void paintComponent(Graphics g) {
     	//System.out.println("Paint Component");
     	if(drawPlaying) {
-    		//double millisPerPixel = (double) FDData.timeStepInMillis / pixelsPerTime;
-    		//int startX = (int) Math.round((double) HarmonicsView.offsetInMillis / millisPerPixel + HarmonicsEditor.leftOffset);
+    		double pixelsPerTime = (double) getWidth() / (double) (GraphEditor.maxViewTime - GraphEditor.minViewTime);
+    		double millisPerPixel = (double) FDData.timeStepInMillis / pixelsPerTime;
+    		int startX = (int) Math.round((double) offsetInMillis / millisPerPixel);
     		g.drawImage(bi, 0, 0, null);
        		g.setColor(new Color(0.5f, 0.5f, 0.5f, 0.75f));
-    		//g.fillRect(startX, 0, 1, getHeight());    		
+    		g.fillRect(startX, 0, 1, getHeight());    		
     		drawPlaying = false;
     		return;
     	}

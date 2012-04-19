@@ -28,6 +28,15 @@ public class GraphController implements MouseListener, ActionListener {
 	public void mousePressed(MouseEvent e){
 	    int x = e.getX();
 	    int y = e.getY();
+	    if(e.isControlDown()) {
+	    	GraphEditor.zoomInX(x);
+	    	return;
+	    }
+	    if(e.isShiftDown()) {
+	    	if(GraphView.yView == GraphView.YView.AMPLITUDE) GraphEditor.zoomInAmplitude(y);
+	    	if(GraphView.yView == GraphView.YView.FREQUENCY) GraphEditor.zoomInFrequency(y);
+	    	return;
+	    }
 	}
 	
 	public void mouseClicked(MouseEvent e){
