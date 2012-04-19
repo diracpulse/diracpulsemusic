@@ -14,6 +14,9 @@ public class GraphEditor extends JFrame {
 	public static GraphController controller;
 	public static GraphActionHandler actionHandler;
 	public static HashMap<Long, Harmonic> harmonicIDToHarmonic;
+	public static HashMap<Integer, HashMap<Integer, Long>> timeToLogAmplitudeTimes10ToHarmonicID;
+	public static HashSet<Long> selectedHarmonicIDs;
+	public static int upperOffset = FDData.noteBase * 2;
 	public static int minHarmonicLength = 1;
 	public static int maxTime = 1;
 	public static int minTime = 0;
@@ -40,13 +43,14 @@ public class GraphEditor extends JFrame {
 		startReadData();
         String fileName = FileTools.PromptForFileOpen(view, extension);
         GraphFileInput.ReadBinaryFileData(fileName);
-        endReadData();
         this.setTitle(fileName);
-        view.repaint();
+        endReadData();
 	}
 	
 	static void startReadData() {
 		harmonicIDToHarmonic = new HashMap<Long, Harmonic>();
+		timeToLogAmplitudeTimes10ToHarmonicID = new HashMap<Integer, HashMap<Integer, Long>>();
+		selectedHarmonicIDs = new HashSet<Long>();
 		maxTime = FDData.minTime;
 		minTime = FDData.maxTime;
 		maxNote = FDData.getMinNote();
@@ -59,6 +63,11 @@ public class GraphEditor extends JFrame {
 			harmonicIDToHarmonic.put(data.getHarmonicID(), new Harmonic(data.getHarmonicID()));
 		}
 		harmonicIDToHarmonic.get(data.getHarmonicID()).addData(data);
+		int logAmplitudeTimes10 = (int) Math.round(data.getLogAmplitude() * 10.0);
+		if(!timeToLogAmplitudeTimes10ToHarmonicID.containsKey(data.getTime())) {
+			timeToLogAmplitudeTimes10ToHarmonicID.put(data.getTime(), new HashMap<Integer, Long>());
+		}
+		timeToLogAmplitudeTimes10ToHarmonicID.get(data.getTime()).put(logAmplitudeTimes10, data.getHarmonicID());
 	}
 	
 	static void endReadData() {
@@ -80,6 +89,7 @@ public class GraphEditor extends JFrame {
 		maxViewNote = maxNote;
 		minViewLogAmplitude = 0.0;
 		maxViewLogAmplitude = maxLogAmplitude;
+		view.repaint();
 	}
 
     public GraphEditor() {
@@ -122,6 +132,10 @@ public class GraphEditor extends JFrame {
 	
 	public static int frequencyInHzToNote(double freqInHz) {
 		return (int) Math.round(Math.log(freqInHz)/Math.log(2.0) * (double) FDData.noteBase);
+	}
+	
+	public static double noteToFrequencyInHz(int note) {
+		return (int) Math.pow(2.0, (double) note / (double) FDData.noteBase);
 	}
 	
 	public static void promptForOctaveView(GraphEditor parent) {

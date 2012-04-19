@@ -8,6 +8,8 @@ import java.util.TreeSet;
 
 public class GraphView extends JComponent {
 
+	
+	
 	public enum ColorView {
 		AMPLITUDE,
 		FREQUENCY,
@@ -30,10 +32,11 @@ public class GraphView extends JComponent {
 	private static int offsetInMillis = 0;
 	
 	public void drawFileData(Graphics g) {
+		drawViewInfo(g);
 		double pixelsPerTime = (double) getWidth() / (double) (GraphEditor.maxViewTime - GraphEditor.minViewTime);
 		double pixelsPerValue = 1;
-		if(yView == YView.AMPLITUDE) pixelsPerValue = (double) getHeight() / (double) (GraphEditor.maxViewLogAmplitude - GraphEditor.minViewLogAmplitude);
-		if(yView == YView.FREQUENCY) pixelsPerValue = (double) getHeight() / (double) (GraphEditor.maxViewNote - GraphEditor.minViewNote);
+		if(yView == YView.AMPLITUDE) pixelsPerValue = (double) (getHeight() - GraphEditor.upperOffset) / (double) (GraphEditor.maxViewLogAmplitude - GraphEditor.minViewLogAmplitude);
+		if(yView == YView.FREQUENCY) pixelsPerValue = (double) (getHeight() - GraphEditor.upperOffset) / (double) (GraphEditor.maxViewNote - GraphEditor.minViewNote);
 		for(Harmonic harmonic: GraphEditor.harmonicIDToHarmonic.values()) {
 			if(harmonic.getLength() < GraphEditor.minHarmonicLength) continue;
 			if(harmonic.getAverageNote() < GraphEditor.minViewNote || harmonic.getAverageNote() > GraphEditor.maxViewNote) continue;
@@ -69,7 +72,7 @@ public class GraphView extends JComponent {
 				}
 				int windowEndTime = end.getTime() - GraphEditor.minViewTime;
 				int endX = (int) Math.round(pixelsPerTime * windowEndTime);
-				int endY = 1;
+				int endY = 0;
 				if(yView == YView.AMPLITUDE) endY = (int) Math.round(pixelsPerValue * (end.getLogAmplitude() - GraphEditor.minViewLogAmplitude));
 				if(yView == YView.FREQUENCY) endY = (int) Math.round(pixelsPerValue * (end.getNote() - GraphEditor.minViewNote));		
 				endY = getHeight() - endY;
@@ -81,7 +84,10 @@ public class GraphView extends JComponent {
 				}
 				if(colorView == ColorView.HARMONICS) {
 					g.setColor(getHarmonicColor(harmonic.getHarmonicID()));
-				}				
+				}
+				if(GraphEditor.selectedHarmonicIDs.contains(harmonic.getHarmonicID())) {
+					g.setColor(new Color(1.0f, 1.0f, 1.0f, 1.0f));
+				}
 				g.drawLine(startX, startY, endX, endY);
 				start = end;
 			}
@@ -139,6 +145,29 @@ public class GraphView extends JComponent {
 		int green = (int) (harmonicID / 64) % 64;
 		int blue = (int) (harmonicID / (64 * 64)) % 64;
 		return new Color(red + 192, green + 192, blue + 192);
+	}
+	
+	public void drawViewInfo(Graphics g) {
+		double tVMin = GraphEditor.minViewTime / (1000.0 / FDData.timeStepInMillis);
+		double tVMax = GraphEditor.maxViewTime / (1000.0 / FDData.timeStepInMillis);
+		double fVMin = GraphEditor.noteToFrequencyInHz(GraphEditor.minViewNote);
+		double fVMax = GraphEditor.noteToFrequencyInHz(GraphEditor.maxViewNote);
+		double lAVMin = Math.round(GraphEditor.minViewLogAmplitude * 100.0) / 100.0;
+		double lAVMax = Math.round(GraphEditor.maxViewLogAmplitude * 100.0) / 100.0;
+		double tMin = GraphEditor.minTime / (1000.0 / FDData.timeStepInMillis);
+		double tMax = GraphEditor.maxTime / (1000.0 / FDData.timeStepInMillis);
+		double fMin = GraphEditor.noteToFrequencyInHz(GraphEditor.minNote);
+		double fMax = GraphEditor.noteToFrequencyInHz(GraphEditor.maxNote);
+		double lAMin = Math.round(GraphEditor.minLogAmplitude * 100.0) / 100.0;
+		double lAMax = Math.round(GraphEditor.maxLogAmplitude * 100.0) / 100.0;
+		g.setColor(new Color(1.0f, 1.0f, 1.0f, 0.75f));
+		int fontHeight = g.getFontMetrics().getHeight();
+		g.drawString(new String("Tmin: " + tVMin + " | " + tMin), 0, fontHeight);
+		g.drawString(new String("Tmax: " + tVMax + " | " + tMax), 0, fontHeight * 2);
+		g.drawString(new String("Fmin: " + fVMin + " | " + fMin), 0, fontHeight * 3);
+		g.drawString(new String("Fmax: " + fVMax + " | " + fMax), 0, fontHeight * 4);
+		g.drawString(new String("LAmin: " + lAVMin + " | " + lAMin), 0, fontHeight * 5);
+		g.drawString(new String("LAmax: " + lAVMax + " | " + lAMax), 0, fontHeight * 6);
 	}
 	
 	public void drawPlayTime(int offsetInMillis) {
