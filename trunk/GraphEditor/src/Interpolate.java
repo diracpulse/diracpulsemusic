@@ -1,48 +1,42 @@
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 
 class Interpolate {
-	
-	public enum FDDataType {
-		AMPLITUDE,
-		NOTE;
-	}
-	
-	public static ArrayList<FDData> dataInterpolate(ArrayList<FDData> input) {
-		ArrayList<FDData> middleVal = dataInterpolate(input, FDDataType.AMPLITUDE);
-		return dataInterpolate(middleVal, FDDataType.NOTE);
-	}
-
-	public static ArrayList<FDData> dataInterpolate(ArrayList<FDData> input, FDDataType type) {
-		ArrayList<FDData> output = new ArrayList<FDData>();
+		
+	public static TreeMap<Integer, FDData> dataInterpolate(TreeMap<Integer, FDData> input) {
+		TreeMap<Integer, FDData> output = new TreeMap<Integer, FDData>();
 		if(input.isEmpty()) return output;
-		int lowerTime = input.get(0).getTime();
-		double lowerValue = input.get(0).getLogAmplitude();
-		FDData currentData = input.get(0);
-		for(int index = 1; index < input.size(); index++) {
-			int upperTime = input.get(index).getTime();
-			double upperValue = 0.0;
-			if(type == FDDataType.AMPLITUDE) upperValue = input.get(index).getLogAmplitude();
-			if(type == FDDataType.NOTE) upperValue = input.get(index).getNote();
-			double slope = (upperValue - lowerValue) / (upperTime - lowerTime);
+		if(input.size() == 1) {
+			output.put(input.firstKey(), input.firstEntry().getValue());
+			return output;
+		}
+		long harmonicID = input.firstEntry().getValue().getHarmonicID();
+		int lowerTime = input.firstKey();
+		double lowerAmpValue = input.get(lowerTime).getLogAmplitude();
+		double lowerNoteValue = input.get(lowerTime).getNote();
+		for(int upperTime: input.keySet()) {
+			if(upperTime == lowerTime) continue;
+			double upperAmpValue = input.get(upperTime).getLogAmplitude();
+			double upperNoteValue = input.get(upperTime).getNote();
+			double ampSlope = (upperAmpValue - lowerAmpValue) / (upperTime - lowerTime);
+			double noteSlope = (upperNoteValue - lowerNoteValue) / (upperTime - lowerTime);
 			for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
-				double value = lowerValue + (timeIndex - lowerTime) * slope;
+				double ampValue = lowerAmpValue + (timeIndex - lowerTime) * ampSlope;
+				double noteValue = lowerNoteValue + (timeIndex - lowerTime) * noteSlope;
 				try {
-					if(type == FDDataType.AMPLITUDE) {
-						output.add(new FDData(timeIndex, currentData.getNote(), value, currentData.getHarmonicID()));
-					}
-					if(type == FDDataType.NOTE) {
-						output.add(new FDData(timeIndex, value, currentData.getLogAmplitude(), currentData.getHarmonicID()));
-					}
+					//System.out.println(timeIndex + " " +  noteValue + " " +  ampValue + " " +  harmonicID);
+					output.put(timeIndex, new FDData(timeIndex, noteValue, ampValue, harmonicID));
 				} catch (Exception e) {
-					System.out.println("LogLinear.dataInterpolate(): error creating data");
+					System.out.println("Interpolate.dataInterpolate(): error creating data");
 					return null;
 				}
-				lowerValue = upperValue;
-				lowerTime = upperTime;
 			}
+			lowerAmpValue = upperAmpValue;
+			lowerNoteValue = upperNoteValue;
+			lowerTime = upperTime;
 		}
 		return output;
 	}

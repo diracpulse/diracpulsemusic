@@ -46,10 +46,33 @@ public class Harmonic {
 		return data;
 	}
 	
+	public void removeData(int time) {
+		if(!timeToData.containsKey(time)) {
+			System.out.println("Harmonic.removeData: Data does not exist!");
+			return;
+		}
+		timeToData.remove(time);
+	}
+	
 	public boolean containsData() {
 		return !timeToData.isEmpty();
 	}
 	
+	public boolean containsData(int time, int note) {
+		if(timeToData.containsKey(time)) {
+			if(timeToData.get(time).getNote() == note) return true;
+		}
+		return false;
+	}
+	
+	public boolean containsDataInterpolated(int time, int note) {
+		TreeMap <Integer, FDData> interpolatedData = getAllDataInterpolated();
+		if(interpolatedData.containsKey(time)) {
+			if(interpolatedData.get(time).getNote() == note) return true;
+		}
+		return false;
+	}
+
 	public int getStartSampleOffset() {
 		if(!containsData()) return 0;
 		return (int) Math.round(timeToData.firstKey() * SynthTools.timeToSample);
@@ -68,18 +91,21 @@ public class Harmonic {
 		return length;
 	}
 	
-	public ArrayList<FDData> getAllData() {
-		ArrayList<FDData> returnVal = new ArrayList<FDData>(timeToData.values());
+	public TreeMap<Integer, FDData> getAllData() {
+		TreeMap<Integer, FDData> returnVal = new TreeMap<Integer, FDData>();
+		for(int time: timeToData.keySet()) {
+			returnVal.put(time, timeToData.get(time));
+		}
 		if(returnVal.size() == 0) return returnVal;
 		if(getTaperLength() == 0) return returnVal;
-		returnVal.add(getEnd());
+		returnVal.put(getEnd().getTime(), getEnd());
 		return returnVal;
 	}
-	
-	public ArrayList<FDData> getAllDataInterpolated() {
-		return Interpolate.dataInterpolate(getAllData());
+
+	public TreeMap<Integer, FDData> getAllDataInterpolated() {
+		return Interpolate.dataInterpolate(timeToData);
 	}
-	
+
 	public boolean containsData(FDData data) {
 		if(timeToData.containsKey(data.getTime())) return true;
 		return false;
@@ -103,6 +129,7 @@ public class Harmonic {
 	}
 	
 	public int getLength() {
+		if(timeToData.size() < 2) return 0;
 		return getEnd().getTime() - getStart().getTime();
 	}
 	

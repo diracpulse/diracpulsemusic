@@ -14,10 +14,13 @@ public class GraphEditor extends JFrame {
 	public static GraphController controller;
 	public static GraphActionHandler actionHandler;
 	public static HashMap<Long, Harmonic> harmonicIDToHarmonic;
+	public static TreeMap<Long, Harmonic> harmonicIDToControlPointHarmonic;
 	public static HashMap<Integer, HashMap<Integer, Long>> timeToLogAmplitudeTimes10ToHarmonicID;
 	public static HashMap<Integer, HashMap<Integer, Long>> timeToNoteToHarmonicID;
 	public static HashSet<Long> selectedHarmonicIDs;
+	public static long activeControlPointHarmonicID = 0;
 	public static int upperOffset = FDData.noteBase * 2;
+	public static int leftOffset = 0;
 	public static int minHarmonicLength = 1;
 	public static int maxTime = 1;
 	public static int minTime = 0;
@@ -36,6 +39,7 @@ public class GraphEditor extends JFrame {
 	public static boolean displaySelectedHarmonics = true;
 	public static boolean displayUnselectedHarmonics = true;
 	public static double zoomFactor = 2.0;
+	public static Random randomIDGenerator;
 	
 	public JMenuBar createMenuBar() {
         GraphActionHandler actionHandler = new GraphActionHandler(this);
@@ -43,18 +47,21 @@ public class GraphEditor extends JFrame {
     }
 
 	public void openFileInGraphEditor(String extension) {
-		startReadData();
+		initVariables();
         String fileName = FileTools.PromptForFileOpen(view, extension);
         GraphFileInput.ReadBinaryFileData(fileName);
         this.setTitle(fileName);
         endReadData();
 	}
 	
-	static void startReadData() {
+	static void initVariables() {
 		harmonicIDToHarmonic = new HashMap<Long, Harmonic>();
 		timeToLogAmplitudeTimes10ToHarmonicID = new HashMap<Integer, HashMap<Integer, Long>>();
 		timeToNoteToHarmonicID = new HashMap<Integer, HashMap<Integer, Long>>();
 		selectedHarmonicIDs = new HashSet<Long>();
+		harmonicIDToControlPointHarmonic = new TreeMap<Long, Harmonic>();
+		activeControlPointHarmonicID = randomIDGenerator.nextLong();
+		harmonicIDToControlPointHarmonic.put(activeControlPointHarmonicID, new Harmonic(activeControlPointHarmonicID));
 		maxTime = FDData.minTime;
 		minTime = FDData.maxTime;
 		maxNote = FDData.getMinNote();
@@ -109,7 +116,8 @@ public class GraphEditor extends JFrame {
         controller.setView(view);
         add(view);
         setSize(1500, 800);
-        harmonicIDToHarmonic = new HashMap<Long, Harmonic>();
+        randomIDGenerator = new Random();
+        initVariables();
     }
     
 	private static void createAndShowGUI() {

@@ -16,5 +16,5 @@ public class GraphUtils {
 		if(GraphView.yView == GraphView.YView.FREQUENCY) return GraphEditor.maxViewNote - ((y - GraphEditor.upperOffset) / pixelsPerValue);
 		return -1.0;
 	}
-	
+
 }

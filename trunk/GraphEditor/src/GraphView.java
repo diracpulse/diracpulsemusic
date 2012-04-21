@@ -37,11 +37,13 @@ public class GraphView extends JComponent {
 		double pixelsPerValue = 1;
 		if(yView == YView.AMPLITUDE) pixelsPerValue = (double) (getHeight() - GraphEditor.upperOffset) / (double) (GraphEditor.maxViewLogAmplitude - GraphEditor.minViewLogAmplitude);
 		if(yView == YView.FREQUENCY) pixelsPerValue = (double) (getHeight() - GraphEditor.upperOffset) / (double) (GraphEditor.maxViewNote - GraphEditor.minViewNote);
-		for(Harmonic harmonic: GraphEditor.harmonicIDToHarmonic.values()) {
+		ArrayList<Harmonic> allHarmonics = new ArrayList<Harmonic>(GraphEditor.harmonicIDToHarmonic.values());
+		allHarmonics.addAll(GraphEditor.harmonicIDToControlPointHarmonic.values());
+		for(Harmonic harmonic: allHarmonics) {
 			if(harmonic.getLength() < GraphEditor.minHarmonicLength) continue;
 			if(harmonic.getAverageNote() < GraphEditor.minViewNote || harmonic.getAverageNote() > GraphEditor.maxViewNote) continue;
 			if(harmonic.getMaxLogAmplitude() < GraphEditor.minViewLogAmplitude) continue;
-			ArrayList<FDData> hData = new ArrayList<FDData>(harmonic.getAllData());
+			ArrayList<FDData> hData = new ArrayList<FDData>(harmonic.getAllDataInterpolated().values());
 			if(hData.size() < 2) continue;
 			FDData start = hData.get(0);
 			for(int index = 1; index < hData.size(); index++) {

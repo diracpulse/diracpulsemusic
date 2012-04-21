@@ -38,6 +38,38 @@ public class GraphController implements MouseListener, ActionListener {
 	    	if(GraphView.yView == GraphView.YView.FREQUENCY) GraphEditor.zoomInFrequency(y);
 	    	return;
 	    }
+	    if(e.isAltDown()) {
+    		if(y < GraphEditor.upperOffset) return;
+    		if(x < GraphEditor.leftOffset) return;
+    		int time = GraphUtils.screenXToTime(x);
+    		int note = (int) Math.round(GraphUtils.screenYToValue(y));
+	    	if(GraphView.yView == GraphView.YView.FREQUENCY) {
+	    		for(Harmonic harmonic: GraphEditor.harmonicIDToControlPointHarmonic.values()) {
+	    			if(harmonic.containsData(time, note)) {
+	    				harmonic.removeData(time);
+	    				GraphEditor.view.repaint();
+	    				return;
+	    			}
+	    			if(harmonic.containsDataInterpolated(time, note)) {
+	    				GraphEditor.activeControlPointHarmonicID = harmonic.getHarmonicID();
+	    				GraphEditor.view.repaint();
+	    				return;
+	    			}	
+	    		}
+	    		FDData newData = null;
+	    		try {
+	    			newData = new FDData(time, note, 1.0, GraphEditor.activeControlPointHarmonicID);
+	    		} catch (Exception ex) {
+	    			System.out.println("GraphController.mousePressed (ALT): Error creating FDData");
+	    			return;
+	    		}
+	    		long id = GraphEditor.activeControlPointHarmonicID;
+	    		GraphEditor.harmonicIDToControlPointHarmonic.get(id).addData(newData);
+	    		GraphEditor.view.repaint();
+	    		return;
+	    	}
+	    	return;
+	    }
 	    if(GraphView.yView == GraphView.YView.AMPLITUDE) {
 	    	int time = GraphUtils.screenXToTime(x);
 	    	System.out.println(GraphUtils.screenYToValue(y));
