@@ -33,7 +33,7 @@ public class GraphFileOutput {
 		int index = 0;
 		ArrayList<FDData> allData = new ArrayList<FDData>();
 		for(Harmonic harmonic: harmonics) {
-			for(FDData data: harmonic.getAllData()) {
+			for(FDData data: harmonic.getAllData().values()) {
 				allData.add(data);
 			}
 		}
@@ -95,7 +95,7 @@ public class GraphFileOutput {
 	    	DataOutputStream selectedOut = new DataOutputStream(new
 		            BufferedOutputStream(new FileOutputStream(fileName)));
             for(Harmonic harmonic: GraphEditor.harmonicIDToHarmonic.values()) {
-            	for(FDData data: harmonic.getAllData()) {
+            	for(FDData data: harmonic.getAllData().values()) {
             		float amp = (float) data.getLogAmplitude();
             		selectedOut.writeInt(data.getTime());
             		selectedOut.writeInt(data.getNote());
