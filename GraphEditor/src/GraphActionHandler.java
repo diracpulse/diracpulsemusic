@@ -57,6 +57,36 @@ public class GraphActionHandler extends JPanel {
 		}
 	}
 	
+	public class PlayControlPointsAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public PlayControlPointsAction() {
+			super("Play Control Points");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			GraphEditor.playDataInControlPoints(parent);
+		}
+	}
+	
+	public class SelectSlowPlayAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+		private int slowSpeed;
+		
+		public SelectSlowPlayAction(int slowSpeed) {
+			super("Slow Play = " + slowSpeed);
+			this.slowSpeed = slowSpeed;
+		}
+		
+		public void actionPerformed(ActionEvent arg0) {
+			SynthTools.slowSpeed = slowSpeed;
+		}
+		
+	}
+	
 	public class ToggleClipZeroAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
@@ -157,6 +187,21 @@ public class GraphActionHandler extends JPanel {
 		}		
 		
 	}
+	
+	public class NewCPHarmonicAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+		
+		public NewCPHarmonicAction() {
+			super("New CP Harmonic");
+		}
+		
+		public void actionPerformed(ActionEvent arg0) {
+			GraphEditor.newControlPointHarmonic();
+		    GraphEditor.view.repaint();
+		}		
+		
+	}
 
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
@@ -169,6 +214,7 @@ public class GraphActionHandler extends JPanel {
         menuBar.add(playMenu);
         playMenu.add(new PlayWindowAction());
         playMenu.add(new PlaySequencerAction());
+        playMenu.add(new PlayControlPointsAction());
         JMenu viewMenu = new JMenu("View");
         menuBar.add(viewMenu);
         viewMenu.add(new ToggleClipZeroAction());
@@ -183,10 +229,18 @@ public class GraphActionHandler extends JPanel {
         JMenu yViewMenu = new JMenu("YView");
         menuBar.add(yViewMenu);
         yViewMenu.add(new YViewAction());
+        JMenu controlPointMenu = new JMenu("ControlPoint");
+        menuBar.add(controlPointMenu);
+        controlPointMenu.add(new NewCPHarmonicAction());
         JMenu minLengthMenu = new JMenu("MinLength");
         menuBar.add(minLengthMenu);      
         for(int minLength = 1; minLength <= 20; minLength++) {
         	minLengthMenu.add(new SelectMinLengthAction(minLength));
+        }
+        JMenu slowPlayMenu = new JMenu("SlowPlay");
+        menuBar.add(slowPlayMenu);
+        for(int slowPlay = 1; slowPlay <= 5; slowPlay++) {
+        	slowPlayMenu.add(new SelectSlowPlayAction(slowPlay));
         }
         return menuBar;
 	}

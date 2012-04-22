@@ -33,14 +33,11 @@ public class GraphController implements MouseListener, ActionListener {
 	    	return;
 	    }
 	    if(e.isShiftDown()) {
-	    	if(y < GraphEditor.upperOffset) return;
 	    	if(GraphView.yView == GraphView.YView.AMPLITUDE) GraphEditor.zoomInAmplitude(y);
 	    	if(GraphView.yView == GraphView.YView.FREQUENCY) GraphEditor.zoomInFrequency(y);
 	    	return;
 	    }
 	    if(e.isAltDown()) {
-    		if(y < GraphEditor.upperOffset) return;
-    		if(x < GraphEditor.leftOffset) return;
     		int time = GraphUtils.screenXToTime(x);
     		int note = (int) Math.round(GraphUtils.screenYToValue(y));
 	    	if(GraphView.yView == GraphView.YView.FREQUENCY) {

@@ -19,8 +19,6 @@ public class GraphEditor extends JFrame {
 	public static HashMap<Integer, HashMap<Integer, Long>> timeToNoteToHarmonicID;
 	public static HashSet<Long> selectedHarmonicIDs;
 	public static long activeControlPointHarmonicID = 0;
-	public static int upperOffset = FDData.noteBase * 2;
-	public static int leftOffset = 0;
 	public static int minHarmonicLength = 1;
 	public static int maxTime = 1;
 	public static int minTime = 0;
@@ -236,25 +234,37 @@ public class GraphEditor extends JFrame {
 	
 	public static void zoomInFrequency(int y) {
 		double divisor = 2 * zoomFactor;
+		System.out.println(y);
 		minViewNote = (int) Math.round(GraphUtils.screenYToValue(y + view.getHeight() / divisor));
 		maxViewNote = (int) Math.round(GraphUtils.screenYToValue(y - view.getHeight() / divisor));
-		if(minViewNote < 0) {
-			maxViewNote -= minViewNote;
-			minViewNote = 0;
+		System.out.println(minViewNote + " " + maxViewNote);
+		if(minViewNote < minNote) {
+			maxViewNote -= (minViewNote - minNote);
+			minViewNote = minNote;
 		}
 		if(maxViewNote > maxNote) {
 			minViewNote -= (maxViewNote - maxNote);
 			maxViewNote = maxNote;
 		}
+		System.out.println(minViewNote + " " + maxViewNote);
 		view.repaint();
 	}
 	
+	public static void newControlPointHarmonic() {
+		activeControlPointHarmonicID = randomIDGenerator.nextLong();
+		harmonicIDToControlPointHarmonic.put(activeControlPointHarmonicID, new Harmonic(activeControlPointHarmonicID));
+	}
+	
 	public static void playDataInCurrentWindow(GraphEditor parent) {
-		new PlayData(parent, 50, view.getTimeAxisWidthInMillis(), PlayData.DataType.WINDOW);
+		new PlayData(parent, 60, view.getTimeAxisWidthInMillis(), PlayData.DataType.WINDOW);
 	}
 	
 	public static void playDataInSequencer(GraphEditor parent) {
-		new PlayData(parent, 50, view.getTimeAxisWidthInMillis(), PlayData.DataType.SEQUENCER);
+		new PlayData(parent, 60, view.getTimeAxisWidthInMillis(), PlayData.DataType.SEQUENCER);
+	}
+	
+	public static void playDataInControlPoints(GraphEditor parent) {
+		new PlayData(parent, 60, view.getTimeAxisWidthInMillis(), PlayData.DataType.CONTROL_POINT);
 	}
 
 	public static void drawPlayTime(int offsetInMillis) {
