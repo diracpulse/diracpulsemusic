@@ -103,7 +103,16 @@ public class Harmonic {
 	}
 
 	public TreeMap<Integer, FDData> getAllDataInterpolated() {
-		return Interpolate.dataInterpolate(timeToData);
+		TreeMap<Integer, FDData> returnVal = new TreeMap<Integer, FDData>();
+		if(timeToData.size() == 0) return returnVal;
+		if(timeToData.size() == 1) {
+			returnVal.put(getStartTime(), getStart());
+			return returnVal;
+		}
+		returnVal = Interpolate.dataInterpolate(timeToData);
+		if(getTaperLength() == 0) return returnVal;
+		returnVal.put(getEnd().getTime(), getEnd());
+		return returnVal;
 	}
 
 	public boolean containsData(FDData data) {
@@ -258,7 +267,7 @@ public class Harmonic {
 		return new ArrayList<FDData>(newTimeToData.values());
 	}
 	
-	public ArrayList<FDData> getTrimmedHarmonic(int startTime, int endTime) {
+	public ArrayList<FDData> getTrimmedHarmonic(int startTime, int endTime, int slowSpeed) {
 		TreeMap<Integer, FDData> trimmedData = new TreeMap<Integer, FDData>();
 		ArrayList<FDData> returnData = new ArrayList<FDData>();
 		try {
@@ -268,7 +277,7 @@ public class Harmonic {
 				trimmedData.put(data.getTime(), data);
 			}
 			for(FDData data: trimmedData.values()) {
-				FDData newData = new FDData(data.getTime() - startTime, data.getNote(), data.getLogAmplitude(), data.getHarmonicID());
+				FDData newData = new FDData((data.getTime() - startTime) * slowSpeed, data.getNote(), data.getLogAmplitude(), data.getHarmonicID());
 				returnData.add(newData);
 			}
 		} catch (Exception e) {
@@ -280,7 +289,7 @@ public class Harmonic {
 	public ArrayList<FDData> getPureSineHarmonic(double logAmplitude) {
 		ArrayList<FDData> returnData = new ArrayList<FDData>();
 		try {
-			for(FDData data: timeToData.values()) {
+			for(FDData data: getAllDataInterpolated().values()) {
 				FDData newData = new FDData(data.getTime(), data.getNote(), logAmplitude, data.getHarmonicID());
 				returnData.add(newData);
 			}

@@ -32,11 +32,10 @@ public class GraphView extends JComponent {
 	private static int offsetInMillis = 0;
 	
 	public void drawFileData(Graphics g) {
-		drawViewInfo(g);
 		double pixelsPerTime = (double) getWidth() / (double) (GraphEditor.maxViewTime - GraphEditor.minViewTime);
 		double pixelsPerValue = 1;
-		if(yView == YView.AMPLITUDE) pixelsPerValue = (double) (getHeight() - GraphEditor.upperOffset) / (double) (GraphEditor.maxViewLogAmplitude - GraphEditor.minViewLogAmplitude);
-		if(yView == YView.FREQUENCY) pixelsPerValue = (double) (getHeight() - GraphEditor.upperOffset) / (double) (GraphEditor.maxViewNote - GraphEditor.minViewNote);
+		if(yView == YView.AMPLITUDE) pixelsPerValue = (double) getHeight() / (double) (GraphEditor.maxViewLogAmplitude - GraphEditor.minViewLogAmplitude);
+		if(yView == YView.FREQUENCY) pixelsPerValue = (double) getHeight() / (double) (GraphEditor.maxViewNote - GraphEditor.minViewNote);
 		ArrayList<Harmonic> allHarmonics = new ArrayList<Harmonic>(GraphEditor.harmonicIDToHarmonic.values());
 		allHarmonics.addAll(GraphEditor.harmonicIDToControlPointHarmonic.values());
 		for(Harmonic harmonic: allHarmonics) {
@@ -102,6 +101,7 @@ public class GraphView extends JComponent {
 				start = end;
 			}
 		}
+		drawViewInfo(g);
 	}
 	
 	private Color getAmplitudeColor(double amplitude) {
@@ -170,8 +170,11 @@ public class GraphView extends JComponent {
 		double fMax = GraphEditor.noteToFrequencyInHz(GraphEditor.maxNote);
 		double lAMin = Math.round(GraphEditor.minLogAmplitude * 100.0) / 100.0;
 		double lAMax = Math.round(GraphEditor.maxLogAmplitude * 100.0) / 100.0;
-		g.setColor(new Color(1.0f, 1.0f, 1.0f, 0.75f));
 		int fontHeight = g.getFontMetrics().getHeight();
+		int maxWidth = (int) Math.round(g.getFontMetrics().getStringBounds("XXXX: XXXXX.XE | XXXXX.XE", g).getWidth());
+		g.setColor(new Color(1.0f, 1.0f, 1.0f, 0.75f));
+		g.fillRect(0, 0, maxWidth, fontHeight * 7);
+		g.setColor(new Color(0.0f, 0.0f, 0.0f, 0.75f));
 		g.drawString(new String("Tmin: " + tVMin + " | " + tMin), 0, fontHeight);
 		g.drawString(new String("Tmax: " + tVMax + " | " + tMax), 0, fontHeight * 2);
 		g.drawString(new String("Fmin: " + fVMin + " | " + fMin), 0, fontHeight * 3);
@@ -182,11 +185,11 @@ public class GraphView extends JComponent {
 	
 	public void drawPlayTime(int offsetInMillis) {
 		drawPlaying = true;
-		GraphView.offsetInMillis = offsetInMillis;
+		GraphView.offsetInMillis = offsetInMillis / SynthTools.slowSpeed;
 	}
 	
 	public int getTimeAxisWidthInMillis() {
-   		return (GraphEditor.maxViewTime - GraphEditor.minViewTime) * FDData.timeStepInMillis;
+   		return (GraphEditor.maxViewTime - GraphEditor.minViewTime) * FDData.timeStepInMillis * SynthTools.slowSpeed;
 	}
 	
     protected void paintComponent(Graphics g) {

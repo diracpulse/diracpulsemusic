@@ -7,7 +7,8 @@ public class PlayData implements ActionListener {
 	
 	public enum DataType {
 		WINDOW,
-		SEQUENCER;
+		SEQUENCER,
+		CONTROL_POINT;
 	}
 	
 	int currentOffsetInMillis;
@@ -22,9 +23,10 @@ public class PlayData implements ActionListener {
 		this.currentOffsetInMillis = 0;
 		this.refreshRateInMillis = refreshRateInMillis;
 		this.endTimeInMillis = endTimeInMillis;
-		timer = new Timer(refreshRateInMillis, this);
+		timer = new Timer(this.refreshRateInMillis, this);
 		if(type == DataType.WINDOW) SynthTools.createPCMWindowData(parent);
 		if(type == DataType.SEQUENCER) SynthTools.createPCMSequencerData(parent);
+		if(type == DataType.CONTROL_POINT) SynthTools.createPCMControlPointData(parent);
 		//SynthTools.createPCMData(parent, GraphEditor.leftX, endTimeInMillis / GraphEditor.timeStepInMillis);
         timer.setInitialDelay(0);
         timer.start();
