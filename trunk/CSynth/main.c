@@ -22,12 +22,13 @@ const double log2val = 0.69314718055994530941723212145818;
 const double max16BitAmplitude = 32767.0;
 
 struct FDData {
-	int time;
-	int note;
+	float time;
+	float note;
 	double logAmplitude;
 	long harmonicID;
 } FDDataArray[MAXDATA];
 
+// important asm variables (not all in use)
 char FPSave[256];
 int asmNumLoops;
 double asmdouble;
@@ -51,10 +52,15 @@ int asmPrintVal;
 double *asmSamplePointer;
 double junk[10];
 double junk2[10];
-int timeIn;
-int noteIn;
+
+
+// FDData variables
+float timeIn;
+float noteIn;
 double logAmplitudeIn;
 long harmonicIDIn;
+
+// debug asm variables
 double asm1;
 double asm2;
 double asm3;
@@ -110,8 +116,8 @@ void printFDData(struct FDData data, int index) {
 void LoadDataFromFile(FILE *stream, int offset, int index) {
 	//printf("LoadDataFromFile");
 	fseek(stream, offset, SEEK_SET);
-	fread((void *) &timeIn, sizeof(int), 1, stream);
-	fread((void *) &noteIn, sizeof(int), 1, stream);
+	fread((void *) &timeIn, sizeof(float), 1, stream);
+	fread((void *) &noteIn, sizeof(float), 1, stream);
 	fread((void *) &logAmplitudeIn, sizeof(double), 1, stream);
 	fread((void *) &harmonicIDIn, sizeof(long), 1, stream);
 	FDDataArray[index].time = timeIn;
