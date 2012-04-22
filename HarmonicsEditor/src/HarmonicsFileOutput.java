@@ -40,8 +40,8 @@ public class HarmonicsFileOutput {
 		ByteBuffer littleEndian = ByteBuffer.allocate(allData.size() * (4 + 4 + 8 + 8));
 		littleEndian.order(ByteOrder.LITTLE_ENDIAN);
 		for(FDData data: allData) {
-			littleEndian.putInt(data.getTime());
-			littleEndian.putInt(data.getNote());
+			littleEndian.putFloat(data.getTime());
+			littleEndian.putFloat(data.getNote());
 			littleEndian.putDouble(data.getLogAmplitude());
 			littleEndian.putLong(data.getHarmonicID());
 		}
