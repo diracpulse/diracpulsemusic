@@ -19,23 +19,14 @@ public class FDData {
 	}
 		
 	private DataType type = DataType.FUNDAMENTAL;
-	private int time = minTime;
+	private double time = minTime;
 	private double note = 31 * 4; // out of bounds stored at 16Hz
 	private double logAmplitude = minLogAmplitude;
 	private long harmonicID = 1L;
-	
-
-	public FDData(int time, double note, double logAmplitude, long harmonicID) throws Exception {
-		if(!withinBounds(time, note, logAmplitude)) throw new Exception();
-		this.time = time;
-		this.note = note;
-		this.logAmplitude = logAmplitude;
-		this.harmonicID = harmonicID;
-	}
-	
-	public FDData(int time, int note, double logAmplitude, long id) throws Exception {
+		
+	public FDData(double time, double note, double logAmplitude, long id) throws Exception {
 		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
-		if(!withinBounds(time, note, logAmplitude)) {
+		if(!withinBounds((int) Math.round(time), (int) Math.round(note), logAmplitude)) {
 			throw new Exception("FDData [" + time + "|" + note + "|" + logAmplitude + "]");
 		}
 		this.time = time;
@@ -53,19 +44,23 @@ public class FDData {
 	}	
 	
 	public int getTime() {
-		return time;
+		return (int) Math.round(time);
+	}
+	
+	public float getTimeAsFloat() {
+		return (float) time;
 	}
 	
 	public int getTimeInMillis() {
-		return time * FDData.timeStepInMillis;
+		return (int) Math.round(time * FDData.timeStepInMillis);
 	}
 	
 	public int getNote() {
 		return (int) Math.round(note);
 	}
 	
-	public double getNoteAsDouble() {
-		return note;
+	public float getNoteAsFloat() {
+		return (float) note;
 	}
 	
 	public double getLogAmplitude() {
@@ -73,7 +68,7 @@ public class FDData {
 	}
 	
 	public void setLogAmplitude(double logAmplitudeArg) throws Exception {
-		if(!withinBounds(time, note, logAmplitudeArg)) throw new Exception();
+		if(!withinBounds((int) Math.round(time), (int) Math.round(note), logAmplitudeArg)) throw new Exception();
 		logAmplitude = logAmplitudeArg;
 	}
 	

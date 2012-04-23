@@ -49,9 +49,17 @@ public class Harmonic {
 		return returnVal;
 	}
 	
-	// Sythesis seems to work OK without interpolating note values
-	public ArrayList<FDData> getAllDataInterpolated() {
-		return SynthTools.interpolateAmplitude(getAllData());
+	public TreeMap<Integer, FDData> getAllDataInterpolated() {
+		TreeMap<Integer, FDData> returnVal = new TreeMap<Integer, FDData>();
+		if(timeToData.size() == 0) return returnVal;
+		if(timeToData.size() == 1) {
+			returnVal.put(getStartTime(), getStart());
+			return returnVal;
+		}
+		returnVal = Interpolate.dataInterpolate(timeToData);
+		if(getTaperLength() == 0) return returnVal;
+		returnVal.put(getEnd().getTime(), getEnd());
+		return returnVal;
 	}
 	
 	public boolean containsData(FDData data) {

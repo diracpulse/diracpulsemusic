@@ -181,7 +181,7 @@ public class GraphEditor extends JFrame {
 	public static void promptForColorView(GraphEditor parent) {
 		Object[] colorData = {"Amplitude", "Frequency", "Harmonics"};
 		String choice =  (String) JOptionPane.showInputDialog(parent, "Color Display Select", 
-										"Select Color View", JOptionPane.PLAIN_MESSAGE, null, colorData, 0);
+										"Select Color View", JOptionPane.PLAIN_MESSAGE, null, colorData, 2);
 		if(choice == null) return;
 		if(choice.equals("Amplitude")) GraphView.colorView = GraphView.ColorView.AMPLITUDE;
 		if(choice.equals("Frequency")) GraphView.colorView = GraphView.ColorView.FREQUENCY;
@@ -191,12 +191,26 @@ public class GraphEditor extends JFrame {
 	
 	public static void promptForYView(GraphEditor parent) {
 		Object[] colorData = {"Amplitude", "Frequency"};
-		String choice =  (String) JOptionPane.showInputDialog(parent, "Color Display Select", 
+		String choice =  (String) JOptionPane.showInputDialog(parent, "Y View Select", 
 										"Select Color View", JOptionPane.PLAIN_MESSAGE, null, colorData, 0);
 		if(choice == null) return;
-		if(choice.equals("Amplitude")) GraphView.yView = GraphView.YView.AMPLITUDE;
-		if(choice.equals("Frequency")) GraphView.yView = GraphView.YView.FREQUENCY;
+		if(choice.equals("Amplitude")) {
+			GraphView.yView = GraphView.YView.AMPLITUDE;
+			GraphView.colorView = GraphView.ColorView.FREQUENCY;
+		}
+		if(choice.equals("Frequency")) {
+			GraphView.yView = GraphView.YView.FREQUENCY;
+			GraphView.colorView = GraphView.ColorView.AMPLITUDE;
+		}
 		view.repaint();
+	}
+	
+	public static void leftClickMenu(GraphEditor parent, int x, int y) {
+		if(GraphView.yView == GraphView.YView.AMPLITUDE) {
+			clipAmplitude(y);
+			return;
+		}
+		clipFrequency(parent, y);
 	}
 	
 	public static void zoomInX(int x) {
@@ -229,6 +243,25 @@ public class GraphEditor extends JFrame {
 			maxViewLogAmplitude = maxLogAmplitude;
 		}
 		System.out.println(minViewLogAmplitude + " " + maxViewLogAmplitude);
+		view.repaint();
+	}
+	
+	public static void clipAmplitude(int y) {
+		minViewLogAmplitude = GraphUtils.screenYToValue(y);
+		view.repaint();
+	}
+	
+	public static void clipFrequency(GraphEditor parent, int y) {
+		Object[] colorData = {"Clip Treble", "Clip Bass"};
+		String choice =  (String) JOptionPane.showInputDialog(parent, "Color Display Select", 
+										"Select Clip Region", JOptionPane.PLAIN_MESSAGE, null, colorData, 0);
+		if(choice == null) return;
+		if(choice.equals("Clip Treble")) {
+			maxViewNote = (int) Math.round(GraphUtils.screenYToValue(y));
+		}
+		if(choice.equals("Clip Bass")) {
+			minViewNote = (int) Math.round(GraphUtils.screenYToValue(y));
+		}
 		view.repaint();
 	}
 	

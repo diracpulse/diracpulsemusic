@@ -89,17 +89,18 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
-	public class PlayWAVAction extends AbstractAction {
+	public class PlayLinearAction extends AbstractAction {
 
 		private static final long serialVersionUID = 7354387706903212877L;
 
-		public PlayWAVAction() {
-			super("Play WAV");
+		public PlayLinearAction() {
+			super("Play Linear");
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Play WAV");
+			parent.playSelectedDataInCurrentWindowLinear();
+			System.out.println("Play Linear");
 		}
 	}
 	
@@ -423,7 +424,7 @@ public class ActionHandler extends JPanel {
         JMenu playMenu = new JMenu("Play");
         menuBar.add(playMenu);        
         playMenu.add(new JMenuItem(new PlayHarmonicsAction()));
-        playMenu.add(new JMenuItem(new PlayWAVAction()));
+        playMenu.add(new JMenuItem(new PlayLinearAction()));
         JMenu viewMenu = new JMenu("View");
         menuBar.add(viewMenu);
         viewMenu.add(new JMenuItem(new ViewMusicAction())); 

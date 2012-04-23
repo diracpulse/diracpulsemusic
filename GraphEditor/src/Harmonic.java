@@ -6,8 +6,8 @@ public class Harmonic {
 
 	private int minTimeStep = 1; // 4 * 5.0ms = 20ms
 	private double minCycles = 2;
-	private boolean applyTaper = true; // not in use currently
-	private boolean overwrite = true; // not in use currently
+	private boolean applyTaper = true;
+	private boolean overwrite = false; // overwrites occur for play speeds < 1.0
 	private boolean useVibrato = false;
 	private TreeMap<Integer, FDData> timeToData = new TreeMap<Integer, FDData>();
 	private double maxLogAmplitude = 0.0;
@@ -42,7 +42,7 @@ public class Harmonic {
 			if(data.getNote() > maxNote) maxNote = data.getNote();
 		}
 		//System.out.println("Harmonic.addData(): Duplicate data at time = " + data.getTime());
-		System.out.print("|" + data.getTime() + ":" + data.getNote() + ":" + (float) data.getLogAmplitude() + "|");
+		//System.out.print("|" + data.getTime() + ":" + data.getNote() + ":" + (float) data.getLogAmplitude() + "|");
 		return data;
 	}
 	
@@ -56,6 +56,11 @@ public class Harmonic {
 	
 	public boolean containsData() {
 		return !timeToData.isEmpty();
+	}
+	
+	public boolean containsTime(int time) {
+		if(timeToData.containsKey(time)) return true;
+		return false;
 	}
 	
 	public boolean containsData(int time, int note) {
@@ -147,7 +152,7 @@ public class Harmonic {
 		double endLogAmp = endData.getLogAmplitude();
 		double taperLength = 0;
 		if(endLogAmp > 0.0) {
-			double endLogFreq = endData.getNoteAsDouble() / FDData.noteBase;
+			double endLogFreq = endData.getNoteAsFloat() / FDData.noteBase;
 			double cycleLength = SynthTools.sampleRate / Math.pow(FDData.logBase, endLogFreq);
 			//taperLength =  (int) Math.ceil(endLogAmp * cycleLength);
 			taperLength = cycleLength * 2;
@@ -267,7 +272,7 @@ public class Harmonic {
 		return new ArrayList<FDData>(newTimeToData.values());
 	}
 	
-	public ArrayList<FDData> getTrimmedHarmonic(int startTime, int endTime, int slowSpeed) {
+	public ArrayList<FDData> getTrimmedHarmonic(int startTime, int endTime, double playSpeed) {
 		TreeMap<Integer, FDData> trimmedData = new TreeMap<Integer, FDData>();
 		ArrayList<FDData> returnData = new ArrayList<FDData>();
 		try {
@@ -277,7 +282,7 @@ public class Harmonic {
 				trimmedData.put(data.getTime(), data);
 			}
 			for(FDData data: trimmedData.values()) {
-				FDData newData = new FDData((data.getTime() - startTime) * slowSpeed, data.getNote(), data.getLogAmplitude(), data.getHarmonicID());
+				FDData newData = new FDData((data.getTime() - startTime) * playSpeed, data.getNote(), data.getLogAmplitude(), data.getHarmonicID());
 				returnData.add(newData);
 			}
 		} catch (Exception e) {
@@ -286,11 +291,11 @@ public class Harmonic {
 		return returnData;
 	}
 	
-	public ArrayList<FDData> getPureSineHarmonic(double logAmplitude) {
+	public ArrayList<FDData> getPureSineHarmonic(double logAmplitude, double playSpeed) {
 		ArrayList<FDData> returnData = new ArrayList<FDData>();
 		try {
 			for(FDData data: getAllDataInterpolated().values()) {
-				FDData newData = new FDData(data.getTime(), data.getNote(), logAmplitude, data.getHarmonicID());
+				FDData newData = new FDData(data.getTime() * playSpeed, data.getNote(), logAmplitude, data.getHarmonicID());
 				returnData.add(newData);
 			}
 		} catch (Exception e) {

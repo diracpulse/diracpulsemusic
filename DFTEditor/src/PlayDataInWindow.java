@@ -12,13 +12,17 @@ public class PlayDataInWindow implements ActionListener {
 	DFTEditor parent;
 	boolean startPlay = true;
 	
-	PlayDataInWindow(DFTEditor parent, int refreshRateInMillis, int endTimeInMillis) {
+	PlayDataInWindow(DFTEditor parent, int refreshRateInMillis, int endTimeInMillis, boolean linear) {
 		this.parent = parent;
 		this.currentOffsetInMillis = 0;
 		this.refreshRateInMillis = refreshRateInMillis;
 		this.endTimeInMillis = endTimeInMillis;
 		timer = new Timer(refreshRateInMillis, this);
-		SynthTools.createPCMData();
+		if(linear) {
+			SynthTools.createPCMDataLinear();
+		} else {
+			SynthTools.createPCMData();
+		}
         timer.setInitialDelay(0);
         timer.start();
 	}

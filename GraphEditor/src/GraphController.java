@@ -28,6 +28,10 @@ public class GraphController implements MouseListener, ActionListener {
 	public void mousePressed(MouseEvent e){
 	    int x = e.getX();
 	    int y = e.getY();
+	    if(e.getButton() == MouseEvent.BUTTON3) {
+	    	GraphEditor.leftClickMenu(parent, x, y);
+	    	return;
+	    }
 	    if(e.isControlDown()) {
 	    	GraphEditor.zoomInX(x);
 	    	return;
@@ -53,15 +57,19 @@ public class GraphController implements MouseListener, ActionListener {
 	    				return;
 	    			}	
 	    		}
+	    		long id = GraphEditor.activeControlPointHarmonicID;
+	    		Harmonic harmonic = GraphEditor.harmonicIDToControlPointHarmonic.get(id);
+	    		if(harmonic.containsTime(time)) {
+	    			harmonic.removeData(time);
+	    		}
 	    		FDData newData = null;
 	    		try {
-	    			newData = new FDData(time, note, 1.0, GraphEditor.activeControlPointHarmonicID);
+	    			newData = new FDData(time, note, 1.0, id);
 	    		} catch (Exception ex) {
 	    			System.out.println("GraphController.mousePressed (ALT): Error creating FDData");
 	    			return;
 	    		}
-	    		long id = GraphEditor.activeControlPointHarmonicID;
-	    		GraphEditor.harmonicIDToControlPointHarmonic.get(id).addData(newData);
+	    		harmonic.addData(newData);
 	    		GraphEditor.view.repaint();
 	    		return;
 	    	}
