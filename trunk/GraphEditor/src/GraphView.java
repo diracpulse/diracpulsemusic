@@ -21,8 +21,8 @@ public class GraphView extends JComponent {
 		FREQUENCY;
 	}
 
-	public static ColorView colorView = ColorView.FREQUENCY;
-	public static YView yView = YView.AMPLITUDE;
+	public static ColorView colorView = ColorView.AMPLITUDE;
+	public static YView yView = YView.FREQUENCY;
 	
 	private static final long serialVersionUID = 2964004162144513754L;
 	
@@ -85,6 +85,12 @@ public class GraphView extends JComponent {
 				}
 				if(colorView == ColorView.HARMONICS) {
 					g.setColor(getHarmonicColor(harmonic.getHarmonicID()));
+				}
+				if(GraphEditor.harmonicIDToControlPointHarmonic.containsKey(harmonic.getHarmonicID())) {
+					if(harmonic.containsData(start.getTime(), start.getNote())) {
+						g.fillRect(startX - 1, startY - 1, 3, 3);
+						g.fillRect(endX - 1, endY - 1, 3, 3);
+					}
 				}
 				if(GraphEditor.selectedHarmonicIDs.contains(harmonic.getHarmonicID())) {
 					if(!GraphEditor.displaySelectedHarmonics) {
@@ -185,11 +191,11 @@ public class GraphView extends JComponent {
 	
 	public void drawPlayTime(int offsetInMillis) {
 		drawPlaying = true;
-		GraphView.offsetInMillis = offsetInMillis / SynthTools.slowSpeed;
+		GraphView.offsetInMillis = (int) Math.round(offsetInMillis / SynthTools.playSpeed);
 	}
 	
 	public int getTimeAxisWidthInMillis() {
-   		return (GraphEditor.maxViewTime - GraphEditor.minViewTime) * FDData.timeStepInMillis * SynthTools.slowSpeed;
+   		return (int) Math.round((GraphEditor.maxViewTime - GraphEditor.minViewTime) * FDData.timeStepInMillis * SynthTools.playSpeed);
 	}
 	
     protected void paintComponent(Graphics g) {

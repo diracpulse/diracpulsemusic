@@ -16,6 +16,11 @@ class SynthTools {
 		PCMData = FileOutput.SynthFDDataExternally(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
 	}
 	
+	static void createPCMDataLinear() {
+		createHarmonics(DFTEditor.timeToFreqToSelectedData);
+		PCMData = FastSynth.synthHarmonics(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
+	}
+	
 	static void playPCMData() {
 		if(PCMData == null) return;
 		AudioPlayer ap = new AudioPlayer(parent, PCMData, 1.0);
@@ -127,33 +132,6 @@ class SynthTools {
 			for(Integer note: input.get(time).keySet()) {
 				FDData data = input.get(time).get(note);
 				output.get(time).put(note, data);
-			}
-		}
-		return output;
-	}
-	
-	// Sythesis seems to work OK without interpolating note values
-	public static ArrayList<FDData> interpolateAmplitude(ArrayList<FDData> input) {
-		ArrayList<FDData> output = new ArrayList<FDData>();
-		if(input.isEmpty()) return output;
-		int lowerTime = input.get(0).getTime();
-		double lowerValue = input.get(0).getLogAmplitude();
-		FDData currentData = input.get(0);
-		for(int index = 1; index < input.size(); index++) {
-			int upperTime = input.get(index).getTime();
-			double upperValue = input.get(index).getLogAmplitude();
-			double slope = (upperValue - lowerValue) / (upperTime - lowerTime);
-			for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
-				double value = lowerValue + (timeIndex - lowerTime) * slope;
-				try {
-					//System.out.println(timeIndex + " " +  currentData.getNote() + " " + (float) value + " " + currentData.getHarmonicID());
-					output.add(new FDData(timeIndex, currentData.getNote(), (float) value, currentData.getHarmonicID()));
-				} catch (Exception e) {
-					System.out.println("LogLinear.dataInterpolate(): error creating data");
-					return null;
-				}
-				lowerValue = upperValue;
-				lowerTime = upperTime;
 			}
 		}
 		return output;

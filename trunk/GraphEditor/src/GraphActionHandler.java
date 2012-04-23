@@ -71,18 +71,18 @@ public class GraphActionHandler extends JPanel {
 		}
 	}
 	
-	public class SelectSlowPlayAction extends AbstractAction {
+	public class SelectPlaySpeedAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
-		private int slowSpeed;
+		private double playSpeed;
 		
-		public SelectSlowPlayAction(int slowSpeed) {
-			super("Slow Play = " + slowSpeed);
-			this.slowSpeed = slowSpeed;
+		public SelectPlaySpeedAction(double playSpeed) {
+			super("Play Speed = " + playSpeed);
+			this.playSpeed = playSpeed;
 		}
 		
 		public void actionPerformed(ActionEvent arg0) {
-			SynthTools.slowSpeed = slowSpeed;
+			SynthTools.playSpeed = playSpeed;
 		}
 		
 	}
@@ -237,10 +237,10 @@ public class GraphActionHandler extends JPanel {
         for(int minLength = 1; minLength <= 20; minLength++) {
         	minLengthMenu.add(new SelectMinLengthAction(minLength));
         }
-        JMenu slowPlayMenu = new JMenu("SlowPlay");
-        menuBar.add(slowPlayMenu);
-        for(int slowPlay = 1; slowPlay <= 5; slowPlay++) {
-        	slowPlayMenu.add(new SelectSlowPlayAction(slowPlay));
+        JMenu playSpeedMenu = new JMenu("PlaySpeed");
+        menuBar.add(playSpeedMenu);
+        for(double playSpeed = 0.3; playSpeed <= 2.1; playSpeed += 0.1) {
+        	playSpeedMenu.add(new SelectPlaySpeedAction(playSpeed));
         }
         return menuBar;
 	}

@@ -40,8 +40,8 @@ public class GraphFileOutput {
 		ByteBuffer littleEndian = ByteBuffer.allocate(allData.size() * (4 + 4 + 8 + 8));
 		littleEndian.order(ByteOrder.LITTLE_ENDIAN);
 		for(FDData data: allData) {
-			littleEndian.putFloat(data.getTime());
-			littleEndian.putFloat(data.getNote());
+			littleEndian.putFloat(data.getTimeAsFloat());
+			littleEndian.putFloat(data.getNoteAsFloat());
 			littleEndian.putDouble(data.getLogAmplitude());
 			littleEndian.putLong(data.getHarmonicID());
 		}

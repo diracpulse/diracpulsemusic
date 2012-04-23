@@ -4,7 +4,9 @@ public class GraphUtils {
 	public static int screenXToTime(double x) {
 		double timeSpan = GraphEditor.maxViewTime - GraphEditor.minViewTime;
 		double timesPerPixel = timeSpan / (double) GraphEditor.view.getWidth();
-		return (int) Math.round(x * timesPerPixel) + GraphEditor.minViewTime;
+		int returnVal = (int) Math.round(x * timesPerPixel) + GraphEditor.minViewTime;
+		//System.out.println("screenXToTime " + returnVal);
+		return returnVal;
 	}
 	
 	public static double screenYToValue(double y) {

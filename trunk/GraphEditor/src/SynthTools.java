@@ -12,7 +12,7 @@ class SynthTools {
 	static double twoPI = 2.0 * Math.PI;
 	static double timeToSample = sampleRate * (FDData.timeStepInMillis * 1.0 / 1000.0);
 	static double[] PCMData = null;
-	static int slowSpeed = 2;
+	static double playSpeed = 1.0;
 	static GraphEditor parent;
 
 	static void createPCMWindowData(GraphEditor parent) {
@@ -24,8 +24,9 @@ class SynthTools {
 			if(harmonic.getEndTime() < GraphEditor.minViewTime) continue;
 			if(harmonic.getMaxNote() < GraphEditor.minViewNote) continue;
 			if(harmonic.getMinNote() > GraphEditor.maxViewNote) continue;
+			if(harmonic.getMaxLogAmplitude() < GraphEditor.minViewLogAmplitude) continue;
 			synthHarmonics.add(new Harmonic(harmonic.getHarmonicID()));
-			for(FDData data: harmonic.getTrimmedHarmonic(GraphEditor.minViewTime, GraphEditor.maxViewTime, slowSpeed)) {
+			for(FDData data: harmonic.getTrimmedHarmonic(GraphEditor.minViewTime, GraphEditor.maxViewTime, playSpeed)) {
 				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
 			}
 		}
@@ -39,7 +40,7 @@ class SynthTools {
 		for(long harmonicID: GraphEditor.selectedHarmonicIDs) {
 			Harmonic harmonic = GraphEditor.harmonicIDToHarmonic.get(harmonicID);
 			synthHarmonics.add(new Harmonic(harmonic.getHarmonicID()));
-			for(FDData data: harmonic.getPureSineHarmonic(1.0)) {
+			for(FDData data: harmonic.getPureSineHarmonic(1.0, playSpeed)) {
 				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
 			}
 		}
@@ -53,7 +54,7 @@ class SynthTools {
 		for(long harmonicID: GraphEditor.harmonicIDToControlPointHarmonic.keySet()) {
 			Harmonic harmonic = GraphEditor.harmonicIDToControlPointHarmonic.get(harmonicID);
 			synthHarmonics.add(new Harmonic(harmonic.getHarmonicID()));
-			for(FDData data: harmonic.getPureSineHarmonic(1.0)) {
+			for(FDData data: harmonic.getPureSineHarmonic(1.0, playSpeed)) {
 				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
 			}
 		}
