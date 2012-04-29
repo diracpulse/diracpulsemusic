@@ -122,7 +122,7 @@ public class Harmonic {
 	}
 	
 	public int getEndTime() {
-		return timeToData.lastKey();
+		return getEnd().getTime();
 	}
 	
 }

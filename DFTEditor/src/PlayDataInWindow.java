@@ -5,6 +5,12 @@ import javax.swing.Timer;
 
 public class PlayDataInWindow implements ActionListener {
 	
+	public enum SynthType {
+		Log,
+		Linear,
+		LinearCubicSpline;
+	}
+	
 	int currentOffsetInMillis;
 	int refreshRateInMillis;
 	int endTimeInMillis;
@@ -12,17 +18,15 @@ public class PlayDataInWindow implements ActionListener {
 	DFTEditor parent;
 	boolean startPlay = true;
 	
-	PlayDataInWindow(DFTEditor parent, int refreshRateInMillis, int endTimeInMillis, boolean linear) {
+	PlayDataInWindow(DFTEditor parent, int refreshRateInMillis, int endTimeInMillis, SynthType synthType) {
 		this.parent = parent;
 		this.currentOffsetInMillis = 0;
 		this.refreshRateInMillis = refreshRateInMillis;
 		this.endTimeInMillis = endTimeInMillis;
 		timer = new Timer(refreshRateInMillis, this);
-		if(linear) {
-			SynthTools.createPCMDataLinear();
-		} else {
-			SynthTools.createPCMData();
-		}
+		if(synthType == SynthType.Log) SynthTools.createPCMData();
+		if(synthType == SynthType.Linear) SynthTools.createPCMDataLinear();
+		if(synthType == SynthType.LinearCubicSpline) SynthTools.createPCMDataLinearCubicSpline();
         timer.setInitialDelay(0);
         timer.start();
 	}

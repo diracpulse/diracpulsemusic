@@ -18,7 +18,12 @@ class SynthTools {
 	
 	static void createPCMDataLinear() {
 		createHarmonics(DFTEditor.timeToFreqToSelectedData);
-		PCMData = FastSynth.synthHarmonics(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
+		PCMData = FastSynth.synthHarmonicsLinear(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
+	}
+	
+	static void createPCMDataLinearCubicSpline() {
+		createHarmonics(DFTEditor.timeToFreqToSelectedData);
+		PCMData = FastSynth.synthHarmonicsLinearCubicSpline(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
 	}
 	
 	static void playPCMData() {
@@ -53,9 +58,10 @@ class SynthTools {
 						DFTEditor.addSelected(data);
 						harmonicTime++;
 						continue;
-					}					
-					// check for data at [currentNote+1,time+1]
+					}
 					currentNote++;
+					// check for data at [currentNote+1,time+1]
+					if(deltaHarmonic == 0) continue;
 					if(input.get(harmonicTime).containsKey(currentNote)) {
 						FDData data = input.get(harmonicTime).get(currentNote);
 						data.setHarmonicID(id);

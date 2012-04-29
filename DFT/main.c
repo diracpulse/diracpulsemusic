@@ -5,7 +5,7 @@
 //#include "main.h"
 
 #define MAXDFTWINDOW 44100
-#define MAXWAVELETS 31 * 32
+#define MAXWAVELETS 62 * 32
 
 void CalculateWavelets();
 
@@ -28,7 +28,7 @@ const double onePI = 3.1415926535897932384626433832795;
 const double twoPI = 6.283185307179586476925286766559;
 const double samplingRate = 44100.0;
 const double samplesPerStep = 220.5; // 5ms
-const double notesPerOctave = 31.0;
+const double notesPerOctave = 62.0;
 const double maxBinStep = 1.5;
 const double alpha = 5.0;
 
@@ -216,9 +216,9 @@ void InitWavelets() {
 	//if(debug) printf("InitWavelets\n");
 	maxDFTLength = 0;
 	maxCyclesPerWindow = maxBinStep / (pow(2.0, 1.0 / notesPerOctave) - 1.0);
-	index = InitWaveletsHelper(maxFreqHz, 2000.0, index, 1.0, 1.0);
-	index = InitWaveletsHelper(2000.0, 20.0, index, 1.0, sqrt(2.0));
-	//index = InitWaveletsHelper(80.0, 20.0, index, 2.0, 2.0);
+	index = InitWaveletsHelper(maxFreqHz, 2000.0, index, 1.0);
+	index = InitWaveletsHelper(2000.0, 500.0, index, sqrt(2.0));
+	index = InitWaveletsHelper(500.0, 20.0, index, 2.0);
     numWavelets = index;
     // MATRIX OUTPUT
     printf("#_MAXNOTE_\n%d\n", frequencyToNote(maxFreqHz) - 1); // #HACK skip first wavelet
@@ -229,7 +229,7 @@ void InitWavelets() {
 
 // Creates Wavelets starting at upperNote and ending at (lowerNote - 1)
 // Returns index for NEXT wavelet
-int InitWaveletsHelper(double upperFreqHz, double stopFreqHz, int index, double initialTaper, double taperPerOctave) {
+int InitWaveletsHelper(double upperFreqHz, double stopFreqHz, int index, double taperPerOctave) {
 	int note = 0;
 	int upperNote = frequencyToNote(upperFreqHz);
 	int stopNote = frequencyToNote(stopFreqHz);
@@ -261,7 +261,7 @@ int InitWaveletsHelper(double upperFreqHz, double stopFreqHz, int index, double 
     	WaveletInfoArray[index].note = note;
     	index++;
     }
-    //initialTaper = taperValue;
+    initialTaper = taperValue;
     //printf("taperValue: %f ", taperValue);
     return index;
 }

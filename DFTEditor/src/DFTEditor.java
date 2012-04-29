@@ -172,11 +172,15 @@ public class DFTEditor extends JFrame {
 	}
 	
 	public void playSelectedDataInCurrentWindow() {
-		new PlayDataInWindow(this, 50, view.getTimeAxisWidthInMillis(), false);
+		new PlayDataInWindow(this, 50, view.getTimeAxisWidthInMillis(), PlayDataInWindow.SynthType.Log);
 	}
 	
 	public void playSelectedDataInCurrentWindowLinear() {
-		new PlayDataInWindow(this, 50, view.getTimeAxisWidthInMillis(), true);
+		new PlayDataInWindow(this, 50, view.getTimeAxisWidthInMillis(), PlayDataInWindow.SynthType.Linear);
+	}
+	
+	public void playSelectedDataInCurrentWindowLinearCubicSpline() {
+		new PlayDataInWindow(this, 50, view.getTimeAxisWidthInMillis(), PlayDataInWindow.SynthType.LinearCubicSpline);
 	}
 
 	public void drawPlayTime(int offsetInMillis, int refreshRateInMillis) {
