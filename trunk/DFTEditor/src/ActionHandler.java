@@ -104,6 +104,21 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
+	public class PlayLinearCubicSplineAction extends AbstractAction {
+
+		private static final long serialVersionUID = 7354387706903212877L;
+
+		public PlayLinearCubicSplineAction() {
+			super("Play Linear Cubic Spline");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			parent.playSelectedDataInCurrentWindowLinearCubicSpline();
+			System.out.println("Play Linear Cubic Spline");
+		}
+	}
+	
 	public class ViewDigits1Action extends AbstractAction {
 
 		private static final long serialVersionUID = 5910687309575402310L;
@@ -425,6 +440,7 @@ public class ActionHandler extends JPanel {
         menuBar.add(playMenu);        
         playMenu.add(new JMenuItem(new PlayHarmonicsAction()));
         playMenu.add(new JMenuItem(new PlayLinearAction()));
+        playMenu.add(new JMenuItem(new PlayLinearCubicSplineAction()));
         JMenu viewMenu = new JMenu("View");
         menuBar.add(viewMenu);
         viewMenu.add(new JMenuItem(new ViewMusicAction())); 

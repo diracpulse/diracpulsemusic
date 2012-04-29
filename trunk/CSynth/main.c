@@ -17,7 +17,7 @@ const double onePI = 3.1415926535897932384626433832795;
 const double twoPI = 6.283185307179586476925286766559;
 const double sampleRate = 44100.0;
 const double timeToSample = 220.5; // 5ms
-const double notesPerOctave = 31.0;
+const double notesPerOctave = 62.0;
 const double log2val = 0.69314718055994530941723212145818;
 const double max16BitAmplitude = 32767.0;
 

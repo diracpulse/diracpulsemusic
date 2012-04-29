@@ -3,7 +3,7 @@
 public class FDData {
 	
 	public static final int timeStepInMillis = 5; // time in secs = this.time * timeStepInMillis / 1000
-	public static final int noteBase = 31; // freq in Hz = 2.0^((this.note + this.noteFraction) / noteBase)
+	public static final int noteBase = 62; // freq in Hz = 2.0^((this.note + this.noteFraction) / noteBase)
 	public static final double logBase = 2.0; // amplitude = logBase ^ logAmplitude
 	
 	//Data Bounds
@@ -20,7 +20,7 @@ public class FDData {
 		
 	private DataType type = DataType.FUNDAMENTAL;
 	private int time = minTime;
-	private int note = 31 * 4; // out of bounds stored at 16Hz
+	private int note = noteBase * 4; // out of bounds stored at 16Hz
 	private double noteFraction = 0.0; // frequency = 2^(note/31) + 2^(noteFraction/31);
 	private double logAmplitude = minLogAmplitude;
 	private long harmonicID = 1L;

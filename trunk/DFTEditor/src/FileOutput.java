@@ -83,7 +83,7 @@ public class FileOutput {
 		ArrayList<FDData> allData = new ArrayList<FDData>();
 		for(Harmonic harmonic: harmonics) {
 			if(!harmonic.isSynthesized()) continue;
-			for(FDData data: harmonic.getAllData()) {
+			for(FDData data: new ArrayList<FDData>(harmonic.getAllDataInterpolated().values())) {
 				allData.add(data);
 			}
 		}
