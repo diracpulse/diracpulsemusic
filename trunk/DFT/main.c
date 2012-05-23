@@ -5,7 +5,7 @@
 //#include "main.h"
 
 #define MAXDFTWINDOW 44100
-#define MAXWAVELETS 62 * 32
+#define MAXWAVELETS 31 * 32
 
 void CalculateWavelets();
 
@@ -28,7 +28,7 @@ const double onePI = 3.1415926535897932384626433832795;
 const double twoPI = 6.283185307179586476925286766559;
 const double samplingRate = 44100.0;
 const double samplesPerStep = 220.5; // 5ms
-const double notesPerOctave = 62.0;
+const double notesPerOctave = 31.0;
 const double maxBinStep = 1.5;
 const double alpha = 5.0;
 
