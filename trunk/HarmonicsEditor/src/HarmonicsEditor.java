@@ -251,41 +251,59 @@ public class HarmonicsEditor extends JFrame {
 	public static String randomLoop(HarmonicsEditor parent) {
 		clearCurrentData();
 		SoftSynth.initLoop();
-		StringBuffer returnVal = new StringBuffer();
 		int centerNote = frequencyInHzToNote(350.0);
 		int currentTime = 0; 
-		int minDuration = 50;
-		int maxDuration = 100;
 		int[] beatDurations = new int[] {100, 100, 100, 100};
-		int repeat = randomGenerator.nextInt(beatDurations.length - 1);
 		int beat = 0;
-		boolean useRepeat = false;
 		boolean useHighFreq = false;
+		int[] notes = new int[4];
+		notes[0] = centerNote + randomGenerator.nextInt(26) - 13;
+		for(int index = 1; index < notes.length; index++) {
+			notes[index] = notes[index - 1] + randomGenerator.nextInt(7) + 6;
+		}
+		int[] chords;
+		int[] chords2 = new int[2];
+		int[] chords3 = new int[3];
 		for(int duration: beatDurations) {
-			int note = centerNote + randomGenerator.nextInt(26) - 13;
-			int randomChordIndex = randomGenerator.nextInt(10);
-			returnVal.append(note);
-			int[] chords = Loop.getChord(randomChordIndex);
+			for(int index = 1; index < 2; index++) {
+				chords2[index - 1] = notes[index] - notes[index - 1];
+				chords3[index - 1] = notes[index] - notes[index - 1];
+			}
+			chords3[2] = notes[3] - notes[2];
+			if(notes[2] - notes[1] > 25) {
+				notes[2] = 25 - randomGenerator.nextInt(3);
+				chords2[1] = notes[2] - notes[1];
+			}
+			if(chords3[2] > 31 - 6) {
+				chords = chords2;
+			} else {
+				chords = chords3;
+			}
 			useHighFreq = false;
 			if(beat % 2 == 1) useHighFreq = true;
-			SoftSynth.addBeat(currentTime, note, chords, duration, useHighFreq);
-			if(beat == repeat && useRepeat) {
-				beat++;
-				useHighFreq = false;
-				if(beat % 2 == 1) useHighFreq = true;
-				SoftSynth.addBeat(currentTime, note, chords, duration, useHighFreq);
-				returnVal.append(" " + note);
-			}
+			SoftSynth.addBeat(currentTime, notes[0], chords, duration, useHighFreq);
 			currentTime += duration;
 			beat++;
-			if(beat < beatDurations.length) returnVal.append("|");
+			if(randomGenerator.nextBoolean()) {
+				notes[0] += randomGenerator.nextInt(7) + 3;
+			} else {
+				notes[0] -= randomGenerator.nextInt(7) + 3;
+			}
+			for(int index = 1; index < notes.length; index++) {
+				int chord = notes[index] - notes[index - 1];
+				if(chord > 13) {
+					notes[index] = notes[index - 1] + randomGenerator.nextInt(3) + 10;
+					continue;
+				}
+				if(chord < 6) {
+					notes[index] = notes[index - 1] + randomGenerator.nextInt(3) + 6;
+				}
+				notes[index] = notes[index - 1] + randomGenerator.nextInt(7) + 6;
+			}
 		}
 		SoftSynth.addDataToHarmonicsEditor();
-		//addCompression(2.0);
 		playSelectedDataInCurrentWindow(parent);
-		//JOptionPane.showConfirmDialog(parent, "Ready To Play");
-		returnVal.append("\n");
-		return returnVal.toString();
+		return "";
 	}
 
 	public static int frequencyInHzToNote(double freqInHz) {
