@@ -36,11 +36,10 @@ public class TrackEditor extends JFrame {
 		view.repaint();
 	}
 
-	public void openFileInTrackEditor(String extension) {
+	public static void openFileInTrackEditor(String fileName) {
 		initVariables();
-        String fileName = FileTools.PromptForFileOpen(view, extension);
         TrackFileInput.ReadBinaryFileData(fileName);
-        this.setTitle(fileName);
+        //this.setTitle(fileName);
 	}
 	
 	static void initVariables() {
@@ -88,6 +87,7 @@ public class TrackEditor extends JFrame {
 			trackHarmonicIDToHarmonic.put(harmonic.getHarmonicID(), harmonic);
 		}
 		numBeats++;
+		view.repaint();
 	}
 	
     public TrackEditor() {

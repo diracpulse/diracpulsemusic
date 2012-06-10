@@ -318,4 +318,32 @@ public class Harmonic {
 		}
 	}
 	
+	public void flattenHarmonic() {
+		TreeMap<Integer, FDData> newTimeToData = new TreeMap<Integer, FDData>();
+		if(timeToData.size() < 2) return;
+		int noteSum = 0;
+		int maxNote = 0;
+		int minNote = Integer.MAX_VALUE;
+		for(FDData data: timeToData.values()) {
+			int note = data.getNote();
+			if(note < minNote) minNote = note;
+			if(note > maxNote) maxNote = note;
+			noteSum += note;
+		}
+		if((maxNote - minNote) > 31) return;
+		double dAverageNote = Math.round((double) noteSum / (double) (timeToData.size()));
+		int averageNote = (int) Math.round(dAverageNote);
+		for(int time: timeToData.keySet()) {
+			try {
+				FDData data = timeToData.get(time);
+				float logAmp = (float) data.getLogAmplitude();
+				FDData newData = new FDData(time, (float) averageNote, logAmp, harmonicID);
+				newTimeToData.put(time, newData);
+			} catch (Exception e) {
+				System.out.println("Error in Harmonic.flattenHarmonic(): " + e.getMessage());
+			}
+		}
+		timeToData = newTimeToData;
+	}
+	
 }

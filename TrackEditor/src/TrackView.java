@@ -17,16 +17,24 @@ public class TrackView extends JComponent {
 	private static boolean useImage = true;
 	private static boolean drawPlaying = false;
 	private static int offsetInMillis = 0;
+	public static int loopLength = 400;
+	public static int leftPanelWidth = 100;
+	public static int leftYStep = 31 + 2;
+	// changing this will not change height in drawUpperPanel
+	public static int upperPanelHeight = 31 * 4;
+	// changing this will not change height in drawLowerPanel
+	public static int lowerRowHeight = 31 * 2;
+	public static int numLoopsPerRow = 2;
 	
 	public void drawFileData(Graphics g) {
 		g.drawImage(leftPanel, 0, 0, null);
+		drawUpperPanel(g);
+		drawLowerPanel(g);
 	}
 	
 	public static void initLeftPanel() {
-		int yStep = 31 + 2;
-		int xStep = 4;
-		int loopLength = 400;
-		int leftPanelWidth = loopLength / xStep;
+		int yStep = leftYStep;
+		int xStep = loopLength / leftPanelWidth;
 		int leftPanelHeight = TrackEditor.loopFiles.length * yStep;
 		float minAmp = 16.0f;
 		float maxAmp = 0.0f;
@@ -43,6 +51,7 @@ public class TrackView extends JComponent {
 			TrackEditor.loopHarmonicIDToHarmonic = new HashMap<Long, Harmonic>();
 			TrackFileInput.ReadBinaryFileData(loopFile.getAbsolutePath());
 			for(Harmonic harmonic: TrackEditor.loopHarmonicIDToHarmonic.values()) {
+				harmonic.flattenHarmonic();
 				for(FDData data: new ArrayList<FDData>(harmonic.getAllDataInterpolated().values())) {
 					int x = data.getTime() / xStep;
 					if(x >= leftPanelWidth) continue;
@@ -66,6 +75,79 @@ public class TrackView extends JComponent {
 				}
 			}
 		}
+	}
+	
+	private void drawUpperPanel(Graphics g) {
+		float[][] upperPanelArray = new float[loopLength][31];
+		for(int x = 0; x < loopLength; x++) {
+			for(int y = 0; y < 31; y++) {
+				upperPanelArray[x][y] = 0.0f;
+			}
+		}
+		for(Harmonic harmonic: TrackEditor.loopHarmonicIDToHarmonic.values()) {
+			harmonic.flattenHarmonic();
+			for(FDData data: new ArrayList<FDData>(harmonic.getAllDataInterpolated().values())) {
+				int x = data.getTime();
+				if(x >= loopLength) continue;
+				int y = data.getNote() % 31;
+				if(data.getLogAmplitude() > upperPanelArray[x][y]) upperPanelArray[x][y] = (float) data.getLogAmplitude();
+			}
+		}
+		for(int x = 0; x < loopLength; x++) {
+			for(int y = 0; y < 31; y++) {
+				g.setColor(getAmplitudeColor(upperPanelArray[x][y], 1.0f));
+				g.fillRect(x * 2 + leftPanelWidth, y * 4, 2, 4);
+				if((x * 2) % 200 == 0 && x != 0) {
+					g.setColor(new Color(1.0f, 1.0f, 1.0f, 0.75f));
+					g.fillRect(x * 2 + leftPanelWidth, 0, 1, 31 * 4);
+				}
+			}
+		}
+	}
+	
+	private void drawLowerPanel(Graphics g) {
+		int maxTime = 0;
+		for(Harmonic harmonic: TrackEditor.trackHarmonicIDToHarmonic.values()) {
+			for(FDData data: new ArrayList<FDData>(harmonic.getAllDataInterpolated().values())) {
+				if(data.getTime() > maxTime) maxTime = data.getTime();
+			}
+		}
+		int numRows = (int) Math.ceil((double) maxTime / (double) (loopLength * 2));
+		int y = upperPanelHeight;
+		for(int row = 0; row < numRows; row++) {
+			drawRow(g, y, row * loopLength * 2, (row + 1) * loopLength * 2);
+			y += lowerRowHeight;
+		}
+	}
+	
+	private void drawRow(Graphics g, int upperY, int minTime, int maxTime) {
+		int numXVals = loopLength * numLoopsPerRow;
+		float[][] rowArray = new float[loopLength * numXVals][31];
+		for(int x = 0; x < numXVals; x++) {
+			for(int y = 0; y < 31; y++) {
+				rowArray[x][y] = 0.0f;
+			}
+		}
+		for(Harmonic harmonic: TrackEditor.trackHarmonicIDToHarmonic.values()) {
+			for(FDData data: new ArrayList<FDData>(harmonic.getAllDataInterpolated().values())) {
+				int x = data.getTime();
+				if(x < minTime || x > maxTime) continue;
+				int y = data.getNote() % 31;
+				if(data.getLogAmplitude() > rowArray[x - minTime][y]) rowArray[x - minTime][y] = (float) data.getLogAmplitude();
+			}
+		}
+		for(int x = 0; x < numXVals; x++) {
+			for(int y = 0; y < 31; y++) {
+				g.setColor(getAmplitudeColor(rowArray[x][y], 1.0f));
+				g.fillRect(x + leftPanelWidth, upperY + y * 2, 1, 2);
+				if((x * 2) % 100 == 0 && x != 0) {
+					g.setColor(new Color(1.0f, 1.0f, 1.0f, 0.75f));
+					g.fillRect(x + leftPanelWidth, upperY, 1, 31 * 2);
+				}
+			}
+		}
+		g.setColor(new Color(1.0f, 1.0f, 1.0f, 0.5f));
+		g.fillRect(leftPanelWidth, upperY, numXVals, 1);
 	}
 	
 	private static Color getAmplitudeColor(double amplitude, float alpha) {
