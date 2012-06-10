@@ -28,6 +28,17 @@ public class TrackController implements MouseListener, ActionListener {
 	public void mousePressed(MouseEvent e){
 	    int x = e.getX();
 	    int y = e.getY();
+	    if(x < view.leftPanelWidth) {
+	    	// Select a loop from list of graphical list of loop files
+	    	int loopFileIndex = y / view.leftYStep;
+	    	if(loopFileIndex < TrackEditor.loopFiles.length) {
+	    		TrackEditor.openFileInTrackEditor(TrackEditor.loopFiles[loopFileIndex].getAbsolutePath());
+	    		view.repaint();
+	    	}
+	    } else {
+	    	// Select a beat from loop or track
+	    	
+	    }
 	}
 	
 	public void mouseClicked(MouseEvent e){

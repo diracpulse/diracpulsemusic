@@ -14,21 +14,7 @@ public class TrackActionHandler extends JPanel {
 	public TrackActionHandler(TrackEditor parent) {
 		this.parent = parent;
 	}
-	
-	public class OpenAction extends AbstractAction {
-		
-		private static final long serialVersionUID = 1L;
 
-		public OpenAction() {
-			super("Open");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			parent.openFileInTrackEditor(".saved");
-		}
-	}
-	
 	public class OpenDirectoryAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
@@ -123,7 +109,6 @@ public class TrackActionHandler extends JPanel {
         //Create the File menu
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
-        fileMenu.add(new OpenAction());
         fileMenu.add(new OpenDirectoryAction());
         JMenu playMenu = new JMenu("Play");
         menuBar.add(playMenu);
