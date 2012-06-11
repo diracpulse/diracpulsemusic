@@ -13,14 +13,17 @@ public class TrackEditor extends JFrame {
 	public static TrackView view;
 	public static TrackController controller;
 	public static TrackActionHandler actionHandler;
+	public static HashMap<Integer, ArrayList<Harmonic>> fileIndexToHarmonics = new HashMap<Integer, ArrayList<Harmonic>>();
 	public static HashMap<Long, Harmonic> loopHarmonicIDToHarmonic = new HashMap<Long, Harmonic>();
 	public static HashMap<Long, Harmonic> trackHarmonicIDToHarmonic = new HashMap<Long, Harmonic>();
+	public static HashMap<Integer, HashSet<Integer>> fileIndexToTaggedBeats = new HashMap<Integer, HashSet<Integer>>();
 	public static double maxLoopLogAmplitude = 16.0;
 	public static double minLoopLogAmplitude = 0.0;
 	public static Random randomIDGenerator = new Random();
 	public static int beatLengthInMillis = 500;
 	public static int numBeats = 0;
 	public static File[] loopFiles = null;
+	public static int currentLoopFileIndex = 0;
 	
 	public JMenuBar createMenuBar() {
         TrackActionHandler actionHandler = new TrackActionHandler(this);
@@ -32,20 +35,34 @@ public class TrackEditor extends JFrame {
 		if(loopFiles == null) return;
 		loopHarmonicIDToHarmonic = new HashMap<Long, Harmonic>();
 		trackHarmonicIDToHarmonic = new HashMap<Long, Harmonic>();
+		fileIndexToHarmonics = new HashMap<Integer, ArrayList<Harmonic>>();
+		int index = 0;
+		for(File loopFile: TrackEditor.loopFiles) {
+			TrackEditor.loopHarmonicIDToHarmonic = new HashMap<Long, Harmonic>();
+			TrackFileInput.ReadBinaryFileData(loopFile.getAbsolutePath());
+			fileIndexToHarmonics.put(index, new ArrayList<Harmonic>());
+			for(Harmonic harmonic: TrackEditor.loopHarmonicIDToHarmonic.values()) {
+				harmonic.flattenHarmonic();
+				fileIndexToHarmonics.get(index).add(harmonic);
+			}
+			fileIndexToTaggedBeats.put(index, new HashSet<Integer>());
+			index++;
+		}
+		currentLoopFileIndex = index - 1;
 		TrackView.initLeftPanel();
 		view.repaint();
 	}
 
-	public static void openFileInTrackEditor(String fileName) {
-		initVariables();
-        TrackFileInput.ReadBinaryFileData(fileName);
-        //this.setTitle(fileName);
-	}
-	
-	static void initVariables() {
+	public static void selectNewLoop(int index) {
 		loopHarmonicIDToHarmonic = new HashMap<Long, Harmonic>();
+		for(Harmonic harmonic: TrackEditor.fileIndexToHarmonics.get(index)) {
+			loopHarmonicIDToHarmonic.put(harmonic.getHarmonicID(), harmonic);
+		}
+		currentLoopFileIndex = index;
+		view.initLeftPanel();
+		view.repaint();
 	}
-	
+		
 	public static void addData(FDData data) {
 		if(!loopHarmonicIDToHarmonic.containsKey(data.getHarmonicID())) {
 			loopHarmonicIDToHarmonic.put(data.getHarmonicID(), new Harmonic(data.getHarmonicID()));
@@ -89,6 +106,22 @@ public class TrackEditor extends JFrame {
 		numBeats++;
 		view.repaint();
 	}
+
+	public static void clearTrackData() {
+		trackHarmonicIDToHarmonic = new HashMap<Long, Harmonic>();
+		numBeats = 0;
+		view.repaint();
+	}
+	
+	public static void toggleTaggedBeat(int beat) {
+		if(fileIndexToTaggedBeats.get(currentLoopFileIndex).contains(beat)) {
+			fileIndexToTaggedBeats.get(currentLoopFileIndex).remove(beat);
+		} else {
+			fileIndexToTaggedBeats.get(currentLoopFileIndex).add(beat);
+		}
+		view.initLeftPanel();
+		view.repaint();
+	}
 	
     public TrackEditor() {
         view = new TrackView();
@@ -99,7 +132,7 @@ public class TrackEditor extends JFrame {
         controller.setView(view);
         add(view);
         setSize(1500, 800);
-        initVariables();
+        loopHarmonicIDToHarmonic = new HashMap<Long, Harmonic>();
     }
     
 	private static void createAndShowGUI() {

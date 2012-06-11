@@ -86,6 +86,20 @@ public class TrackActionHandler extends JPanel {
 		}
 		
 	}
+	
+	public class ClearTrackAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public ClearTrackAction() {
+			super("Clear Track");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			TrackEditor.clearTrackData();
+		}
+	}
 
 	public class SelectPlaySpeedAction extends AbstractAction {
 		
@@ -122,8 +136,9 @@ public class TrackActionHandler extends JPanel {
         	addMenu.add(new AddBeatAction(beat));
         }    
         menuBar.add(addMenu);
-        JMenu colorMenu = new JMenu("Color");
-        menuBar.add(colorMenu);
+        JMenu clearMenu = new JMenu("Clear");
+        clearMenu.add(new ClearTrackAction());
+        menuBar.add(clearMenu);
         JMenu yViewMenu = new JMenu("YView");
         menuBar.add(yViewMenu);
         JMenu controlPointMenu = new JMenu("ControlPoint");
