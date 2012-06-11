@@ -32,12 +32,15 @@ public class TrackController implements MouseListener, ActionListener {
 	    	// Select a loop from list of graphical list of loop files
 	    	int loopFileIndex = y / view.leftYStep;
 	    	if(loopFileIndex < TrackEditor.loopFiles.length) {
-	    		TrackEditor.openFileInTrackEditor(TrackEditor.loopFiles[loopFileIndex].getAbsolutePath());
-	    		view.repaint();
+	    		TrackEditor.selectNewLoop(loopFileIndex);
 	    	}
 	    } else {
 	    	// Select a beat from loop or track
-	    	
+	    	if(y < view.upperPanelHeight) {
+	    		if(x >= (view.leftPanelWidth + view.upperPanelWidth)) return;
+	    		int beatIndex = (x - view.leftPanelWidth) / view.upperPanelBeatWidth;
+	    		TrackEditor.toggleTaggedBeat(beatIndex);
+	    	}
 	    }
 	}
 	

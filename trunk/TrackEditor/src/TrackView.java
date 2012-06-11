@@ -22,9 +22,13 @@ public class TrackView extends JComponent {
 	public static int leftYStep = 31 + 2;
 	// changing this will not change height in drawUpperPanel
 	public static int upperPanelHeight = 31 * 4;
+	// changing this will not change width in drawUpperPanel
+	public static int upperPanelWidth = 800;
+	// changing this will not change beat width in drawUpperPanel
+	public static int upperPanelBeatWidth = 200;
 	// changing this will not change height in drawLowerPanel
 	public static int lowerRowHeight = 31 * 2;
-	public static int numLoopsPerRow = 2;
+	public static int numLoopsPerRow = 4;
 	
 	public void drawFileData(Graphics g) {
 		g.drawImage(leftPanel, 0, 0, null);
@@ -47,11 +51,8 @@ public class TrackView extends JComponent {
 		leftPanel = new BufferedImage(leftPanelWidth, leftPanelHeight, BufferedImage.TYPE_INT_RGB);
 		Graphics2D g2 = leftPanel.createGraphics();
 		int upperY = 0;
-		for(File loopFile: TrackEditor.loopFiles) {
-			TrackEditor.loopHarmonicIDToHarmonic = new HashMap<Long, Harmonic>();
-			TrackFileInput.ReadBinaryFileData(loopFile.getAbsolutePath());
-			for(Harmonic harmonic: TrackEditor.loopHarmonicIDToHarmonic.values()) {
-				harmonic.flattenHarmonic();
+		for(int index = 0; index < TrackEditor.loopFiles.length; index++) {
+			for(Harmonic harmonic: TrackEditor.fileIndexToHarmonics.get(index)) {
 				for(FDData data: new ArrayList<FDData>(harmonic.getAllDataInterpolated().values())) {
 					int x = data.getTime() / xStep;
 					if(x >= leftPanelWidth) continue;
@@ -69,12 +70,24 @@ public class TrackView extends JComponent {
 			for(int y = 0; y < leftPanelHeight; y++) {
 				g2.setColor(getAmplitudeColor(leftPanelArray[x][y], 1.0f));
 				g2.fillRect(x, y, 1, 1);
-				if(y % 33 == 0 && y != 0) {
-					g2.setColor(new Color(1.0f, 1.0f, 1.0f));
+				if(y % 33 == 0 || y == 0) {
+					g2.setColor(new Color(1.0f, 1.0f, 1.0f, 0.5f));
 					g2.fillRect(x, y, leftPanelWidth, 1);
+					g2.setColor(new Color(1.0f, 1.0f, 1.0f, 0.75f));
+					g2.drawString("" + y / 33, 0, y + 10);
 				}
 			}
 		}
+		for(int beatIndex = 0;  beatIndex < 4; beatIndex++) {
+			for(int fileIndex = 0; fileIndex < TrackEditor.loopFiles.length; fileIndex++) {
+				if(TrackEditor.fileIndexToTaggedBeats.get(fileIndex).contains(beatIndex)) {
+					g2.setColor(new Color(1.0f, 1.0f, 1.0f, 0.5f));
+					g2.fillRect(beatIndex * 25, fileIndex * leftYStep, 25, leftYStep);
+				}
+			}
+		}		
+		g2.setColor(new Color(1.0f, 1.0f, 1.0f, 0.4f));
+		g2.fillRect(0, TrackEditor.currentLoopFileIndex * leftYStep, 100, leftYStep);
 	}
 	
 	private void drawUpperPanel(Graphics g) {
@@ -112,28 +125,31 @@ public class TrackView extends JComponent {
 				if(data.getTime() > maxTime) maxTime = data.getTime();
 			}
 		}
-		int numRows = (int) Math.ceil((double) maxTime / (double) (loopLength * 2));
+		int numRows = (int) Math.ceil((double) maxTime / (double) (loopLength * numLoopsPerRow));
 		int y = upperPanelHeight;
 		for(int row = 0; row < numRows; row++) {
-			drawRow(g, y, row * loopLength * 2, (row + 1) * loopLength * 2);
+			drawRow(g, y, row * loopLength * numLoopsPerRow, (row + 1) * loopLength * numLoopsPerRow);
 			y += lowerRowHeight;
 		}
 	}
 	
 	private void drawRow(Graphics g, int upperY, int minTime, int maxTime) {
-		int numXVals = loopLength * numLoopsPerRow;
+		int xStep = 2;
+		int numXVals = loopLength * numLoopsPerRow / xStep;
 		float[][] rowArray = new float[loopLength * numXVals][31];
 		for(int x = 0; x < numXVals; x++) {
 			for(int y = 0; y < 31; y++) {
 				rowArray[x][y] = 0.0f;
 			}
 		}
+		int arrayX = 0;
 		for(Harmonic harmonic: TrackEditor.trackHarmonicIDToHarmonic.values()) {
 			for(FDData data: new ArrayList<FDData>(harmonic.getAllDataInterpolated().values())) {
 				int x = data.getTime();
 				if(x < minTime || x > maxTime) continue;
 				int y = data.getNote() % 31;
-				if(data.getLogAmplitude() > rowArray[x - minTime][y]) rowArray[x - minTime][y] = (float) data.getLogAmplitude();
+				arrayX = (x - minTime) / xStep;
+				if(data.getLogAmplitude() > rowArray[arrayX][y]) rowArray[arrayX][y] = (float) data.getLogAmplitude();
 			}
 		}
 		for(int x = 0; x < numXVals; x++) {
