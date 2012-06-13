@@ -91,6 +91,7 @@ public class TrackView extends JComponent {
 	}
 	
 	private void drawUpperPanel(Graphics g) {
+		TreeMap<Integer, TreeMap<Integer, Integer>> beatToNoteToNumNotes = new TreeMap<Integer, TreeMap<Integer, Integer>>();
 		float[][] upperPanelArray = new float[loopLength][31];
 		for(int x = 0; x < loopLength; x++) {
 			for(int y = 0; y < 31; y++) {
@@ -101,8 +102,13 @@ public class TrackView extends JComponent {
 			harmonic.flattenHarmonic();
 			for(FDData data: new ArrayList<FDData>(harmonic.getAllDataInterpolated().values())) {
 				int x = data.getTime();
+				int beat = x / 100;
 				if(x >= loopLength) continue;
 				int y = data.getNote() % 31;
+				if(!beatToNoteToNumNotes.containsKey(beat)) beatToNoteToNumNotes.put(beat, new TreeMap<Integer, Integer>());
+				if(!beatToNoteToNumNotes.get(beat).containsKey(y)) beatToNoteToNumNotes.get(beat).put(y, 0);
+				int numNotes = beatToNoteToNumNotes.get(beat).get(y).intValue() + 1;
+				beatToNoteToNumNotes.get(beat).put(y, numNotes);
 				if(data.getLogAmplitude() > upperPanelArray[x][y]) upperPanelArray[x][y] = (float) data.getLogAmplitude();
 			}
 		}
@@ -115,6 +121,26 @@ public class TrackView extends JComponent {
 					g.fillRect(x * 2 + leftPanelWidth, 0, 1, 31 * 4);
 				}
 			}
+		}	
+		g.setColor(new Color(1.0f, 1.0f, 1.0f, 0.75f));
+		int x = leftPanelWidth;
+		for(int beat = 0; beat < 4; beat++) {
+			TreeMap<Integer, TreeSet<Integer>> numNotesToNote = new TreeMap<Integer, TreeSet<Integer>>();
+			for(int note = 0; note < 31; note++) {
+				if(!beatToNoteToNumNotes.containsKey(beat)) continue;
+				if(!beatToNoteToNumNotes.get(beat).containsKey(note)) continue;
+				int numNotes = beatToNoteToNumNotes.get(beat).get(note);
+				if(!numNotesToNote.containsKey(numNotes)) numNotesToNote.put(numNotes, new TreeSet<Integer>());
+				numNotesToNote.get(numNotes).add(note);
+			}
+			int y = 0;
+			for(int numNotes: numNotesToNote.keySet()) {
+				for(int note: numNotesToNote.get(numNotes)) {
+					g.drawString(note + " | " + numNotes, x, y + 10);
+					y += 10;
+				}
+			}
+			x += 200;
 		}
 	}
 	
