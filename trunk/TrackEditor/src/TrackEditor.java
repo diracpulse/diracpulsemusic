@@ -24,6 +24,8 @@ public class TrackEditor extends JFrame {
 	public static int numBeats = 0;
 	public static File[] loopFiles = null;
 	public static int currentLoopFileIndex = 0;
+	public static int xStep = 6; // one digit
+	public static int yStep = 9; // one digit;
 	
 	public JMenuBar createMenuBar() {
         TrackActionHandler actionHandler = new TrackActionHandler(this);
