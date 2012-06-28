@@ -150,6 +150,22 @@ public class HarmonicsActionHandler extends JPanel {
 		}
 	}
 	
+	public class RandomChordAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public RandomChordAction() {
+			super("Random Chord");
+		}
+ 
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Random Chord");
+			Loop.randomChord(parent);
+		}
+	}
+	
+	
 	public class NonRandomDoubletAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
@@ -306,6 +322,7 @@ public class HarmonicsActionHandler extends JPanel {
         menuBar.add(harmonicsMenu);
         JMenu loopMenu = new JMenu("Loop");
         loopMenu.add(new RandomLoopAction());
+        loopMenu.add(new RandomChordAction());
         loopMenu.add(new RandomTripletAction());
         loopMenu.add(new NonRandomDoubletAction());
         loopMenu.add(new RandomDoubletAction());
