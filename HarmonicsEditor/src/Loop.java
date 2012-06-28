@@ -1,6 +1,7 @@
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Random;
 
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
@@ -53,6 +54,57 @@ public class Loop implements ActionListener {
 		return returnVal.toString() + "\n";
 	}
 	
+	public static void randomChord(HarmonicsEditor parent) {
+		ArrayList<ArrayList<Integer>> allChords = new ArrayList<ArrayList<Integer>>();
+		String fileName = "Chord" + System.currentTimeMillis() + ".txt";
+		for(int baseNote = 8 * 31; baseNote <= 9 * 31; baseNote += 6) {
+			for(int chord1 = 6; chord1 < 13; chord1 += 1) {
+				for(int chord2 = 6; chord2 < 13; chord2 += 1) {
+					ArrayList<Integer> chord = new ArrayList<Integer>();
+					chord.add(baseNote);
+					chord.add(chord1);
+					chord.add(chord2);
+					allChords.add(chord);
+				}
+			}
+		}
+		Random random = new Random();
+		while(!allChords.isEmpty()) {
+			int numChords = allChords.size();
+			int randomIndex = random.nextInt(numChords);
+			ArrayList<Integer> currentChord = allChords.get(randomIndex);
+			int baseNote = currentChord.get(0);
+			int chord1 = currentChord.get(1);
+			int chord2 = currentChord.get(2);
+			String loopDescriptor = baseNote + " " + chord1 + " " + chord2;
+			synthChord(baseNote, chord1, chord2);
+			SoftSynth.addDataToHarmonicsEditor();
+			HarmonicsEditor.playSelectedDataInCurrentWindow(parent);
+			Integer result = getRating(parent, loopDescriptor);
+			if(result != null) {
+				System.out.println(result);
+				String fileString = loopDescriptor + " " + result;
+				HarmonicsFileOutput.OutputStringToFile(fileName, fileString + "\n");
+			}
+			allChords.remove(randomIndex);
+		}
+	}
+	
+	public static void synthChord(int baseNote, int chord1, int chord2) {
+		HarmonicsEditor.clearCurrentData();
+		SoftSynth.initLoop();
+		int duration = 100;
+		int[] chord = {chord1, chord2};
+		SoftSynth.addBeat(0, baseNote, chord, duration, false);
+		SoftSynth.addBeat(duration, baseNote, chord, duration, false);
+	}
+
+	public static Integer getRating(HarmonicsEditor parent, String loopDescriptor) {
+		Object[] ratings = {5, 4, 3, 2, 1, 0};
+		return (Integer) JOptionPane.showInputDialog(parent, loopDescriptor, "Select Rating",
+													 JOptionPane.PLAIN_MESSAGE, null, ratings, 2);
+	}
+	
 	public static void nonRandomDoublet(HarmonicsEditor parent) {
 		String fileName = "Doublet" + System.currentTimeMillis() + ".txt";
 			for(int deltaNote1 = -15; deltaNote1 <= 15; deltaNote1++) {
@@ -69,12 +121,6 @@ public class Loop implements ActionListener {
 				}
 			}
 		}
-	}
-	
-	public static Integer getRating(HarmonicsEditor parent, String loopDescriptor) {
-		Object[] ratings = {5, 4, 3, 2, 1, 0};
-		return (Integer) JOptionPane.showInputDialog(parent, loopDescriptor, "Select Rating",
-													 JOptionPane.PLAIN_MESSAGE, null, ratings, 2);
 	}
 	
 	public static void randomDoublet(HarmonicsEditor parent) {

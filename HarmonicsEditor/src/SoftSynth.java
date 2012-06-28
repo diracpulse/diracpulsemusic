@@ -46,20 +46,20 @@ public class SoftSynth {
 			//System.out.println(highFreqStart);
 			synthHarmonicWithOvertones(startTime, endTime, highFreqStart, maxNote, harmonicIDToInstrumentHarmonic.firstEntry().getValue(), -4.0);
 		} else {
-			synthNoteWithOvertones(startTime, endTime, baseNote, maxNote, 14.0);
+			synthNoteWithOvertones(startTime, endTime, baseNote, maxNote, 12.0);
 			for(int chord: chords) {
 				currentChord += chord;
 				int note = baseNote + currentChord;
-				synthNoteWithOvertones(startTime, endTime, note, maxNote, 14.0);
+				synthNoteWithOvertones(startTime, endTime, note, maxNote, 12.0);
 			}
 		}
+		fitHarmonicsToChords(startTime, baseNote, chords, true);
 		// Synth Bass Instrument
 		if(harmonicIDToBassSynthHarmonic != null) {
 			synthInstrument(startTime, endTime, lowestNote, harmonicIDToBassSynthHarmonic, 0.0);
 		} else {
-			synthNoteWithOvertones(startTime, endTime, lowestNote, baseNote, 14.0);
+			synthNoteWithOvertones(startTime, endTime, lowestNote, baseNote, 12.0);
 		}
-		fitHarmonicsToChords(startTime, lowestNote, chords, true);
 		// Synth Noise Sources
 		if(harmonicIDToKickDrumHarmonic != null) {
 			synthInstrument(startTime, endTime, -1, harmonicIDToKickDrumHarmonic, 0.0);
@@ -137,7 +137,7 @@ public class SoftSynth {
 				int currentNote = baseNote + currentChord;
 				if(currentNote > FDData.getMaxNote()) break;
 				ArrayList<Harmonic> harmonicsToMerge = new ArrayList<Harmonic>();
-				for(int mergeNote = currentNote - 2; mergeNote <= currentNote + 2; mergeNote++) {
+				for(int mergeNote = currentNote - 3; mergeNote <= currentNote + 3; mergeNote++) {
 					if(noteToHarmonic.containsKey(mergeNote)) {
 						harmonicsToMerge.add(noteToHarmonic.get(mergeNote));
 						noteToHarmonic.remove(mergeNote);
