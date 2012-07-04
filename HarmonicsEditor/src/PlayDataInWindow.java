@@ -35,4 +35,9 @@ public class PlayDataInWindow implements ActionListener {
 		if(currentOffsetInMillis >= endTimeInMillis) timer.stop();
 	}
 	
+	public static void play() {
+		SynthTools.createPCMData(null);
+		SynthTools.playWindow();
+	}
+	
 }

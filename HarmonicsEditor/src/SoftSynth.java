@@ -35,7 +35,7 @@ public class SoftSynth {
 			for(int chord: chords) {
 				currentChord += chord;
 				int note = baseNote + currentChord;
-				synthInstrument(startTime, endTime, note, harmonicIDToInstrumentHarmonic, -1.0);
+				synthInstrument(startTime, endTime, note, harmonicIDToInstrumentHarmonic, -0.0);
 			}
 			int harmonicMaxNote = 0;
 			for(Harmonic harmonic: beatStartTimeToHarmonics.get(startTime)) {
@@ -46,19 +46,25 @@ public class SoftSynth {
 			//System.out.println(highFreqStart);
 			synthHarmonicWithOvertones(startTime, endTime, highFreqStart, maxNote, harmonicIDToInstrumentHarmonic.firstEntry().getValue(), -4.0);
 		} else {
-			synthNoteWithOvertones(startTime, endTime, baseNote, maxNote, 12.0);
+			synthNoteWithOvertones(startTime, endTime, baseNote, maxNote, 14.0, true);
+			boolean attenuate = true;
 			for(int chord: chords) {
 				currentChord += chord;
 				int note = baseNote + currentChord;
-				synthNoteWithOvertones(startTime, endTime, note, maxNote, 12.0);
+				if(!attenuate) {
+					synthNoteWithOvertones(startTime, endTime, note, maxNote, 13.0, true);
+				} else {
+					synthNoteWithOvertones(startTime, endTime, note, maxNote, 13.0, true);
+				}
+				attenuate = !attenuate;
 			}
 		}
-		fitHarmonicsToChords(startTime, baseNote, chords, true);
+		//fitHarmonicsToChords(startTime, baseNote, chords, true);
 		// Synth Bass Instrument
 		if(harmonicIDToBassSynthHarmonic != null) {
 			synthInstrument(startTime, endTime, lowestNote, harmonicIDToBassSynthHarmonic, 0.0);
 		} else {
-			synthNoteWithOvertones(startTime, endTime, lowestNote, baseNote, 12.0);
+			synthNoteWithOvertones(startTime, endTime, lowestNote, baseNote, 16.0, false);
 		}
 		// Synth Noise Sources
 		if(harmonicIDToKickDrumHarmonic != null) {
@@ -243,42 +249,45 @@ public class SoftSynth {
 			}
 		}
 	}
-
-	public static void synthSingleNote(int startTime, int endTime, int note, double amplitude) {
+	
+	public static double sawTooth(double phase) {
+		phase /= 2.0 * Math.PI;
+		phase -= Math.floor(phase);
+		return (phase - 0.5) / 2.0;
+	}
+	
+	public static void synthNoteWithOvertones(int startTime, int endTime, int minNote, int maxNote, double amplitude, boolean applyTaper) {
 		try {
-			long harmonicID =  HarmonicsEditor.getRandomID();
-			int attackTime = startTime + 2;
-			FDData start = new FDData(startTime, note, amplitude - 2.0, harmonicID);
-			FDData attack = new FDData(attackTime, note, amplitude, harmonicID);
-			FDData end = new FDData(endTime, note, amplitude - 2.0, harmonicID);
-			Harmonic harmonic = new Harmonic(harmonicID);
-			harmonic.addData(start);
-			harmonic.addData(attack);
-			harmonic.addData(end);
-			TreeMap<Long, Harmonic> harmonicsArg = new TreeMap<Long, Harmonic>();
-			harmonicsArg.put(harmonicID, harmonic);
-			synthInstrument(0, endTime, note, harmonicsArg, 0.0);
+			double taperVal = 1.0;
+			if(!applyTaper) taperVal = 1.0;
+			TreeMap<Integer, Harmonic> noteToHarmonicID = new TreeMap<Integer, Harmonic>();
+			for(int note = minNote; note < maxNote; note += FDData.noteBase) {
+				long harmonicID =  HarmonicsEditor.getRandomID();
+				noteToHarmonicID.put(note, new Harmonic(harmonicID));
+			}
+			double AMPhase = Math.PI;
+			double FMPhase = Math.PI;
+			for(int time = startTime; time <= endTime; time++) {
+				double dTime = time;
+				for(int note = minNote; note < maxNote; note += FDData.noteBase) {
+					double dNote = note;
+					double taper = (dNote - minNote) / (double) FDData.noteBase;
+					double amplitudeAdjust = Math.sin(AMPhase * taper); // * Math.random();
+					Harmonic currentHarmonic = noteToHarmonicID.get(note);
+					double currentAmplitude = amplitudeAdjust + amplitude - Math.pow(taper, taperVal);
+					if(currentAmplitude < 2.0) break;
+					FDData data = new FDData(time, note, currentAmplitude, currentHarmonic.getHarmonicID());
+					currentHarmonic.addData(data);
+				}
+				AMPhase += (2.0 * Math.PI) / (endTime - startTime);
+			}
+			for(int note = minNote; note < maxNote; note += FDData.noteBase) {
+				Harmonic currentHarmonic = noteToHarmonicID.get(note);
+				beatStartTimeToHarmonics.get(startTime).add(currentHarmonic);
+			}
 		} catch (Exception e) {
 			System.out.println("HarmonicsEditor.synthNoteWithOvertones() error creating data:" + e.getMessage());
 		}		
-	}
-
-	public static void synthNoteWithOvertones(int startTime, int endTime, int minNote, int maxNote, double maxAmplitude) {
-		int note = minNote;
-		int duration = endTime - startTime;
-		try {
-			while(note < maxNote) {
-				double taper = (note - minNote) / (double) FDData.noteBase;
-				taper = Math.pow(taper, 1.25);
-				double currentAmplitude = maxAmplitude - taper;
-				int currentEndTime = startTime + (int) Math.round(duration / (taper * 0.10 + 1.0));
-				if(currentAmplitude < 2.0) break;
-				synthSingleNote(startTime, currentEndTime, note, currentAmplitude);
-				note += FDData.noteBase;
-			}	
-		} catch (Exception e) {
-			System.out.println("HarmonicsEditor.synthNoteWithOvertones() error creating data:" + e.getMessage());
-		}
 	}
 
 }

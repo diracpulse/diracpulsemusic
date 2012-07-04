@@ -36,6 +36,18 @@ public class FDData {
 		this.logAmplitude = logAmplitude;
 	}
 	
+	public FDData(int time, double noteComplete, double logAmplitude, long id) throws Exception {
+		int note = (int) Math.round(noteComplete);
+		double noteFraction = noteComplete - note;
+		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
+		if(!withinBounds(time, note, noteFraction, logAmplitude)) throw new Exception();
+		this.time = time;
+		this.note = note;
+		this.noteFraction = noteFraction;
+		this.logAmplitude = logAmplitude;
+		this.harmonicID = id;
+	}
+	
 	// This contructor is used to input file data
 	public FDData(int time, int note, float logAmplitude) throws Exception {
 		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
