@@ -217,8 +217,9 @@ void InitWavelets() {
 	maxDFTLength = 0;
 	maxCyclesPerWindow = maxBinStep / (pow(2.0, 1.0 / notesPerOctave) - 1.0);
 	index = InitWaveletsHelper(maxFreqHz, 2000.0, index, 1.0);
-	index = InitWaveletsHelper(2000.0, 500.0, index, sqrt(2.0));
-	index = InitWaveletsHelper(500.0, 20.0, index, 2.0);
+	index = InitWaveletsHelper(2000.0, 250.0, index, sqrt(2.0));
+	index = InitWaveletsHelper(250.0, 80.0, index, 2.0);
+	index = InitWaveletsHelper(80.0, 20.0, index, sqrt(2.0));
     numWavelets = index;
     // MATRIX OUTPUT
     printf("#_MAXNOTE_\n%d\n", frequencyToNote(maxFreqHz) - 1); // #HACK skip first wavelet
