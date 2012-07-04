@@ -2,6 +2,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.TreeMap;
 
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
@@ -56,15 +57,19 @@ public class Loop implements ActionListener {
 	
 	public static void randomChord(HarmonicsEditor parent) {
 		ArrayList<ArrayList<Integer>> allChords = new ArrayList<ArrayList<Integer>>();
+		TreeMap<Integer, TreeMap<Integer, Integer>> selectedChords = new TreeMap<Integer, TreeMap<Integer, Integer>>();
 		String fileName = "Chord" + System.currentTimeMillis() + ".txt";
-		for(int baseNote = 8 * 31; baseNote <= 9 * 31; baseNote += 6) {
-			for(int chord1 = 6; chord1 < 13; chord1 += 1) {
-				for(int chord2 = 6; chord2 < 13; chord2 += 1) {
+		for(int baseNote = 8 * 31; baseNote <= 8 * 31; baseNote += 3) {
+			for(int chord1 = 6; chord1 <= 13; chord1 += 1) {
+				selectedChords.put(chord1, new TreeMap<Integer, Integer>());
+				for(int chord2 = 6; chord2 <= 13; chord2 += 1) {
+					//if(chord1 == chord2) continue;
 					ArrayList<Integer> chord = new ArrayList<Integer>();
 					chord.add(baseNote);
 					chord.add(chord1);
 					chord.add(chord2);
 					allChords.add(chord);
+					selectedChords.get(chord1).put(chord2, 0);
 				}
 			}
 		}
@@ -76,17 +81,33 @@ public class Loop implements ActionListener {
 			int baseNote = currentChord.get(0);
 			int chord1 = currentChord.get(1);
 			int chord2 = currentChord.get(2);
-			String loopDescriptor = baseNote + " " + chord1 + " " + chord2;
 			synthChord(baseNote, chord1, chord2);
 			SoftSynth.addDataToHarmonicsEditor();
+			HarmonicsEditor.refreshView();
 			HarmonicsEditor.playSelectedDataInCurrentWindow(parent);
-			Integer result = getRating(parent, loopDescriptor);
+			/* PlayDataInWindow.play();
+			try {
+				Thread.sleep(1000);
+			} catch (Exception e) {
+				
+			}
+			*/
+			Integer result = getRating(parent, "NONE");
 			if(result != null) {
 				System.out.println(result);
-				String fileString = loopDescriptor + " " + result;
-				HarmonicsFileOutput.OutputStringToFile(fileName, fileString + "\n");
+				//String fileString = loopDescriptor + " " + result;
+				//HarmonicsFileOutput.OutputStringToFile(fileName, fileString + "\n");
+				int numResults = selectedChords.get(chord1).get(chord2) + 1;
+				selectedChords.get(chord1).put(chord2, numResults);
 			}
 			allChords.remove(randomIndex);
+		}
+		for(int chord1 = 6; chord1 <= 13; chord1 += 1) {
+			for(int chord2 = 6; chord2 <= 13; chord2 += 1) {
+				int numResults = selectedChords.get(chord1).get(chord2);
+				String fileString = chord1 + " " + chord2 + " " + numResults;
+				HarmonicsFileOutput.OutputStringToFile(fileName, fileString + "\n");
+			}
 		}
 	}
 	
@@ -96,7 +117,7 @@ public class Loop implements ActionListener {
 		int duration = 100;
 		int[] chord = {chord1, chord2};
 		SoftSynth.addBeat(0, baseNote, chord, duration, false);
-		SoftSynth.addBeat(duration, baseNote, chord, duration, false);
+		//SoftSynth.addBeat(duration, baseNote, chord, duration, false);
 	}
 
 	public static Integer getRating(HarmonicsEditor parent, String loopDescriptor) {
