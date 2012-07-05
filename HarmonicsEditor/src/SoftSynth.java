@@ -31,20 +31,20 @@ public class SoftSynth {
 		lowestNote += FDData.noteBase;
 		// Synth Main Instrument
 		if(harmonicIDToInstrumentHarmonic != null) {
-			synthInstrument(startTime, endTime, baseNote, harmonicIDToInstrumentHarmonic, 0.0);
+			synthInstrumentEQ(startTime, endTime, baseNote, chords, harmonicIDToInstrumentHarmonic, 0.0);
 			for(int chord: chords) {
 				currentChord += chord;
 				int note = baseNote + currentChord;
-				synthInstrument(startTime, endTime, note, harmonicIDToInstrumentHarmonic, -0.0);
+				//synthInstrumentEQ(startTime, endTime, note, harmonicIDToInstrumentHarmonic, 0.0);
 			}
 			int harmonicMaxNote = 0;
 			for(Harmonic harmonic: beatStartTimeToHarmonics.get(startTime)) {
 				if(harmonic.getAverageNote() > harmonicMaxNote) harmonicMaxNote = harmonic.getAverageNote();
 			}
-			int highFreqStart = baseNote;
-			while(highFreqStart <= harmonicMaxNote) highFreqStart += FDData.noteBase;
+			//int highFreqStart = baseNote;
+			//while(highFreqStart <= harmonicMaxNote) highFreqStart += FDData.noteBase;
 			//System.out.println(highFreqStart);
-			synthHarmonicWithOvertones(startTime, endTime, highFreqStart, maxNote, harmonicIDToInstrumentHarmonic.firstEntry().getValue(), -4.0);
+			//synthHarmonicWithOvertones(startTime, endTime, highFreqStart, maxNote, harmonicIDToInstrumentHarmonic.firstEntry().getValue(), -4.0);
 		} else {
 			synthNoteWithOvertones(startTime, endTime, baseNote, maxNote, 14.0, true);
 			boolean attenuate = true;
@@ -62,9 +62,9 @@ public class SoftSynth {
 		//fitHarmonicsToChords(startTime, baseNote, chords, true);
 		// Synth Bass Instrument
 		if(harmonicIDToBassSynthHarmonic != null) {
-			synthInstrument(startTime, endTime, lowestNote, harmonicIDToBassSynthHarmonic, 0.0);
+			//synthInstrument(startTime, endTime, lowestNote, harmonicIDToBassSynthHarmonic, 0.0);
 		} else {
-			synthNoteWithOvertones(startTime, endTime, lowestNote, baseNote, 16.0, false);
+			//synthNoteWithOvertones(startTime, endTime, lowestNote, baseNote, 16.0, false);
 		}
 		// Synth Noise Sources
 		if(harmonicIDToKickDrumHarmonic != null) {
@@ -104,6 +104,100 @@ public class SoftSynth {
 				newHarmonic.addData(data);
 			}
 			beatStartTimeToHarmonics.get(startTime).add(newHarmonic);
+		}
+	}
+	
+	public static void synthInstrumentEQ(int startTime, int endTime, int baseNote, int[] chords, TreeMap<Long, Harmonic> harmonics, double gain) {
+		TreeMap<Integer, Harmonic> noteToHarmonic = new TreeMap<Integer, Harmonic>();
+		TreeMap<Integer, TreeMap<Integer, Double>> timeToNoteToEQ = new TreeMap<Integer, TreeMap<Integer, Double>>(); 
+		for(int note = FDData.getMinNote(); note < FDData.getMaxNote(); note++) {
+			for(Harmonic harmonic: harmonics.values()) {
+				if(harmonic.getAverageNote() == note) {
+					noteToHarmonic.put(note, harmonic);
+				}
+			}
+		}	
+		int minEQNote = noteToHarmonic.firstKey();
+		int maxEQNote = noteToHarmonic.lastKey();
+		int numTimes = endTime - startTime;
+		int numNotes = FDData.getMaxNote() - FDData.getMinNote();
+		double[][] EQMatrix = new double[numTimes][numNotes];
+		for(int time = startTime; time < endTime; time++) {
+			int normalTime = time - startTime;
+			timeToNoteToEQ.put(normalTime, new TreeMap<Integer, Double>());
+			double currentLogAmp = -1.0;
+			for(int note: noteToHarmonic.keySet()) {
+				if(currentLogAmp == -1.0) currentLogAmp = noteToHarmonic.get(note).getAllData().get(0).getLogAmplitude();
+				if(noteToHarmonic.get(note).getDataAtTime(normalTime) != null) {
+					currentLogAmp = noteToHarmonic.get(note).getDataAtTime(normalTime).getLogAmplitude();
+					timeToNoteToEQ.get(normalTime).put(note, currentLogAmp);
+				} else {
+					timeToNoteToEQ.get(normalTime).put(note, currentLogAmp);
+				}
+			}
+		}
+		ArrayList<Integer> notes = new ArrayList<Integer>(noteToHarmonic.keySet());
+		for(int time = 0; time < numTimes; time++) {
+			if(minEQNote > FDData.getMinNote()) {
+				int startNote = FDData.getMinNote();
+				int endNote = minEQNote;
+				double logAmpVal = timeToNoteToEQ.get(time).get(minEQNote);
+				for(int note = startNote; note < endNote; note++) {
+					EQMatrix[time][note - FDData.getMinNote()] = logAmpVal; 
+				}
+			}
+			for(int noteIndex = 0; noteIndex < notes.size() - 1; noteIndex++) {
+				int startNote = notes.get(noteIndex);
+				int endNote = notes.get(noteIndex + 1);
+				double startLogAmp = timeToNoteToEQ.get(time).get(startNote);
+				double endLogAmp = timeToNoteToEQ.get(time).get(endNote);
+				double slope = (endLogAmp - startLogAmp) / (endNote - startNote);
+				for(int note = startNote; note < endNote; note++) {
+					EQMatrix[time][note - FDData.getMinNote()] = (note - startNote) * slope + startLogAmp; 
+				}
+			}
+			if(maxEQNote < FDData.getMaxNote()) {
+				int startNote = maxEQNote;
+				int endNote = FDData.getMaxNote();
+				double startLogAmp = timeToNoteToEQ.get(time).get(startNote);
+				double endLogAmp = 0.0;
+				double slope = (endLogAmp - startLogAmp) / (endNote - startNote);
+				for(int note = startNote; note < endNote; note++) {
+					EQMatrix[time][note - FDData.getMinNote()] = 0.0; // (note - startNote) * slope + startLogAmp; 
+				}
+			}
+		}
+		int lowestNote = baseNote;
+		int currentChord = 0;
+		while(lowestNote >= FDData.getMinNote()) lowestNote -= FDData.noteBase;
+		lowestNote += FDData.noteBase;
+		ArrayList<Integer> baseNotes = new ArrayList<Integer>();
+		baseNotes.add(lowestNote); // baseNote synth low bass as well
+		int noteVal = baseNote;
+		for(int chord: chords) {
+			noteVal += chord;
+			baseNotes.add(noteVal);
+		}
+		int currentNoteIndex = 0;
+		for(int currentNote: baseNotes) {
+			for(int note = currentNote; note < FDData.getMaxNote(); note += FDData.noteBase) {
+				long harmonicID = HarmonicsEditor.getRandomID();
+				Harmonic newHarmonic = new Harmonic(harmonicID);
+				for(int time = 0; time < numTimes; time++) {
+					try {
+						double logAmpVal = EQMatrix[time][note - FDData.getMinNote()];
+						if(currentNoteIndex == 1) logAmpVal -= 2.0;
+						if(currentNoteIndex == 2) logAmpVal -= 1.0;
+						if(logAmpVal < 0.0) continue;
+						FDData data = new FDData(time + startTime, note, logAmpVal, harmonicID);
+						newHarmonic.addData(data);
+					} catch (Exception e) {
+						System.out.println("synthInstrumentEQ: Error creating data");
+					}
+				}
+			beatStartTimeToHarmonics.get(startTime).add(newHarmonic);
+			}
+			currentNoteIndex++;
 		}
 	}
 	

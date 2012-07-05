@@ -74,6 +74,11 @@ public class Harmonic {
 		return LogLinear.dataInterpolate(getAllData());
 	}
 	
+	public FDData getDataAtTime(int time) {
+		if(timeToData.containsKey(time)) return timeToData.get(time);
+		return null;
+	}
+	
 	public boolean containsData(FDData data) {
 		if(timeToData.containsKey(data.getTime())) return true;
 		return false;
@@ -94,7 +99,7 @@ public class Harmonic {
 			System.out.println("Harmonic.getEnd(): Error creating data");
 		}
 		return taperData;
-	}	
+	}
 	
 	// used to avoid null pointer for small harmonics
 	public Double[] getDummyArray() {
