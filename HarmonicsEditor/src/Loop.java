@@ -12,21 +12,21 @@ public class Loop implements ActionListener {
 	public static class Beat {
 		
 		int baseNote;
-		int[] chord;
+		double[] chord;
 		int duration;
 		
-		public Beat(int baseNote, int[] chord, int duration) {
+		public Beat(int baseNote, double[] chord, int duration) {
 			this.baseNote = baseNote;
-			this.chord = new int[chord.length];
+			this.chord = new double[chord.length];
 			for(int index = 0; index < chord.length; index++) this.chord[index] = chord[index];
 			this.duration = duration;
 		}
 		
-		public int getBaseNote() {
+		public double getBaseNote() {
 			return baseNote;
 		}
 		
-		public int[] getChord() {
+		public double[] getChord() {
 			return chord;
 		}
 		
@@ -37,7 +37,7 @@ public class Loop implements ActionListener {
 		public String toString() {
 			StringBuffer returnVal = new StringBuffer();
 			returnVal.append(baseNote);
-			for(int chordVal: chord) returnVal.append(":" + chordVal);
+			for(double chordVal: chord) returnVal.append(":" + chordVal);
 			returnVal.append(":" + duration);
 			return returnVal.toString();
 		}
@@ -111,13 +111,39 @@ public class Loop implements ActionListener {
 		}
 	}
 	
-	public static void synthChord(int baseNote, int chord1, int chord2) {
+	public static void continuousRandomChord(HarmonicsEditor parent) {
+		double minBaseNote = Math.log(256.0) / Math.log(2.0) * FDData.noteBase;
+		double maxBaseNote = Math.log(440.0) / Math.log(2.0) * FDData.noteBase;
+		double minChord = Math.log(8.0 / 7.0) / Math.log(2.0) * FDData.noteBase;
+		double maxChord = Math.log(4.5 / 3.0) / Math.log(2.0) * FDData.noteBase;
+		boolean repeat = true;
+		while(repeat) {
+			double baseNote = Math.random() * (maxBaseNote - minBaseNote) + minBaseNote;
+			double chord1 = Math.random() * (maxChord - minChord) + minChord;
+			double chord2 = Math.random() * (maxChord - minChord) + minChord;
+			if(chord1 + chord2 > FDData.noteBase - minChord) continue;
+			synthChord(baseNote, chord1, chord2);
+			SoftSynth.addDataToHarmonicsEditor();
+			HarmonicsEditor.refreshView();
+			HarmonicsEditor.playSelectedDataInCurrentWindow(parent);
+			int result = JOptionPane.showOptionDialog(parent, null, null, JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+			if(result == 2) break;
+			HarmonicsFileOutput.OutputDoubleToFile("randomChordsBinary", chord1);
+			HarmonicsFileOutput.OutputDoubleToFile("randomChordsBinary", chord2);
+			if(result == 0) HarmonicsFileOutput.OutputDoubleToFile("randomChordsBinary", 1.0);
+			if(result == 1) HarmonicsFileOutput.OutputDoubleToFile("randomChordsBinary", 0.0);
+		}
+	}
+	
+	public static void synthChord(double baseNote, double chord1, double chord2) {
 		HarmonicsEditor.clearCurrentData();
 		SoftSynth.initLoop();
 		int duration = 100;
-		int[] chord = {chord1, chord2};
+		double[] chord = {chord1, chord2};
 		SoftSynth.addBeat(0, baseNote, chord, duration, false);
-		//SoftSynth.addBeat(duration, baseNote, chord, duration, false);
+		SoftSynth.addBeat(100, baseNote, chord, duration, false);
+		SoftSynth.addBeat(200, baseNote, chord, duration, false);
+		SoftSynth.addBeat(300, baseNote, chord, duration, false);
 	}
 
 	public static Integer getRating(HarmonicsEditor parent, String loopDescriptor) {
@@ -331,7 +357,7 @@ public class Loop implements ActionListener {
 			for(int beat = 0; beat < numBeats; beat++) {
 				int baseNote = centerNote + deltaBN + deltaNotes.get(beat);
 				int chordIndex = chordIndices.get(beat);
-				int[] chords = getChord(chordIndex);
+				double[] chords = getChord(chordIndex);
 				loop.add(new Beat(baseNote, chords, duration));
 			}
 			loop.add(new Beat(0, getChord(0), duration));
@@ -353,28 +379,28 @@ public class Loop implements ActionListener {
 		}
 	}
 	
-	public static int[] getChord(int index) {
+	public static double[] getChord(int index) {
 		switch(index) {
 			case 0:
-				return new int[] {6, 7, 8};
+				return new double[] {6, 7, 8};
 			case 1:
-				return new int[] {7, 6, 8};
+				return new double[] {7, 6, 8};
 			case 2:
-				return new int[] {6, 7, 10};
+				return new double[] {6, 7, 10};
 			case 3:
-				return new int[] {7, 6, 10};
+				return new double[] {7, 6, 10};
 			case 4:
-				return new int[] {8, 10, 6};
+				return new double[] {8, 10, 6};
 			case 5:
-				return new int[] {8, 10, 7};
+				return new double[] {8, 10, 7};
 			case 6:
-				return new int[] {10, 8, 6};
+				return new double[] {10, 8, 6};
 			case 7:
-				return new int[] {10, 8, 7};
+				return new double[] {10, 8, 7};
 			case 8:
-				return new int[] {13, 10};
+				return new double[] {13, 10};
 			case 9:
-				return new int[] {10, 13};
+				return new double[] {10, 13};
 		}
 		return null;
 	}

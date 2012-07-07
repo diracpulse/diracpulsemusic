@@ -29,6 +29,19 @@ public class HarmonicsFileOutput {
 		}
 	}
 	
+	public static void OutputDoubleToFile(String fileName, double data) {
+	    try {
+	    	DataOutputStream out = new DataOutputStream(new
+		            BufferedOutputStream(new FileOutputStream(fileName, true)));
+            out.writeDouble(data);
+            out.close();
+		} catch (Exception e) {
+			System.out.println("Exception in HarmonicsFileOutput.OutputDoubleToFile");
+			e.printStackTrace();
+			System.exit(0);
+		}
+	}
+	
 	public static double[] SynthFDDataExternally(ArrayList<Harmonic> harmonics) {
 		int index = 0;
 		ArrayList<FDData> allData = new ArrayList<FDData>();

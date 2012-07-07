@@ -261,9 +261,9 @@ public class HarmonicsEditor extends JFrame {
 		for(int index = 1; index < notes.length; index++) {
 			notes[index] = notes[index - 1] + randomGenerator.nextInt(7) + 6;
 		}
-		int[] chords;
-		int[] chords2 = new int[2];
-		int[] chords3 = new int[3];
+		double[] chords;
+		double[] chords2 = new double[2];
+		double[] chords3 = new double[3];
 		for(int duration: beatDurations) {
 			for(int index = 1; index < 2; index++) {
 				chords2[index - 1] = notes[index] - notes[index - 1];
