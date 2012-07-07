@@ -161,10 +161,9 @@ public class HarmonicsActionHandler extends JPanel {
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Random Chord");
-			Loop.randomChord(parent);
+			Loop.continuousRandomChord(parent);
 		}
 	}
-	
 	
 	public class NonRandomDoubletAction extends AbstractAction {
 		
