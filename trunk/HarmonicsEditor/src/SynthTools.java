@@ -14,10 +14,29 @@ class SynthTools {
 	static HarmonicsEditor parent;
 
 	static void createPCMData(HarmonicsEditor parent) {
-		//PCMData = FastSynth.synthHarmonics(new ArrayList<Harmonic>(parent.harmonicIDToHarmonic.values()));
 		if(HarmonicsEditor.harmonicIDToHarmonic == null || HarmonicsEditor.harmonicIDToHarmonic.isEmpty()) return;
-		PCMData = HarmonicsFileOutput.SynthFDDataExternally(
-				new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonic.values()));
+		PCMData = FastSynth.synthHarmonicsLinear(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonic.values()));
+	}
+	
+	static void createPCMDataNoise(HarmonicsEditor parent) {
+		if(HarmonicsEditor.harmonicIDToHarmonic == null || HarmonicsEditor.harmonicIDToHarmonic.isEmpty()) return;
+		FastSynth.initSharedPCMData(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonic.values()));
+		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
+			int duration = harmonic.getLength();
+			int note = harmonic.getAverageNote();
+			if(note < 8 * FDData.noteBase) {
+				//FastSynth.synthHarmonicLinear(harmonic);
+				//continue;
+			}
+			int startTime = harmonic.getStartSampleOffset();
+			double amplitude = Math.pow(2.0, harmonic.getMaxLogAmplitude());
+			double[] audio = Filter.getFilteredNoise(duration, note, amplitude);
+			for(int time = startTime; time < startTime + duration; time++) {
+				FastSynth.sharedPCMData[time] += audio[time - startTime];
+			}
+			System.out.println(note + startTime + "complete");
+		}
+		PCMData = FastSynth.sharedPCMData;
 	}
 	
 	static void createPCMData(HarmonicsEditor parent, int startTime, int endTime) {
