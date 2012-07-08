@@ -9,13 +9,15 @@ public class DataViewerView extends JComponent {
 	DataViewerView() {}
 	
     protected void paintComponent(Graphics g) {
+    	g.setColor(new Color(0.0f, 0.0f, 0.0f));
+    	g.fillRect(0, 0, getWidth(), getHeight());
     	drawIntegerGrid(g);
 		for(DataViewer.dataPoint2D data: DataViewer.dataPoints) {
 			DataViewer.dataPoint2D normalData = DataViewer.getNormalizedData(data);
 			g.setColor(getColor(normalData.getValue()));
 			int screenX = (int) Math.round(normalData.getX() * getWidth());
 			int screenY = (int) Math.round(normalData.getY() * getHeight());
-			g.drawRect(screenX, screenY, 2, 2);
+			g.fillRect(screenX, screenY, 2, 2);
 		}	
     }
 		

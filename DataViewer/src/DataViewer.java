@@ -62,7 +62,7 @@ public class DataViewer extends JFrame {
 			if(data.getX() > maxX) maxX = data.getX();
 			if(data.getY() > maxY) maxY = data.getY();
 			if(data.getValue() > maxValue) maxValue = data.getValue();
-			System.out.println(data);
+			//System.out.println(data);
 		}
 		xRange = (DataViewer.maxX - DataViewer.minX);
 		if(xRange == 0) xRange = 1.0;
