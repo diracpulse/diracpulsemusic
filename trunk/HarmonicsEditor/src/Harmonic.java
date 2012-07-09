@@ -13,7 +13,7 @@ public class Harmonic {
 	private double maxLogAmplitude = 0.0;
 	//
 	private long harmonicID;
-	
+
 	public Harmonic(long id) {
 		this.harmonicID = id;
 	}

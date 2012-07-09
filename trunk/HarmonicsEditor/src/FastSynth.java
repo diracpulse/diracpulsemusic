@@ -31,7 +31,7 @@ public class FastSynth {
 	}
 	
 	public static void synthHarmonicLinear(Harmonic harmonic) {
-		ArrayList<FDData> dataArray = new ArrayList<FDData>(harmonic.getAllDataInterpolated());
+		ArrayList<FDData> dataArray = new ArrayList<FDData>(harmonic.getAllData());
 		int maxArrayIndex = dataArray.size();
 		double currentPhase = 0.0;
 		for(int arrayIndex = 0; arrayIndex < maxArrayIndex - 1; arrayIndex++) {
@@ -56,7 +56,7 @@ public class FastSynth {
 	}
 	
 	public static void synthHarmonicLinearCubicSpline(Harmonic harmonic) {
-		ArrayList<FDData> dataArray = new ArrayList<FDData>(harmonic.getAllDataInterpolated());
+		ArrayList<FDData> dataArray = new ArrayList<FDData>(harmonic.getAllData());
 		if(dataArray.size() < 2) return;
 		double[] times = new double[dataArray.size()];
 		double[] amps = new double[dataArray.size()];
