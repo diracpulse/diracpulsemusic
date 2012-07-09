@@ -7,7 +7,7 @@ public class Filter {
 	final static double onePI = 3.1415926535897932384626433832795;
 	final static double halfPI = 1.5707963267948966192313216916398;
 	final static double samplingRate = 44100.0;
-	final static double maxBinStep = 2.0;
+	final static double maxBinStep = 0.25;
 
 	final static double alpha = 10.0;
 	
@@ -101,6 +101,45 @@ public class Filter {
 		    //noise[index] = y1;
 		    //noise[index + 1] = y2;
 			noise[index] = Math.random();
+			currentPhase += deltaPhase;
+		}
+		for(int returnIndex = 0; returnIndex < duration; returnIndex++) {
+			double value = 0.0;
+			for(int filterIndex = 0; filterIndex < windowLength; filterIndex++) {
+				value += noise[returnIndex + filterIndex] * bpFilter[filterIndex];
+			}
+			returnVal[returnIndex] = value;
+		}
+		double maxAmplitude = 0.0;
+		for(int returnIndex = 0; returnIndex < duration; returnIndex++) {
+			if(returnVal[returnIndex] > maxAmplitude) maxAmplitude = returnVal[returnIndex];
+		}
+		for(int returnIndex = 0; returnIndex < duration; returnIndex++) {
+			returnVal[returnIndex] *= amplitude / maxAmplitude;
+		}
+		return returnVal;	
+	}
+	
+	public static double[] getFilteredSawtooth(int duration, int note, double amplitude) {
+		double[] returnVal = new double[duration];
+		double freq = Math.pow(2.0, (double) note / (double) FDData.noteBase);
+		double cyclesPerWindow = maxBinStep / (Math.pow(2.0, 1.0 / FDData.noteBase) - 1.0);
+		double samplesPerCycle = samplingRate / freq;
+		int windowLength = (int) Math.round(cyclesPerWindow * samplesPerCycle);
+		double[] noise = new double[duration + windowLength + 1];
+		filter = new double[windowLength * 2];
+		BPFilter(freq, windowLength, alpha);
+		double[] bpFilter = filter;
+		double currentPhase = 0.0;
+		double deltaPhase = (freq / SynthTools.sampleRate) * SynthTools.twoPI;
+		for(int index = 0; index < duration + windowLength; index += 1) {
+			//double x1 = Math.random();
+			//double x2 = Math.random();
+		    //double y1 = Math.sqrt(-2 * Math.log(x1)) * Math.cos(2 * Math.PI * x2 );
+		    //double y2 = Math.sqrt(-2 * Math.log(x1)) * Math.sin(2 * Math.PI * x2 );
+		    //noise[index] = y1;
+		    //noise[index + 1] = y2;
+			noise[index] = Math.random() - 0.5;
 			currentPhase += deltaPhase;
 		}
 		for(int returnIndex = 0; returnIndex < duration; returnIndex++) {

@@ -300,6 +300,21 @@ public class HarmonicsActionHandler extends JPanel {
 		}
 	}
 	
+	public class ConsonanceTestAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public ConsonanceTestAction() {
+			super("Consonance Test");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Consonance Test");
+			Loop.synthConsonantChord(parent);
+		}
+	}
+	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -333,7 +348,10 @@ public class HarmonicsActionHandler extends JPanel {
         instrumentMenu.add(new LoadHighFreqAction());
         instrumentMenu.add(new LoadBassSynthAction());
         instrumentMenu.add(new LoadSnareAction());
-        menuBar.add(instrumentMenu);       
+        menuBar.add(instrumentMenu);
+        JMenu testMenu = new JMenu("Test");
+        testMenu.add(new ConsonanceTestAction());
+        menuBar.add(testMenu);
         return menuBar;
 	}
 

@@ -251,7 +251,7 @@ public class HarmonicsEditor extends JFrame {
 	public static String randomLoop(HarmonicsEditor parent) {
 		clearCurrentData();
 		SoftSynth.initLoop();
-		int centerNote = frequencyInHzToNote(350.0);
+		int centerNote = frequencyInHzToNote(256.0);
 		int currentTime = 0; 
 		int[] beatDurations = new int[] {100, 100, 100, 100};
 		int beat = 0;
@@ -259,7 +259,7 @@ public class HarmonicsEditor extends JFrame {
 		int[] notes = new int[4];
 		notes[0] = centerNote + randomGenerator.nextInt(26) - 13;
 		for(int index = 1; index < notes.length; index++) {
-			notes[index] = notes[index - 1] + randomGenerator.nextInt(7) + 6;
+			notes[index] = notes[index - 1] + randomGenerator.nextInt(6) + 7;
 		}
 		double[] chords;
 		double[] chords2 = new double[2];
@@ -296,9 +296,9 @@ public class HarmonicsEditor extends JFrame {
 					continue;
 				}
 				if(chord < 6) {
-					notes[index] = notes[index - 1] + randomGenerator.nextInt(3) + 6;
+					notes[index] = notes[index - 1] + randomGenerator.nextInt(3) + 7;
 				}
-				notes[index] = notes[index - 1] + randomGenerator.nextInt(7) + 6;
+				notes[index] = notes[index - 1] + randomGenerator.nextInt(6) + 7;
 			}
 		}
 		SoftSynth.addDataToHarmonicsEditor();

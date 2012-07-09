@@ -114,7 +114,7 @@ public class Loop implements ActionListener {
 	public static void continuousRandomChord(HarmonicsEditor parent) {
 		double minBaseNote = Math.log(256.0) / Math.log(2.0) * FDData.noteBase;
 		double maxBaseNote = Math.log(440.0) / Math.log(2.0) * FDData.noteBase;
-		double minChord = Math.log(8.0 / 7.0) / Math.log(2.0) * FDData.noteBase;
+		double minChord = Math.log(5.0 / 4.0) / Math.log(2.0) * FDData.noteBase;
 		double maxChord = Math.log(4.5 / 3.0) / Math.log(2.0) * FDData.noteBase;
 		boolean repeat = true;
 		while(repeat) {
@@ -141,9 +141,24 @@ public class Loop implements ActionListener {
 		int duration = 100;
 		double[] chord = {chord1, chord2};
 		SoftSynth.addBeat(0, baseNote, chord, duration, false);
-		SoftSynth.addBeat(100, baseNote, chord, duration, false);
-		SoftSynth.addBeat(200, baseNote, chord, duration, false);
-		SoftSynth.addBeat(300, baseNote, chord, duration, false);
+		SoftSynth.addBeat(100, baseNote + 8, chord, duration, false);
+		SoftSynth.addBeat(200, baseNote + 16, chord, duration, false);
+		SoftSynth.addBeat(300, baseNote + 24, chord, duration, false);
+	}
+	
+	public static void synthConsonantChord(HarmonicsEditor parent) {
+		HarmonicsEditor.clearCurrentData();
+		SoftSynth.initLoop();
+		int duration = 100;
+		double baseNote = 8 * FDData.noteBase;
+		double[] chord = {(4.0 / 3.0), (5.0 / 4.0), (6.0 / 5.0)};
+		SoftSynth.addBeat(0, baseNote, chord, duration, false);
+		SoftSynth.addBeat(100, baseNote + 8, chord, duration, false);
+		SoftSynth.addBeat(200, baseNote + 16, chord, duration, false);
+		SoftSynth.addBeat(300, baseNote + 24, chord, duration, false);
+		SoftSynth.addDataToHarmonicsEditor();
+		HarmonicsEditor.refreshView();
+		HarmonicsEditor.playSelectedDataInCurrentWindow(parent);
 	}
 
 	public static Integer getRating(HarmonicsEditor parent, String loopDescriptor) {
