@@ -253,58 +253,36 @@ public class HarmonicsEditor extends JFrame {
 		SoftSynth.initLoop();
 		int centerNote = frequencyInHzToNote(256.0);
 		int currentTime = 0; 
-		int[] beatDurations = new int[] {100, 100, 100, 100};
+		int[] beatDurations = new int[] {100, 100, 100, 100, 100, 100, 100, 100};
 		int beat = 0;
-		boolean useHighFreq = false;
-		int[] notes = new int[4];
-		notes[0] = centerNote + randomGenerator.nextInt(26) - 13;
-		for(int index = 1; index < notes.length; index++) {
-			notes[index] = notes[index - 1] + randomGenerator.nextInt(6) + 7;
-		}
-		double[] chords;
-		double[] chords2 = new double[2];
-		double[] chords3 = new double[3];
+		int note = centerNote + randomGenerator.nextInt(26) - 13;
 		for(int duration: beatDurations) {
-			for(int index = 1; index < 2; index++) {
-				chords2[index - 1] = notes[index] - notes[index - 1];
-				chords3[index - 1] = notes[index] - notes[index - 1];
-			}
-			chords3[2] = notes[3] - notes[2];
-			if(notes[2] - notes[1] > 25) {
-				notes[2] = 25 - randomGenerator.nextInt(3);
-				chords2[1] = notes[2] - notes[1];
-			}
-			if(chords3[2] > 31 - 6) {
-				chords = chords2;
-			} else {
-				chords = chords3;
-			}
-			useHighFreq = false;
+			boolean useHighFreq = false;
 			if(beat % 2 == 1) useHighFreq = true;
-			SoftSynth.addBeat(currentTime, notes[0], chords, duration, useHighFreq);
+			int numChords = 2; // randomGenerator.nextInt(2) + 1;
+			if(numChords == 0) {
+				SoftSynth.addBeat(currentTime, note, null, duration, useHighFreq);
+			}
+			if(numChords == 1) {
+				double chord1 = randomGenerator.nextInt(18) + 7;
+				double[] finalChords = {chord1};
+				SoftSynth.addBeat(currentTime, note, finalChords, duration, useHighFreq);
+			}
+			if(numChords == 2) {
+				double chord1 = randomGenerator.nextInt(7) + 7;
+				double chord2 = randomGenerator.nextInt(5) + 7;
+				double[] finalChords = {chord1, chord2};
+				SoftSynth.addBeat(currentTime, note, finalChords, duration, useHighFreq);
+			}
 			currentTime += duration;
 			beat++;
-			if(randomGenerator.nextBoolean()) {
-				notes[0] += randomGenerator.nextInt(7) + 3;
-			} else {
-				notes[0] -= randomGenerator.nextInt(7) + 3;
-			}
-			for(int index = 1; index < notes.length; index++) {
-				int chord = notes[index] - notes[index - 1];
-				if(chord > 13) {
-					notes[index] = notes[index - 1] + randomGenerator.nextInt(3) + 10;
-					continue;
-				}
-				if(chord < 6) {
-					notes[index] = notes[index - 1] + randomGenerator.nextInt(3) + 7;
-				}
-				notes[index] = notes[index - 1] + randomGenerator.nextInt(6) + 7;
-			}
+			note += randomGenerator.nextInt(20) - 10;
 		}
 		SoftSynth.addDataToHarmonicsEditor();
 		playSelectedDataInCurrentWindow(parent);
 		return "";
 	}
+	
 
 	public static int frequencyInHzToNote(double freqInHz) {
 		return (int) Math.round(Math.log(freqInHz)/Math.log(2.0) * (double) FDData.noteBase);
