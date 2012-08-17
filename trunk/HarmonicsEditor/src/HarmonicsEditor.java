@@ -261,18 +261,18 @@ public class HarmonicsEditor extends JFrame {
 			if(beat % 2 == 1) useHighFreq = true;
 			int numChords = 2; // randomGenerator.nextInt(2) + 1;
 			if(numChords == 0) {
-				SoftSynth.addBeat(currentTime, note, null, duration, useHighFreq);
+				SoftSynth.addBeat(note, null, duration);
 			}
 			if(numChords == 1) {
-				double chord1 = randomGenerator.nextInt(18) + 7;
-				double[] finalChords = {chord1};
-				SoftSynth.addBeat(currentTime, note, finalChords, duration, useHighFreq);
+				int chord1 = randomGenerator.nextInt(18) + 7;
+				int[] finalChords = {chord1};
+				SoftSynth.addBeat(note, finalChords, duration);
 			}
 			if(numChords == 2) {
-				double chord1 = randomGenerator.nextInt(7) + 7;
-				double chord2 = randomGenerator.nextInt(5) + 7;
-				double[] finalChords = {chord1, chord2};
-				SoftSynth.addBeat(currentTime, note, finalChords, duration, useHighFreq);
+				int chord1 = randomGenerator.nextInt(7) + 7;
+				int chord2 = randomGenerator.nextInt(5) + 7;
+				int[] finalChords = {chord1, chord2};
+				SoftSynth.addBeat(note, finalChords, duration);
 			}
 			currentTime += duration;
 			beat++;

@@ -150,81 +150,6 @@ public class HarmonicsActionHandler extends JPanel {
 		}
 	}
 	
-	public class RandomChordAction extends AbstractAction {
-		
-		private static final long serialVersionUID = 1L;
-
-		public RandomChordAction() {
-			super("Random Chord");
-		}
- 
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Random Chord");
-			Loop.continuousRandomChord(parent);
-		}
-	}
-	
-	public class NonRandomDoubletAction extends AbstractAction {
-		
-		private static final long serialVersionUID = 1L;
-
-		public NonRandomDoubletAction() {
-			super("Nonrandom Doublet");
-		}
- 
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Nonrandom Doublet");
-			Loop.nonRandomDoublet(parent);
-		}
-	}
-	
-	public class RandomDoubletAction extends AbstractAction {
-		
-		private static final long serialVersionUID = 1L;
-
-		public RandomDoubletAction() {
-			super("Random Doublet");
-		}
- 
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Random Doublet");
-			Loop.randomDoublet(parent);
-		}
-	}
-	
-	public class RandomTripletAction extends AbstractAction {
-		
-		private static final long serialVersionUID = 1L;
-
-		public RandomTripletAction() {
-			super("Random Triplet");
-		}
- 
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Random Triplet");
-			Loop.randomTriplet(parent);
-		}
-	}
-	
-	public class RandomQuadAction extends AbstractAction {
-		
-		private static final long serialVersionUID = 1L;
-
-		public RandomQuadAction() {
-			super("Random Quad");
-		}
- 
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Random Quad");
-			Loop.synthRandomLoopRepeat(parent);
-		}
-	}
-	
 	public class LoadInstrumentAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
@@ -299,22 +224,7 @@ public class HarmonicsActionHandler extends JPanel {
 			parent.loadSnare();
 		}
 	}
-	
-	public class ConsonanceTestAction extends AbstractAction {
-		
-		private static final long serialVersionUID = 1L;
 
-		public ConsonanceTestAction() {
-			super("Consonance Test");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Consonance Test");
-			Loop.synthConsonantChord(parent);
-		}
-	}
-	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -336,11 +246,6 @@ public class HarmonicsActionHandler extends JPanel {
         menuBar.add(harmonicsMenu);
         JMenu loopMenu = new JMenu("Loop");
         loopMenu.add(new RandomLoopAction());
-        loopMenu.add(new RandomChordAction());
-        loopMenu.add(new RandomTripletAction());
-        loopMenu.add(new NonRandomDoubletAction());
-        loopMenu.add(new RandomDoubletAction());
-        loopMenu.add(new RandomQuadAction());
         menuBar.add(loopMenu);
         JMenu instrumentMenu = new JMenu("Instrument");
         instrumentMenu.add(new LoadInstrumentAction());
@@ -350,7 +255,6 @@ public class HarmonicsActionHandler extends JPanel {
         instrumentMenu.add(new LoadSnareAction());
         menuBar.add(instrumentMenu);
         JMenu testMenu = new JMenu("Test");
-        testMenu.add(new ConsonanceTestAction());
         menuBar.add(testMenu);
         return menuBar;
 	}

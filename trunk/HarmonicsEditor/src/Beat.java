@@ -2,22 +2,22 @@
 public class Beat {
 	
 	int baseNote;
-	double[] chord;
+	int[] chords;
 	int duration;
 	
-	public Beat(int baseNote, double[] chord, int duration) {
+	public Beat(int baseNote, int[] chords, int duration) {
 		this.baseNote = baseNote;
-		this.chord = new double[chord.length];
-		for(int index = 0; index < chord.length; index++) this.chord[index] = chord[index];
+		this.chords = new int[chords.length];
+		for(int index = 0; index < chords.length; index++) this.chords[index] = chords[index];
 		this.duration = duration;
 	}
 	
-	public double getBaseNote() {
+	public int getBaseNote() {
 		return baseNote;
 	}
 	
-	public double[] getChord() {
-		return chord;
+	public int[] getChords() {
+		return chords;
 	}
 	
 	public int getDuration() {
@@ -27,7 +27,7 @@ public class Beat {
 	public String toString() {
 		StringBuffer returnVal = new StringBuffer();
 		returnVal.append(baseNote);
-		for(double chordVal: chord) returnVal.append(":" + chordVal);
+		for(double chordVal: chords) returnVal.append(":" + chordVal);
 		returnVal.append(":" + duration);
 		return returnVal.toString();
 	}
