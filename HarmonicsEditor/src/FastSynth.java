@@ -22,12 +22,13 @@ public class FastSynth {
 	public static void initSharedPCMData(ArrayList<Harmonic> harmonics) {
 		double maxEndTime = 0;
 		for(Harmonic harmonic: harmonics) {
-			double harmonicEndTime = Math.ceil(harmonic.getEndTime());
+			double harmonicEndTime = Math.ceil(harmonic.getEnd().getTime());
 			if(harmonicEndTime > maxEndTime) maxEndTime = harmonicEndTime;
 		}
 		int numSamples = (int) Math.ceil(maxEndTime * timeToSample);
 		sharedPCMData = new double[numSamples];
 		for(int index = 0; index < numSamples; index++) sharedPCMData[index] = 0.0;
+		System.out.println("FastSynth.initSharedPCMData() numSamples = " + numSamples);
 	}
 	
 	public static void synthHarmonicLinear(Harmonic harmonic) {
@@ -46,6 +47,10 @@ public class FastSynth {
 			double ampSlope = (upperAmplitude - lowerAmplitude) / (upperTime - lowerTime);
 			double deltaPhaseSlope = (upperDeltaPhase - lowerDeltaPhase) / (upperTime - lowerTime);
 			for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
+				if(timeIndex >= sharedPCMData.length) {
+					System.out.println("FastSynth.synthHarmonicLinear() timeIndex = " + timeIndex);
+					continue;
+				}
 				double amplitude = lowerAmplitude + (timeIndex - lowerTime) * ampSlope;
 				double deltaPhase = lowerDeltaPhase + (timeIndex - lowerTime) * deltaPhaseSlope;
 				sharedPCMData[timeIndex] += Math.sin(currentPhase) * amplitude;
