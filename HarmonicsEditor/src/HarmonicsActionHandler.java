@@ -87,34 +87,34 @@ public class HarmonicsActionHandler extends JPanel {
 		}
 	}
 	
-	public class ViewAmplitudesAction extends AbstractAction {
+	public class ViewPixelsAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
 
-		public ViewAmplitudesAction() {
-			super("Amplitudes");
+		public ViewPixelsAction() {
+			super("Pixels");
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("View Amplitudes");
-			HarmonicsView.dataView = HarmonicsView.DataView.AMPLITUDES;
+			HarmonicsView.dataView = HarmonicsView.DataView.PIXELS;
 			HarmonicsEditor.refreshView();
 		}
 	}
 	
-	public class ViewHarmonicsAction extends AbstractAction {
+	public class ViewDigitsAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
 
-		public ViewHarmonicsAction() {
-			super("Harmonics");
+		public ViewDigitsAction() {
+			super("Digits");
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("View Harmonics");
-			HarmonicsView.dataView = HarmonicsView.DataView.HARMONICS;
+			HarmonicsView.dataView = HarmonicsView.DataView.DIGITS;
 			HarmonicsEditor.refreshView();
 		}
 	}
@@ -238,8 +238,8 @@ public class HarmonicsActionHandler extends JPanel {
         menuBar.add(playMenu);        
         playMenu.add(new JMenuItem(new PlayAllAction()));
         JMenu viewMenu = new JMenu("View");
-        viewMenu.add(new ViewAmplitudesAction());
-        viewMenu.add(new ViewHarmonicsAction());
+        viewMenu.add(new ViewPixelsAction());
+        viewMenu.add(new ViewDigitsAction());
         menuBar.add(viewMenu);
         JMenu harmonicsMenu = new JMenu("Harmonics");
         harmonicsMenu.add(new FlattenAllHarmonicsAction());

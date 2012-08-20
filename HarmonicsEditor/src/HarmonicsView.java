@@ -13,11 +13,11 @@ public class HarmonicsView extends JComponent {
 	 */
 
 	public enum DataView {
-		HARMONICS,
-		AMPLITUDES;
+		PIXELS,
+		DIGITS;
 	}
 	
-	public static DataView dataView = DataView.AMPLITUDES;
+	public static DataView dataView = DataView.DIGITS;
 	
 	private static final long serialVersionUID = 2964004162144513754L;
 	
@@ -26,18 +26,29 @@ public class HarmonicsView extends JComponent {
 	private static boolean drawPlaying = false;
 	private static int offsetInMillis;
 	
-	//public static int timesPerPixel = 2;
-	public static int digits = 2;
-	public static int pixelsPerTime = HarmonicsEditor.xStep;
-	public static int pixelsPerNote = HarmonicsEditor.yStep * digits;
-
+	public static int getNumDigits() {
+		if(dataView == DataView.DIGITS) return 2;
+		return 1; // as pixels, must be one digit high for note display
+	}
+	
+	public static int getPixelsPerTime() {
+		if(dataView == DataView.DIGITS) return HarmonicsEditor.xStep;
+		return 1;
+	}
+	
+	public static int getPixelsPerNote() {
+		return HarmonicsEditor.yStep * getNumDigits();
+	}
+	
 	public void drawUpperTimes(Graphics g) {
+		int timeStep = 1;
+		if(dataView == DataView.PIXELS) timeStep = HarmonicsEditor.xStep;
 		int intDigits = 3;
 		int decimalStartY = intDigits * HarmonicsEditor.yStep;
 		int endTime = HarmonicsUtils.pixelXToTime(getWidth());	
 		Color white = new Color(0.0f, 0.0f, 0.0f);
 		Color black = new Color(1.0f, 1.0f, 1.0f);
-		for(int time = HarmonicsEditor.leftX; time <= endTime; time++) {
+		for(int time = HarmonicsEditor.leftX; time <= endTime; time += timeStep) {
 			if(time > HarmonicsEditor.maxTime) return;
 			if(!HarmonicsUtils.timeToDrawSegment(time)) continue;
 			int screenX = HarmonicsUtils.timeToPixelX(time);
@@ -104,8 +115,13 @@ public class HarmonicsView extends JComponent {
 				}
 				//g.setColor(b);
 				//g.fillRect(screenX, screenY, HarmonicsEditor.xStep, HarmonicsEditor.yStep);
-				HarmonicsUtils.DrawAmplitudeVertical(g, b, screenX, screenY, 2, logAmplitude);
-				
+				if(dataView == DataView.DIGITS) {
+					HarmonicsUtils.DrawAmplitudeVertical(g, b, screenX, screenY, 2, logAmplitude);
+				}
+				if(dataView == DataView.PIXELS) {
+					g.setColor(b);
+					g.fillRect(screenX, screenY, 1, HarmonicsEditor.yStep);
+				}
 			}
 		}
 	}
@@ -146,14 +162,14 @@ public class HarmonicsView extends JComponent {
 	}
 	
 	public int getTimeAxisWidthInMillis() {
-   		double millisPerPixel = (double) FDData.timeStepInMillis / (double) pixelsPerTime;
+   		double millisPerPixel = (double) FDData.timeStepInMillis / (double) getPixelsPerTime();
    		return (int) Math.round(getWidth() * millisPerPixel);
 	}
 	
     protected void paintComponent(Graphics g) {
     	//System.out.println("Paint Component");
     	if(drawPlaying) {
-    		double millisPerPixel = (double) FDData.timeStepInMillis / pixelsPerTime;
+    		double millisPerPixel = (double) FDData.timeStepInMillis / getPixelsPerTime();
     		int startX = (int) Math.round((double) HarmonicsView.offsetInMillis / millisPerPixel + HarmonicsEditor.leftOffset);
     		g.drawImage(bi, 0, 0, null);
        		g.setColor(new Color(0.5f, 0.5f, 0.5f, 0.75f));
