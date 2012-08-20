@@ -3,8 +3,6 @@ import java.util.*;
 
 public class HarmonicsUtils {
 	
-	public static int pixelsPerTime = HarmonicsView.pixelsPerTime;
-	public static int pixelsPerNote = HarmonicsView.pixelsPerNote;
 	public static TreeSet<Integer> currentNotes = null;
 	public static TreeMap<Integer, Integer> noteToPixelYMap = null;
 	
@@ -49,7 +47,7 @@ public class HarmonicsUtils {
 		if(note > maxNote || note < HarmonicsEditor.minNote) return -1;
 		for(int loopNote = maxNote; loopNote >= HarmonicsEditor.minNote; loopNote--) {
 			if(loopNote == note) return pixelY;
-			if(currentNotes.contains(loopNote)) pixelY += HarmonicsView.pixelsPerNote;
+			if(currentNotes.contains(loopNote)) pixelY += HarmonicsView.getPixelsPerNote();
 		}
 		return -1;
 	}
@@ -89,12 +87,12 @@ public class HarmonicsUtils {
 	}
 	
 	public static int timeToPixelX(int time) {
-		return (time - HarmonicsEditor.leftX) * pixelsPerTime + HarmonicsEditor.leftOffset;
+		return (time - HarmonicsEditor.leftX) * HarmonicsView.getPixelsPerTime() + HarmonicsEditor.leftOffset;
 	}
 		
 	public static int pixelXToTime(int pixelX) {
 		pixelX -= HarmonicsEditor.leftOffset;
-		return (pixelX / pixelsPerTime) + HarmonicsEditor.leftX;
+		return (pixelX / HarmonicsView.getPixelsPerTime()) + HarmonicsEditor.leftX;
 	}
 	
 	public static void DrawAmplitudeVertical(Graphics g, Color b, int screenX, int screenY, int numDigits, double value) {
@@ -152,9 +150,9 @@ public class HarmonicsUtils {
 	//This takes two vertical lines, digitVal is above fraction val 
 	public static void DrawSegmentData(Graphics g, Color b, int screenX, int screenY, int digitVal, int fractionVal) {
 		Color black = new Color(0.0f, 0.0f, 0.0f);
-		int lowerScreenY = screenY + pixelsPerNote / 2;			
+		int lowerScreenY = screenY + HarmonicsView.getPixelsPerNote() / 2;			
 		g.setColor(b);
-		g.fillRect(screenX, screenY, HarmonicsEditor.xStep, pixelsPerNote);
+		g.fillRect(screenX, screenY, HarmonicsEditor.xStep, HarmonicsView.getPixelsPerNote());
 		SevenSegmentSmall(g, black, b, screenX, screenY, digitVal);
 		SevenSegmentSmall(g, black, b, screenX, lowerScreenY, fractionVal);
 	}
