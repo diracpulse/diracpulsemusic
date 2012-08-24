@@ -28,6 +28,7 @@ public class HarmonicsController implements MouseListener, ActionListener {
 	public void mousePressed(MouseEvent e){
 	    int x = e.getX();
 	    int y = e.getY();
+	    HarmonicsEditor.handleBeatSelected(HarmonicsUtils.pixelXToBeat(x));
 	    if(x < HarmonicsEditor.leftOffset) {
 	    	HarmonicsEditor.controlPanel.handleMouseClick(x, y);
 	    	return;

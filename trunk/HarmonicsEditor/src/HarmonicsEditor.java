@@ -190,92 +190,43 @@ public class HarmonicsEditor extends JFrame {
 		return 0.0;
 	}
 	
-	public static int getNote(int index) {
-		int sign = 1;
-		if(index < 0) {
-			sign = -1;
-			index *= -1;
-		}
-		switch(index) {
-		case 0:
-			return 0;
-		case 1:
-			return 1 * sign;
-		case 2:
-			return 2 * sign;
-		case 3:
-			return 3 * sign;
-		case 4:
-			return 4 * sign;
-		case 5:
-			return 5 * sign;
-		case 6:
-			return 6 * sign;
-		case 7:
-			return 7 * sign;
-		case 8:
-			return 8 * sign;
-		case 9:
-			return 10 * sign;
-		case 10:
-			return 13 * sign;
-	}
-	return 18;
-	}
-	
-	public static int[] getRandomConsonantChord() {
-		int randIndex = randomGenerator.nextInt(6);
-		switch(randIndex) {
-			case 0:
-				return new int[] {13, 8};
-			case 1:
-				return new int[] {8, 13};
-			case 2:
-				return new int[] {8, 10};
-			case 3:
-				return new int[] {10, 8};
-			case 4:
-				return new int[] {13, 10};
-			case 5:
-				return new int[] {10, 13};
-		}
-		return null;
-	}
-	
+
 	public static void repeatRandomLoop(HarmonicsEditor parent) {
 		String loopDescriptor = randomLoop(parent);
 		System.out.println(loopDescriptor);
 	}
 	
-
+	public static void handleBeatSelected(int beat) {
+		System.out.println("Beat Selected = " + beat);
+		if(beat == -1) return; // out of bounds or beatArray==null
+		SoftSynth.beatArray.get(beat).modifyBaseNote = false;
+		SoftSynth.beatArray.get(beat).modifyChords = false;
+		SoftSynth.beatArray.get(beat).modifyDuration = false;
+		view.repaint();
+	}
+	
 	public static String randomLoop(HarmonicsEditor parent) {
 		clearCurrentData();
-		SoftSynth.initLoop();
+		int numBeats = 8;
+		int defaultDuration = 100;
+		SoftSynth.initLoop(numBeats, defaultDuration);
 		int centerNote = frequencyInHzToNote(256.0);
-		int currentTime = 0; 
-		int[] beatDurations = new int[] {100, 100, 100, 100, 100, 100, 100, 100};
-		int beat = 0;
 		int note = centerNote + randomGenerator.nextInt(26) - 13;
-		for(int duration: beatDurations) {
-			boolean useHighFreq = false;
-			if(beat % 2 == 1) useHighFreq = true;
-			int numChords = 2; // randomGenerator.nextInt(2) + 1;
-			if(numChords == 0) {
-				SoftSynth.addBeat(note, null, duration);
+		for(int beat = 0; beat < numBeats; beat++) {
+			if(!SoftSynth.beatArray.get(beat).modifyBaseNote) {
+				note = SoftSynth.beatArray.get(beat).getBaseNote();
 			}
-			if(numChords == 1) {
-				int chord1 = randomGenerator.nextInt(18) + 7;
-				int[] finalChords = {chord1};
-				SoftSynth.addBeat(note, finalChords, duration);
+			int chord1 = randomGenerator.nextInt(7) + 7;
+			int chord2 = randomGenerator.nextInt(5) + 7;
+			int[] finalChords = {chord1, chord2};
+			if(!SoftSynth.beatArray.get(beat).modifyChords) {
+				finalChords = SoftSynth.beatArray.get(beat).getChords();
 			}
-			if(numChords == 2) {
-				int chord1 = randomGenerator.nextInt(7) + 7;
-				int chord2 = randomGenerator.nextInt(5) + 7;
-				int[] finalChords = {chord1, chord2};
-				SoftSynth.addBeat(note, finalChords, duration);
-			}
-			currentTime += duration;
-			beat++;
+			int duration = defaultDuration + (int) Math.round(Math.random() * defaultDuration / 5);
+			if(!SoftSynth.beatArray.get(beat).modifyDuration) {
+				duration = SoftSynth.beatArray.get(beat).getDuration();
+			}			
+			SoftSynth.modifyBeat(beat, note, finalChords, duration);
 			note += randomGenerator.nextInt(20) - 10;
 		}
 		SoftSynth.addDataToHarmonicsEditor();
@@ -283,7 +234,6 @@ public class HarmonicsEditor extends JFrame {
 		return "";
 	}
 	
-
 	public static int frequencyInHzToNote(double freqInHz) {
 		return (int) Math.round(Math.log(freqInHz)/Math.log(2.0) * (double) FDData.noteBase);
 	}

@@ -30,6 +30,21 @@ public class HarmonicsUtils {
 		}
 	}
 	
+	// returns beat or -1 if not on a beat
+	public static int pixelXToBeat(int x) {
+		if(SoftSynth.beatArray == null) return - 1;
+		int beatStartTime = 0;
+		int beatIndex = 0;
+		for(Beat beat: SoftSynth.beatArray) {
+			int lowerX = timeToPixelX(beatStartTime);
+			int upperX = timeToPixelX(beatStartTime + beat.getDuration());
+			if((x > lowerX) && (x < upperX)) return beatIndex;
+			beatIndex++;
+			beatStartTime += beat.getDuration();
+		}
+		return -1;
+	}
+	
 	public static int noteToPixelY(int note) {
 		if(noteToPixelYMap == null) compileNoteToPixelY();
 		return noteToPixelY(note, true);

@@ -17,8 +17,17 @@ public class SoftSynth {
 	public static TreeMap<Integer, ArrayList<Harmonic>> beatStartTimeToHarmonics = null;
 	public static final double logAmplitudeLimit = 12.0;
 	
-	public static void initLoop() {
-		beatArray = new ArrayList<Beat>();
+	public static void clearLoop() {
+		beatArray = null;
+	}
+	
+	public static void initLoop(int numBeats, int duration) {
+		if(beatArray == null) {
+			beatArray = new ArrayList<Beat>();
+			for(int beat = 0; beat < numBeats; beat++) {
+				beatArray.add(new Beat(-1, null, duration));
+			}
+		}
 		beatStartTimeToHarmonics = new TreeMap<Integer, ArrayList<Harmonic>>();
 	}
 	
@@ -34,9 +43,10 @@ public class SoftSynth {
 		}
 	}
 	
-	public static void addBeat(int baseNote, int[] chords, int duration) {
-		if(beatArray == null) beatArray = new ArrayList<Beat>();
-		beatArray.add(new Beat(baseNote, chords, duration));
+	public static void modifyBeat(int beatIndex, int baseNote, int[] chords, int duration) {
+		beatArray.get(beatIndex).baseNote = baseNote;
+		beatArray.get(beatIndex).chords = chords;
+		beatArray.get(beatIndex).duration = duration;
 	}
 	
 	public static void synthAllBeats() {
