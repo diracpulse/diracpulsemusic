@@ -79,6 +79,68 @@ public class HarmonicsView extends JComponent {
 		}
 	}
 	
+	public void drawBeatInfo(Graphics g) {
+		if(SoftSynth.beatArray == null) return;
+		int fontHeight = g.getFontMetrics().getHeight();
+		int beatIndex = 0;
+		int currentTime = 0;
+		Color black = new Color(0.0f, 0.0f, 0.0f, 0.75f);
+		Color grey = new Color(1.0f, 1.0f, 1.0f, 0.75f);
+		for(Beat beat: SoftSynth.beatArray) {
+			int x = HarmonicsUtils.timeToPixelX(currentTime);
+			// START: draw base note info
+			Color b = black;
+			Color f = grey;
+			String currentLine = "BN: " + beat.getBaseNote();
+			int lineWidth = (int) Math.round(g.getFontMetrics().getStringBounds(currentLine, g).getWidth());
+			if(!beat.modifyBaseNote) {
+				b = grey;
+				f = black;
+			}
+			int y = HarmonicsEditor.upperOffset;
+			g.setColor(b);
+			g.fillRect(x, y, lineWidth, fontHeight);
+			g.setColor(f);
+			g.drawString(currentLine, x, y + fontHeight - 2);
+			// START: draw base note info
+			// START: draw chords info
+			b = black;
+			f = grey;
+			currentLine = "CH: ";
+			for(int chord: beat.getChords()) {
+				currentLine += " " + chord + ",";
+			}
+			lineWidth = (int) Math.round(g.getFontMetrics().getStringBounds(currentLine, g).getWidth());
+			if(!beat.modifyChords) {
+				b = grey;
+				f = black;
+			}
+			y = HarmonicsEditor.upperOffset + fontHeight * 1;
+			g.setColor(b);
+			g.fillRect(x, y, lineWidth, fontHeight);
+			g.setColor(f);
+			g.drawString(currentLine, x, y + fontHeight - 2);
+			// END: draw chords info
+			// START: draw duration info
+			b = black;
+			f = grey;
+			currentLine = "DUR: " + beat.getDuration();
+			lineWidth = (int) Math.round(g.getFontMetrics().getStringBounds(currentLine, g).getWidth());
+			if(!beat.modifyDuration) {
+				b = grey;
+				f = black;
+			}
+			y = HarmonicsEditor.upperOffset + fontHeight * 2;
+			g.setColor(b);
+			g.fillRect(x, y, lineWidth, fontHeight);
+			g.setColor(f);
+			g.drawString(currentLine, x, y + fontHeight - 2);
+			// END: draw duration info
+			beatIndex++;
+			currentTime += beat.getDuration();
+		}
+	}
+	
 	public void drawFileData(Graphics g) {
 		if(HarmonicsEditor.harmonicIDToHarmonic == null) return;
 		HarmonicsUtils.compileNoteToPixelY();
@@ -124,6 +186,7 @@ public class HarmonicsView extends JComponent {
 				}
 			}
 		}
+		drawBeatInfo(g);
 	}
 	
 	private Color getColor(double logAmplitude) {

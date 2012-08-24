@@ -5,10 +5,13 @@ public class Beat {
 	int[] chords;
 	int duration;
 	
+	boolean modifyBaseNote = true;
+	boolean modifyChords = true;
+	boolean modifyDuration = true;
+	
 	public Beat(int baseNote, int[] chords, int duration) {
 		this.baseNote = baseNote;
-		this.chords = new int[chords.length];
-		for(int index = 0; index < chords.length; index++) this.chords[index] = chords[index];
+		this.chords= chords;
 		this.duration = duration;
 	}
 	
@@ -23,7 +26,7 @@ public class Beat {
 	public int getDuration() {
 		return duration; 
 	}
-	
+
 	public String toString() {
 		StringBuffer returnVal = new StringBuffer();
 		returnVal.append(baseNote);
