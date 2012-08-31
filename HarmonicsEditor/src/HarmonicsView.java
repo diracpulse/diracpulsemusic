@@ -91,7 +91,7 @@ public class HarmonicsView extends JComponent {
 			// START: draw base note info
 			Color b = black;
 			Color f = grey;
-			String currentLine = "BN: " + beat.getBaseNote();
+			String currentLine = "B: " + beat.getBaseNote() % FDData.noteBase;
 			int lineWidth = (int) Math.round(g.getFontMetrics().getStringBounds(currentLine, g).getWidth());
 			if(!beat.modifyBaseNote) {
 				b = grey;
@@ -106,9 +106,9 @@ public class HarmonicsView extends JComponent {
 			// START: draw chords info
 			b = black;
 			f = grey;
-			currentLine = "CH: ";
+			currentLine = "C: ";
 			for(int chord: beat.getChords()) {
-				currentLine += " " + chord + ",";
+				currentLine += chord + " ";
 			}
 			lineWidth = (int) Math.round(g.getFontMetrics().getStringBounds(currentLine, g).getWidth());
 			if(!beat.modifyChords) {
@@ -124,7 +124,7 @@ public class HarmonicsView extends JComponent {
 			// START: draw duration info
 			b = black;
 			f = grey;
-			currentLine = "DUR: " + beat.getDuration();
+			currentLine = "D: " + beat.getDuration();
 			lineWidth = (int) Math.round(g.getFontMetrics().getStringBounds(currentLine, g).getWidth());
 			if(!beat.modifyDuration) {
 				b = grey;
