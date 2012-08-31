@@ -60,7 +60,7 @@ public class SoftSynth {
 	public static void synthBeat(int startTime, int baseNote, int[] chords, int duration, boolean useHighFreq) {
 		beatStartTimeToHarmonics.put(startTime, new ArrayList<Harmonic>());
 		int maxNote = (int) Math.round(Math.floor(HarmonicsEditor.frequencyInHzToNote(FDData.maxFrequencyInHz)) - 1.0);
-		int minNote = HarmonicsEditor.frequencyInHzToNote(40.0);
+		int minNote = HarmonicsEditor.frequencyInHzToNote(32.0);
 		int endTime = startTime + duration - 1;
 		int lowestNote = baseNote;
 		while(lowestNote >= minNote) lowestNote -= FDData.noteBase;
@@ -108,7 +108,7 @@ public class SoftSynth {
 		if(harmonicIDToBassSynthHarmonic != null) {
 			synthInstrumentEQ(startTime, endTime, lowestNote, null, harmonicIDToInstrumentHarmonic, 0.0);
 		} else {
-			//synthBassNoteWithOvertones(startTime, endTime, lowestNote, baseNote, 15.0, Harmonic.Waveform.SAWTOOTH);
+			// synthBassNoteWithOvertones(startTime, endTime, lowestNote, baseNote, 15.0);
 		}
 		// Synth Noise Sources
 		if(harmonicIDToKickDrumHarmonic != null) {
@@ -171,17 +171,20 @@ public class SoftSynth {
 			timeToNoteToEQ.put(normalTime, new TreeMap<Integer, Double>());
 			double currentLogAmp = -1.0;
 			for(int note: noteToHarmonic.keySet()) {
+				// use first value occuring in lowest note (may not be at time == 1)
 				if(currentLogAmp == -1.0) currentLogAmp = noteToHarmonic.get(note).getAllData().get(0).getLogAmplitude();
 				if(noteToHarmonic.get(note).getDataAtTime(normalTime) != null) {
 					currentLogAmp = noteToHarmonic.get(note).getDataAtTime(normalTime).getLogAmplitude();
 					timeToNoteToEQ.get(normalTime).put(note, currentLogAmp);
 				} else {
+					// use currentLogAmp from previous note
 					timeToNoteToEQ.get(normalTime).put(note, currentLogAmp);
 				}
 			}
 		}
 		ArrayList<Integer> notes = new ArrayList<Integer>(noteToHarmonic.keySet());
 		for(int time = 0; time < numTimes; time++) {
+			// fill in values for notes < min note in instrument data
 			if(minEQNote > FDData.getMinNote()) {
 				int startNote = FDData.getMinNote();
 				int endNote = minEQNote;
@@ -190,6 +193,7 @@ public class SoftSynth {
 					EQMatrix[time][note - FDData.getMinNote()] = logAmpVal; 
 				}
 			}
+			// fill in values for notes between min and max notes in instrument data
 			for(int noteIndex = 0; noteIndex < notes.size() - 1; noteIndex++) {
 				int startNote = notes.get(noteIndex);
 				int endNote = notes.get(noteIndex + 1);
@@ -200,14 +204,17 @@ public class SoftSynth {
 					EQMatrix[time][note - FDData.getMinNote()] = (note - startNote) * slope + startLogAmp; 
 				}
 			}
+			// fill in values for notes > max note in instrument data
 			if(maxEQNote < FDData.getMaxNote()) {
 				int startNote = maxEQNote;
 				int endNote = FDData.getMaxNote();
+				double numOctaves = (double) (endNote - startNote) / FDData.noteBase;
 				double startLogAmp = timeToNoteToEQ.get(time).get(startNote);
-				double endLogAmp = 0.0;
+				double endLogAmp = startLogAmp / 2.0;
+				if(endLogAmp < 0.0) endLogAmp = 0.0;
 				double slope = (endLogAmp - startLogAmp) / (endNote - startNote);
 				for(int note = startNote; note < endNote; note++) {
-					EQMatrix[time][note - FDData.getMinNote()] = 0.0; // (note - startNote) * slope + startLogAmp; 
+					EQMatrix[time][note - FDData.getMinNote()] = (note - startNote) * slope + startLogAmp; 
 				}
 			}
 		}
@@ -232,8 +239,8 @@ public class SoftSynth {
 				for(int time = 0; time < numTimes; time++) {
 					try {
 						double logAmpVal = EQMatrix[time][(int) Math.round(note) - FDData.getMinNote()];
-						if(currentNoteIndex == 1) logAmpVal -= 2.0;
-						if(currentNoteIndex == 2) logAmpVal -= 1.0;
+						//if(currentNoteIndex == 1) logAmpVal -= 2.0;
+						//if(currentNoteIndex == 2) logAmpVal -= 1.0;
 						if(chords != null) {
 							//logAmpVal -= taperVal;
 						}

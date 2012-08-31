@@ -199,9 +199,9 @@ public class HarmonicsEditor extends JFrame {
 	public static void handleBeatSelected(int beat) {
 		System.out.println("Beat Selected = " + beat);
 		if(beat == -1) return; // out of bounds or beatArray==null
-		SoftSynth.beatArray.get(beat).modifyBaseNote = false;
-		SoftSynth.beatArray.get(beat).modifyChords = false;
-		SoftSynth.beatArray.get(beat).modifyDuration = false;
+		SoftSynth.beatArray.get(beat).modifyBaseNote = !SoftSynth.beatArray.get(beat).modifyBaseNote;
+		SoftSynth.beatArray.get(beat).modifyChords = !SoftSynth.beatArray.get(beat).modifyChords;
+		SoftSynth.beatArray.get(beat).modifyDuration = !SoftSynth.beatArray.get(beat).modifyDuration;
 		view.repaint();
 	}
 	
@@ -210,8 +210,10 @@ public class HarmonicsEditor extends JFrame {
 		int numBeats = 8;
 		int defaultDuration = 100;
 		SoftSynth.initLoop(numBeats, defaultDuration);
-		int centerNote = frequencyInHzToNote(256.0);
-		int note = centerNote + randomGenerator.nextInt(26) - 13;
+		int minNote = frequencyInHzToNote(256.0);
+		int centerNote = minNote + FDData.noteBase / 2;
+		int maxNote = minNote + FDData.noteBase - 1;
+		int note = centerNote;
 		for(int beat = 0; beat < numBeats; beat++) {
 			if(!SoftSynth.beatArray.get(beat).modifyBaseNote) {
 				note = SoftSynth.beatArray.get(beat).getBaseNote();
@@ -222,12 +224,18 @@ public class HarmonicsEditor extends JFrame {
 			if(!SoftSynth.beatArray.get(beat).modifyChords) {
 				finalChords = SoftSynth.beatArray.get(beat).getChords();
 			}
-			int duration = defaultDuration + (int) Math.round(Math.random() * defaultDuration / 5);
+			int duration = defaultDuration; // + (int) Math.round(Math.random() * defaultDuration / 5);
 			if(!SoftSynth.beatArray.get(beat).modifyDuration) {
 				duration = SoftSynth.beatArray.get(beat).getDuration();
 			}			
 			SoftSynth.modifyBeat(beat, note, finalChords, duration);
-			note += randomGenerator.nextInt(20) - 10;
+			int deltaNoteFactor = randomGenerator.nextInt(7) - 3;
+			int deltaNote = deltaNoteFactor * 3;
+			if(deltaNote > 0) deltaNote += randomGenerator.nextInt(3);
+			if(deltaNote < 0) deltaNote -= randomGenerator.nextInt(3);
+			note += deltaNote;
+			if(note > maxNote) note -= deltaNote * 2;
+			if(note < minNote) note -= deltaNote * 2;
 		}
 		SoftSynth.addDataToHarmonicsEditor();
 		playSelectedDataInCurrentWindow(parent);
