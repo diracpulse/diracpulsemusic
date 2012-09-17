@@ -256,127 +256,7 @@ public class SoftSynth {
 			currentNoteIndex++;
 		}
 	}
-	
-	public static void synthHarmonicWithOvertones(int startTime, int endTime, int note, int maxNote, Harmonic harmonic, double gain) {
-		int harmonicNote = harmonic.getAverageNote();
-		int deltaNote = note - harmonic.getAverageNote();
-		while((harmonicNote + deltaNote) < maxNote) {
-			long harmonicID = HarmonicsEditor.getRandomID();
-			ArrayList<FDData> harmonicData = harmonic.getScaledHarmonic(startTime, endTime, deltaNote, harmonicID);
-			Harmonic newHarmonic = new Harmonic(harmonicID);
-			for(FDData data: harmonicData) {
-				data.setLogAmplitude(data.getLogAmplitude() + gain);
-				newHarmonic.addData(data);
-			}
-			gain -= 2.0;
-			beatStartTimeToHarmonics.get(startTime).add(newHarmonic);
-			deltaNote += FDData.noteBase;
-		}
-	}
-	
-	public static void fitHarmonicsToChords(int startTime, int lowestNote, int[] chords, boolean chordsOnly) { 
-		ArrayList<Harmonic> harmonics = beatStartTimeToHarmonics.get(startTime);
-		TreeMap<Integer, Harmonic> noteToHarmonic = new TreeMap<Integer, Harmonic>();
-		TreeMap<Integer, Harmonic> noteToHarmonicChordsOnly = new TreeMap<Integer, Harmonic>();
-		for(Harmonic harmonic: harmonics) {
-			int note = harmonic.getAverageNote();
-			if(noteToHarmonic.containsKey(note)) {
-				//System.out.println("SoftSynth.fitHarmonicsToChords: duplicate note");
-				noteToHarmonic.put(note, mergeHarmonics(noteToHarmonic.get(note), harmonic));
-			}
-			noteToHarmonic.put(note, harmonic);
-		}
-		for(int baseNote = lowestNote; baseNote < FDData.getMaxNote(); baseNote += FDData.noteBase) {
-			int currentChord = 0;
-			int chordIndex = 0;
-			while(true) {
-				int currentNote = baseNote + currentChord;
-				if(currentNote > FDData.getMaxNote()) break;
-				ArrayList<Harmonic> harmonicsToMerge = new ArrayList<Harmonic>();
-				for(int mergeNote = currentNote - 3; mergeNote <= currentNote + 3; mergeNote++) {
-					if(noteToHarmonic.containsKey(mergeNote)) {
-						harmonicsToMerge.add(noteToHarmonic.get(mergeNote));
-						noteToHarmonic.remove(mergeNote);
-					}
-				}
-				Harmonic mergedHarmonic = mergeHarmonics(harmonicsToMerge, currentNote);
-				if(mergedHarmonic != null) {
-					noteToHarmonic.put(currentNote, mergedHarmonic);
-					noteToHarmonicChordsOnly.put(currentNote, mergedHarmonic);
-				}
-				if(chordIndex >= chords.length) break;
-				currentChord += chords[chordIndex];
-				chordIndex++;
-			}
-		}
-		if(chordsOnly) {
-			beatStartTimeToHarmonics.put(startTime, new ArrayList<Harmonic>(noteToHarmonicChordsOnly.values()));
-		} else {
-			beatStartTimeToHarmonics.put(startTime, new ArrayList<Harmonic>(noteToHarmonic.values()));
-		}
-	}
-		
-	public static Harmonic mergeHarmonics(ArrayList<Harmonic> harmonics, int mergeNote) {
-		if(harmonics.size() == 0) return null;
-		long harmonicID = HarmonicsEditor.getRandomID();
-		Harmonic mergedHarmonic = harmonics.get(0);
-		for(int index = 1; index < harmonics.size(); index++) {
-			mergedHarmonic = mergeHarmonics(mergedHarmonic, harmonics.get(index));
-		}
-		ArrayList<FDData> harmonicData = mergedHarmonic.getScaledAverageNote(mergeNote);
-		Harmonic newHarmonic = new Harmonic(harmonicID);
-		for(FDData data: harmonicData) newHarmonic.addData(data);
-		return newHarmonic;
-	}
 
-	public static Harmonic mergeHarmonics(Harmonic h1, Harmonic h2) {
-		long harmonicID = HarmonicsEditor.getRandomID();
-		Harmonic returnVal = new Harmonic(harmonicID);
-		TreeMap<Integer, FDData> timeToData1 = new TreeMap<Integer, FDData>();
-		TreeMap<Integer, FDData> timeToData2 = new TreeMap<Integer, FDData>();
-		for(FDData data: h1.getAllDataInterpolated()) {
-			timeToData1.put(data.getTime(), data);
-		}
-		for(FDData data: h2.getAllDataInterpolated()) {
-			timeToData2.put(data.getTime(), data);
-		}
-		if(timeToData1.isEmpty() && timeToData2.isEmpty()) return returnVal;
-		if(timeToData1.isEmpty()) return h2;
-		if(timeToData2.isEmpty()) return h1;
-		int startTime = timeToData1.firstKey();
-		int endTime = timeToData1.lastKey();
-		if(timeToData2.firstKey() < startTime) startTime = timeToData2.firstKey();
-		if(timeToData2.lastKey() > endTime) endTime = timeToData2.lastKey();
-		for(int time = startTime; time <= endTime; time++) {
-			if(timeToData1.containsKey(time)) {
-				FDData d1 = timeToData1.get(time);
-				if(timeToData2.containsKey(time)) {
-					FDData d2 = timeToData2.get(time);
-					double amplitude1 = Math.pow(2.0, d1.getLogAmplitude());
-					double amplitude2 = Math.pow(2.0, d2.getLogAmplitude());
-					double logAmplitude = Math.log(amplitude1 + amplitude2) / Math.log(2.0);
-					int note = (d1.getNote() + d2.getNote()) / 2;
-					try {
-						FDData combined = new FDData(time, note, logAmplitude, harmonicID);
-						returnVal.addData(combined);
-					} catch (Exception e) {
-						System.out.println("SoftSynth.mergeHarmonics: Error creating data");
-					}
-				} else {
-					returnVal.addData(timeToData1.get(time));
-				}
-			} else {
-				if(timeToData2.containsKey(time)) {
-					returnVal.addData(timeToData2.get(time));
-				} else {
-					returnVal.addData(getData(time, h1.getAverageNote(), 0.0, harmonicID));
-				}
-			}
-		}
-		returnVal.setAllHarmonicIDsEqual();
-		return returnVal;
-	}
-	
 	public static FDData getData(int time, int note, double logAmplitude, long harmonicID) {
 		FDData returnVal = null;
 		try {
@@ -413,28 +293,14 @@ public class SoftSynth {
 	
 	public static void synthTrebleNoteWithOvertones(int startTime, int endTime, double minNote, double maxNote, double amplitude) {
 		try {
-			double AMPhase = Math.PI;
-			for(double loopNote = minNote; loopNote < maxNote - 3; loopNote += FDData.noteBase) {
-				double note = loopNote;
+			for(double note = minNote; note < maxNote; note += FDData.noteBase) {
 				Harmonic harmonic = new Harmonic(HarmonicsEditor.getRandomID());
-				double taper = (note - minNote) / (double) FDData.noteBase;
-				for(int time = startTime; time < endTime - 10; time++) {
-					double amplitudeAdjust = Math.sin(AMPhase * taper);
-					double currentAmplitude = amplitude + amplitudeAdjust - taper;
-					if(currentAmplitude < 4.0) break;
-					FDData data = new FDData(time, note, currentAmplitude, harmonic.getHarmonicID());
-					harmonic.addData(data);
-					AMPhase += (2.0 * Math.PI) / (endTime - startTime) * taper;
-				}
+				harmonic.addData(new FDData(startTime, note, amplitude, harmonic.getHarmonicID()));
+				harmonic.addData(new FDData(endTime - 10, note, amplitude, harmonic.getHarmonicID()));
+				harmonic.addData(new FDData(endTime, note, 0.0, harmonic.getHarmonicID()));
 				beatStartTimeToHarmonics.get(startTime).add(harmonic);
-			}
-			for(double note = minNote + FDData.noteBase * 2; note < maxNote - 3; note += FDData.noteBase) {
-				if(note < 8 * FDData.noteBase) continue;
-				double taper = (note - minNote) / (double) FDData.noteBase;
-				Harmonic formant = new Harmonic(HarmonicsEditor.getRandomID());
-				formant.addData(new FDData(startTime, note, amplitude - taper, formant.getHarmonicID()));
-				formant.addData(new FDData(startTime + 100, note, 0.0, formant.getHarmonicID()));
-				beatStartTimeToHarmonics.get(startTime).add(formant);
+				amplitude -= 1.0;
+				if(amplitude < 2.0) break;
 			}
 		} catch (Exception e) {
 			System.out.println("HarmonicsEditor.synthNoteWithOvertones() error creating data:" + e.getMessage());
@@ -443,7 +309,6 @@ public class SoftSynth {
 	
 	public static void synthBassNoteWithOvertones(int startTime, int endTime, double minNote, double maxNote, double amplitude) {
 		try {
-			double AMPhase = Math.PI;
 			for(double note = minNote; note < maxNote; note += FDData.noteBase) {
 				Harmonic harmonic = new Harmonic(HarmonicsEditor.getRandomID());
 				harmonic.addData(new FDData(startTime, note, amplitude, harmonic.getHarmonicID()));
