@@ -49,6 +49,7 @@ public class HarmonicsEditor extends JFrame {
 	public static final int timeStepInMillis = FDData.timeStepInMillis; // timeInMillis = time * timeStepInMillis
 	public static final int noteBase = FDData.noteBase; // frequencyInHz = pow(2.0, (note / noteBase))
 	public static Random randomGenerator = new Random();
+	public static RandomLoop randomLoop = null;
 
 	public JMenuBar createMenuBar() {
         HarmonicsActionHandler actionHandler = new HarmonicsActionHandler(this);
@@ -189,26 +190,25 @@ public class HarmonicsEditor extends JFrame {
 	public static double getMinAmplitude() {
 		return 0.0;
 	}
-	
-
-	public static void repeatRandomLoop(HarmonicsEditor parent) {
-		String loopDescriptor = randomLoop(parent);
-		System.out.println(loopDescriptor);
-	}
-	
+		
 	public static void handleBeatSelected(int beat) {
 		System.out.println("Beat Selected = " + beat);
-		if(beat == -1) return; // out of bounds or beatArray==null
-		SoftSynth.beatArray.get(beat).modifyBaseNote = !SoftSynth.beatArray.get(beat).modifyBaseNote;
-		SoftSynth.beatArray.get(beat).modifyChords = !SoftSynth.beatArray.get(beat).modifyChords;
-		SoftSynth.beatArray.get(beat).modifyDuration = !SoftSynth.beatArray.get(beat).modifyDuration;
-		view.repaint();
+		randomLoop.handleBeatSelected(beat);
 	}
 	
-	public static String randomLoop(HarmonicsEditor parent) {
-		RandomLoop randomLoop = new RandomLoop(parent);
+	public static void newRandomLoop(HarmonicsEditor parent) {
+		randomLoop = new RandomLoop(parent);
 		randomLoop.playRandomLoop();
-		return "";
+	}
+	
+	public static void playRandomLoop(HarmonicsEditor parent) {
+		if(randomLoop == null) randomLoop = new RandomLoop(parent);
+		randomLoop.playRandomLoop();
+	}
+	
+	public static void playScale(HarmonicsEditor parent) {
+		if(randomLoop == null) randomLoop = new RandomLoop(parent);
+		randomLoop.playScale();
 	}
 	
 	public static int frequencyInHzToNote(double freqInHz) {
@@ -222,7 +222,6 @@ public class HarmonicsEditor extends JFrame {
 	public static void clearCurrentData() {
 		maxTime = 0;
 		harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
-		
 	}
 	
 	public static void addData(FDData data) {

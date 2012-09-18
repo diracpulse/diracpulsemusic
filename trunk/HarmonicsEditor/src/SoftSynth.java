@@ -13,26 +13,12 @@ public class SoftSynth {
 	public static TreeMap<Long, Harmonic> harmonicIDToHighFreqHarmonic = null;
 	public static TreeMap<Long, Harmonic> harmonicIDToBassSynthHarmonic = null;
 	public static TreeMap<Long, Harmonic> harmonicIDToSnareHarmonic = null;
-	public static ArrayList<Beat> beatArray = null;
 	public static TreeMap<Integer, ArrayList<Harmonic>> beatStartTimeToHarmonics = null;
 	public static final double logAmplitudeLimit = 12.0;
-	
-	public static void clearLoop() {
-		beatArray = null;
-	}
-	
-	public static void initLoop(int numBeats, int duration) {
-		if(beatArray == null) {
-			beatArray = new ArrayList<Beat>();
-			for(int beat = 0; beat < numBeats; beat++) {
-				beatArray.add(new Beat(-1, null, duration));
-			}
-		}
-		beatStartTimeToHarmonics = new TreeMap<Integer, ArrayList<Harmonic>>();
-	}
-	
-	public static void addDataToHarmonicsEditor() {
-		synthAllBeats();
+
+	public static void synthLoopInHarmonicsEditor(ArrayList<Beat> beatArray) {
+		HarmonicsEditor.clearCurrentData();
+		synthAllBeats(beatArray);
 		for(int beatStartTime: beatStartTimeToHarmonics.keySet()) {
 			for(Harmonic harmonic: beatStartTimeToHarmonics.get(beatStartTime)) {
 				//harmonic.addCompressionWithLimiter(4.0, 14.0);
@@ -43,13 +29,8 @@ public class SoftSynth {
 		}
 	}
 	
-	public static void modifyBeat(int beatIndex, int baseNote, int[] chords, int duration) {
-		beatArray.get(beatIndex).baseNote = baseNote;
-		beatArray.get(beatIndex).chords = chords;
-		beatArray.get(beatIndex).duration = duration;
-	}
-	
-	public static void synthAllBeats() {
+	private static void synthAllBeats(ArrayList<Beat> beatArray) {
+		beatStartTimeToHarmonics = new TreeMap<Integer, ArrayList<Harmonic>>();
 		int startTime = 0;
 		for(Beat beat: beatArray) {
 			synthBeat(startTime, beat.baseNote, beat.chords, beat.duration, false);
@@ -57,7 +38,7 @@ public class SoftSynth {
 		}
 	}
 	
-	public static void synthBeat(int startTime, int baseNote, int[] chords, int duration, boolean useHighFreq) {
+	private static void synthBeat(int startTime, int baseNote, int[] chords, int duration, boolean useHighFreq) {
 		beatStartTimeToHarmonics.put(startTime, new ArrayList<Harmonic>());
 		int maxNote = (int) Math.round(Math.floor(HarmonicsEditor.frequencyInHzToNote(FDData.maxFrequencyInHz)) - 1.0);
 		int minNote = HarmonicsEditor.frequencyInHzToNote(32.0);
@@ -128,7 +109,7 @@ public class SoftSynth {
 		HarmonicsEditor.refreshView();
 	}
 	
-	public static void synthInstrument(int startTime, int endTime, int note, TreeMap<Long, Harmonic> harmonics, double gain) {
+	private static void synthInstrument(int startTime, int endTime, int note, TreeMap<Long, Harmonic> harmonics, double gain) {
 		TreeSet<Integer> notes = new TreeSet<Integer>();
 		for(Harmonic harmonic: harmonics.values()) notes.add(harmonic.getAverageNote()); 
 		int firstNote = notes.first();
@@ -150,8 +131,9 @@ public class SoftSynth {
 			beatStartTimeToHarmonics.get(startTime).add(newHarmonic);
 		}
 	}
-	
-	public static void synthInstrumentEQ(int startTime, int endTime, int baseNote, int[] chords, TreeMap<Long, Harmonic> harmonics, double gain) {
+
+	private static void synthInstrumentEQ(int startTime, int endTime, int baseNote, int[] chords, TreeMap<Long, Harmonic> harmonics, double gain) {
+		double minAmpVal = 0.0;
 		TreeMap<Integer, Harmonic> noteToHarmonic = new TreeMap<Integer, Harmonic>();
 		TreeMap<Integer, TreeMap<Integer, Double>> timeToNoteToEQ = new TreeMap<Integer, TreeMap<Integer, Double>>(); 
 		for(int note = FDData.getMinNote(); note < FDData.getMaxNote(); note++) {
@@ -160,7 +142,7 @@ public class SoftSynth {
 					noteToHarmonic.put(note, harmonic);
 				}
 			}
-		}	
+		}
 		int minEQNote = noteToHarmonic.firstKey();
 		int maxEQNote = noteToHarmonic.lastKey();
 		int numTimes = endTime - startTime;
@@ -179,6 +161,7 @@ public class SoftSynth {
 				} else {
 					// use currentLogAmp from previous note
 					timeToNoteToEQ.get(normalTime).put(note, currentLogAmp);
+					timeToNoteToEQ.get(normalTime).put(note, 0.0);
 				}
 			}
 		}
@@ -189,6 +172,7 @@ public class SoftSynth {
 				int startNote = FDData.getMinNote();
 				int endNote = minEQNote;
 				double logAmpVal = timeToNoteToEQ.get(time).get(minEQNote);
+				if(logAmpVal < minAmpVal) logAmpVal = minAmpVal;
 				for(int note = startNote; note < endNote; note++) {
 					EQMatrix[time][note - FDData.getMinNote()] = logAmpVal; 
 				}
@@ -201,7 +185,9 @@ public class SoftSynth {
 				double endLogAmp = timeToNoteToEQ.get(time).get(endNote);
 				double slope = (endLogAmp - startLogAmp) / (endNote - startNote);
 				for(int note = startNote; note < endNote; note++) {
-					EQMatrix[time][note - FDData.getMinNote()] = (note - startNote) * slope + startLogAmp; 
+					double ampVal = (note - startNote) * slope + startLogAmp;
+					if(ampVal < minAmpVal) ampVal = minAmpVal;
+					EQMatrix[time][note - FDData.getMinNote()] = ampVal;
 				}
 			}
 			// fill in values for notes > max note in instrument data
@@ -214,7 +200,9 @@ public class SoftSynth {
 				if(endLogAmp < 0.0) endLogAmp = 0.0;
 				double slope = (endLogAmp - startLogAmp) / (endNote - startNote);
 				for(int note = startNote; note < endNote; note++) {
-					EQMatrix[time][note - FDData.getMinNote()] = (note - startNote) * slope + startLogAmp; 
+					double ampVal = (note - startNote) * slope + startLogAmp;
+					if(ampVal < minAmpVal) ampVal = minAmpVal;
+					EQMatrix[time][note - FDData.getMinNote()] = ampVal;
 				}
 			}
 		}
@@ -255,26 +243,16 @@ public class SoftSynth {
 			}
 			currentNoteIndex++;
 		}
+		synthInstrument(startTime, endTime, -1, harmonics, -2.0);
 	}
 
-	public static FDData getData(int time, int note, double logAmplitude, long harmonicID) {
-		FDData returnVal = null;
-		try {
-			returnVal = new FDData(time, note, 0.0, harmonicID);
-		} catch (Exception e) {
-			System.out.println("SoftSynth.getData: Error creating data");
-		}
-		return returnVal;
-	}
-	
-	
-	public static double sawTooth(double phase) {
+	private static double sawTooth(double phase) {
 		phase /= 2.0 * Math.PI;
 		phase -= Math.floor(phase);
 		return (phase - 0.5) / 2.0;
 	}
 	
-	public static void synthNote(int startTime, int endTime, double note, double amplitude, double taper) {
+	private static void synthNote(int startTime, int endTime, double note, double amplitude, double taper) {
 		try {
 			double AMPhase = Math.PI;
 			Harmonic currentHarmonic = new Harmonic(HarmonicsEditor.getRandomID());
@@ -291,7 +269,7 @@ public class SoftSynth {
 		}
 	}
 	
-	public static void synthTrebleNoteWithOvertones(int startTime, int endTime, double minNote, double maxNote, double amplitude) {
+	private static void synthTrebleNoteWithOvertones(int startTime, int endTime, double minNote, double maxNote, double amplitude) {
 		try {
 			for(double note = minNote; note < maxNote; note += FDData.noteBase) {
 				Harmonic harmonic = new Harmonic(HarmonicsEditor.getRandomID());
@@ -307,7 +285,7 @@ public class SoftSynth {
 		}
 	}
 	
-	public static void synthBassNoteWithOvertones(int startTime, int endTime, double minNote, double maxNote, double amplitude) {
+	private static void synthBassNoteWithOvertones(int startTime, int endTime, double minNote, double maxNote, double amplitude) {
 		try {
 			for(double note = minNote; note < maxNote; note += FDData.noteBase) {
 				Harmonic harmonic = new Harmonic(HarmonicsEditor.getRandomID());
