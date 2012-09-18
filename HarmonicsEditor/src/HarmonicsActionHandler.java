@@ -146,7 +146,37 @@ public class HarmonicsActionHandler extends JPanel {
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Random Loop");
-			HarmonicsEditor.randomLoop(parent);
+			HarmonicsEditor.playRandomLoop(parent);
+		}
+	}
+	
+	public class NewRandomLoopAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public NewRandomLoopAction() {
+			super("New Random Loop");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("New Random Loop");
+			HarmonicsEditor.newRandomLoop(parent);
+		}
+	}
+	
+	public class PlayScaleAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+
+		public PlayScaleAction() {
+			super("Play Scale");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("PlayScale");
+			HarmonicsEditor.playScale(parent);
 		}
 	}
 	
@@ -247,6 +277,9 @@ public class HarmonicsActionHandler extends JPanel {
         JMenu loopMenu = new JMenu("Loop");
         loopMenu.add(new RandomLoopAction());
         menuBar.add(loopMenu);
+        JMenu scaleMenu = new JMenu("Scale");
+        scaleMenu.add(new PlayScaleAction());
+        menuBar.add(scaleMenu);
         JMenu instrumentMenu = new JMenu("Instrument");
         instrumentMenu.add(new LoadInstrumentAction());
         instrumentMenu.add(new LoadKickDrumAction());
@@ -254,8 +287,9 @@ public class HarmonicsActionHandler extends JPanel {
         instrumentMenu.add(new LoadBassSynthAction());
         instrumentMenu.add(new LoadSnareAction());
         menuBar.add(instrumentMenu);
-        JMenu testMenu = new JMenu("Test");
-        menuBar.add(testMenu);
+        JMenu newMenu = new JMenu("New");
+        newMenu.add(new NewRandomLoopAction());
+        menuBar.add(newMenu);
         return menuBar;
 	}
 

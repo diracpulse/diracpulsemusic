@@ -32,10 +32,10 @@ public class HarmonicsUtils {
 	
 	// returns beat or -1 if not on a beat
 	public static int pixelXToBeat(int x) {
-		if(SoftSynth.beatArray == null) return - 1;
+		if(HarmonicsEditor.randomLoop == null) return - 1;
 		int beatStartTime = 0;
 		int beatIndex = 0;
-		for(Beat beat: SoftSynth.beatArray) {
+		for(Beat beat: HarmonicsEditor.randomLoop.beatArray) {
 			int lowerX = timeToPixelX(beatStartTime);
 			int upperX = timeToPixelX(beatStartTime + beat.getDuration());
 			if((x > lowerX) && (x < upperX)) return beatIndex;

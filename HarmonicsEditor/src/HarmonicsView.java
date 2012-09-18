@@ -80,13 +80,13 @@ public class HarmonicsView extends JComponent {
 	}
 	
 	public void drawBeatInfo(Graphics g) {
-		if(SoftSynth.beatArray == null) return;
+		if(HarmonicsEditor.randomLoop == null) return;
 		int fontHeight = g.getFontMetrics().getHeight();
 		int beatIndex = 0;
 		int currentTime = 0;
 		Color black = new Color(0.0f, 0.0f, 0.0f, 0.75f);
 		Color grey = new Color(1.0f, 1.0f, 1.0f, 0.75f);
-		for(Beat beat: SoftSynth.beatArray) {
+		for(Beat beat: HarmonicsEditor.randomLoop.beatArray) {
 			int x = HarmonicsUtils.timeToPixelX(currentTime);
 			// START: draw base note info
 			Color b = black;
