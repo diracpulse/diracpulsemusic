@@ -7,6 +7,20 @@ public class FastSynth {
 	public static double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
 	public static double[] sharedPCMData;
 	
+	private static double sawTooth(double phase) {
+		phase /= 2.0 * Math.PI;
+		phase -= Math.floor(phase);
+		return (phase - 0.5) / 2.0;
+	}
+	
+	private static double triangle(double phase) {
+		phase /= 2.0 * Math.PI;
+		phase -= Math.floor(phase);
+		if(phase < 0.25) return phase * 4;
+		if(phase < 0.75) return (0.5 - phase) * 4;
+		return (phase - 1.0) * 4;
+	}
+	
 	public static double[] synthHarmonicsLinear(ArrayList<Harmonic> harmonics) {
 		initSharedPCMData(harmonics);
 		for(Harmonic harmonic: harmonics) synthHarmonicLinear(harmonic);

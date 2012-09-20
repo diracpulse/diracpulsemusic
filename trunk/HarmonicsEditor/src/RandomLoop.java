@@ -8,7 +8,7 @@ public class RandomLoop {
 	
 	HarmonicsEditor parent;
 	int numBeats = 8;
-	int[] durations = {100, 125, 150};
+	int[] durations = {50, 75, 100, 150};
 	int[] steps = {0,0,1,1,1,1,2,2,2,3,3,4};
 	int direction = 1;
 	int numNotes = 7;
