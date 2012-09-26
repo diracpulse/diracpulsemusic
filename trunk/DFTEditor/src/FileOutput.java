@@ -17,6 +17,7 @@ public class FileOutput {
 	
 	// This function reads from a (newly created) .mono5ms file
 	public static void selectedExportAll(DFTEditor parent) {
+		TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToSelectedData = DFTEditor.getSelectedData();
 		try {
 		//runProcess();
 			TreeSet<String> mono5msFileNames = new TreeSet<String>();
@@ -46,8 +47,7 @@ public class FileOutput {
 			}
 			for(String exportFileName: exportFileNames) {
 				FileInput.ReadBinaryFileData(parent, exportFileName + ".mono5ms", "mono5ms");
-				DFTEditor.timeToFreqToSelectedData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
-				DFTEditor.autoSelect();
+				timeToFreqToSelectedData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
 				OutputSelectedToFile(exportFileName);
 			}
 		} catch (Exception e) {
@@ -56,12 +56,13 @@ public class FileOutput {
 	}
 	
 	public static void OutputSelectedToFile(String fileName) {
-	    try {
+		TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToSelectedData = DFTEditor.getSelectedData();
+		try {
 	    	DataOutputStream selectedOut = new DataOutputStream(new
 		            BufferedOutputStream(new FileOutputStream(new String(fileName + ".selected"))));
-            for(int time: DFTEditor.timeToFreqToSelectedData.keySet()) {
-            	for(int freq: DFTEditor.timeToFreqToSelectedData.get(time).keySet()) {
-            		FDData data = DFTEditor.timeToFreqToSelectedData.get(time).get(freq);
+            for(int time: timeToFreqToSelectedData.keySet()) {
+            	for(int freq: timeToFreqToSelectedData.get(time).keySet()) {
+            		FDData data = timeToFreqToSelectedData.get(time).get(freq);
             		float amp = (float) data.getLogAmplitude();
             		selectedOut.writeInt(time);
             		selectedOut.writeInt(DFTEditor.freqToNote(freq));

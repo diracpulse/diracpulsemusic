@@ -12,7 +12,9 @@ public class DFTFileInput {
 	
 	// This function reads from a binary file
 	public static void ReadSelectedFileData(String fileName) {
-		DFTEditor.timeToFreqToSelectedData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
+		DFTEditor.timeToFreqToSelectedDataMono = new TreeMap<Integer, TreeMap<Integer, FDData>>();
+		DFTEditor.timeToFreqToSelectedDataLeft = new TreeMap<Integer, TreeMap<Integer, FDData>>();
+		DFTEditor.timeToFreqToSelectedDataRight = new TreeMap<Integer, TreeMap<Integer, FDData>>();
 		DataInputStream in = null;
 	    try {
 	    	in = new DataInputStream(new
