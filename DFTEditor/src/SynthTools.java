@@ -12,17 +12,19 @@ class SynthTools {
 	public static boolean refresh = true;
 
 	static void createPCMData() {
-		createHarmonics(DFTEditor.timeToFreqToSelectedData);
+		createHarmonics(DFTEditor.timeToFreqToSelectedDataMono);
 		PCMData = FileOutput.SynthFDDataExternally(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
 	}
 	
 	static void createPCMDataLinear() {
-		createHarmonics(DFTEditor.timeToFreqToSelectedData);
+		TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToSelectedData = DFTEditor.getSelectedData();
+		createHarmonics(timeToFreqToSelectedData);
 		PCMData = FastSynth.synthHarmonicsLinear(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
 	}
 	
 	static void createPCMDataLinearCubicSpline() {
-		createHarmonics(DFTEditor.timeToFreqToSelectedData);
+		TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToSelectedData = DFTEditor.getSelectedData();
+		createHarmonics(timeToFreqToSelectedData);
 		PCMData = FastSynth.synthHarmonicsLinearCubicSpline(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
 	}
 	

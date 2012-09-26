@@ -125,8 +125,11 @@ public class FileConvert {
             		System.out.println(linein); // print comment 
             	} else {
             		// assumes it's amplitude data (must be in proper order)
-            		amp = new Float(linein);
-            		binaryOut.writeFloat(amp);
+            		String[] leftRight = linein.split(" ");
+            		float left = new Float(leftRight[0]);
+            		float right = new Float(leftRight[1]);
+            		binaryOut.writeFloat(left);
+            		binaryOut.writeFloat(right);
             	}
             }
             binaryOut.close();

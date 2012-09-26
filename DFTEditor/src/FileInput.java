@@ -19,7 +19,9 @@ public class FileInput {
 		parent.setTitle("Loading: " + fileName);
 		//timeToFreqToAmp = new TreeMap<Integer, TreeMap<Integer, Float>>();
 		DFTEditor.floorAmpToCount = new TreeMap<Integer, Integer>();
-		ArrayList<Float> matrixVals = new ArrayList<Float>();
+		ArrayList<Float> matrixValsMono = new ArrayList<Float>();
+		ArrayList<Float> matrixValsLeft = new ArrayList<Float>();
+		ArrayList<Float> matrixValsRight = new ArrayList<Float>();		
 		DataInputStream in = null;
 		DFTEditor.maxAmplitude = 0.0f;
 		DFTEditor.minAmplitude = 15.0f;
@@ -38,15 +40,19 @@ public class FileInput {
 			DFTEditor.maxScreenNote = in.readInt();
 			DFTEditor.minScreenNote = in.readInt();
 			while(true) {
-				amp = in.readFloat();
-				matrixVals.add(amp);
-				if(amp > DFTEditor.maxAmplitude) {
-					DFTEditor.maxAmplitude = amp;
+				float left = in.readFloat();
+				float right = in.readFloat();
+				float mono = (float) (Math.log(Math.pow(2.0, left) + Math.pow(2.0, right)) / Math.log(2.0));
+				matrixValsMono.add(mono);
+				matrixValsLeft.add(left);
+				matrixValsRight.add(right);					
+				if(mono > DFTEditor.maxAmplitude) {
+					DFTEditor.maxAmplitude = mono;
 				}
-				if(amp < DFTEditor.minAmplitude) {
-					DFTEditor.minAmplitude = amp;
+				if(mono < DFTEditor.minAmplitude) {
+					DFTEditor.minAmplitude = mono;
 				}
-				int floorAmp = (int) Math.floor(amp);
+				int floorAmp = (int) Math.floor(mono);
 				int number = 0;
 				if(DFTEditor.floorAmpToCount.containsKey(floorAmp)) {
 					number = DFTEditor.floorAmpToCount.get(floorAmp);
@@ -62,14 +68,22 @@ public class FileInput {
 				System.out.println("DFTEditor: error reading from: " + fileName);
 			}
 		}
-		int matrixValsSize = matrixVals.size();
+		int matrixValsSize = matrixValsMono.size();
 		DFTEditor.maxScreenFreq = DFTEditor.maxScreenNote - DFTEditor.minScreenNote;
 		DFTEditor.maxTime = matrixValsSize / (DFTEditor.maxScreenFreq + 1);
-		DFTEditor.amplitudes = new float[DFTEditor.maxTime + 1][DFTEditor.maxScreenFreq + 1];
+		DFTEditor.newFileData();
+		DFTEditor.amplitudesMono = new float[DFTEditor.maxTime + 1][DFTEditor.maxScreenFreq + 1];
+		DFTEditor.amplitudesLeft = new float[DFTEditor.maxTime + 1][DFTEditor.maxScreenFreq + 1];		
+		DFTEditor.amplitudesRight = new float[DFTEditor.maxTime + 1][DFTEditor.maxScreenFreq + 1];		
 		int index = 0;
 		for(int time = 0; time < DFTEditor.maxTime; time++) {
 			for(int freq = 0; freq <= DFTEditor.maxScreenFreq; freq++) {
-				if(index < matrixValsSize) DFTEditor.amplitudes[time][freq] = matrixVals.get(index);
+				if(index >= matrixValsSize) {
+					System.out.println("FileInput.ReadBinaryFileData: index out of bounds");
+				}
+				DFTEditor.amplitudesMono[time][freq] = matrixValsMono.get(index);
+				DFTEditor.amplitudesLeft[time][freq] = matrixValsLeft.get(index);
+				DFTEditor.amplitudesRight[time][freq] = matrixValsRight.get(index);
 				index++;
 			}
 		}
