@@ -302,13 +302,11 @@ public class DFTEditor extends JFrame {
 			}
 		}
 		// unselect data that is not played
-		/*
 		for(int time: unselect.keySet()) {
 			for(int freq: unselect.get(time)) {
 				timeToFreqToSelectedData.get(time).remove(freq);
 			}
 		}
-		*/
 		refreshView();
 	}
 
