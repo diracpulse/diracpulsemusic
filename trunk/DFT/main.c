@@ -8,6 +8,7 @@
 #define MAXWAVELETS 31 * 32
 
 void CalculateWavelets();
+void outputRoundedData(double sinVal, double cosVal, int waveletIndex);
 
 // File Variables
 short LeftRight[MAXDFTWINDOW * 2];
@@ -37,7 +38,7 @@ double maxCyclesPerWindow = 0.0;
 int numWavelets = 0;
 
 // Special Variables
-double roundingFactor = 10.0;
+double roundingFactor = 1000.0;
 
 // Function helpers
 double KaiserWindow[MAXDFTWINDOW];
@@ -51,8 +52,6 @@ struct WaveletInfo {
 	float *sinArray;//[MAXDFTWINDOW];
 	float *cosArray;//[MAXDFTWINDOW];
 } WaveletInfoArray[MAXWAVELETS];
-
-double logAmps[MAXWAVELETS];
 
 void LoadSamplesFromFile(FILE *stream, int centerIndex) {
 	//if(debug) printf("LoadSamplesFromFile\n");
@@ -109,20 +108,31 @@ void SingleDFT(int waveletIndex, int startIndex, int endIndex) {
 	}
 	double leftVal = 0.0;
 	double rightVal = 0.0;
-	double monoVal = 0.0;
-	double sinVal = 0.0;
-	double cosVal = 0.0;
+	double sinValLeft = 0.0;
+	double cosValLeft = 0.0;
+	double sinValRight = 0.0;
+	double cosValRight = 0.0;
 	double ampVal = 0.0;
 	double logAmp = 0.0;
 	double roundedLogAmp = 0.0;
 	for(index = 0; index < maxIndex; index++) {
 		leftVal = (double) LeftRight[(startIndex + index) * 2];
 		rightVal = (double) LeftRight[(startIndex + index) * 2 + 1];
-		monoVal = leftVal + rightVal;
-		sinVal += WaveletInfoArray[waveletIndex].sinArray[index] * monoVal;
-		cosVal += WaveletInfoArray[waveletIndex].cosArray[index] * monoVal;
+		sinValLeft += WaveletInfoArray[waveletIndex].sinArray[index] * leftVal;
+		cosValLeft += WaveletInfoArray[waveletIndex].cosArray[index] * leftVal;
+		sinValRight += WaveletInfoArray[waveletIndex].sinArray[index] * rightVal;
+		cosValRight += WaveletInfoArray[waveletIndex].cosArray[index] * rightVal;
 	}
-	ampVal = sinVal * sinVal;
+	outputRoundedData(sinValLeft, cosValLeft, waveletIndex);
+	printf(" ");
+	outputRoundedData(sinValRight, cosValRight, waveletIndex);
+	printf("\n");
+}
+
+void outputRoundedData(double sinVal, double cosVal, int waveletIndex) {
+	double logAmp = 0.0;
+	double roundedLogAmp = 0.0;
+	double ampVal = sinVal * sinVal;
 	ampVal += cosVal * cosVal;
 	ampVal = sqrt(ampVal) / WaveletInfoArray[waveletIndex].gain;
 	ampVal *= 2.0; // integral of sin, cos over time approaches 0.5
@@ -131,10 +141,8 @@ void SingleDFT(int waveletIndex, int startIndex, int endIndex) {
 	} else {
 		logAmp = 0.0;
 	}
-	logAmps[waveletIndex] = logAmp;
-	// MATRIX OUTPUT
 	roundedLogAmp = round(logAmp * roundingFactor) / roundingFactor;
-	printf("%f\n", roundedLogAmp);
+	printf("%f", roundedLogAmp);
 }
 
 void SampleArrayIndex(int waveletIndex) {
