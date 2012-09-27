@@ -89,6 +89,70 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
+	public class StereoAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public StereoAction() {
+			super("Stereo");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			DFTEditor.currentChannel = DFTEditor.Channel.STEREO;
+			DFTEditor.view.repaint();
+			System.out.println("Stereo");
+		}
+	}
+	
+	public class MonoAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public MonoAction() {
+			super("Mono");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			DFTEditor.currentChannel = DFTEditor.Channel.MONO;
+			DFTEditor.view.repaint();
+			System.out.println("Mono");
+		}
+	}
+	
+	public class LeftAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public LeftAction() {
+			super("Left");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			DFTEditor.currentChannel = DFTEditor.Channel.LEFT;
+			DFTEditor.view.repaint();
+			System.out.println("Left");
+		}
+	}
+	
+	public class RightAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public RightAction() {
+			super("Right");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			DFTEditor.currentChannel = DFTEditor.Channel.RIGHT;
+			DFTEditor.view.repaint();
+			System.out.println("Right");
+		}
+	}
+	
 	public class PlayLinearAction extends AbstractAction {
 
 		private static final long serialVersionUID = 7354387706903212877L;
@@ -434,6 +498,13 @@ public class ActionHandler extends JPanel {
         fileMenu.add(new SaveSelectedAction());
         fileMenu.add(new ExportAllAction());
         fileMenu.add(new ExitAction());
+        // Create Channel Select
+        JMenu channelMenu = new JMenu("Channel");
+        menuBar.add(channelMenu);
+        channelMenu.add(new StereoAction());
+        channelMenu.add(new MonoAction());
+        channelMenu.add(new LeftAction());
+        channelMenu.add(new RightAction());
         //Create the Play menu
         JMenu playMenu = new JMenu("Play");
         menuBar.add(playMenu);        

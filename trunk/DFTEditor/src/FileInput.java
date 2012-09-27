@@ -92,7 +92,7 @@ public class FileInput {
 		//calculateAmpSum();
 		//calculateMaxAmpAtFreq();
 		parent.printFloorAmpCount();
-		parent.calculateTimeToFreqsAtMaxima();
+		//parent.calculateTimeToFreqsAtMaxima();
 		parent.setTitle(fileName);
 	}
 	

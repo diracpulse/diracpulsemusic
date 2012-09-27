@@ -31,8 +31,9 @@ public class DFTEditor extends JFrame {
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToFreqToSelectedDataMono;
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToFreqToSelectedDataLeft;
 	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToFreqToSelectedDataRight;
-	//public static ArrayList<Harmonic> harmonics;
-	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic = null;
+	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicMono = null;
+	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicLeft = null;
+	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicRight = null;
 	public static int minHarmonicLength = 1;
 	public static double minLogAmplitudeThreshold = 1.0; // used by autoSelect
 	public static int minLengthThreshold = 1;
@@ -77,6 +78,9 @@ public class DFTEditor extends JFrame {
 	// they are related as calculated in noteToFreq(int note) and freqToNote(int freq)
 	
 	public static void newFileData() {
+	    harmonicIDToHarmonicMono = new TreeMap<Long, Harmonic>();
+	    harmonicIDToHarmonicLeft = new TreeMap<Long, Harmonic>();
+	    harmonicIDToHarmonicRight = new TreeMap<Long, Harmonic>();
 		timeToFreqsAtMaximaMono = new TreeMap<Integer, TreeSet<Integer>>();
 		timeToFreqsAtMaximaLeft = new TreeMap<Integer, TreeSet<Integer>>();
 		timeToFreqsAtMaximaRight = new TreeMap<Integer, TreeSet<Integer>>();
@@ -103,6 +107,13 @@ public class DFTEditor extends JFrame {
 		if(currentChannel == Channel.STEREO || currentChannel == Channel.MONO) return timeToFreqToSelectedDataMono;
 		if(currentChannel == Channel.LEFT) return timeToFreqToSelectedDataLeft;
 		if(currentChannel == Channel.RIGHT) return timeToFreqToSelectedDataRight;
+		return null;
+	}
+	
+	public static TreeMap<Long, Harmonic> getHarmonicIDToHarmonic() {
+		if(currentChannel == Channel.STEREO || currentChannel == Channel.MONO) return harmonicIDToHarmonicMono;
+		if(currentChannel == Channel.LEFT) return harmonicIDToHarmonicLeft;
+		if(currentChannel == Channel.RIGHT) return harmonicIDToHarmonicRight;
 		return null;
 	}
 	
@@ -246,24 +257,29 @@ public class DFTEditor extends JFrame {
 		return randomIDGenerator.nextLong();
 	}
 	
-	public static void calculateTimeToFreqsAtMaximaChannel() {
-		currentChannel = Channel.LEFT;
-		//calculateTimeToFreqsAtMaximaCurrentChannel();
-		currentChannel = Channel.RIGHT;
-		//calculateTimeToFreqsAtMaximaCurrentChannel();
+	public static void autoSelect() {
 		currentChannel = Channel.MONO;
-		//calculateTimeToFreqsAtMaximaCurrentChannel();
+		autoSelectChannel();
+		currentChannel = Channel.RIGHT;
+		autoSelectChannel();
+		currentChannel = Channel.LEFT;
+		autoSelectChannel();
 		currentChannel = Channel.STEREO;
 	}
 	
-	public static void autoSelect() {
+	public static void autoSelectChannel() {
 		// add all maximas
+		calculateTimeToFreqsAtMaxima();
+		float[][] amplitudes = getAmplitudes();
+		TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima = getMaximas();
+		TreeMap<Integer, TreeMap<Integer, FDData>>  timeToFreqToSelectedData = getSelectedData();
+		TreeMap<Long, Harmonic> harmonicIDToHarmonic = getHarmonicIDToHarmonic();
 		TreeMap<Integer, ArrayList<Integer>> unselect = new TreeMap<Integer, ArrayList<Integer>>();
-		for(int time: timeToFreqsAtMaximaMono.keySet()) {
-			for(int freq:  timeToFreqsAtMaximaMono.get(time)) {
+		for(int time: timeToFreqsAtMaxima.keySet()) {
+			for(int freq:  timeToFreqsAtMaxima.get(time)) {
 				FDData data = null;
 				try {
-					data = new FDData(time, freqToNote(freq), amplitudesMono[time][freq], 1L);
+					data = new FDData(time, freqToNote(freq), amplitudes[time][freq], 1L);
 				} catch (Exception e){
 					System.out.println("DFTEditor.autoSelect(): unable to create FDData");
 				}
@@ -272,10 +288,10 @@ public class DFTEditor extends JFrame {
 		}
 		// refreshView();
 		// create Harmonics from selected
-		SynthTools.createHarmonics(timeToFreqToSelectedDataMono);
-		for(int time: timeToFreqToSelectedDataMono.keySet()) {
-			for(int freq: timeToFreqToSelectedDataMono.get(time).keySet()) {
-				FDData data = timeToFreqToSelectedDataMono.get(time).get(freq);
+		SynthTools.createHarmonics(timeToFreqToSelectedData);
+		for(int time: timeToFreqToSelectedData.keySet()) {
+			for(int freq: timeToFreqToSelectedData.get(time).keySet()) {
+				FDData data = timeToFreqToSelectedData.get(time).get(freq);
 				long harmonicID = data.getHarmonicID();
 				Harmonic harmonic = harmonicIDToHarmonic.get(harmonicID);
 				// have to put in unselect to avoid ConcurrentModificationException
@@ -286,23 +302,26 @@ public class DFTEditor extends JFrame {
 			}
 		}
 		// unselect data that is not played
+		/*
 		for(int time: unselect.keySet()) {
 			for(int freq: unselect.get(time)) {
-				timeToFreqToSelectedDataMono.get(time).remove(freq);
+				timeToFreqToSelectedData.get(time).remove(freq);
 			}
 		}
+		*/
 		refreshView();
 	}
 
 	// NOTE: maxima test is not performed for freq = 0 and freq = maxFreq
-	public void calculateTimeToFreqsAtMaxima() {
-		timeToFreqsAtMaximaMono = new TreeMap<Integer, TreeSet<Integer>>();
+	public static void calculateTimeToFreqsAtMaxima() {
+		float[][] amplitudes = getAmplitudes();
+		TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima = getMaximas();
 		for(int timeIndex = 0; timeIndex <= maxTime; timeIndex++) {
 			TreeSet<Integer> freqsAtMaxima = new TreeSet<Integer>();
-			float upperVal = amplitudesMono[timeIndex][0];
-			float centerVal = amplitudesMono[timeIndex][1]; // should be initialized in for loop
+			float upperVal = amplitudes[timeIndex][0];
+			float centerVal = amplitudes[timeIndex][1]; // should be initialized in for loop
 			for(int freqIndex = 2; freqIndex <= maxScreenFreq; freqIndex++) {
-				float lowerVal = amplitudesMono[timeIndex][freqIndex];
+				float lowerVal = amplitudes[timeIndex][freqIndex];
 				if((centerVal >= upperVal) && (centerVal >= lowerVal)) {
 					if(centerVal == 0.0) continue;
 					freqsAtMaxima.add(freqIndex - 1);
@@ -310,25 +329,25 @@ public class DFTEditor extends JFrame {
 				upperVal = centerVal;
 				centerVal = lowerVal;
 			}
-			timeToFreqsAtMaximaMono.put(timeIndex, freqsAtMaxima);
+			timeToFreqsAtMaxima.put(timeIndex, freqsAtMaxima);
 		}
 		// collapse maximas at adjacent freqs
-		for(int time: timeToFreqsAtMaximaMono.keySet()) {
+		for(int time: timeToFreqsAtMaxima.keySet()) {
 			TreeSet<Integer> freqSet = new TreeSet<Integer>();
 			// create deep copy of timeToFreqsAtMaximaMono.get(time)
-			for(Integer value: timeToFreqsAtMaximaMono.get(time)) freqSet.add(value);;
+			for(Integer value: timeToFreqsAtMaxima.get(time)) freqSet.add(value);;
 			while(!freqSet.isEmpty()) {
 				int freq = freqSet.first();
 				int startFreq = freq;
 				freqSet.remove(startFreq);
-				timeToFreqsAtMaximaMono.get(time).remove(startFreq);
+				timeToFreqsAtMaxima.get(time).remove(startFreq);
 				while(freqSet.contains(freq + 1)) {
 					freq++;
 					freqSet.remove(freq);
-					timeToFreqsAtMaximaMono.get(time).remove(freq);
+					timeToFreqsAtMaxima.get(time).remove(freq);
 				}
 				int centerFreq = startFreq + (freq - startFreq) / 2;
-				timeToFreqsAtMaximaMono.get(time).add(centerFreq);
+				timeToFreqsAtMaxima.get(time).add(centerFreq);
 			}
 		}
 	}
@@ -418,7 +437,6 @@ public class DFTEditor extends JFrame {
         selections = new ArrayList<Selection>();
         selections.add(new Selection(DFTEditor.selectionArea, deleteSelected));
         randomIDGenerator = new Random();
-        harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
         openFileInDFTEditor();
         //DFTUtils.testGetConsonantOvertonesBase31();
     }
