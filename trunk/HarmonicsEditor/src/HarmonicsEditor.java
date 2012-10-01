@@ -15,14 +15,24 @@ public class HarmonicsEditor extends JFrame {
 	 * 
 	 */
 
+	public enum Channel {
+		LEFT,
+		RIGHT,
+		MONO,
+		STEREO,
+	}
+	
+	public static Channel currentChannel = Channel.STEREO;
+
 	public static MultiWindow parent;
 	public static HarmonicsView view;
 	public static HarmonicsController controller;
 	public static HarmonicsActionHandler actionHandler;
 	public static JToolBar navigationBar;
-	public static ControlPanel controlPanel;
-	
-	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic;
+	public static ControlPanel controlPanel;	
+	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicMono;
+	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicLeft;
+	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicRight;
 	public static TreeSet<Integer> averageNotes;
 	//public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToData;
 	public static ArrayList<Harmonic>  harmonics;
@@ -88,29 +98,68 @@ public class HarmonicsEditor extends JFrame {
 		navigationBar.add(button);
 	}
 
+	public static TreeMap<Long, Harmonic> getHarmonicIDToHarmonic() {
+		if(currentChannel == Channel.STEREO || currentChannel == Channel.MONO) return harmonicIDToHarmonicMono;
+		if(currentChannel == Channel.LEFT) return harmonicIDToHarmonicLeft;
+		if(currentChannel == Channel.RIGHT) return harmonicIDToHarmonicRight;
+		return null;
+	}
+	
 	public void openFileInHarmonicsEditor(String extension) {
         fileName = FileTools.PromptForFileOpen(view, extension);
         HarmonicsFileInput.ReadBinaryFileData(fileName);
         //removeNullHarmonics();
-        if(harmonicIDToHarmonic.isEmpty()) {
-        	harmonicIDToHarmonic = null;
+        if(harmonicIDToHarmonicMono.isEmpty()) {
+        	harmonicIDToHarmonicMono = null;
         	return;
         }
+        if(harmonicIDToHarmonicLeft.isEmpty()) {
+        	harmonicIDToHarmonicLeft = null;
+        	return;
+        }
+        if(harmonicIDToHarmonicRight.isEmpty()) {
+        	harmonicIDToHarmonicRight = null;
+        	return;
+        }     
         this.setTitle(fileName);
         //System.out.println(fileName);
         //view.repaint();
 	}
 	
 	public void removeNullHarmonics() {
-		for(long harmonicID: harmonicIDToHarmonic.keySet()) {
-			if(harmonicIDToHarmonic.get(harmonicID) == null) {
+		for(long harmonicID: harmonicIDToHarmonicMono.keySet()) {
+			if(harmonicIDToHarmonicMono.get(harmonicID) == null) {
 				System.out.println("null found");
-				harmonicIDToHarmonic.remove(harmonicID);
+				harmonicIDToHarmonicMono.remove(harmonicID);
 				continue;
 			}
-			if(!harmonicIDToHarmonic.get(harmonicID).containsData()) {
+			if(!harmonicIDToHarmonicMono.get(harmonicID).containsData()) {
 				System.out.println("emptyHarmonicFound");
-				harmonicIDToHarmonic.remove(harmonicID);
+				harmonicIDToHarmonicMono.remove(harmonicID);
+				continue;
+			}		
+		}
+		for(long harmonicID: harmonicIDToHarmonicLeft.keySet()) {
+			if(harmonicIDToHarmonicLeft.get(harmonicID) == null) {
+				System.out.println("null found");
+				harmonicIDToHarmonicLeft.remove(harmonicID);
+				continue;
+			}
+			if(!harmonicIDToHarmonicLeft.get(harmonicID).containsData()) {
+				System.out.println("emptyHarmonicFound");
+				harmonicIDToHarmonicLeft.remove(harmonicID);
+				continue;
+			}		
+		}
+		for(long harmonicID: harmonicIDToHarmonicRight.keySet()) {
+			if(harmonicIDToHarmonicRight.get(harmonicID) == null) {
+				System.out.println("null found");
+				harmonicIDToHarmonicRight.remove(harmonicID);
+				continue;
+			}
+			if(!harmonicIDToHarmonicRight.get(harmonicID).containsData()) {
+				System.out.println("emptyHarmonicFound");
+				harmonicIDToHarmonicRight.remove(harmonicID);
 				continue;
 			}		
 		}
@@ -118,31 +167,41 @@ public class HarmonicsEditor extends JFrame {
 	
 	public void loadInstrument() {
 		openFileInHarmonicsEditor(".harmonics");
-		SoftSynth.harmonicIDToInstrumentHarmonic = harmonicIDToHarmonic;
+		SoftSynth.harmonicIDToInstrumentHarmonicMono = harmonicIDToHarmonicMono;
+		SoftSynth.harmonicIDToInstrumentHarmonicLeft = harmonicIDToHarmonicLeft;
+		SoftSynth.harmonicIDToInstrumentHarmonicRight = harmonicIDToHarmonicRight;
 		refreshView();
 	}
 	
 	public void loadKickDrum() {
 		openFileInHarmonicsEditor(".harmonics");
-		SoftSynth.harmonicIDToKickDrumHarmonic = harmonicIDToHarmonic;
+		SoftSynth.harmonicIDToKickDrumHarmonicMono = harmonicIDToHarmonicMono;
+		SoftSynth.harmonicIDToKickDrumHarmonicLeft = harmonicIDToHarmonicLeft;
+		SoftSynth.harmonicIDToKickDrumHarmonicRight = harmonicIDToHarmonicRight;
 		refreshView();
 	}
 	
 	public void loadHighFreq() {
 		openFileInHarmonicsEditor(".harmonics");
-		SoftSynth.harmonicIDToHighFreqHarmonic = harmonicIDToHarmonic;
+		SoftSynth.harmonicIDToHighFreqHarmonicMono = harmonicIDToHarmonicMono;
+		SoftSynth.harmonicIDToHighFreqHarmonicLeft = harmonicIDToHarmonicLeft;
+		SoftSynth.harmonicIDToHighFreqHarmonicRight = harmonicIDToHarmonicRight;
 		refreshView();
 	}
 	
 	public void loadBassSynth() {
 		openFileInHarmonicsEditor(".harmonics");
-		SoftSynth.harmonicIDToBassSynthHarmonic = harmonicIDToHarmonic;
+		SoftSynth.harmonicIDToBassSynthHarmonicMono = harmonicIDToHarmonicMono;
+		SoftSynth.harmonicIDToBassSynthHarmonicLeft = harmonicIDToHarmonicLeft;
+		SoftSynth.harmonicIDToBassSynthHarmonicRight = harmonicIDToHarmonicRight;
 		refreshView();
 	}
 	
 	public void loadSnare() {
 		openFileInHarmonicsEditor(".harmonics");
-		SoftSynth.harmonicIDToSnareHarmonic = harmonicIDToHarmonic;
+		SoftSynth.harmonicIDToSnareHarmonicMono = harmonicIDToHarmonicMono;
+		SoftSynth.harmonicIDToSnareHarmonicLeft = harmonicIDToHarmonicLeft;
+		SoftSynth.harmonicIDToSnareHarmonicRight = harmonicIDToHarmonicRight;
 		refreshView();
 	}
 
@@ -221,10 +280,16 @@ public class HarmonicsEditor extends JFrame {
 
 	public static void clearCurrentData() {
 		maxTime = 0;
-		harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
+		harmonicIDToHarmonicMono = new TreeMap<Long, Harmonic>();
+		harmonicIDToHarmonicLeft = new TreeMap<Long, Harmonic>();
+		harmonicIDToHarmonicRight = new TreeMap<Long, Harmonic>();
 	}
 	
-	public static void addData(FDData data) {
+	public static void addData(FDData data, int channel) {
+		TreeMap<Long, Harmonic> harmonicIDToHarmonic = null;
+		if(channel == 0) harmonicIDToHarmonic = harmonicIDToHarmonicMono;
+		if(channel == 1) harmonicIDToHarmonic = harmonicIDToHarmonicLeft;
+		if(channel == 2) harmonicIDToHarmonic = harmonicIDToHarmonicRight;
 		int time = data.getTime();
 		int note = data.getNote();
 		if(time > maxTime) maxTime = time;
@@ -265,8 +330,14 @@ public class HarmonicsEditor extends JFrame {
 	}
 	
 	public static void flattenAllHarmonics() {
-		for(long harmonicID: harmonicIDToHarmonic.keySet()) {
-			harmonicIDToHarmonic.get(harmonicID).flattenHarmonic();
+		for(long harmonicID: harmonicIDToHarmonicMono.keySet()) {
+			harmonicIDToHarmonicMono.get(harmonicID).flattenHarmonic();
+		}
+		for(long harmonicID: harmonicIDToHarmonicLeft.keySet()) {
+			harmonicIDToHarmonicLeft.get(harmonicID).flattenHarmonic();
+		}
+		for(long harmonicID: harmonicIDToHarmonicRight.keySet()) {
+			harmonicIDToHarmonicRight.get(harmonicID).flattenHarmonic();
 		}
 	}
 

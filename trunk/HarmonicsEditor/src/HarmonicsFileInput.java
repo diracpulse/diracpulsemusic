@@ -32,13 +32,14 @@ public class HarmonicsFileInput {
 		try {
 			// loop is terminated by EOFException
 			while(true) {
+				int channel = in.readByte();
 				int time = in.readInt();
 				int note = in.readInt();
 				float amp = in.readFloat();
 				long id = in.readLong();
 				FDData data = new FDData(time, note, amp, id);
 				//System.out.println(data);
-				HarmonicsEditor.addData(data);
+				HarmonicsEditor.addData(data, channel);
 				//System.out.println(data);
 			}
 		} catch (Exception e) {

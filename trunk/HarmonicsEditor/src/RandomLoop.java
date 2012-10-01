@@ -8,10 +8,10 @@ public class RandomLoop {
 	
 	HarmonicsEditor parent;
 	int numBeats = 8;
-	int[] durations = {50, 75, 100, 150};
+	int[] durations = {100};
 	int[] steps = {0,0,1,1,1,1,2,2,2,3,3,4};
 	int direction = 1;
-	int numNotes = 7;
+	int numNotes = 8;
 	int[] key = new int[numNotes];
 	int[] deltaKey = new int[numNotes];
 	int[][] allChords = new int[numNotes][2];

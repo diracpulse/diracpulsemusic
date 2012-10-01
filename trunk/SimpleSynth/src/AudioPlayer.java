@@ -63,6 +63,30 @@ class AudioPlayer {
 		playBuffer(left, right, masterVolume);
 	}
 	
+	public void playBufferRight(double[] mono, double masterVolume) {
+		final int numberOfSamples = mono.length;
+		double[] left = new double[numberOfSamples];
+		double[] right = new double[numberOfSamples];
+		int index;
+		for (index = 0; index < numberOfSamples; index++) { 
+			left[index] = 0.0;
+			right[index] = mono[index];
+		}
+		playBuffer(left, right, masterVolume);
+	}
+	
+	public void playBufferLeft(double[] mono, double masterVolume) {
+		final int numberOfSamples = mono.length;
+		double[] left = new double[numberOfSamples];
+		double[] right = new double[numberOfSamples];
+		int index;
+		for (index = 0; index < numberOfSamples; index++) { 
+			left[index] = mono[index];
+			right[index] = 0.0;
+		}
+		playBuffer(left, right, masterVolume);
+	}
+	
 	
 	public void playBuffer(double[] left, double right[], double masterVolume) {
 		if (left.length != right.length) return; 

@@ -462,6 +462,7 @@ public class ActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Cutoff = " + logCutoff);
 			DFTEditor.minLogAmplitudeThreshold = logCutoff;
+			DFTEditor.autoSelect();
 		    DFTEditor.view.repaint();
 		    SynthTools.refresh = true;
 		    parent.playSelectedDataInCurrentWindow();
