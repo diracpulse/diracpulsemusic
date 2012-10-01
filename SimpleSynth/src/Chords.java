@@ -21,12 +21,15 @@ class Chords {
 
 	public void playChords() {
 		//superTrig();
-		for (double freq = 20.0; freq < 20000.0; freq *= Math.pow(2.0, 1.0 / 12.0)) {
+		for (double freq = 2000.0; freq < 20000.0; freq *= Math.pow(2.0, 1.0 / 31.0)) {
 			System.out.println(freq);
-			AB = new AudioBuffer(samples);
-			AB.addFrequency(freq);
 			try {
-				while(AB.hasMore()) AP.playBuffer(AB.getBuffer(samples), 1.0);
+				AB = new AudioBuffer(samples);
+				AB.addFrequency(freq);
+				AP.playBufferLeft(AB.getBuffer(samples), 1.0);
+				AB = new AudioBuffer(samples);
+				AB.addFrequency(freq);				
+				AP.playBufferRight(AB.getBuffer(samples), 1.0);
 				Thread.sleep(100);
 			} catch (InterruptedException ex) {}
 		}

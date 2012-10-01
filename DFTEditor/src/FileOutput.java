@@ -56,27 +56,45 @@ public class FileOutput {
 	}
 	
 	public static void OutputSelectedToFile(String fileName) {
-		TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToSelectedData = DFTEditor.getSelectedData();
+		DFTEditor.Channel saveChannel = DFTEditor.currentChannel;
 		try {
 	    	DataOutputStream selectedOut = new DataOutputStream(new
-		            BufferedOutputStream(new FileOutputStream(new String(fileName + ".selected"))));
+		            BufferedOutputStream(new FileOutputStream(new String(fileName + ".harmonics"))));
+			DFTEditor.currentChannel = DFTEditor.Channel.MONO;
+			OutputSelectedToFile(selectedOut, (byte) 0);
+			DFTEditor.currentChannel = DFTEditor.Channel.LEFT;
+			OutputSelectedToFile(selectedOut, (byte) 1);
+			DFTEditor.currentChannel = DFTEditor.Channel.RIGHT;
+			OutputSelectedToFile(selectedOut, (byte) 2);
+            selectedOut.close();
+		} catch (Exception e) {
+			System.out.println("Exception in FileOutput.OutputSelectedToFile(filename)");
+			e.printStackTrace();
+			System.exit(0);
+		}
+		System.out.println("Finished output of of selected to: " + fileName + ".selected");
+		DFTEditor.currentChannel = saveChannel;
+	}
+	
+	public static void OutputSelectedToFile(DataOutputStream selectedOut, byte channel) {
+		TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToSelectedData = DFTEditor.getSelectedData();
+		try {
             for(int time: timeToFreqToSelectedData.keySet()) {
             	for(int freq: timeToFreqToSelectedData.get(time).keySet()) {
             		FDData data = timeToFreqToSelectedData.get(time).get(freq);
             		float amp = (float) data.getLogAmplitude();
+            		selectedOut.writeByte(channel);
             		selectedOut.writeInt(time);
             		selectedOut.writeInt(DFTEditor.freqToNote(freq));
             		selectedOut.writeFloat(amp);
             		selectedOut.writeLong(data.getHarmonicID());
             	}
             }
-            selectedOut.close();
 		} catch (Exception e) {
-			System.out.println("Exception in FileOutput.OutputSelectedToFile");
+			System.out.println("Exception in FileOutput.OutputSelectedToFile(selectedOut, channel");
 			e.printStackTrace();
 			System.exit(0);
 		}
-		System.out.println("Finished output of of selected to: " + fileName + ".selected");
 	}
 	
 	public static double[] SynthFDDataExternally(ArrayList<Harmonic> harmonics) {

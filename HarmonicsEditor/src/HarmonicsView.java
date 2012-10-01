@@ -17,7 +17,7 @@ public class HarmonicsView extends JComponent {
 		DIGITS;
 	}
 	
-	public static DataView dataView = DataView.DIGITS;
+	public static DataView dataView = DataView.PIXELS;
 	
 	private static final long serialVersionUID = 2964004162144513754L;
 	
@@ -142,7 +142,7 @@ public class HarmonicsView extends JComponent {
 	}
 	
 	public void drawFileData(Graphics g) {
-		if(HarmonicsEditor.harmonicIDToHarmonic == null) return;
+		if(HarmonicsEditor.harmonicIDToHarmonicMono == null) return;
 		HarmonicsUtils.compileNoteToPixelY();
 		//System.out.println("Finished Compiling");
 		drawLeftNotes(g);
@@ -152,7 +152,7 @@ public class HarmonicsView extends JComponent {
 		int startNote = HarmonicsUtils.pixelYToNote(HarmonicsEditor.upperOffset);
 		int endNote = HarmonicsUtils.pixelYToNote(getHeight());
 		if(endNote == -1) endNote = HarmonicsEditor.minNote;
-		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
+		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonicMono.values()) {
 			//System.out.println(harmonic.getAverageNote());
 			FDData start = harmonic.getStart();
 			FDData end = harmonic.getEnd();

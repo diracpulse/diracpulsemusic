@@ -10,18 +10,22 @@ class SynthTools {
 	static double sampleRate = 44100.0;
 	static double twoPI = 2.0 * Math.PI;
 	static double timeToSample = sampleRate * (FDData.timeStepInMillis * 1.0 / 1000.0);
-	static double[] PCMData = null;
+	static double[] PCMDataMono = null;
+	static double[] PCMDataLeft = null;
+	static double[] PCMDataRight = null;
 	static HarmonicsEditor parent;
 
 	static void createPCMData(HarmonicsEditor parent) {
-		if(HarmonicsEditor.harmonicIDToHarmonic == null || HarmonicsEditor.harmonicIDToHarmonic.isEmpty()) return;
-		PCMData = FastSynth.synthHarmonicsLinear(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonic.values()));
+		if(HarmonicsEditor.harmonicIDToHarmonicMono == null || HarmonicsEditor.harmonicIDToHarmonicMono.isEmpty()) return;
+		PCMDataMono = FastSynth.synthHarmonicsLinear(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonicMono.values()));
+		PCMDataLeft = FastSynth.synthHarmonicsLinear(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonicLeft.values()));
+		PCMDataRight = FastSynth.synthHarmonicsLinear(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonicRight.values()));
 	}
 	
 	static void createPCMDataNoise(HarmonicsEditor parent) {
-		if(HarmonicsEditor.harmonicIDToHarmonic == null || HarmonicsEditor.harmonicIDToHarmonic.isEmpty()) return;
-		FastSynth.initSharedPCMData(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonic.values()));
-		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
+		if(HarmonicsEditor.harmonicIDToHarmonicMono == null || HarmonicsEditor.harmonicIDToHarmonicMono.isEmpty()) return;
+		FastSynth.initSharedPCMData(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonicMono.values()));
+		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonicMono.values()) {
 			int duration = harmonic.getLength();
 			int note = harmonic.getAverageNote();
 			if(note < 8 * FDData.noteBase) {
@@ -36,13 +40,13 @@ class SynthTools {
 			}
 			System.out.println(note + startTime + "complete");
 		}
-		PCMData = FastSynth.sharedPCMData;
+		PCMDataMono = FastSynth.sharedPCMData;
 	}
 	
 	static void createPCMDataFiltered(HarmonicsEditor parent) {
-		if(HarmonicsEditor.harmonicIDToHarmonic == null || HarmonicsEditor.harmonicIDToHarmonic.isEmpty()) return;
-		FastSynth.initSharedPCMData(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonic.values()));
-		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
+		if(HarmonicsEditor.harmonicIDToHarmonicMono == null || HarmonicsEditor.harmonicIDToHarmonicMono.isEmpty()) return;
+		FastSynth.initSharedPCMData(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonicMono.values()));
+		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonicMono.values()) {
 			int duration = harmonic.getLength();
 			int note = harmonic.getAverageNote();
 			if(note < 8 * FDData.noteBase) {
@@ -57,12 +61,15 @@ class SynthTools {
 			}
 			System.out.println(note + startTime + "complete");
 		}
-		PCMData = FastSynth.sharedPCMData;
+		PCMDataMono = FastSynth.sharedPCMData;
 	}
 
 	public static void playWindow() {
-		if(PCMData == null) return;
-		AudioPlayer ap = new AudioPlayer(parent, PCMData, 1.0);
+		AudioPlayer ap = null;
+		if(PCMDataMono == null) return;
+		if(HarmonicsEditor.currentChannel == HarmonicsEditor.Channel.STEREO) {
+			ap = new AudioPlayer(parent, PCMDataLeft, PCMDataRight, 1.0);
+		}
 		ap.start();
 	}
 

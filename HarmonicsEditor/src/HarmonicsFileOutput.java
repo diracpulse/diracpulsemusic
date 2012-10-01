@@ -107,9 +107,30 @@ public class HarmonicsFileOutput {
 	    try {
 	    	DataOutputStream selectedOut = new DataOutputStream(new
 		            BufferedOutputStream(new FileOutputStream(fileName)));
-            for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
+            for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonicMono.values()) {
             	for(FDData data: harmonic.getAllData()) {
             		float amp = (float) data.getLogAmplitude();
+            		selectedOut.writeByte((byte) 0);
+            		selectedOut.writeInt(data.getTime());
+            		selectedOut.writeInt(data.getNote());
+            		selectedOut.writeFloat(amp);
+            		selectedOut.writeLong(data.getHarmonicID());
+            	}
+            }
+            for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonicLeft.values()) {
+            	for(FDData data: harmonic.getAllData()) {
+            		float amp = (float) data.getLogAmplitude();
+            		selectedOut.writeByte((byte) 1);
+            		selectedOut.writeInt(data.getTime());
+            		selectedOut.writeInt(data.getNote());
+            		selectedOut.writeFloat(amp);
+            		selectedOut.writeLong(data.getHarmonicID());
+            	}
+            }
+            for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonicRight.values()) {
+            	for(FDData data: harmonic.getAllData()) {
+            		float amp = (float) data.getLogAmplitude();
+            		selectedOut.writeByte((byte) 2);
             		selectedOut.writeInt(data.getTime());
             		selectedOut.writeInt(data.getNote());
             		selectedOut.writeFloat(amp);

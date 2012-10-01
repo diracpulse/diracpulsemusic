@@ -70,7 +70,7 @@ public class HarmonicsUtils {
 	public static void compileNoteToPixelY() {
 		currentNotes = new TreeSet<Integer>();
 		noteToPixelYMap = new TreeMap<Integer, Integer>();
-		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
+		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonicMono.values()) {
 			currentNotes.add(harmonic.getAverageNote());
 		}
 		for(int note = FDData.getMinNote(); note <= FDData.getMaxNote(); note++) {
@@ -79,7 +79,7 @@ public class HarmonicsUtils {
 	}
 	
 	public static boolean noteToDrawSegment(int note) {
-		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
+		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonicMono.values()) {
 			if(harmonic.getAverageNote() == note) return true;
 		}
 		return false;
