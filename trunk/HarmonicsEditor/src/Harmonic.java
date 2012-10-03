@@ -359,6 +359,7 @@ public class Harmonic {
 				int note = data.getNote() + deltaNote;
 				if(time > endTime) break;
 				if(note >= FDData.getMaxNote()) continue;
+				if(note <= FDData.getMinNote()) continue;
 				FDData newData = new FDData(time, note, data.getLogAmplitude(), harmonicID);
 				newTimeToData.put(time, newData);
 			}
