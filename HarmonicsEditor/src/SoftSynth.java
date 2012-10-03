@@ -123,7 +123,7 @@ public class SoftSynth {
 			synthInstrument(startTime, endTime, lowestNote, null, harmonicIDToBassSynthHarmonicLeft, 0.0, 1);
 			synthInstrument(startTime, endTime, lowestNote, null, harmonicIDToBassSynthHarmonicRight, 0.0, 2);
 		} else {
-			synthBassNoteWithOvertones(startTime, endTime, lowestNote, baseNote, 14.0);
+			//synthBassNoteWithOvertones(startTime, endTime, lowestNote, baseNote, 14.0);
 		}
 		// Synth Noise Sources
 		if(harmonicIDToKickDrumHarmonicMono != null) {
@@ -267,12 +267,9 @@ public class SoftSynth {
 				}
 			}
 		}
-		double lowestNote = baseNote;
-		while(lowestNote >= FDData.getMinNote()) lowestNote -= FDData.noteBase;
-		lowestNote += FDData.noteBase;
 		ArrayList<Double> baseNotes = new ArrayList<Double>();
-		baseNotes.add(lowestNote); // baseNote synth low bass as well
 		double noteVal = baseNote;
+		baseNotes.add(noteVal);
 		if(chords != null) {
 			for(double chord: chords) {
 				noteVal += chord;
@@ -281,20 +278,24 @@ public class SoftSynth {
 		}
 		int halfStep = (int) Math.round(Math.log(1.5) / Math.log(2.0) * FDData.noteBase);
 		for(double currentNote: baseNotes) {
+			int deltaNote = (int) Math.round(currentNote - baseNote);
 			int currentStep = FDData.noteBase;
 			double logAdjust = 0.0;
 			for(double note = currentNote; note < FDData.getMaxNote(); note += currentStep) {
 				long harmonicID = HarmonicsEditor.getRandomID();
 				Harmonic newHarmonic = new Harmonic(harmonicID);
+				double logAmpVal = 0.0;
 				for(int time = 0; time < numTimes; time++) {
 					try {
-						double logAmpVal = EQMatrix[time][(int) Math.round(note) - FDData.getMinNote()];
+						int noteIndex = (int) Math.round(note) - FDData.getMinNote() - deltaNote;
+						if(noteIndex < 0 || noteIndex >= numNotes) break;
+						logAmpVal = EQMatrix[time][noteIndex];
 						logAmpVal += logAdjust;
 						if(logAmpVal < 0.0) continue;
 						FDData data = new FDData(time + startTime, note, logAmpVal, harmonicID);
 						newHarmonic.addData(data);
 					} catch (Exception e) {
-						System.out.println("synthInstrumentEQ: Error creating data");
+						System.out.println("synthInstrumentEQ: Error creating data: " + time + startTime + " " + note + " " + logAmpVal);
 					}
 				}
 				if(channel == 0) beatStartTimeToHarmonicsMono.get(startTime).add(newHarmonic);
@@ -302,10 +303,10 @@ public class SoftSynth {
 				if(channel == 2) beatStartTimeToHarmonicsLeft.get(startTime).add(newHarmonic);
 				if(note > FDData.noteBase * 9) {
 					if(Math.round(note - currentNote) % FDData.noteBase == 0) {
-						currentStep = halfStep;
-						logAdjust = -2.0;
+						currentStep = FDData.noteBase; // halfStep;
+						logAdjust = 0.0;
 					} else {
-						currentStep = (FDData.noteBase - halfStep);
+						currentStep = FDData.noteBase; // (FDData.noteBase - halfStep);
 						logAdjust = 0.0;
 					}
 				}
