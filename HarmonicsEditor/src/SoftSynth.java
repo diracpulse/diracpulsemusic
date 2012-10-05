@@ -83,9 +83,9 @@ public class SoftSynth {
 		lowestNote += FDData.noteBase;
 		// Synth Main Instrument
 		if(harmonicIDToInstrumentHarmonicMono != null) {
-			synthInstrumentEQ(startTime, endTime, baseNote, chords, harmonicIDToInstrumentHarmonicMono, 0.0, 0);
-			synthInstrumentEQ(startTime, endTime, baseNote, chords, harmonicIDToInstrumentHarmonicLeft, 0.0, 1);
-			synthInstrumentEQ(startTime, endTime, baseNote, chords, harmonicIDToInstrumentHarmonicRight, 0.0, 2);
+			synthInstrumentMatrix(startTime, endTime, baseNote, chords, harmonicIDToInstrumentHarmonicMono, 0.0, 0);
+			synthInstrumentMatrix(startTime, endTime, baseNote, chords, harmonicIDToInstrumentHarmonicLeft, 0.0, 1);
+			synthInstrumentMatrix(startTime, endTime, baseNote, chords, harmonicIDToInstrumentHarmonicRight, 0.0, 2);
 			//synthInstrument(startTime, endTime, baseNote, chords, harmonicIDToInstrumentHarmonicMono, -6.0, 0);
 			//synthInstrument(startTime, endTime, baseNote, chords, harmonicIDToInstrumentHarmonicLeft, -6.0, 1);
 			//synthInstrument(startTime, endTime, baseNote, chords, harmonicIDToInstrumentHarmonicRight, -6.0, 2);
@@ -188,85 +188,29 @@ public class SoftSynth {
 			if(channel == 2) beatStartTimeToHarmonicsRight.get(startTime).add(newHarmonic);
 		}
 	}
-
-	private static void synthInstrumentEQ(int startTime, int endTime, int baseNote, int[] chords, TreeMap<Long, Harmonic> rawHarmonics, double gain, int channel) {
-		TreeMap<Long, Harmonic> harmonics = getScaledHarmonics(rawHarmonics, baseNote);
-		double minAmpVal = 0.0;
-		TreeMap<Integer, Harmonic> noteToHarmonic = new TreeMap<Integer, Harmonic>();
-		TreeMap<Integer, TreeMap<Integer, Double>> timeToNoteToEQ = new TreeMap<Integer, TreeMap<Integer, Double>>(); 
-		for(int note = FDData.getMinNote(); note < FDData.getMaxNote(); note++) {
-			for(Harmonic harmonic: harmonics.values()) {
-				if(harmonic.getAverageNote() == note) {
-					noteToHarmonic.put(note, harmonic);
-				}
-			}
-		}
-		int minEQNote = noteToHarmonic.firstKey();
-		int maxEQNote = noteToHarmonic.lastKey();
+	
+	private static void synthInstrumentMatrix(int startTime, int endTime, int baseNote, int[] chords, TreeMap<Long, Harmonic> harmonics, double gain, int channel) {
 		int numTimes = endTime - startTime;
 		int numNotes = FDData.getMaxNote() - FDData.getMinNote();
 		double[][] EQMatrix = new double[numTimes][numNotes];
-		for(int time = startTime; time < endTime; time++) {
-			int normalTime = time - startTime;
-			timeToNoteToEQ.put(normalTime, new TreeMap<Integer, Double>());
-			double currentLogAmp = 0.0;
-			for(int note: noteToHarmonic.keySet()) {
-				// use first value occuring in lowest note (may not be at time == 1)
-				// if(currentLogAmp == -1.0) currentLogAmp = noteToHarmonic.get(note).getAllData().get(0).getLogAmplitude();
-				if(noteToHarmonic.get(note).getDataAtTime(normalTime) != null) {
-					currentLogAmp = noteToHarmonic.get(note).getDataAtTime(normalTime).getLogAmplitude();
-					timeToNoteToEQ.get(normalTime).put(note, currentLogAmp);
-				} else {
-					// use currentLogAmp from previous note
-					if(currentLogAmp > 2.0) {
-						timeToNoteToEQ.get(normalTime).put(note, 0.0) ; // currentLogAmp - 2.0);
-					} else {
-						timeToNoteToEQ.get(normalTime).put(note, 0.0);
-					}
-				}
-			}
-		}
-		ArrayList<Integer> notes = new ArrayList<Integer>(noteToHarmonic.keySet());
 		for(int time = 0; time < numTimes; time++) {
-			// fill in values for notes < min note in instrument data
-			if(minEQNote > FDData.getMinNote()) {
-				int startNote = FDData.getMinNote();
-				int endNote = minEQNote;
-				double logAmpVal = timeToNoteToEQ.get(time).get(minEQNote);
-				if(logAmpVal < minAmpVal) logAmpVal = minAmpVal;
-				for(int note = startNote; note < endNote; note++) {
-					EQMatrix[time][note - FDData.getMinNote()] = 0.0; 
-				}
-			}
-			// fill in values for notes between min and max notes in instrument data
-			for(int noteIndex = 0; noteIndex < notes.size() - 1; noteIndex++) {
-				int startNote = notes.get(noteIndex);
-				int endNote = notes.get(noteIndex + 1);
-				double startLogAmp = timeToNoteToEQ.get(time).get(startNote);
-				double endLogAmp = timeToNoteToEQ.get(time).get(endNote);
-				double slope = (endLogAmp - startLogAmp) / (endNote - startNote);
-				for(int note = startNote; note < endNote; note++) {
-					double ampVal = (note - startNote) * slope + startLogAmp;
-					if(ampVal < minAmpVal) ampVal = minAmpVal;
-					EQMatrix[time][note - FDData.getMinNote()] = ampVal;
-				}
-			}
-			// fill in values for notes > max note in instrument data
-			if(maxEQNote < FDData.getMaxNote()) {
-				int startNote = maxEQNote;
-				int endNote = FDData.getMaxNote();
-				double numOctaves = (double) (endNote - startNote) / FDData.noteBase;
-				double startLogAmp = timeToNoteToEQ.get(time).get(startNote);
-				double endLogAmp = startLogAmp / 2.0;
-				if(endLogAmp < 0.0) endLogAmp = 0.0;
-				double slope = (endLogAmp - startLogAmp) / (endNote - startNote);
-				for(int note = startNote; note < endNote; note++) {
-					double ampVal = (note - startNote) * slope + startLogAmp;
-					if(ampVal < minAmpVal) ampVal = minAmpVal;
-					EQMatrix[time][note - FDData.getMinNote()] = ampVal;
-				}
+			for(int note = 0; note < numNotes; note++) {
+				EQMatrix[time][note] = 0.0;			
 			}
 		}
+		double maxAmplitude = 0.0;
+		int maxNote = FDData.getMinNote();
+		for(Harmonic harmonic: harmonics.values()) {
+			for(FDData data: harmonic.getAllData()) {
+				if(data.getLogAmplitude() > maxAmplitude) {
+					maxAmplitude = data.getLogAmplitude();
+					maxNote = data.getNote();
+				}
+				if(data.getTime() >= numTimes) continue;
+				EQMatrix[data.getTime()][data.getNote() - FDData.getMinNote()] = data.getLogAmplitude();
+			}
+		}
+		int deltaNote = baseNote - maxNote;
 		ArrayList<Double> baseNotes = new ArrayList<Double>();
 		double noteVal = baseNote;
 		baseNotes.add(noteVal);
@@ -276,22 +220,21 @@ public class SoftSynth {
 				baseNotes.add(noteVal);
 			}
 		}
-		int halfStep = (int) Math.round(Math.log(1.5) / Math.log(2.0) * FDData.noteBase);
 		for(double currentNote: baseNotes) {
-			int deltaNote = (int) Math.round(currentNote - baseNote);
-			int currentStep = FDData.noteBase;
-			double logAdjust = 0.0;
-			for(double note = currentNote; note < FDData.getMaxNote(); note += currentStep) {
+			int innerDeltaNote = (int) Math.round(currentNote - baseNote);
+			for(double note = currentNote - FDData.noteBase; note < FDData.getMaxNote(); note++) {
 				long harmonicID = HarmonicsEditor.getRandomID();
 				Harmonic newHarmonic = new Harmonic(harmonicID);
-				double logAmpVal = 0.0;
+				double logAmpVal = 0.0; 
 				for(int time = 0; time < numTimes; time++) {
 					try {
-						int noteIndex = (int) Math.round(note) - FDData.getMinNote() - deltaNote;
+						int noteIndex = (int) Math.round(note) - FDData.getMinNote() - innerDeltaNote - deltaNote;
 						if(noteIndex < 0 || noteIndex >= numNotes) break;
+						double upperlogAmpVal = EQMatrix[time][noteIndex + 1];
 						logAmpVal = EQMatrix[time][noteIndex];
-						logAmpVal += logAdjust;
-						if(logAmpVal < 0.0) continue;
+						double lowerlogAmpVal = EQMatrix[time][noteIndex - 1];
+						if(logAmpVal < upperlogAmpVal || logAmpVal < lowerlogAmpVal) continue;
+						if(logAmpVal <= 0.0) continue;
 						FDData data = new FDData(time + startTime, note, logAmpVal, harmonicID);
 						newHarmonic.addData(data);
 					} catch (Exception e) {
@@ -301,42 +244,8 @@ public class SoftSynth {
 				if(channel == 0) beatStartTimeToHarmonicsMono.get(startTime).add(newHarmonic);
 				if(channel == 1) beatStartTimeToHarmonicsRight.get(startTime).add(newHarmonic);
 				if(channel == 2) beatStartTimeToHarmonicsLeft.get(startTime).add(newHarmonic);
-				if(note > FDData.noteBase * 9) {
-					if(Math.round(note - currentNote) % FDData.noteBase == 0) {
-						currentStep = FDData.noteBase; // halfStep;
-						logAdjust = 0.0;
-					} else {
-						currentStep = FDData.noteBase; // (FDData.noteBase - halfStep);
-						logAdjust = 0.0;
-					}
-				}
 			}
 		}
-	}
-	
-	private static TreeMap<Long, Harmonic> getScaledHarmonics(TreeMap<Long, Harmonic> harmonics, int baseNote) {
-		TreeMap<Long, Harmonic> scaledHarmonics = new TreeMap<Long, Harmonic>();
-		double currentAmplitude = 0.0;
-		double maxAmplitude = 0.0;
-		int maxAmplitudeNote = FDData.getMinNote();
-		for(Harmonic harmonic: harmonics.values()) {
-			currentAmplitude = harmonic.getMaxLogAmplitude();
-			if(currentAmplitude > maxAmplitude) {
-				maxAmplitude = currentAmplitude;
-				maxAmplitudeNote = harmonic.getAverageNote();
-			}
-		}
-		int deltaNote = baseNote - maxAmplitudeNote;
-		for(Harmonic harmonic: harmonics.values()) {
-			Harmonic scaledHarmonic = new Harmonic(HarmonicsEditor.getRandomID());
-			for(FDData data: harmonic.getScaledHarmonic(0, FDData.maxTime, deltaNote, scaledHarmonic.getHarmonicID())) {
-				scaledHarmonic.addData(data);
-			}
-			if(scaledHarmonic.getAverageNote() >= FDData.getMinNote()) {
-				scaledHarmonics.put(scaledHarmonic.getHarmonicID(), scaledHarmonic);
-			}
-		}
-		return scaledHarmonics;
 	}
 
 	private static double sawTooth(double phase) {
