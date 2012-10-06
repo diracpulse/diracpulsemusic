@@ -482,7 +482,7 @@ public class ActionHandler extends JPanel {
 		
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("MinLength = " + minLength);
-			DFTEditor.minHarmonicLength = minLength;
+			DFTEditor.minLengthThreshold = minLength;
 			SynthTools.refresh = true;
 		    parent.playSelectedDataInCurrentWindow();
 		}		
