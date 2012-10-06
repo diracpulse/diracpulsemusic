@@ -34,7 +34,7 @@ public class DFTEditor extends JFrame {
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicMono = null;
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicLeft = null;
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicRight = null;
-	public static int minHarmonicLength = 1;
+	//public static int minHarmonicLength = 1;
 	public static double minLogAmplitudeThreshold = 1.0; // used by autoSelect
 	public static int minLengthThreshold = 1;
 	public static ArrayList<Selection> selections;
@@ -403,7 +403,6 @@ public class DFTEditor extends JFrame {
         FileInput.ReadBinaryFileData(this, fileName, "mono5ms");
         DFTFileInput.ReadSelectedFileData(fileNameTrimmed);
         // Ensure that all previously selected data will be viewable/played
-    	minHarmonicLength = 1;
     	minLogAmplitudeThreshold = 1.0; // used by autoSelect
     	SynthTools.refresh = true;
     	autoSelect();
