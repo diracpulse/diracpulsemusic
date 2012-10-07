@@ -118,9 +118,10 @@ public class DFTEditor extends JFrame {
 	}
 	
 	public static float getAmplitude(int time, int freq) {
-		if(time >= maxTime && freq >= maxScreenFreq) return 0.0f;
-		float[][] amplitude = getAmplitudes();
-		return amplitude[time][freq];
+		float[][] amplitudes = getAmplitudes();
+		if(time >= amplitudes.length) return 0.0f;
+		if(freq >= amplitudes[0].length) return 0.0f;
+		return amplitudes[time][freq];
 	}
 	
 	public static boolean isMaxima(int time, int freq) {
