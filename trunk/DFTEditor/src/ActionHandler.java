@@ -294,34 +294,18 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
-	public class DataAndMaximasViewAction extends AbstractAction {
-
-		private static final long serialVersionUID = 270072643328180860L;
-
-		public DataAndMaximasViewAction() {
-			super("Data and Maximas");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Data and Maximas");
-			DFTView.setDataView(DFTView.DataView.DATA_AND_MAXIMAS);
-			DFTEditor.view.repaint();
-		}
-	}
-	
-	public class MaximasViewAction extends AbstractAction {
+	public class DerivativesViewAction extends AbstractAction {
 
 		private static final long serialVersionUID = 1L;
 
-		public MaximasViewAction() {
-			super("Maximas");
+		public DerivativesViewAction() {
+			super("Derivatives");
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Maximas");
-			DFTView.setDataView(DFTView.DataView.MAXIMAS_ONLY);
+			System.out.println("Derivatives");
+			DFTView.setDataView(DFTView.DataView.DERIVATIVES);
 			DFTEditor.view.repaint();
 		}
 	}
@@ -337,7 +321,7 @@ public class ActionHandler extends JPanel {
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Data");
-			DFTView.setDataView(DFTView.DataView.DATA_ONLY);
+			DFTView.setDataView(DFTView.DataView.DATA);
 			DFTEditor.view.repaint();
 		}
 	}
@@ -525,8 +509,7 @@ public class ActionHandler extends JPanel {
         menuBar.add(editMenu);
         JMenu dataViewMenu = new JMenu("DataView");
         menuBar.add(dataViewMenu);
-        dataViewMenu.add(new JMenuItem(new DataAndMaximasViewAction()));
-        dataViewMenu.add(new JMenuItem(new MaximasViewAction()));
+        dataViewMenu.add(new JMenuItem(new DerivativesViewAction()));
         dataViewMenu.add(new JMenuItem(new DataViewAction()));
         dataViewMenu.add(new JMenuItem(new HarmonicsViewAction()));
         JMenu selectionAreaMenu = new JMenu("SelectionArea");

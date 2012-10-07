@@ -27,7 +27,7 @@ public class DFTView extends JComponent {
 	}
 
 	public enum DataView {
-		MONO, DATA_ONLY, MAXIMAS_ONLY, DATA_AND_MAXIMAS, HARMONICS;
+		DATA, HARMONICS, DERIVATIVES;
 	}
 
 	public static void setDataView(DataView v) {
@@ -39,7 +39,7 @@ public class DFTView extends JComponent {
 	}
 
 	private static View view = View.Pixels1;
-	private static DataView dataView = DataView.MONO;
+	private static DataView dataView = DataView.DATA;
 
 	public static double getXStep() {
 		switch (view) {
@@ -134,59 +134,23 @@ public class DFTView extends JComponent {
 	public void drawFileData(Graphics g, boolean scaleLines) {
 		// clear old data
 		g.setColor(new Color(0.0f, 0.0f, 0.0f));
-		g.fillRect(DFTEditor.leftOffset, DFTEditor.upperOffset, getWidth(),
-				getHeight());
+		g.fillRect(DFTEditor.leftOffset, DFTEditor.upperOffset, getWidth(), getHeight());
 		drawLeftFreqs(g);
 		drawUpperTimes(g);
-		if ((dataView == DataView.MONO)) {
-			drawFileDataAsHarmonics(g);
-			return;
-		}
-		if ((view == View.Digits1) || (view == View.Digits2)) {
-			drawFileDataAsPixels(g);
-			return;
-		}
 		if (view == View.Music) {
 			drawFileDataAsMusic(g);
 			System.out.println("DFTView.drawFileData Music Finished");
 			return;
 		}
-		int startTime = DFTEditor.leftX;
-		int endTime = (int) Math.round(startTime
-				+ ((getWidth() - DFTEditor.leftOffset) / getXStep()));
-		int startFreq = DFTEditor.upperY;
-		int endFreq = (int) Math.round(startFreq
-				+ ((getHeight() - DFTEditor.upperOffset) / getYStep()));
-		for (int time = startTime; time < endTime; time++) {
-			if (!isXInBounds(time))
-				break;
-			for (int freq = startFreq; freq < endFreq; freq++) {
-				if (!isYInBounds(freq))
-					break;
-				int screenX = (int) Math.round(DFTEditor.leftOffset
-						+ ((time - DFTEditor.leftX) * getXStep()));
-				int screenY = (int) Math.round(DFTEditor.upperOffset
-						+ ((freq - DFTEditor.upperY) * getYStep()));
-				if (DFTEditor.isSelected(time, freq)) {
-					float amp = (float) DFTEditor.getSelected(time, freq)
-							.getLogAmplitude();
-					if (amp > 0.0f) {
-						Color b = getColor(time, freq);
-						drawAmplitude(g, screenX, screenY, amp, b);
-					}
-				} else {
-					float amp = DFTEditor.getAmplitude(time, freq);
-					if (amp > 0.0f) {
-						Color b = getColor(time, freq);
-						drawAmplitude(g, screenX, screenY, amp, b);
-					}
-				}
-			}
+		if ((dataView == DataView.HARMONICS)) {
+			drawFileDataAsHarmonics(g);
+			return;
 		}
-		// g2.setColor(new Color(1.0f, 0.0f, 0.0f, 0.5f));
-		// g2.setStroke(new BasicStroke(4));
-		// g2.drawLine(100, 400, 1500, 400);
-		// DrawMinimaAmdMaximas(g);
+		if ((dataView == DataView.DERIVATIVES)) {
+			drawFileDataAsDerivatives(g);
+			return;
+		}
+		drawFileDataAsPixelsOrDigits(g);
 	}
 
 	public void drawFileDataAsMusic(Graphics g) {
@@ -208,12 +172,7 @@ public class DFTView extends JComponent {
 				if (data == null)
 					continue;
 				float logAmplitude = (float) data.getLogAmplitude();
-				Color b = null;
-				if (dataView == DataView.HARMONICS) {
-					b = getColor(data.getHarmonicID());
-				} else {
-					b = getColor(logAmplitude);
-				}
+				Color b = getColor(logAmplitude);
 				g.setColor(b);
 				int screenX = DFTEditor.leftOffset + (time - startTime)
 						/ timeStep;
@@ -236,12 +195,7 @@ public class DFTView extends JComponent {
 					firstData = data;
 					continue;
 				}
-				Color b = null;
-				if (dataView == DataView.HARMONICS) {
-					b = getColor(firstData.getHarmonicID());
-				} else {
-					b = getColor(firstData.getLogAmplitude());
-				}
+				Color b = getColor(firstData.getLogAmplitude());
 				g.setColor(b);
 				int startScreenX = DFTUtils.timeToScreenX(firstData.getTime());
 				int startScreenY = DFTUtils.freqToScreenY(DFTEditor.noteToFreq(firstData.getNote()));
@@ -282,7 +236,7 @@ public class DFTView extends JComponent {
 		g.fillRect(screenX, screenY, pixelStepX, pixelStepY);
 	}
 
-	public void drawFileDataAsPixels(Graphics g) {
+	public void drawFileDataAsPixelsOrDigits(Graphics g) {
 		int pixelStepX = (int) getXStep(); // (DFTEditor.xStep /
 											// getTimeIncrement());
 		int pixelStepY = (int) getYStep(); // (DFTEditor.yStep /
@@ -314,6 +268,44 @@ public class DFTView extends JComponent {
 					drawAmplitude(g, screenX, screenY, DFTEditor.getAmplitude(
 							x, y), b);
 				}
+			}
+		}
+	}
+	
+	public void drawFileDataAsDerivatives(Graphics g) {
+		float ampRange = DFTEditor.maxAmplitude - DFTEditor.minAmplitude;
+		int startX = DFTEditor.leftX;
+		int endX = startX + (int) Math.round((getWidth() - DFTEditor.leftOffset) / getXStep());
+		int startY = DFTEditor.upperY;
+		int endY = startY + (int) Math.round((getHeight() - DFTEditor.upperOffset) / getYStep());
+		for (int x = startX; x < endX; x++) {
+			if (!isXInBounds(x)) break;
+			for (int y = startY; y < endY - 1; y++) {
+				if (!isYInBounds(y)) break;
+				int screenX = DFTEditor.leftOffset + (int) Math.round((x - DFTEditor.leftX) * getXStep());
+				int screenY = DFTEditor.upperOffset + (int) Math.round((y - DFTEditor.upperY) * getYStep());
+				float amp = DFTEditor.getAmplitude(x, y) - DFTEditor.getAmplitude(x, y + 1);
+				Color b = null;
+				float red = 0;
+				float green = 0;
+				float blue = 0;
+				if (Math.abs(amp) <= 0.5f) {
+					red = 0.5f + amp;
+					blue = 0.5f - amp;
+					green = 0.5f;
+				} else {
+					if (amp < 0.5f) {
+						red = 0.0f;
+						blue = 0.25f + -0.75f * (amp) / (ampRange);
+						green = 0.0f;
+					} else {
+						red = 0.25f + 0.75f * (amp) / (ampRange);
+						blue = 0.0f;
+						green = 0.0f;						
+					}
+				}
+				b = new Color(red, green, blue);
+				drawAmplitude(g, screenX, screenY, amp, b);
 			}
 		}
 	}
@@ -362,21 +354,7 @@ public class DFTView extends JComponent {
 			blue = blue / 2.0f + 0.5f;
 			return new Color(red, green, blue);
 		}
-		switch (dataView) {
-		case DATA_ONLY:
-			return new Color(red, green, blue);
-		case MAXIMAS_ONLY:
-			if (DFTEditor.isMaxima(time, freq))
-				return new Color(red, green, blue);
-			return new Color(0.0f, 0.0f, 0.0f);
-		case DATA_AND_MAXIMAS:
-			if (DFTEditor.isMaxima(time, freq))
-				return new Color(red, green, blue);
-		case HARMONICS:
-			return new Color(0.0f, 0.0f, 0.0f);
-		}
-		// if we're here there's an error
-		return new Color(-1.0f, -1.0f, -1.0f);
+		return new Color(red, green, blue);
 	}
 
 	private Color getColor(long harmonicID) {
