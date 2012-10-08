@@ -5,6 +5,22 @@ import javax.swing.filechooser.FileFilter;
 
 public class FileTools {
 
+	public static String PromptForFileOpenWAV(Component c) {
+	   	JFileChooser fc = new JFileChooser();
+	   	FileTools.WAVFilter filter = new FileTools.WAVFilter();
+		fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		fc.setCurrentDirectory(new File("."));
+		fc.setFileFilter(filter);
+        int returnVal = fc.showOpenDialog(c);
+		if (returnVal == JFileChooser.APPROVE_OPTION) {
+        	File file = fc.getSelectedFile();
+        	return fc.getCurrentDirectory() + "/" + file.getName();
+    	} else {
+	    	System.exit(0);
+    	}
+    	return "";
+	}
+	
 	public static String PromptForFileOpen(Component c) {
 	   	JFileChooser fc = new JFileChooser();
 	   	FileTools.Mono5msFilter filter = new FileTools.Mono5msFilter();
@@ -46,6 +62,21 @@ public class FileTools {
 		
 		public String getDescription() {
 			return new String(".mono5ms files");
+		}
+	}
+	
+	public static class WAVFilter extends FileFilter {
+		
+		public WAVFilter() {};
+		
+		public boolean accept(File f) {
+			if(f.getName().contains(".wav")) return true;
+			if(f.isDirectory()) return true;
+			return false;
+		}
+		
+		public String getDescription() {
+			return new String(".wav files");
 		}
 	}
 
