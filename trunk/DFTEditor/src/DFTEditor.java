@@ -50,8 +50,8 @@ public class DFTEditor extends JFrame {
 	public static int timeStepInMillis = FDData.timeStepInMillis; // time in ms = time * timeStepInMillis
 	// these are the max/min valued amplitude for the whole file
 	// they are used to calculate the color of amplitude values
-	public static float maxAmplitude;
-	public static float minAmplitude;
+	public static float maxAmplitude = 17.0f;
+	public static float minAmplitude = 0.0f;
 	// the maximum summed value at any given time
 	public static float maxAmplitudeSum;
 	//Freq ranges from minRealFreq to maxRealFreq, it does not start at 0 (Direct Current)
@@ -410,6 +410,16 @@ public class DFTEditor extends JFrame {
         view.repaint();
 	}
 	
+	public void FileDFT() {
+        String fileName = FileTools.PromptForFileOpenWAV(view);
+        DFT.FileDFTMatrix(fileName);
+    	minLogAmplitudeThreshold = 1.0; // used by autoSelect
+    	SynthTools.refresh = true;
+    	newFileData();
+    	autoSelect();
+        view.repaint();
+	}
+	
 	public void exportAllFiles() {
         FileOutput.selectedExportAll(this);
         JOptionPane.showMessageDialog(this, "Finished exporting all files");
@@ -423,7 +433,7 @@ public class DFTEditor extends JFrame {
 	}
 	
     public DFTEditor() {
-    	FileConvert.wavImportAll();
+    	//FileConvert.wavImportAll();
         view = new DFTView();
         view.setBackground(Color.black);
         controller = new DFTController();
@@ -435,7 +445,9 @@ public class DFTEditor extends JFrame {
         selections = new ArrayList<Selection>();
         selections.add(new Selection(DFTEditor.selectionArea, deleteSelected));
         randomIDGenerator = new Random();
-        openFileInDFTEditor();
+        //openFileInDFTEditor();
+        FileDFT();
+        view.repaint();
         //DFTUtils.testGetConsonantOvertonesBase31();
     }
     

@@ -16,6 +16,20 @@ public class ActionHandler extends JPanel {
 		this.parent = parent;
 	}
 	
+	public class DFTAction extends AbstractAction {
+
+		private static final long serialVersionUID = -5323292053150793042L;
+
+		public DFTAction() {
+			super("DFT");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			parent.FileDFT();
+		}
+	}	
+	
 	public class OpenAction extends AbstractAction {
 
 		private static final long serialVersionUID = -5323292053150793042L;
@@ -479,6 +493,7 @@ public class ActionHandler extends JPanel {
         //Create the File menu
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
+        fileMenu.add(new DFTAction());
         fileMenu.add(new OpenAction());
         fileMenu.add(new SaveSelectedAction());
         fileMenu.add(new ExportAllAction());

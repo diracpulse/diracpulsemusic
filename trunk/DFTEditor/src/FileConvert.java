@@ -42,39 +42,14 @@ public class FileConvert {
 				//System.out.println("OUT5MS: " + mono5msFileName);
 			}
 			for(String convertFileName: convertFileNames) {
-				ConvertWAVToMono5ms(convertFileName);
+				ConvertWAVToMono5msExternal(convertFileName);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public static void runProcess() {
-		try {
-			String s;
-            Process p = Runtime.getRuntime().exec("a");
-            BufferedReader stdInput = new BufferedReader(new 
-                 InputStreamReader(p.getInputStream()));
-            BufferedReader stdError = new BufferedReader(new 
-                 InputStreamReader(p.getErrorStream()));
-            // read the output from the command
-            System.out.println("Here is the standard output of the command:\n");
-            while ((s = stdInput.readLine()) != null) {
-                System.out.println(s);
-            }
-            // read any errors from the attempted command
-            System.out.println("Here is the standard error of the command (if any):\n");
-            while ((s = stdError.readLine()) != null) {
-                System.out.println(s);
-            }
-        }
-        catch (IOException e) {
-            System.out.println("FileConvert.runProcess: IOException: ");
-            e.printStackTrace();
-        }
-    }
-	
-	public static void ConvertWAVToMono5ms(String fileName) {
+	public static void ConvertWAVToMono5msExternal(String fileName) {
 		System.out.println("Starting conversion of \"" + fileName + ".wav\" to \"" + fileName + ".mono5ms\"");
 		String linein = "";
 		Float amp;
