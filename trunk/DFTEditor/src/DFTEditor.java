@@ -12,7 +12,7 @@ public class DFTEditor extends JFrame {
 		STEREO,
 	}
 	
-	public static Channel currentChannel = Channel.MONO;
+	public static Channel currentChannel = Channel.STEREO;
 	private static final long serialVersionUID = -2291799595853726615L;
 	public static MultiWindow parent;
 	public static DFTView view;
