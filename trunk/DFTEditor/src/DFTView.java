@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.TreeMap;
 
 public class DFTView extends JComponent {
 
@@ -15,7 +16,7 @@ public class DFTView extends JComponent {
 	private static int offsetInMillis;
 
 	public enum View {
-		Music, Digits1, Digits2, Pixels1, Pixels2, Pixels3;
+		Digits1, Digits2, Pixels1, Pixels2, Pixels3;
 	}
 
 	public static void setView(View v) {
@@ -43,8 +44,6 @@ public class DFTView extends JComponent {
 
 	public static double getXStep() {
 		switch (view) {
-		case Music:
-			return 0.5;
 		case Digits1:
 			return DFTEditor.xStep;
 		case Digits2:
@@ -61,8 +60,6 @@ public class DFTView extends JComponent {
 
 	public static double getYStep() {
 		switch (view) {
-		case Music:
-			return 2;
 		case Digits1:
 			return DFTEditor.yStep;
 		case Digits2:
@@ -137,11 +134,6 @@ public class DFTView extends JComponent {
 		g.fillRect(DFTEditor.leftOffset, DFTEditor.upperOffset, getWidth(), getHeight());
 		drawLeftFreqs(g);
 		drawUpperTimes(g);
-		if (view == View.Music) {
-			drawFileDataAsMusic(g);
-			System.out.println("DFTView.drawFileData Music Finished");
-			return;
-		}
 		if ((dataView == DataView.HARMONICS)) {
 			drawFileDataAsHarmonics(g);
 			return;
@@ -153,41 +145,9 @@ public class DFTView extends JComponent {
 		drawFileDataAsPixelsOrDigits(g);
 	}
 
-	public void drawFileDataAsMusic(Graphics g) {
-		int timeStep = (int) Math.round(1.0 / getXStep());
-		int startTime = DFTEditor.leftX;
-		int endTime = (int) Math.round(startTime
-				+ ((getWidth() - DFTEditor.leftOffset) * timeStep));
-		int startFreq = DFTEditor.upperY;
-		int endFreq = (int) Math.round(startFreq
-				+ ((getHeight() - DFTEditor.upperOffset) / getYStep()));
-		for (int time = startTime; time < endTime; time += timeStep) {
-			if (!isXInBounds(time))
-				break;
-			for (int freq = startFreq; freq < endFreq; freq++) {
-				if (!isYInBounds(freq))
-					break;
-				FDData data = DFTUtils.getMaxDataInTimeRange(time, time
-						+ timeStep, freq);
-				if (data == null)
-					continue;
-				float logAmplitude = (float) data.getLogAmplitude();
-				Color b = getColor(logAmplitude);
-				g.setColor(b);
-				int screenX = DFTEditor.leftOffset + (time - startTime)
-						/ timeStep;
-				int screenY = (int) Math.round(DFTEditor.upperOffset
-						+ (freq - startFreq) * getYStep());
-				// System.out.println(screenX + " " + screenY + " " +
-				// logAmplitude);
-				// drawAmplitude(g, screenX, screenY, logAmplitude, b);
-				g.drawRect(screenX, screenY, 2, 2);
-			}
-		}
-	}
-
 	public void drawFileDataAsHarmonics(Graphics g) {
-		for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonicMono.values()) {
+		TreeMap<Long, Harmonic> harmonicIDToHarmonic = DFTEditor.getHarmonicIDToHarmonic();
+		for(Harmonic harmonic: harmonicIDToHarmonic.values()) {
 			if(!harmonic.isSynthesized()) continue;
 			FDData firstData = null;
 			for(FDData data: harmonic.getAllData()) {
@@ -247,8 +207,7 @@ public class DFTView extends JComponent {
 		int endY = startY
 				+ ((getHeight() - DFTEditor.upperOffset) / pixelStepY);
 		for (int x = startX; x < endX; x++) {
-			if (!isXInBounds(x))
-				break;
+			if (!isXInBounds(x)) break;
 			for (int y = startY; y < endY; y++) {
 				if (!isYInBounds(y))
 					break;
@@ -257,17 +216,9 @@ public class DFTView extends JComponent {
 				int screenY = DFTEditor.upperOffset
 						+ ((y - DFTEditor.upperY) * pixelStepY);
 				float amp = DFTEditor.getAmplitude(x, y);
-				if (amp == 0.0f)
-					continue;
-				Color b = getColor(x, y);
-				if (DFTEditor.isSelected(x, y)) {
-					float logAmplitude = (float) DFTEditor.getSelected(x, y)
-							.getLogAmplitude();
-					drawAmplitude(g, screenX, screenY, logAmplitude, b);
-				} else {
-					drawAmplitude(g, screenX, screenY, DFTEditor.getAmplitude(
-							x, y), b);
-				}
+				if (amp == 0.0f) continue;
+				Color b = getColor(x,y);
+				drawAmplitude(g, screenX, screenY, amp, b);
 			}
 		}
 	}
@@ -348,11 +299,13 @@ public class DFTView extends JComponent {
 		} else {
 			green = red * 2.0f;
 		}
-		if (DFTEditor.isSelected(time, freq)) {
-			red = red / 2.0f + 0.5f;
-			green = 0.0f;
-			blue = blue / 2.0f + 0.5f;
-			return new Color(red, green, blue);
+		if (DFTEditor.getMaximas().containsKey(time)) {
+			if(DFTEditor.getMaximas().get(time).contains(freq)) {
+				red = red / 2.0f + 0.5f;
+				green = 0.0f;
+				blue = blue / 2.0f + 0.5f;
+				return new Color(red, green, blue);
+			}
 		}
 		return new Color(red, green, blue);
 	}
@@ -382,17 +335,6 @@ public class DFTView extends JComponent {
 			outputFreq = currentFreq
 					- DFTUtils.getConsonantOvertonesBase31(index);
 			index++;
-		}
-	}
-
-	private void drawVerticesSelectedArea(Graphics g) {
-		g.setColor(new Color(1.0f, 1.0f, 0.0f, 0.5f));
-		for (FDData data : DFTEditor.getCurrentSelection().getInputData()) {
-			int x = DFTUtils.timeToScreenX(data.getTime());
-			int y = DFTUtils
-					.freqToScreenY(DFTEditor.noteToFreq(data.getNote()));
-			g.drawLine(DFTEditor.leftOffset, y, getWidth(), y);
-			g.drawLine(x, DFTEditor.upperOffset, x, getHeight());
 		}
 	}
 
@@ -440,14 +382,12 @@ public class DFTView extends JComponent {
 			super.paintComponent(g);
 			drawFileData(g2, true);
 			drawHarmonicsBase31(g2);
-			drawVerticesSelectedArea(g2);
 			g.drawImage(bi, 0, 0, null);
 			return;
 		}
 		super.paintComponent(g);
 		drawFileData(g, true);
 		drawHarmonicsBase31(g);
-		drawVerticesSelectedArea(g);
 		return;
 
 	}

@@ -1,23 +1,7 @@
 import java.awt.*;
 
 public class DFTUtils {
-	
-	public static FDData getMaxDataInTimeRange(int startTime, int endTime, int freq) {
-		FDData returnVal = DFTEditor.getSelected(startTime, freq);
-		for(int time = startTime + 1; time < endTime; time++) {
-			FDData currentVal =  DFTEditor.getSelected(time, freq);
-			if(currentVal == null) continue;
-			if(returnVal == null) {
-				returnVal = currentVal;
-				continue;
-			}
-			if(currentVal.getLogAmplitude() > returnVal.getLogAmplitude()) {
-				returnVal = currentVal;
-			}
-		}
-		return returnVal;
-	}
-	
+
 	public static int getConsonantOvertonesBase31(int index) {
 		int[] first3 = {31, 18, 13};
 		int[] cycle4 = {10, 8, 7, 6};

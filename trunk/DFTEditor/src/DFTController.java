@@ -18,33 +18,6 @@ public class DFTController implements MouseListener, ActionListener {
 	public void mousePressed(MouseEvent e){
 	    int x = e.getX();
 	    int y = e.getY();
-	    if(e.isShiftDown()) {
-	    	int freqSelected = DFTUtils.screenYToFreq(y);
-	    	if(freqSelected != DFTEditor.drawHarmonicsBaseFreq) {
-	    		DFTEditor.drawHarmonicsBaseFreq = freqSelected;
-	    	} else {
-	    		// toggle off harmonics display
-	    		DFTEditor.drawHarmonicsBaseFreq = -1;
-	    	}
-	    	DFTEditor.refreshView();
-	    	return;
-	    }
-	    if(e.isControlDown()) DFTEditor.clearCurrentSelection();
-	    FDData data = getFileData(x, y);
-	    if(data != null) {
-	    	System.out.println(data);
-			switch(currentAction) {
-				case MAKE_SELECTION:
-					DFTEditor.handleSelection(data);
-					return;
-				case ZOOM:
-					System.out.println("ZOOM not implemented currently");
-					return;
-			}
-		System.out.println("SelectionType unknown");	
-	    } else {
-	    	System.out.println(x + " " + y);
-	    }
 	}
 	
 	

@@ -29,20 +29,6 @@ public class ActionHandler extends JPanel {
 			parent.FileDFT();
 		}
 	}	
-	
-	public class OpenAction extends AbstractAction {
-
-		private static final long serialVersionUID = -5323292053150793042L;
-
-		public OpenAction() {
-			super("Open");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			parent.openFileInDFTEditor();
-		}
-	}	
 
 	public class ExitAction extends AbstractAction {
 
@@ -58,18 +44,18 @@ public class ActionHandler extends JPanel {
 		}
 	}
 
-	public class SaveSelectedAction extends AbstractAction {
+	public class SaveHarmonicsAction extends AbstractAction {
 
 		private static final long serialVersionUID = -4814209505628569590L;
 
-		public SaveSelectedAction() {
+		public SaveHarmonicsAction() {
 			super("Save Selected");
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Save Selected");
-			parent.saveSelectedToFile();
+			parent.saveHarmonicsToFile();
 		}
 	}
 		
@@ -277,37 +263,6 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
-	public class ViewMusicAction extends AbstractAction {
-
-		private static final long serialVersionUID = 1L;
-
-		public ViewMusicAction() {
-			super("Music");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("View Music");
-			DFTView.setView(DFTView.View.Music);
-			DFTEditor.view.repaint();
-		}
-	}
-	
-	public class UndoSelectionAction extends AbstractAction {
-
-		private static final long serialVersionUID = 1L;
-
-		public UndoSelectionAction() {
-			super("Undo Selection");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Undo Selection");
-			DFTEditor.undoPreviousSelection();
-		}
-	}
-	
 	public class DerivativesViewAction extends AbstractAction {
 
 		private static final long serialVersionUID = 1L;
@@ -355,98 +310,7 @@ public class ActionHandler extends JPanel {
 			DFTEditor.view.repaint();
 		}
 	}
-	
-	public class LineAreaAction extends AbstractAction {
 
-		private static final long serialVersionUID = 1L;
-
-		public LineAreaAction() {
-			super("Line");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Line");
-			DFTEditor.setSelectionArea(Selection.Area.LINE_INTERPOLATE);
-		}
-	}
-	
-	public class RectangleAreaAction extends AbstractAction {
-
-		private static final long serialVersionUID = 1L;
-
-		public RectangleAreaAction() {
-			super("Rectangle");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Rectangle");
-			DFTEditor.setSelectionArea(Selection.Area.RECTANGLE);
-		}
-	}
-	
-	public class TriangleAreaAction extends AbstractAction {
-
-		private static final long serialVersionUID = 1L;
-
-		public TriangleAreaAction() {
-			super("Triangle");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Triangle");
-			DFTEditor.setSelectionArea(Selection.Area.TRIANGLE);
-		}
-	}
-	
-	public class AllAreaAction extends AbstractAction {
-
-		private static final long serialVersionUID = 1L;
-
-		public AllAreaAction() {
-			super("All");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("All");
-			DFTEditor.setSelectionArea(Selection.Area.ALL);
-		}
-	}
-	
-	public class AddSelectionAction extends AbstractAction {
-
-		private static final long serialVersionUID = 1L;
-
-		public AddSelectionAction() {
-			super("Add Selection");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Add Selection");
-			DFTEditor.deleteSelected = false;
-		}
-	}
-	
-	public class DeleteSelectionAction extends AbstractAction {
-
-		private static final long serialVersionUID = 1L;
-
-		public DeleteSelectionAction() {
-			super("Delete Selection");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Delete Selection");
-			DFTEditor.deleteSelected = true;
-			DFTEditor.clearCurrentSelection();
-		}
-	}
-	
 	public class SelectCutoffAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
@@ -460,7 +324,7 @@ public class ActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Cutoff = " + logCutoff);
 			DFTEditor.minLogAmplitudeThreshold = logCutoff;
-			DFTEditor.autoSelect();
+			SynthTools.createHarmonics();
 		    DFTEditor.view.repaint();
 		    SynthTools.refresh = true;
 		    parent.playSelectedDataInCurrentWindow();
@@ -494,8 +358,6 @@ public class ActionHandler extends JPanel {
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
         fileMenu.add(new DFTAction());
-        fileMenu.add(new OpenAction());
-        fileMenu.add(new SaveSelectedAction());
         fileMenu.add(new ExportAllAction());
         fileMenu.add(new ExitAction());
         // Create Channel Select
@@ -513,30 +375,16 @@ public class ActionHandler extends JPanel {
         playMenu.add(new JMenuItem(new PlayLinearCubicSplineAction()));
         JMenu viewMenu = new JMenu("View");
         menuBar.add(viewMenu);
-        viewMenu.add(new JMenuItem(new ViewMusicAction())); 
         viewMenu.add(new JMenuItem(new ViewPixels1Action()));
         viewMenu.add(new JMenuItem(new ViewPixels2Action()));
         viewMenu.add(new JMenuItem(new ViewPixels3Action()));    
         viewMenu.add(new JMenuItem(new ViewDigits1Action()));
         viewMenu.add(new JMenuItem(new ViewDigits2Action())); 
-        JMenu editMenu = new JMenu("Edit");
-        editMenu.add(new JMenuItem(new UndoSelectionAction()));
-        menuBar.add(editMenu);
         JMenu dataViewMenu = new JMenu("DataView");
         menuBar.add(dataViewMenu);
         dataViewMenu.add(new JMenuItem(new DerivativesViewAction()));
         dataViewMenu.add(new JMenuItem(new DataViewAction()));
         dataViewMenu.add(new JMenuItem(new HarmonicsViewAction()));
-        JMenu selectionAreaMenu = new JMenu("SelectionArea");
-        menuBar.add(selectionAreaMenu);
-        selectionAreaMenu.add(new JMenuItem(new LineAreaAction()));
-        selectionAreaMenu.add(new JMenuItem(new RectangleAreaAction()));
-        selectionAreaMenu.add(new JMenuItem(new TriangleAreaAction()));
-        selectionAreaMenu.add(new JMenuItem(new AllAreaAction()));
-        JMenu addDeleteMenu = new JMenu("Add/Delete");
-        menuBar.add(addDeleteMenu);
-        addDeleteMenu.add(new JMenuItem(new AddSelectionAction()));
-        addDeleteMenu.add(new JMenuItem(new DeleteSelectionAction()));
         JMenu cutoffMenu = new JMenu("Cutoff");
         menuBar.add(cutoffMenu);
         for(int logCutoff = 12; logCutoff > 2; logCutoff--) {

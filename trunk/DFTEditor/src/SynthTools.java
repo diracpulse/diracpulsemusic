@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 class SynthTools {
 	
@@ -52,90 +53,234 @@ class SynthTools {
 		//ap = new AudioPlayer(parent, PCMDataRight, 1.0);
 		//ap.start();
 	}
+	
+	static void createHarmonics() {
+		createHarmonicsMono();
+		createHarmonicsLeft();
+		createHarmonicsRight();
+	}
 
-	// create Harmonics from saveInput, sets ID of FDData
-	static void createHarmonics(TreeMap<Integer, TreeMap<Integer, FDData>> saveInput) {
-		// create a copy of input because algorithm removes keys after added to harmonics
-		TreeMap<Integer, TreeMap<Integer, FDData>> input = copyTreeMap(saveInput);
-		TreeMap<Long, Harmonic> harmonicIDToHarmonic = DFTEditor.getHarmonicIDToHarmonic(); 
-		//harmonicIDToHarmonic = new TreeMap<Long, Harmonic>(); 
-		while(!input.isEmpty()) {
-			int inputTime = input.firstKey();
-			// loop through all frequencies at current time 
-			while(!input.get(inputTime).isEmpty()) {
-				long id = DFTEditor.getRandomID();
-				Harmonic currentHarmonic = new Harmonic(id);
-				// ARBITRARY: start at lowest note
-				int currentNote = input.get(inputTime).firstKey();
-				int harmonicTime = inputTime;
-				while(input.containsKey(harmonicTime)) {
-					//System.out.println("SynthTools.createHarmonics harmonicTime" + harmonicTime);
-					//sleep(10);
-					// check for data at [currentNote,time+1]
-					if(input.get(harmonicTime).containsKey(currentNote)) {
-						FDData data = input.get(harmonicTime).get(currentNote);
-						data.setHarmonicID(id);
-						currentHarmonic.addData(data);
-						input.get(harmonicTime).remove(currentNote);
-						DFTEditor.addSelected(data);
-						harmonicTime++;
+	static void createHarmonicsMono() {
+		TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
+		DFTEditor.harmonicIDToHarmonicMono = new TreeMap<Long, Harmonic>();
+		DFTEditor.timeToFreqsAtMaximaMono = new TreeMap<Integer, TreeSet<Integer>>();
+		float[][] amplitudes = DFTEditor.amplitudesMono;
+		int numTimes = amplitudes.length;
+		int numFreqs = amplitudes[0].length;
+		int time = 0;
+		int freq = 0;
+		for(time = 0; time < numTimes; time++) {
+			timeToFreqToData.put(time, new TreeMap<Integer, FDData>());
+			DFTEditor.timeToFreqsAtMaximaMono.put(time, new TreeSet<Integer>());
+			for(freq = 1; freq < numFreqs - 1; freq++) {
+				if(amplitudes[time][freq] >= amplitudes[time][freq - 1]) {
+					if(amplitudes[time][freq] >= amplitudes[time][freq + 1]) {
+						if(amplitudes[time][freq] <= 0) continue;
+						FDData data = null;
+						try {
+							data = new FDData(time, DFTEditor.freqToNote(freq), amplitudes[time][freq + 1], 1L);
+						} catch (Exception e) {
+							System.out.println("SynthTools.createHarmonics: Error creating data time: " + time + " freq: " + freq);
+						}
+						timeToFreqToData.get(time).put(freq, data);
+						DFTEditor.timeToFreqsAtMaximaMono.get(time).add(freq);
+						//System.out.println(data);
+					}
+				}
+			}
+		}
+		for(time = 0; time < numTimes; time++) {
+			TreeMap<Integer, FDData> outerFreqToData = timeToFreqToData.get(time);
+			while(!outerFreqToData.isEmpty()) {
+				long harmonicID = DFTEditor.getRandomID();
+				Harmonic newHarmonic = new Harmonic(harmonicID);
+				freq = outerFreqToData.firstKey();
+				FDData currentData = outerFreqToData.get(freq);
+				outerFreqToData.remove(freq);
+				currentData.setHarmonicID(harmonicID);
+				newHarmonic.addData(currentData);
+				for(int innerTime = time + 1; innerTime < numTimes; innerTime++) {
+					TreeMap<Integer, FDData> innerFreqToData = timeToFreqToData.get(innerTime);
+					if(innerFreqToData.containsKey(freq)) {
+						FDData innerData = innerFreqToData.get(freq);
+						innerFreqToData.remove(freq);
+						innerData.setHarmonicID(harmonicID);
+						newHarmonic.addData(innerData);
+						//System.out.println("0:" + harmonicID + " " + innerData);
 						continue;
 					}
-					currentNote++;
-					// check for data at [currentNote+1,time+1]
-					if(deltaHarmonic == 0) continue;
-					if(input.get(harmonicTime).containsKey(currentNote)) {
-						FDData data = input.get(harmonicTime).get(currentNote);
-						data.setHarmonicID(id);
-						currentHarmonic.addData(data);
-						input.get(harmonicTime).remove(currentNote);
-						DFTEditor.addSelected(data);
-						harmonicTime++;
+					if(innerFreqToData.containsKey(freq - 1)) {
+						freq -= 1;
+						FDData innerData = innerFreqToData.get(freq);
+						innerFreqToData.remove(freq);
+						innerData.setHarmonicID(harmonicID);
+						newHarmonic.addData(innerData);
+						//System.out.println("0:" + harmonicID + " " + innerData);
 						continue;
 					}
-					// check for data at [currentNote-1,time-1]
-					currentNote -= 2;
-					if(input.get(harmonicTime).containsKey(currentNote)) {
-						FDData data = input.get(harmonicTime).get(currentNote);
-						data.setHarmonicID(id);
-						currentHarmonic.addData(data);
-						input.get(harmonicTime).remove(currentNote);
-						DFTEditor.addSelected(data);
-						harmonicTime++;
+					if(innerFreqToData.containsKey(freq + 1)) {
+						freq += 1;
+						FDData innerData = innerFreqToData.get(freq);
+						innerFreqToData.remove(freq);
+						innerData.setHarmonicID(harmonicID);
+						newHarmonic.addData(innerData);
+						//System.out.println("0:" + harmonicID + " " + innerData);
 						continue;
 					}
-					if(deltaHarmonic == 1) break;
-					currentNote += 3;
-					if(input.get(harmonicTime).containsKey(currentNote)) {
-						FDData data = input.get(harmonicTime).get(currentNote);
-						data.setHarmonicID(id);
-						currentHarmonic.addData(data);
-						input.get(harmonicTime).remove(currentNote);
-						DFTEditor.addSelected(data);
-						harmonicTime++;
-						continue;
-					}
-					currentNote -= 4;
-					if(input.get(harmonicTime).containsKey(currentNote)) {
-						FDData data = input.get(harmonicTime).get(currentNote);
-						data.setHarmonicID(id);
-						currentHarmonic.addData(data);
-						input.get(harmonicTime).remove(currentNote);
-						DFTEditor.addSelected(data);
-						harmonicTime++;
-						continue;
-					}				
 					break;
 				}
-				harmonicIDToHarmonic.put(id, currentHarmonic);
-			} // while(!input.get(inputTime).isEmpty())
-			input.remove(inputTime);
-			inputTime++;
-			//System.out.println("SynthTools.createHarmonics input size " + input.size());
-			//sleep(10);
-		} // while(!input.isEmpty())
-		//printHarmonics(harmonics);
-		return;
+				DFTEditor.harmonicIDToHarmonicMono.put(harmonicID, newHarmonic);
+			}
+		}
+	}
+	
+
+	static void createHarmonicsLeft() {
+		TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
+		DFTEditor.harmonicIDToHarmonicLeft = new TreeMap<Long, Harmonic>();
+		DFTEditor.timeToFreqsAtMaximaLeft = new TreeMap<Integer, TreeSet<Integer>>();
+		float[][] amplitudes = DFTEditor.amplitudesLeft;
+		int numTimes = amplitudes.length;
+		int numFreqs = amplitudes[0].length;
+		int time = 0;
+		int freq = 0;
+		for(time = 0; time < numTimes; time++) {
+			timeToFreqToData.put(time, new TreeMap<Integer, FDData>());
+			DFTEditor.timeToFreqsAtMaximaLeft.put(time, new TreeSet<Integer>());
+			for(freq = 1; freq < numFreqs - 1; freq++) {
+				if(amplitudes[time][freq] >= amplitudes[time][freq - 1]) {
+					if(amplitudes[time][freq] >= amplitudes[time][freq + 1]) {
+						if(amplitudes[time][freq] == 0) continue;
+						FDData data = null;
+						try {
+							data = new FDData(time, DFTEditor.freqToNote(freq), amplitudes[time][freq + 1], 1L);
+						} catch (Exception e) {
+							System.out.println("SynthTools.createHarmonics: Error creating data time: " + time + " freq: " + freq);
+						}
+						timeToFreqToData.get(time).put(freq, data);
+						DFTEditor.timeToFreqsAtMaximaLeft.get(time).add(freq);
+						//System.out.println(data);
+					}
+				}
+			}
+		}
+		for(time = 0; time < numTimes; time++) {
+			TreeMap<Integer, FDData> outerFreqToData = timeToFreqToData.get(time);
+			while(!outerFreqToData.isEmpty()) {
+				long harmonicID = DFTEditor.getRandomID();
+				Harmonic newHarmonic = new Harmonic(harmonicID);
+				freq = outerFreqToData.firstKey();
+				FDData currentData = outerFreqToData.get(freq);
+				outerFreqToData.remove(freq);
+				currentData.setHarmonicID(harmonicID);
+				newHarmonic.addData(currentData);
+				for(int innerTime = time + 1; innerTime < numTimes; innerTime++) {
+					TreeMap<Integer, FDData> innerFreqToData = timeToFreqToData.get(innerTime);
+					if(innerFreqToData.containsKey(freq)) {
+						FDData innerData = innerFreqToData.get(freq);
+						innerFreqToData.remove(freq);
+						innerData.setHarmonicID(harmonicID);
+						newHarmonic.addData(innerData);
+						//System.out.println("0:" + harmonicID + " " + innerData);
+						continue;
+					}
+					if(innerFreqToData.containsKey(freq - 1)) {
+						freq -= 1;
+						FDData innerData = innerFreqToData.get(freq);
+						innerFreqToData.remove(freq);
+						innerData.setHarmonicID(harmonicID);
+						newHarmonic.addData(innerData);
+						//System.out.println("1:" + harmonicID + " " + innerData);
+						continue;
+					}
+					if(innerFreqToData.containsKey(freq + 1)) {
+						freq += 1;
+						FDData innerData = innerFreqToData.get(freq);
+						innerFreqToData.remove(freq);
+						innerData.setHarmonicID(harmonicID);
+						newHarmonic.addData(innerData);
+						//System.out.println("2:" + harmonicID + " " + innerData);
+						continue;
+					}
+					break;
+				}
+				DFTEditor.harmonicIDToHarmonicLeft.put(harmonicID, newHarmonic);
+			}
+		}
+	}
+	
+	static void createHarmonicsRight() {
+		TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
+		DFTEditor.harmonicIDToHarmonicRight = new TreeMap<Long, Harmonic>();
+		DFTEditor.timeToFreqsAtMaximaRight = new TreeMap<Integer, TreeSet<Integer>>();
+		float[][] amplitudes = DFTEditor.amplitudesRight;
+		int numTimes = amplitudes.length;
+		int numFreqs = amplitudes[0].length;
+		int time = 0;
+		int freq = 0;
+		for(time = 0; time < numTimes; time++) {
+			timeToFreqToData.put(time, new TreeMap<Integer, FDData>());
+			DFTEditor.timeToFreqsAtMaximaRight.put(time, new TreeSet<Integer>());
+			for(freq = 1; freq < numFreqs - 1; freq++) {
+				if(amplitudes[time][freq] >= amplitudes[time][freq - 1]) {
+					if(amplitudes[time][freq] >= amplitudes[time][freq + 1]) {
+						if(amplitudes[time][freq] == 0) continue;
+						FDData data = null;
+						try {
+							data = new FDData(time, DFTEditor.freqToNote(freq), amplitudes[time][freq + 1], 1L);
+						} catch (Exception e) {
+							System.out.println("SynthTools.createHarmonics: Error creating data time: " + time + " freq: " + freq);
+						}
+						timeToFreqToData.get(time).put(freq, data);
+						DFTEditor.timeToFreqsAtMaximaRight.get(time).add(freq);
+						//System.out.println(data);
+					}
+				}
+			}
+		}
+		for(time = 0; time < numTimes; time++) {
+			TreeMap<Integer, FDData> outerFreqToData = timeToFreqToData.get(time);
+			while(!outerFreqToData.isEmpty()) {
+				long harmonicID = DFTEditor.getRandomID();
+				Harmonic newHarmonic = new Harmonic(harmonicID);
+				freq = outerFreqToData.firstKey();
+				FDData currentData = outerFreqToData.get(freq);
+				outerFreqToData.remove(freq);
+				currentData.setHarmonicID(harmonicID);
+				newHarmonic.addData(currentData);
+				for(int innerTime = time + 1; innerTime < numTimes; innerTime++) {
+					TreeMap<Integer, FDData> innerFreqToData = timeToFreqToData.get(innerTime);
+					if(innerFreqToData.containsKey(freq)) {
+						FDData innerData = innerFreqToData.get(freq);
+						innerFreqToData.remove(freq);
+						innerData.setHarmonicID(harmonicID);
+						newHarmonic.addData(innerData);
+						//System.out.println("0:" + harmonicID + " " + innerData);
+						continue;
+					}
+					if(innerFreqToData.containsKey(freq - 1)) {
+						freq -= 1;
+						FDData innerData = innerFreqToData.get(freq);
+						innerFreqToData.remove(freq);
+						innerData.setHarmonicID(harmonicID);
+						newHarmonic.addData(innerData);
+						//System.out.println("1:" + harmonicID + " " + innerData);
+						continue;
+					}
+					if(innerFreqToData.containsKey(freq + 1)) {
+						freq += 1;
+						FDData innerData = innerFreqToData.get(freq);
+						innerFreqToData.remove(freq);
+						innerData.setHarmonicID(harmonicID);
+						newHarmonic.addData(innerData);
+						//System.out.println("2:" + harmonicID + " " + innerData);
+						continue;
+					}
+					break;
+				}
+				DFTEditor.harmonicIDToHarmonicRight.put(harmonicID, newHarmonic);
+			}
+		}
 	}
 	
 	static void printHarmonics(ArrayList<Harmonic> harmonics) {

@@ -16,8 +16,7 @@ import java.util.TreeSet;
 public class FileOutput {
 	
 	// This function reads from a (newly created) .mono5ms file
-	public static void selectedExportAll(DFTEditor parent) {
-		TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToSelectedData = DFTEditor.getSelectedData();
+	public static void harmonicsExportAll(DFTEditor parent) {
 		try {
 		//runProcess();
 			TreeSet<String> mono5msFileNames = new TreeSet<String>();
@@ -47,25 +46,24 @@ public class FileOutput {
 			}
 			for(String exportFileName: exportFileNames) {
 				FileInput.ReadBinaryFileData(parent, exportFileName + ".mono5ms", "mono5ms");
-				timeToFreqToSelectedData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
-				OutputSelectedToFile(exportFileName);
+				OutputHarmonicsToFile(exportFileName);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public static void OutputSelectedToFile(String fileName) {
+	public static void OutputHarmonicsToFile(String fileName) {
 		DFTEditor.Channel saveChannel = DFTEditor.currentChannel;
 		try {
 	    	DataOutputStream selectedOut = new DataOutputStream(new
 		            BufferedOutputStream(new FileOutputStream(new String(fileName + ".harmonics"))));
 			DFTEditor.currentChannel = DFTEditor.Channel.MONO;
-			OutputSelectedToFile(selectedOut, (byte) 0);
+			OutputHarmonicsToFile(selectedOut, (byte) 0);
 			DFTEditor.currentChannel = DFTEditor.Channel.LEFT;
-			OutputSelectedToFile(selectedOut, (byte) 1);
+			OutputHarmonicsToFile(selectedOut, (byte) 1);
 			DFTEditor.currentChannel = DFTEditor.Channel.RIGHT;
-			OutputSelectedToFile(selectedOut, (byte) 2);
+			OutputHarmonicsToFile(selectedOut, (byte) 2);
             selectedOut.close();
 		} catch (Exception e) {
 			System.out.println("Exception in FileOutput.OutputSelectedToFile(filename)");
@@ -76,18 +74,20 @@ public class FileOutput {
 		DFTEditor.currentChannel = saveChannel;
 	}
 	
-	public static void OutputSelectedToFile(DataOutputStream selectedOut, byte channel) {
-		TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToSelectedData = DFTEditor.getSelectedData();
+	public static void OutputHarmonicsToFile(DataOutputStream harmonicsOut, byte channel) {
+		TreeMap<Long, Harmonic> harmonicIDToHarmonic = null;
+		if(channel == 0) harmonicIDToHarmonic = DFTEditor.harmonicIDToHarmonicMono;
+		if(channel == 1) harmonicIDToHarmonic = DFTEditor.harmonicIDToHarmonicLeft;
+		if(channel == 2) harmonicIDToHarmonic = DFTEditor.harmonicIDToHarmonicRight;
 		try {
-            for(int time: timeToFreqToSelectedData.keySet()) {
-            	for(int freq: timeToFreqToSelectedData.get(time).keySet()) {
-            		FDData data = timeToFreqToSelectedData.get(time).get(freq);
+            for(Harmonic harmonic: harmonicIDToHarmonic.values()) {
+            	for(FDData data: harmonic.getAllData()) {
             		float amp = (float) data.getLogAmplitude();
-            		selectedOut.writeByte(channel);
-            		selectedOut.writeInt(time);
-            		selectedOut.writeInt(DFTEditor.freqToNote(freq));
-            		selectedOut.writeFloat(amp);
-            		selectedOut.writeLong(data.getHarmonicID());
+            		harmonicsOut.writeByte(channel);
+            		harmonicsOut.writeInt(data.getTime());
+            		harmonicsOut.writeInt(data.getNote());
+            		harmonicsOut.writeFloat(amp);
+            		harmonicsOut.writeLong(data.getHarmonicID());
             	}
             }
 		} catch (Exception e) {

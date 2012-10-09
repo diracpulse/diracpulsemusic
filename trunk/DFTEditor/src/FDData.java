@@ -113,7 +113,7 @@ public class FDData {
 	}
 	
 	public String toString() {
-		return "[" + getTime() + "|" + getNote() + "|" + getLogAmplitude() + "]";
+		return "[" + getTime() + "|" + getNote() + "|" + getLogAmplitude() + "|" + getHarmonicID() + "]";
 	}
 	
 }
