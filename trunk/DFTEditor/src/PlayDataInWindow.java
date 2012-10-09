@@ -1,14 +1,16 @@
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import javax.swing.JOptionPane;
 import javax.swing.Timer;
 
 
 public class PlayDataInWindow implements ActionListener {
 	
 	public enum SynthType {
-		Log,
 		Linear,
-		LinearCubicSpline;
+		LinearCubicSpline,
+		LinearNoise;
 	}
 	
 	int currentOffsetInMillis;
@@ -24,9 +26,10 @@ public class PlayDataInWindow implements ActionListener {
 		this.refreshRateInMillis = refreshRateInMillis;
 		this.endTimeInMillis = endTimeInMillis;
 		timer = new Timer(refreshRateInMillis, this);
-		if(synthType == SynthType.Log) SynthTools.createPCMData();
 		if(synthType == SynthType.Linear) SynthTools.createPCMDataLinear();
 		if(synthType == SynthType.LinearCubicSpline) SynthTools.createPCMDataLinearCubicSpline();
+		if(synthType == SynthType.LinearNoise) SynthTools.createPCMDataLinearNoise();
+		JOptionPane.showMessageDialog(parent, "Ready To Play");
         timer.setInitialDelay(0);
         timer.start();
 	}
