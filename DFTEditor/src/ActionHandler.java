@@ -73,22 +73,7 @@ public class ActionHandler extends JPanel {
 			parent.exportAllFiles();
 		}
 	}
-	
-	public class PlayHarmonicsAction extends AbstractAction {
 
-		private static final long serialVersionUID = 2018379987198757465L;
-
-		public PlayHarmonicsAction() {
-			super("Play Harmonics");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			parent.playSelectedDataInCurrentWindow();
-			System.out.println("Play Harmonics");
-		}
-	}
-	
 	public class StereoAction extends AbstractAction {
 
 		private static final long serialVersionUID = 1L;
@@ -180,6 +165,21 @@ public class ActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			parent.playSelectedDataInCurrentWindowLinearCubicSpline();
 			System.out.println("Play Linear Cubic Spline");
+		}
+	}
+	
+	public class PlayLinearNoiseAction extends AbstractAction {
+
+		private static final long serialVersionUID = 7354387706903212877L;
+
+		public PlayLinearNoiseAction() {
+			super("Play Linear Noise");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			parent.playSelectedDataInCurrentWindowLinearNoise();
+			System.out.println("Play Linear Noise");
 		}
 	}
 	
@@ -295,6 +295,22 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
+	public class DataOnlyViewAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public DataOnlyViewAction() {
+			super("Data Only");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Data Only");
+			DFTView.setDataView(DFTView.DataView.DATA_ONLY);
+			DFTEditor.view.repaint();
+		}
+	}
+	
 	public class HarmonicsViewAction extends AbstractAction {
 
 		private static final long serialVersionUID = 1L;
@@ -327,7 +343,7 @@ public class ActionHandler extends JPanel {
 			SynthTools.createHarmonics();
 		    DFTEditor.view.repaint();
 		    SynthTools.refresh = true;
-		    parent.playSelectedDataInCurrentWindow();
+		    parent.playSelectedDataInCurrentWindowLinear();
 		}		
 		
 	}
@@ -346,7 +362,7 @@ public class ActionHandler extends JPanel {
 			System.out.println("MinLength = " + minLength);
 			DFTEditor.minLengthThreshold = minLength;
 			SynthTools.refresh = true;
-		    parent.playSelectedDataInCurrentWindow();
+		    parent.playSelectedDataInCurrentWindowLinear();
 		}		
 		
 	}
@@ -370,9 +386,9 @@ public class ActionHandler extends JPanel {
         //Create the Play menu
         JMenu playMenu = new JMenu("Play");
         menuBar.add(playMenu);        
-        playMenu.add(new JMenuItem(new PlayHarmonicsAction()));
         playMenu.add(new JMenuItem(new PlayLinearAction()));
         playMenu.add(new JMenuItem(new PlayLinearCubicSplineAction()));
+        playMenu.add(new JMenuItem(new PlayLinearNoiseAction()));
         JMenu viewMenu = new JMenu("View");
         menuBar.add(viewMenu);
         viewMenu.add(new JMenuItem(new ViewPixels1Action()));
@@ -382,8 +398,9 @@ public class ActionHandler extends JPanel {
         viewMenu.add(new JMenuItem(new ViewDigits2Action())); 
         JMenu dataViewMenu = new JMenu("DataView");
         menuBar.add(dataViewMenu);
-        dataViewMenu.add(new JMenuItem(new DerivativesViewAction()));
         dataViewMenu.add(new JMenuItem(new DataViewAction()));
+        dataViewMenu.add(new JMenuItem(new DataOnlyViewAction()));
+        dataViewMenu.add(new JMenuItem(new DerivativesViewAction()));
         dataViewMenu.add(new JMenuItem(new HarmonicsViewAction()));
         JMenu cutoffMenu = new JMenu("Cutoff");
         menuBar.add(cutoffMenu);

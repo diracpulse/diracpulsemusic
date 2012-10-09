@@ -7,7 +7,7 @@ public class Filter {
 	final static double onePI = 3.1415926535897932384626433832795;
 	final static double halfPI = 1.5707963267948966192313216916398;
 	final static double samplingRate = 44100.0;
-	final static double maxBinStep = 0.25;
+	final static double maxBinStep = 1.0;
 
 	final static double alpha = 10.0;
 	

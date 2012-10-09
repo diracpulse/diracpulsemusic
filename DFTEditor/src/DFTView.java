@@ -28,7 +28,7 @@ public class DFTView extends JComponent {
 	}
 
 	public enum DataView {
-		DATA, HARMONICS, DERIVATIVES;
+		DATA, DATA_ONLY, HARMONICS, DERIVATIVES;
 	}
 
 	public static void setDataView(DataView v) {
@@ -262,6 +262,7 @@ public class DFTView extends JComponent {
 	}
 
 	private Color getColor(double logAmplitude) {
+		if(logAmplitude < 0) return new Color(1.0f, 1.0f, 1.0f);
 		float ampRange = DFTEditor.maxAmplitude - DFTEditor.minAmplitude;
 		float currentVal = (float) logAmplitude;
 		currentVal -= DFTEditor.minAmplitude;
@@ -285,6 +286,7 @@ public class DFTView extends JComponent {
 	private Color getColor(int time, int freq) {
 		float ampRange = DFTEditor.maxAmplitude - DFTEditor.minAmplitude;
 		float currentVal = DFTEditor.getAmplitude(time, freq);
+		if(currentVal < 0) return new Color(1.0f, 1.0f, 1.0f);
 		currentVal -= DFTEditor.minAmplitude;
 		currentVal /= ampRange;
 		if (currentVal < 0.0f)
@@ -301,10 +303,12 @@ public class DFTView extends JComponent {
 		}
 		if (DFTEditor.getMaximas().containsKey(time)) {
 			if(DFTEditor.getMaximas().get(time).contains(freq)) {
-				red = red / 2.0f + 0.5f;
-				green = 0.0f;
-				blue = blue / 2.0f + 0.5f;
-				return new Color(red, green, blue);
+				if(dataView != DataView.DATA_ONLY) {
+					red = red / 2.0f + 0.5f;
+					green = 0.0f;
+					blue = blue / 2.0f + 0.5f;
+					return new Color(red, green, blue);
+				}
 			}
 		}
 		return new Color(red, green, blue);

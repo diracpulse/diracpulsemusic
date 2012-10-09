@@ -19,6 +19,12 @@ public class FastSynth {
 		return sharedPCMData;
 	}
 	
+	public static double[] synthHarmonicsLinearNoise(ArrayList<Harmonic> harmonics) {
+		initSharedPCMData(harmonics);
+		for(Harmonic harmonic: harmonics) synthHarmonicLinearNoise(harmonic);
+		return sharedPCMData;
+	}
+	
 	private static void initSharedPCMData(ArrayList<Harmonic> harmonics) {
 		double maxEndTime = 0;
 		for(Harmonic harmonic: harmonics) {
@@ -28,6 +34,38 @@ public class FastSynth {
 		int numSamples = (int) Math.ceil(maxEndTime * timeToSample);
 		sharedPCMData = new double[numSamples];
 		for(int index = 0; index < numSamples; index++) sharedPCMData[index] = 0.0;
+	}
+	
+	private static void synthHarmonicLinearNoise(Harmonic harmonic) {
+		if(harmonic.getAverageNote() < 10 * FDData.noteBase) {
+			synthHarmonicLinear(harmonic);
+			return;
+		}
+		ArrayList<FDData> dataArray = new ArrayList<FDData>(harmonic.getAllDataInterpolated().values());
+		int maxArrayIndex = dataArray.size();
+		double currentPhase = 0.0;
+		int harmonicStart = (int) Math.round(harmonic.getStartTime() * SynthTools.timeToSample);
+		int duration = (int) Math.round(harmonic.getLength() * SynthTools.timeToSample);
+		double[] noise = Filter.getFilteredNoise(duration, harmonic.getAverageNote(), 1.0);
+		for(int arrayIndex = 0; arrayIndex < maxArrayIndex - 1; arrayIndex++) {
+			int lowerTime = (int) Math.round(dataArray.get(arrayIndex).getTime() * timeToSample);
+			int upperTime = (int) Math.round(dataArray.get(arrayIndex + 1).getTime() * timeToSample);
+			double lowerAmplitude = Math.pow(2.0, dataArray.get(arrayIndex).getLogAmplitude());
+			double upperAmplitude = Math.pow(2.0, dataArray.get(arrayIndex + 1).getLogAmplitude());
+			double lowerFreq = Math.pow(2.0, (double) dataArray.get(arrayIndex).getNoteComplete() / FDData.noteBase);
+			double upperFreq = Math.pow(2.0, (double) dataArray.get(arrayIndex + 1).getNoteComplete() / FDData.noteBase);
+			double lowerDeltaPhase = (lowerFreq / SynthTools.sampleRate) * SynthTools.twoPI;
+			double upperDeltaPhase = (upperFreq / SynthTools.sampleRate) * SynthTools.twoPI;
+			double ampSlope = (upperAmplitude - lowerAmplitude) / (upperTime - lowerTime);
+			double deltaPhaseSlope = (upperDeltaPhase - lowerDeltaPhase) / (upperTime - lowerTime);
+			for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
+				double amplitude = lowerAmplitude + (timeIndex - lowerTime) * ampSlope;
+				double deltaPhase = lowerDeltaPhase + (timeIndex - lowerTime) * deltaPhaseSlope;
+				sharedPCMData[timeIndex] += noise[timeIndex - harmonicStart] * amplitude;
+				currentPhase += deltaPhase;
+				if(currentPhase > SynthTools.twoPI) currentPhase -= SynthTools.twoPI;
+			}	
+		}
 	}
 	
 	private static void synthHarmonicLinear(Harmonic harmonic) {

@@ -13,15 +13,8 @@ class SynthTools {
 	static int deltaHarmonic = 1;
 	static DFTEditor parent;
 	public static boolean refresh = true;
+	public static boolean flatHarmonics = true;
 
-	static void createPCMData() {
-		//TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToSelectedData = DFTEditor.getSelectedData();
-		//createHarmonics(timeToFreqToSelectedData);
-		PCMDataMono = FileOutput.SynthFDDataExternally(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicMono.values()));
-		PCMDataLeft = FileOutput.SynthFDDataExternally(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicLeft.values()));
-		PCMDataRight = FileOutput.SynthFDDataExternally(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicRight.values()));
-	}
-	
 	static void createPCMDataLinear() {
 		//TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToSelectedData = DFTEditor.getSelectedData();
 		//createHarmonics(timeToFreqToSelectedData);
@@ -36,6 +29,14 @@ class SynthTools {
 		PCMDataMono = FastSynth.synthHarmonicsLinearCubicSpline(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicMono.values()));
 		PCMDataLeft = FastSynth.synthHarmonicsLinearCubicSpline(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicLeft.values()));
 		PCMDataRight = FastSynth.synthHarmonicsLinearCubicSpline(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicRight.values()));
+	}
+	
+	static void createPCMDataLinearNoise() {
+		//TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToSelectedData = DFTEditor.getSelectedData();
+		//createHarmonics(timeToFreqToSelectedData);
+		PCMDataMono = FastSynth.synthHarmonicsLinearNoise(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicMono.values()));
+		PCMDataLeft = FastSynth.synthHarmonicsLinearNoise(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicLeft.values()));
+		PCMDataRight = FastSynth.synthHarmonicsLinearNoise(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicRight.values()));
 	}
 	
 	static void playPCMData() {
@@ -87,7 +88,7 @@ class SynthTools {
 						if(amplitudes[time][freq] <= 0) continue;
 						FDData data = null;
 						try {
-							data = new FDData(time, DFTEditor.freqToNote(freq), amplitudes[time][freq + 1], 1L);
+							data = new FDData(time, DFTEditor.freqToNote(freq), amplitudes[time][freq], 1L);
 						} catch (Exception e) {
 							System.out.println("SynthTools.createHarmonics: Error creating data time: " + time + " freq: " + freq);
 						}
@@ -120,6 +121,7 @@ class SynthTools {
 						//System.out.println("0:" + harmonicID + " " + innerData);
 						continue;
 					}
+					if(flatHarmonics) break;
 					if(innerFreqToData.containsKey(freq - 1)) {
 						freq -= 1;
 						FDData innerData = innerFreqToData.get(freq);
