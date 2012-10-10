@@ -3,16 +3,16 @@
 public class FDData {
 	
 	public static final int timeStepInMillis = 5; // time in secs = this.time * timeStepInMillis / 1000
-	public static final int noteBase = 31; // freq in Hz = 2.0^((this.note + this.noteFraction) / noteBase)
+	public static final int noteBase = 72; // freq in Hz = 2.0^((this.note + this.noteFraction) / noteBase)
 	public static final double logBase = 2.0; // amplitude = logBase ^ logAmplitude
 	
 	//Data Bounds
 	public static final int minTime = 0;
 	public static final int maxTime = 10 * 60 * (1000 / timeStepInMillis);
-	public static final double minLogAmplitude = 0.0;
-	public static final double maxLogAmplitude = 24.0;
-	public static final double minFrequencyInHz = 20.0;
-	public static final double maxFrequencyInHz = 20000.0;
+	public static final float minLogAmplitude = 0.0f;
+	public static final float maxLogAmplitude = 24.0f;
+	public static final float minFrequencyInHz = 20.0f;
+	public static final float maxFrequencyInHz = 20000.0f;
 	
 	public enum DataType {
 		FUNDAMENTAL, HARMONIC, FORMANT, PERCUSSIVE, GRAIN
@@ -20,9 +20,9 @@ public class FDData {
 		
 	private DataType type = DataType.FUNDAMENTAL;
 	private int time = minTime;
-	private int note = noteBase * 4; // out of bounds stored at 16Hz
-	private double noteFraction = 0.0; // frequency = 2^(note/31) + 2^(noteFraction/31);
-	private double logAmplitude = minLogAmplitude;
+	private short note = noteBase * 4; // out of bounds stored at 16Hz
+	private float noteFraction = 0.0f; // frequency = 2^(note/31) + 2^(noteFraction/31);
+	private float logAmplitude = minLogAmplitude;
 	private long harmonicID = 1L;
 	
 
@@ -32,9 +32,9 @@ public class FDData {
 		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
 		if(!withinBounds(time, note, noteFraction, logAmplitude)) throw new Exception();
 		this.time = time;
-		this.note = note;
-		this.noteFraction = noteFraction;
-		this.logAmplitude = logAmplitude;
+		this.note = (short) note;
+		this.noteFraction = (float) noteFraction;
+		this.logAmplitude = (float) logAmplitude;
 		this.harmonicID = harmonicID;
 	}
 	
@@ -44,9 +44,9 @@ public class FDData {
 			throw new Exception("FDData [" + time + "|" + note + "|" + logAmplitude + "]");
 		}
 		this.time = time;
-		this.note = note;
-		this.noteFraction = 0.0;
-		this.logAmplitude = logAmplitude;
+		this.note = (short) note;
+		this.noteFraction = (float) 0.0;
+		this.logAmplitude = (float) logAmplitude;
 		this.harmonicID = id;
 	}
 

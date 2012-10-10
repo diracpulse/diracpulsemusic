@@ -327,6 +327,22 @@ public class ActionHandler extends JPanel {
 		}
 	}
 
+	public class SelectMixerAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+		private DFTEditor.ChannelMixer channelMixer;
+		
+		public SelectMixerAction(DFTEditor.ChannelMixer channelMixer) {
+			super(channelMixer.toString());
+			this.channelMixer = channelMixer;
+		}
+		
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println(channelMixer);
+			DFTEditor.currentChannelMixer = channelMixer;
+		}
+	}
+	
 	public class SelectCutoffAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
@@ -383,6 +399,11 @@ public class ActionHandler extends JPanel {
         channelMenu.add(new MonoAction());
         channelMenu.add(new LeftAction());
         channelMenu.add(new RightAction());
+        JMenu mixerMenu = new JMenu("Mixer");
+        for(DFTEditor.ChannelMixer channelMixer: DFTEditor.ChannelMixer.values()) {
+        	mixerMenu.add(new SelectMixerAction(channelMixer));
+        }
+        menuBar.add(mixerMenu);
         //Create the Play menu
         JMenu playMenu = new JMenu("Play");
         menuBar.add(playMenu);        

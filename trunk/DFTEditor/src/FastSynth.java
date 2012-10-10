@@ -5,21 +5,21 @@ public class FastSynth {
 	
 	public static int numSamples = 0;
 	private static double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
-	private static double[] sharedPCMData;
+	private static float[] sharedPCMData;
 	
-	public static double[] synthHarmonicsLinear(ArrayList<Harmonic> harmonics) {
+	public static float[] synthHarmonicsLinear(ArrayList<Harmonic> harmonics) {
 		initSharedPCMData(harmonics);
 		for(Harmonic harmonic: harmonics) synthHarmonicLinear(harmonic);
 		return sharedPCMData;
 	}
 	
-	public static double[] synthHarmonicsLinearCubicSpline(ArrayList<Harmonic> harmonics) {
+	public static float[] synthHarmonicsLinearCubicSpline(ArrayList<Harmonic> harmonics) {
 		initSharedPCMData(harmonics);
 		for(Harmonic harmonic: harmonics) synthHarmonicLinearCubicSpline(harmonic);
 		return sharedPCMData;
 	}
 	
-	public static double[] synthHarmonicsLinearNoise(ArrayList<Harmonic> harmonics) {
+	public static float[] synthHarmonicsLinearNoise(ArrayList<Harmonic> harmonics) {
 		initSharedPCMData(harmonics);
 		for(Harmonic harmonic: harmonics) synthHarmonicLinearNoise(harmonic);
 		return sharedPCMData;
@@ -32,8 +32,8 @@ public class FastSynth {
 			if(harmonicEndTime > maxEndTime) maxEndTime = harmonicEndTime;
 		}
 		int numSamples = (int) Math.ceil(maxEndTime * timeToSample);
-		sharedPCMData = new double[numSamples];
-		for(int index = 0; index < numSamples; index++) sharedPCMData[index] = 0.0;
+		sharedPCMData = new float[numSamples];
+		for(int index = 0; index < numSamples; index++) sharedPCMData[index] = 0.0f;
 	}
 	
 	private static void synthHarmonicLinearNoise(Harmonic harmonic) {
