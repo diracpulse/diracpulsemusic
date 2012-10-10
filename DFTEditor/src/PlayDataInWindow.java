@@ -19,12 +19,14 @@ public class PlayDataInWindow implements ActionListener {
 	Timer timer;
 	DFTEditor parent;
 	boolean startPlay = true;
+	public static SynthType synthType = null;
 	
 	PlayDataInWindow(DFTEditor parent, int refreshRateInMillis, int endTimeInMillis, SynthType synthType) {
 		this.parent = parent;
 		this.currentOffsetInMillis = 0;
 		this.refreshRateInMillis = refreshRateInMillis;
 		this.endTimeInMillis = endTimeInMillis;
+		this.synthType = synthType;
 		timer = new Timer(refreshRateInMillis, this);
 		if(synthType == SynthType.Linear) SynthTools.createPCMDataLinear();
 		if(synthType == SynthType.LinearCubicSpline) SynthTools.createPCMDataLinearCubicSpline();

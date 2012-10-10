@@ -27,7 +27,7 @@ private static int debug = 0;
 private static final double onePI = 3.1415926535897932384626433832795;
 private static final double twoPI = 6.283185307179586476925286766559;
 private static double samplingRate = 44100.0;
-private static double samplesPerStep = 220.5; // 5ms
+private static double samplesPerStep = FDData.timeStepInMillis * 44.1;
 private static double notesPerOctave = FDData.noteBase;
 private static double maxBinStep = 2.0;
 private static double maxWindowLength = 44100 / 5;
@@ -71,7 +71,6 @@ private static int LoadSamplesFromFile(String fileName) {
 		while(true) {
 			int sample = in.readShort();
 			sample = (short) (((sample & 0xFF00) >> 8) | ((sample & 0x00FF) << 8));
-			//System.out.print(sample + " ");
 			ArrayListLeftRight.add((float) sample);
 		}
 	} catch (IOException e) {
@@ -89,9 +88,15 @@ private static int LoadSamplesFromFile(String fileName) {
 	}	
 	int maxTime = ArrayListLeftRight.size() / 2;
 	LeftRight = new float[maxTime * 2];
+	SynthTools.WAVDataMono = new float[maxTime];
+	SynthTools.WAVDataLeft = new float[maxTime];	
+	SynthTools.WAVDataRight = new float[maxTime];
 	for(int index = 0; index < maxTime; index++) {
 		LeftRight[index * 2] = ArrayListLeftRight.get(index * 2);
 		LeftRight[index * 2 + 1] = ArrayListLeftRight.get(index * 2 + 1);
+		SynthTools.WAVDataMono[index] = (LeftRight[index * 2] + LeftRight[index * 2 + 1]) / 2;
+		SynthTools.WAVDataLeft[index] = LeftRight[index * 2];
+		SynthTools.WAVDataRight[index] = LeftRight[index * 2 + 1];
 	}
 	int maxNote = WaveletInfoArrayList.get(0).note;
 	int minNote = WaveletInfoArrayList.get(WaveletInfoArrayList.size() - 1).note;
@@ -180,8 +185,8 @@ private static void InitWavelets() {
 	//if(debug) System.out.print("InitWavelets\n");
 	maxDFTLength = 0;
 	maxCyclesPerWindow = maxBinStep / (Math.pow(2.0, 1.0 / notesPerOctave) - 1.0);
-	index = InitWaveletsHelper(maxFreqHz, 250.0, index, 1.0);
-	index = InitWaveletsHelperConstant(250.0, 20.0, index);
+	index = InitWaveletsHelper(maxFreqHz, 2000.0, index, 1.0);
+	index = InitWaveletsHelperConstant(2000.0, 20.0, index);
 	//index = InitWaveletsHelper(250.0, 80.0, index, 2.0);
     numWavelets = index;
     // MATRIX OUTPUT

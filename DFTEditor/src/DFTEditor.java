@@ -11,8 +11,17 @@ public class DFTEditor extends JFrame {
 		MONO,
 		STEREO,
 	}
+
+	public enum ChannelMixer {
+		LEFT_RIGHT,
+		WAV,
+		LEFT_WAV,
+		WAV_RIGHT;
+		
+	}
 	
 	public static Channel currentChannel = Channel.STEREO;
+	public static ChannelMixer currentChannelMixer = ChannelMixer.LEFT_RIGHT;
 	private static final long serialVersionUID = -2291799595853726615L;
 	public static MultiWindow parent;
 	public static DFTView view;
@@ -32,7 +41,7 @@ public class DFTEditor extends JFrame {
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicLeft = null;
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicRight = null;
 	//public static int minHarmonicLength = 1;
-	public static double minLogAmplitudeThreshold = 1.0; // used by autoSelect
+	public static double minLogAmplitudeThreshold = 4.0; // used by autoSelect
 	public static int minLengthThreshold = 1;
 	public static boolean deleteSelected = false;
 	public static TreeMap<Integer, Integer> floorAmpToCount;
