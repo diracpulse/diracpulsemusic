@@ -32,6 +32,7 @@ private static double notesPerOctave = FDData.noteBase;
 private static double maxBinStep = 2.0;
 private static double maxWindowLength = 44100 / 5;
 private static double alpha = 5.0;
+private static double centerFreq = 1000.0;
 
 // Calculated Variables
 private static double maxCyclesPerWindow = 0.0;
@@ -164,7 +165,17 @@ private static void outputRoundedData(float[][] matrix, double sinVal, double co
 	} else {
 		logAmp = 0.0;
 	}
-	//System.out.println(currentTime + " " + currentFreq + " " + logAmp);
+	/*
+	double length = WaveletInfoArrayList.get(waveletIndex).length / samplesPerStep;
+	int startTime = (int) Math.round(currentTime - length / 2.0);
+	int endTime = (int) Math.round(currentTime + length / 2.0);
+	if(startTime < 0) return;
+	if(endTime >= matrix.length) endTime = matrix.length - 1;
+	if(matrix[startTime][currentFreq] != -1.0f) return;
+	for(int time = startTime; time <= endTime; time++) {
+		matrix[time][currentFreq] = (float) logAmp;
+	}
+	*/
 	matrix[currentTime][currentFreq] = (float) logAmp;
 }
 
@@ -185,9 +196,9 @@ private static void InitWavelets() {
 	//if(debug) System.out.print("InitWavelets\n");
 	maxDFTLength = 0;
 	maxCyclesPerWindow = maxBinStep / (Math.pow(2.0, 1.0 / notesPerOctave) - 1.0);
-	index = InitWaveletsHelper(maxFreqHz, 2000.0, index, 1.0);
-	index = InitWaveletsHelperConstant(2000.0, 20.0, index);
-	//index = InitWaveletsHelper(250.0, 80.0, index, 2.0);
+	index = InitWaveletsHelper(maxFreqHz, centerFreq, index, 1.0);
+	index = InitWaveletsHelperConstant(centerFreq, 20.0, index);
+	//index = InitWaveletsHelper(centerFreq, 20.0, index, 2.0);
     numWavelets = index;
     // MATRIX OUTPUT
     int minNote = frequencyToNote(maxFreqHz) - 1; // #HACK skip first wavelet
@@ -372,6 +383,42 @@ static void fillMatrix() {
 	}
 }
 
+static void filterMatrix() {
+	int numTimes = DFTEditor.amplitudesMono.length;
+	int numFreqs = DFTEditor.amplitudesMono[0].length;
+	for(int freq = 0; freq < numFreqs; freq++) {
+		double freqInHz = Math.pow(2.0, DFTEditor.freqToNote(freq) / FDData.noteBase);
+		if(freqInHz < centerFreq) continue;
+		double logAdjust = Math.log(freqInHz / centerFreq) / Math.log(2.0) / 2.0;
+		for(int time = 0; time < numTimes; time++) {
+			DFTEditor.amplitudesMono[time][freq] -= logAdjust;
+			if(DFTEditor.amplitudesMono[time][freq] < 0.0) DFTEditor.amplitudesMono[time][freq] = 0.0f;
+		}
+	}
+	numTimes = DFTEditor.amplitudesLeft.length;
+	numFreqs = DFTEditor.amplitudesLeft[0].length;
+	for(int freq = 0; freq < numFreqs; freq++) {
+		double freqInHz = Math.pow(2.0, DFTEditor.freqToNote(freq) / FDData.noteBase);
+		if(freqInHz < centerFreq) continue;
+		double logAdjust = Math.log(freqInHz / centerFreq) / Math.log(2.0) / 2.0;
+		for(int time = 0; time < numTimes; time++) {
+			DFTEditor.amplitudesLeft[time][freq] -= logAdjust;
+			if(DFTEditor.amplitudesLeft[time][freq] < 0.0) DFTEditor.amplitudesLeft[time][freq] = 0.0f;
+		}
+	}
+	numTimes = DFTEditor.amplitudesRight.length;
+	numFreqs = DFTEditor.amplitudesRight[0].length;
+	for(int freq = 0; freq < numFreqs; freq++) {
+		double freqInHz = Math.pow(2.0, DFTEditor.freqToNote(freq) / FDData.noteBase);
+		if(freqInHz < centerFreq) continue;
+		double logAdjust = Math.log(freqInHz / centerFreq) / Math.log(2.0) / 2.0;
+		for(int time = 0; time < numTimes; time++) {
+			DFTEditor.amplitudesRight[time][freq] -= logAdjust;
+			if(DFTEditor.amplitudesRight[time][freq] < 0.0) DFTEditor.amplitudesRight[time][freq] = 0.0f;
+		}
+	}	
+}
+
 static void FileDFTMatrix(String fileName) {
 	numWavelets = 0;
 	maxCyclesPerWindow = 0;
@@ -386,5 +433,6 @@ static void FileDFTMatrix(String fileName) {
 		}
 	}
 	fillMatrix();
+	//filterMatrix();
 }
 }
