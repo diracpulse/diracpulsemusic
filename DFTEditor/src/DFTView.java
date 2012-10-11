@@ -28,7 +28,7 @@ public class DFTView extends JComponent {
 	}
 
 	public enum DataView {
-		DATA, DATA_ONLY, HARMONICS, DERIVATIVES;
+		DATA, DATA_ONLY, HARMONICS, HARMONIC_ID, DERIVATIVES;
 	}
 
 	public static void setDataView(DataView v) {
@@ -134,7 +134,7 @@ public class DFTView extends JComponent {
 		g.fillRect(DFTEditor.leftOffset, DFTEditor.upperOffset, getWidth(), getHeight());
 		drawLeftFreqs(g);
 		drawUpperTimes(g);
-		if ((dataView == DataView.HARMONICS)) {
+		if ((dataView == DataView.HARMONICS || dataView == DataView.HARMONIC_ID)) {
 			drawFileDataAsHarmonics(g);
 			return;
 		}
@@ -156,6 +156,7 @@ public class DFTView extends JComponent {
 					continue;
 				}
 				Color b = getColor(firstData.getLogAmplitude());
+				if(dataView == dataView.HARMONIC_ID) b = getColor(firstData.getHarmonicID());
 				g.setColor(b);
 				int startScreenX = DFTUtils.timeToScreenX(firstData.getTime());
 				int startScreenY = DFTUtils.freqToScreenY(DFTEditor.noteToFreq(firstData.getNote()));

@@ -17,6 +17,7 @@ class SynthTools {
 	static DFTEditor parent;
 	public static boolean refresh = true;
 	public static boolean flatHarmonics = false;
+	static double maxDeltaFreq = 1;
 
 	static void createPCMDataLinear() {
 		if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.WAV) return;
@@ -122,6 +123,7 @@ class SynthTools {
 				outerFreqToData.remove(freq);
 				currentData.setHarmonicID(harmonicID);
 				newHarmonic.addData(currentData);
+				int startFreq = freq;
 				for(int innerTime = time + 1; innerTime < numTimes; innerTime++) {
 					TreeMap<Integer, FDData> innerFreqToData = timeToFreqToData.get(innerTime);
 					if(innerFreqToData.containsKey(freq)) {
@@ -134,12 +136,36 @@ class SynthTools {
 					}
 					if(flatHarmonics) break;
 					if(innerFreqToData.containsKey(freq - 1)) {
-						freq -= 1;
-						FDData innerData = innerFreqToData.get(freq);
-						innerFreqToData.remove(freq);
-						innerData.setHarmonicID(harmonicID);
-						newHarmonic.addData(innerData);
-						//System.out.println("0:" + harmonicID + " " + innerData);
+						if(innerFreqToData.containsKey(freq + 1)) {
+							FDData upperData = innerFreqToData.get(freq - 1);
+							FDData lowerData = innerFreqToData.get(freq + 1);
+							if(upperData.getLogAmplitude() > lowerData.getLogAmplitude()) {
+								freq -= 1;
+								FDData innerData = innerFreqToData.get(freq);
+								innerFreqToData.remove(freq);
+								innerData.setHarmonicID(harmonicID);
+								newHarmonic.addData(innerData);
+								//System.out.println("0:" + harmonicID + " " + innerData);
+								if(freq < startFreq - maxDeltaFreq) break;
+							} else {
+								freq += 1;
+								FDData innerData = innerFreqToData.get(freq);
+								innerFreqToData.remove(freq);
+								innerData.setHarmonicID(harmonicID);
+								newHarmonic.addData(innerData);
+								if(freq > startFreq + maxDeltaFreq) break;
+								//System.out.println("0:" + harmonicID + " " + innerData);
+								continue;
+							}
+						} else {
+							freq -= 1;
+							FDData innerData = innerFreqToData.get(freq);
+							innerFreqToData.remove(freq);
+							innerData.setHarmonicID(harmonicID);
+							newHarmonic.addData(innerData);
+							//System.out.println("0:" + harmonicID + " " + innerData);
+							if(freq < startFreq - maxDeltaFreq) break;
+						}
 						continue;
 					}
 					if(innerFreqToData.containsKey(freq + 1)) {
@@ -148,6 +174,7 @@ class SynthTools {
 						innerFreqToData.remove(freq);
 						innerData.setHarmonicID(harmonicID);
 						newHarmonic.addData(innerData);
+						if(freq > startFreq + maxDeltaFreq) break;
 						//System.out.println("0:" + harmonicID + " " + innerData);
 						continue;
 					}

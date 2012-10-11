@@ -73,257 +73,77 @@ public class ActionHandler extends JPanel {
 			parent.exportAllFiles();
 		}
 	}
-
-	public class StereoAction extends AbstractAction {
+	
+	public class SelectViewAction extends AbstractAction {
 
 		private static final long serialVersionUID = 1L;
-
-		public StereoAction() {
-			super("Stereo");
+		private DFTView.View view;
+		
+		public SelectViewAction(DFTView.View view) {
+			super(view.toString());
+			this.view = view;
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			DFTEditor.currentChannel = DFTEditor.Channel.STEREO;
+			System.out.println(view.toString());
+			DFTView.setView(view);
 			DFTEditor.view.repaint();
-			System.out.println("Stereo");
 		}
 	}
-	
-	public class MonoAction extends AbstractAction {
+
+
+	public class SelectDataViewAction extends AbstractAction {
 
 		private static final long serialVersionUID = 1L;
-
-		public MonoAction() {
-			super("Mono");
+		private DFTView.DataView dataView;
+		
+		public SelectDataViewAction(DFTView.DataView dataView) {
+			super(dataView.toString());
+			this.dataView = dataView;
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			DFTEditor.currentChannel = DFTEditor.Channel.MONO;
+			System.out.println(dataView.toString());
+			DFTView.setDataView(dataView);
 			DFTEditor.view.repaint();
-			System.out.println("Mono");
 		}
 	}
-	
-	public class LeftAction extends AbstractAction {
+
+
+	public class SelectPlayAction extends AbstractAction {
 
 		private static final long serialVersionUID = 1L;
-
-		public LeftAction() {
-			super("Left");
+		private PlayDataInWindow.SynthType synthType;
+		
+		public SelectPlayAction(PlayDataInWindow.SynthType synthType) {
+			super(synthType.toString());
+			this.synthType = synthType;
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			DFTEditor.currentChannel = DFTEditor.Channel.LEFT;
-			DFTEditor.view.repaint();
-			System.out.println("Left");
+			System.out.println(synthType.toString());
+			PlayDataInWindow.synthType = synthType;
+			parent.playDataInCurrentWindow();
 		}
 	}
-	
-	public class RightAction extends AbstractAction {
+
+	public class SelectChannelAction extends AbstractAction {
 
 		private static final long serialVersionUID = 1L;
-
-		public RightAction() {
-			super("Right");
+		private DFTEditor.Channel channel;
+		
+		public SelectChannelAction(DFTEditor.Channel channel) {
+			super(channel.toString());
+			this.channel = channel;
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			DFTEditor.currentChannel = DFTEditor.Channel.RIGHT;
-			DFTEditor.view.repaint();
-			System.out.println("Right");
-		}
-	}
-	
-	public class PlayLinearAction extends AbstractAction {
-
-		private static final long serialVersionUID = 7354387706903212877L;
-
-		public PlayLinearAction() {
-			super("Play Linear");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			parent.playSelectedDataInCurrentWindowLinear();
-			System.out.println("Play Linear");
-		}
-	}
-	
-	public class PlayLinearCubicSplineAction extends AbstractAction {
-
-		private static final long serialVersionUID = 7354387706903212877L;
-
-		public PlayLinearCubicSplineAction() {
-			super("Play Linear Cubic Spline");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			parent.playSelectedDataInCurrentWindowLinearCubicSpline();
-			System.out.println("Play Linear Cubic Spline");
-		}
-	}
-	
-	public class PlayLinearNoiseAction extends AbstractAction {
-
-		private static final long serialVersionUID = 7354387706903212877L;
-
-		public PlayLinearNoiseAction() {
-			super("Play Linear Noise");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			parent.playSelectedDataInCurrentWindowLinearNoise();
-			System.out.println("Play Linear Noise");
-		}
-	}
-	
-	public class ViewDigits1Action extends AbstractAction {
-
-		private static final long serialVersionUID = 5910687309575402310L;
-
-		public ViewDigits1Action() {
-			super("Digits = 1");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("View Digits1");
-			DFTView.setView(DFTView.View.Digits1);
-			DFTEditor.view.repaint();
-		}
-	}
-	
-	public class ViewDigits2Action extends AbstractAction {
-
-		private static final long serialVersionUID = 1L;
-
-		public ViewDigits2Action() {
-			super("Digits = 2");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("View Digits2");
-			DFTView.setView(DFTView.View.Digits2);
-			DFTEditor.view.repaint();
-		}
-	}
-	
-	public class ViewPixels1Action extends AbstractAction {
-
-		private static final long serialVersionUID = -1592520256131827974L;
-
-		public ViewPixels1Action() {
-			super("Pixels = 1");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("View Pixels1");
-			DFTView.setView(DFTView.View.Pixels1);
-			DFTEditor.view.repaint();
-		}
-	}
-	
-	public class ViewPixels2Action extends AbstractAction {
-
-		private static final long serialVersionUID = 1L;
-
-		public ViewPixels2Action() {
-			super("Pixels = 2");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("View Pixels2");
-			DFTView.setView(DFTView.View.Pixels2);
-			DFTEditor.view.repaint();
-		}
-	}
-	
-	public class ViewPixels3Action extends AbstractAction {
-
-		private static final long serialVersionUID = 1L;
-
-		public ViewPixels3Action() {
-			super("Pixels = 3");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("View Pixels3");
-			DFTView.setView(DFTView.View.Pixels3);
-			DFTEditor.view.repaint();
-		}
-	}
-	
-	public class DerivativesViewAction extends AbstractAction {
-
-		private static final long serialVersionUID = 1L;
-
-		public DerivativesViewAction() {
-			super("Derivatives");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Derivatives");
-			DFTView.setDataView(DFTView.DataView.DERIVATIVES);
-			DFTEditor.view.repaint();
-		}
-	}
-	
-	public class DataViewAction extends AbstractAction {
-
-		private static final long serialVersionUID = 1L;
-
-		public DataViewAction() {
-			super("Data");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Data");
-			DFTView.setDataView(DFTView.DataView.DATA);
-			DFTEditor.view.repaint();
-		}
-	}
-	
-	public class DataOnlyViewAction extends AbstractAction {
-
-		private static final long serialVersionUID = 1L;
-
-		public DataOnlyViewAction() {
-			super("Data Only");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Data Only");
-			DFTView.setDataView(DFTView.DataView.DATA_ONLY);
-			DFTEditor.view.repaint();
-		}
-	}
-	
-	public class HarmonicsViewAction extends AbstractAction {
-
-		private static final long serialVersionUID = 1L;
-
-		public HarmonicsViewAction() {
-			super("Harmonics");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Harmonics");
-			DFTView.setDataView(DFTView.DataView.HARMONICS);
-			DFTEditor.view.repaint();
+			System.out.println(channel);
+			DFTEditor.currentChannel = channel;
 		}
 	}
 
@@ -359,7 +179,6 @@ public class ActionHandler extends JPanel {
 			SynthTools.createHarmonics();
 		    DFTEditor.view.repaint();
 		    SynthTools.refresh = true;
-		    parent.playSelectedDataInCurrentWindowLinear();
 		}		
 		
 	}
@@ -378,7 +197,6 @@ public class ActionHandler extends JPanel {
 			System.out.println("MinLength = " + minLength);
 			DFTEditor.minLengthThreshold = minLength;
 			SynthTools.refresh = true;
-		    parent.playSelectedDataInCurrentWindowLinear();
 		}		
 		
 	}
@@ -394,11 +212,10 @@ public class ActionHandler extends JPanel {
         fileMenu.add(new ExitAction());
         // Create Channel Select
         JMenu channelMenu = new JMenu("Channel");
+        for(DFTEditor.Channel channel: DFTEditor.Channel.values()) {
+        	channelMenu.add(new SelectChannelAction(channel));
+        }
         menuBar.add(channelMenu);
-        channelMenu.add(new StereoAction());
-        channelMenu.add(new MonoAction());
-        channelMenu.add(new LeftAction());
-        channelMenu.add(new RightAction());
         JMenu mixerMenu = new JMenu("Mixer");
         for(DFTEditor.ChannelMixer channelMixer: DFTEditor.ChannelMixer.values()) {
         	mixerMenu.add(new SelectMixerAction(channelMixer));
@@ -406,23 +223,20 @@ public class ActionHandler extends JPanel {
         menuBar.add(mixerMenu);
         //Create the Play menu
         JMenu playMenu = new JMenu("Play");
-        menuBar.add(playMenu);        
-        playMenu.add(new JMenuItem(new PlayLinearAction()));
-        playMenu.add(new JMenuItem(new PlayLinearCubicSplineAction()));
-        playMenu.add(new JMenuItem(new PlayLinearNoiseAction()));
+        for(PlayDataInWindow.SynthType synthType: PlayDataInWindow.SynthType.values()) {
+        	playMenu.add(new SelectPlayAction(synthType));
+        }
+        menuBar.add(playMenu);
         JMenu viewMenu = new JMenu("View");
         menuBar.add(viewMenu);
-        viewMenu.add(new JMenuItem(new ViewPixels1Action()));
-        viewMenu.add(new JMenuItem(new ViewPixels2Action()));
-        viewMenu.add(new JMenuItem(new ViewPixels3Action()));    
-        viewMenu.add(new JMenuItem(new ViewDigits1Action()));
-        viewMenu.add(new JMenuItem(new ViewDigits2Action())); 
+        for(DFTView.View view: DFTView.View.values()) {
+        	viewMenu.add(new SelectViewAction(view));
+        }
         JMenu dataViewMenu = new JMenu("DataView");
         menuBar.add(dataViewMenu);
-        dataViewMenu.add(new JMenuItem(new DataViewAction()));
-        dataViewMenu.add(new JMenuItem(new DataOnlyViewAction()));
-        dataViewMenu.add(new JMenuItem(new DerivativesViewAction()));
-        dataViewMenu.add(new JMenuItem(new HarmonicsViewAction()));
+        for(DFTView.DataView dataView: DFTView.DataView.values()) {
+        	dataViewMenu.add(new SelectDataViewAction(dataView));
+        }        
         JMenu cutoffMenu = new JMenu("Cutoff");
         menuBar.add(cutoffMenu);
         for(int logCutoff = 12; logCutoff > 2; logCutoff--) {
