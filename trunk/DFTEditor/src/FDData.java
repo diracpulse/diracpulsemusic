@@ -100,6 +100,14 @@ public class FDData {
 		return frequency;
 	}
 	
+	public static int getMaxNote() {
+		return (int) Math.round(Math.log(maxFrequencyInHz)/Math.log(2.0) * (double) noteBase);
+	}
+	
+	public static int getMinNote() {
+		return (int) Math.round(Math.log(minFrequencyInHz)/Math.log(2.0) * (double) noteBase);
+	}
+	
 	private boolean withinBounds(int time, int note, double noteFraction, double logAmplitude) {
 		if((noteFraction < -0.5) || (noteFraction > 0.5)) return false;
 		if(time < minTime) return false;

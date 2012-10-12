@@ -223,6 +223,8 @@ public class DFTEditor extends JFrame {
         DFT.FileDFTMatrix(dftFileName);
     	SynthTools.refresh = true;
     	SynthTools.createHarmonics();
+        parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonicMono);
+        parent.graphEditorFrame.view.repaint();
         view.repaint();
 	}
 	
@@ -250,9 +252,12 @@ public class DFTEditor extends JFrame {
         setSize(1500, 800);
         randomIDGenerator = new Random();
         //openFileInDFTEditor();
-        FileDFT(true);
-        view.repaint();
+        //FileDFT(true);
+        //parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonicMono);
+        //parent.graphEditorFrame.view.repaint();
+        //view.repaint();
         //DFTUtils.testGetConsonantOvertonesBase31();
+        newFileData();
     }
     
 	private static void createAndShowGUI() {
@@ -261,9 +266,9 @@ public class DFTEditor extends JFrame {
 		parent.dftEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		parent.dftEditorFrame.pack();
 		parent.dftEditorFrame.setVisible(true);
-		//parent.harmonicsEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		//parent.harmonicsEditorFrame.pack();
-		//parent.harmonicsEditorFrame.setVisible(true);
+		parent.graphEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		parent.graphEditorFrame.pack();
+		parent.graphEditorFrame.setVisible(true);
 	}
 
 	public static void main(String[] args) {

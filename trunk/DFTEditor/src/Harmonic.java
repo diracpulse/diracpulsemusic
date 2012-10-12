@@ -7,7 +7,9 @@ public class Harmonic {
 	private boolean overwrite = true; // not in use currently
 	private TreeMap<Integer, FDData> timeToData = new TreeMap<Integer, FDData>();
 	private double maxLogAmplitude = 0.0;
-	//
+	private int minNote = FDData.getMaxNote();
+	private int maxNote = FDData.getMinNote();
+
 	private long harmonicID;
 	
 	public Harmonic(long id) {
@@ -25,11 +27,15 @@ public class Harmonic {
 		if(data.getLogAmplitude() > maxLogAmplitude) maxLogAmplitude = data.getLogAmplitude();
 		if(!timeToData.containsKey(data.getTime())) {
 			timeToData.put(data.getTime(), data);
+			if(data.getNote() < minNote) minNote = data.getNote();
+			if(data.getNote() > maxNote) maxNote = data.getNote();
 			return data;
 		}
 		// data already exists at that time
 		if(overwrite) {
 			timeToData.put(data.getTime(), data);
+			if(data.getNote() < minNote) minNote = data.getNote();
+			if(data.getNote() > maxNote) maxNote = data.getNote();
 		}
 		System.out.println("Harmonic.addData(): Duplicate data at time = " + data.getTime());
 		return data;
@@ -85,6 +91,7 @@ public class Harmonic {
 	}
 	
 	public int getLength() {
+		if(timeToData.isEmpty()) return 0;
 		return (getEnd().getTime() - getStart().getTime());
 	}
 
@@ -116,13 +123,98 @@ public class Harmonic {
 		}
 		return (int) Math.round(noteSum / numNotes);
 	}
-
+	
+	public int getMinNote() {
+		return minNote;
+	}
+	
+	public int getMaxNote() {
+		return maxNote;
+	}
+	
 	public int getStartTime() {
 		return timeToData.firstKey();
 	}
 	
 	public int getEndTime() {
 		return getEnd().getTime();
+	}
+	
+	public boolean containsTime(int time) {
+		if(timeToData.containsKey(time)) return true;
+		return false;
+	}
+	
+	public boolean containsData(int time, int note) {
+		if(timeToData.containsKey(time)) {
+			if(timeToData.get(time).getNote() == note) return true;
+		}
+		return false;
+	}
+	
+	public void removeData(int time) {
+		if(!timeToData.containsKey(time)) {
+			System.out.println("Harmonic.removeData: Data does not exist!");
+			return;
+		}
+		timeToData.remove(time);
+	}
+	
+	public boolean containsDataInterpolated(int time, int note) {
+		TreeMap <Integer, FDData> interpolatedData = getAllDataInterpolated();
+		if(interpolatedData.containsKey(time)) {
+			if(interpolatedData.get(time).getNote() == note) return true;
+		}
+		return false;
+	}
+
+	public ArrayList<FDData> getScaledHarmonic(int deltaTime, int endTime, int deltaNote, long harmonicID) {
+		TreeMap<Integer, FDData> newTimeToData = new TreeMap<Integer, FDData>();
+		try {
+			for(FDData data: timeToData.values()) {
+				int time = data.getTime() + deltaTime;
+				int note = data.getNote() + deltaNote;
+				if(time > endTime) break;
+				if(note >= FDData.getMaxNote()) continue;
+				FDData newData = new FDData(time, note, data.getLogAmplitude(), harmonicID);
+				newTimeToData.put(time, newData);
+			}
+		} catch (Exception e) {
+			System.out.println("Harmonic.getScaledHarmonic: Error creating data");
+		}
+		return new ArrayList<FDData>(newTimeToData.values());
+	}
+	
+	public ArrayList<FDData> getTrimmedHarmonic(int startTime, int endTime, double playSpeed) {
+		TreeMap<Integer, FDData> trimmedData = new TreeMap<Integer, FDData>();
+		ArrayList<FDData> returnData = new ArrayList<FDData>();
+		try {
+			for(FDData data: timeToData.values()) {
+				if(data.getTime() < startTime) continue;
+				if(data.getTime() > endTime) break;
+				trimmedData.put(data.getTime(), data);
+			}
+			for(FDData data: trimmedData.values()) {
+				FDData newData = new FDData((int) Math.round((data.getTime() - startTime) * playSpeed), data.getNote(), data.getLogAmplitude(), data.getHarmonicID());
+				returnData.add(newData);
+			}
+		} catch (Exception e) {
+			System.out.println("Harmonic.getTrimmedHarmonic: Error creating data");
+		}
+		return returnData;
+	}
+	
+	public ArrayList<FDData> getPureSineHarmonic(double logAmplitude, double playSpeed) {
+		ArrayList<FDData> returnData = new ArrayList<FDData>();
+		try {
+			for(FDData data: getAllDataInterpolated().values()) {
+				FDData newData = new FDData((int) Math.round(data.getTime() * playSpeed), data.getNote(), logAmplitude, data.getHarmonicID());
+				returnData.add(newData);
+			}
+		} catch (Exception e) {
+			System.out.println("Harmonic.getPureSineHarmonic: Error creating data");
+		}
+		return returnData;
 	}
 	
 }

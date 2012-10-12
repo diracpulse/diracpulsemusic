@@ -41,26 +41,26 @@ class SynthTools {
 	}
 	
 	static void playPCMData() {
-		AudioPlayer ap = new AudioPlayer(parent, PCMDataMono, 1.0);
+		AudioPlayer ap = new AudioPlayer(PCMDataMono, 1.0);
 		if(DFTEditor.currentChannel == DFTEditor.Channel.STEREO) {
 			if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.LEFT_RIGHT) {
-				ap = new AudioPlayer(parent, PCMDataLeft, PCMDataRight, 1.0);
+				ap = new AudioPlayer(PCMDataLeft, PCMDataRight, 1.0);
 			}
 			if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.WAV_RIGHT) {
-				ap = new AudioPlayer(parent, WAVDataLeft, PCMDataRight, 1.0);
+				ap = new AudioPlayer(WAVDataLeft, PCMDataRight, 1.0);
 			}
 			if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.LEFT_WAV) {
-				ap = new AudioPlayer(parent, PCMDataLeft, WAVDataRight, 1.0);
+				ap = new AudioPlayer(PCMDataLeft, WAVDataRight, 1.0);
 			}
 			if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.WAV) {
-				ap = new AudioPlayer(parent, WAVDataLeft, WAVDataRight, 1.0);
+				ap = new AudioPlayer(WAVDataLeft, WAVDataRight, 1.0);
 			}
 		}
 		if(DFTEditor.currentChannel == DFTEditor.Channel.LEFT) {
-			ap = new AudioPlayer(parent, PCMDataLeft, 1.0);
+			ap = new AudioPlayer(PCMDataLeft, 1.0);
 		}
 		if(DFTEditor.currentChannel == DFTEditor.Channel.RIGHT) {
-			ap = new AudioPlayer(parent, PCMDataRight, 1.0);
+			ap = new AudioPlayer(PCMDataRight, 1.0);
 		}
 		ap.start();
 		//ap = new AudioPlayer(parent, PCMDataRight, 1.0);
