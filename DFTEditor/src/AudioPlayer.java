@@ -21,13 +21,13 @@ public class AudioPlayer extends Thread {
 	private double masterVolume;
 
 	
-	AudioPlayer (DFTEditor parent, float[] mono, double masterVolume) {
+	AudioPlayer (float[] mono, double masterVolume) {
 		this.stereo = false;
 		this.mono = mono;
 		this.masterVolume = masterVolume;
 	}
 	
-	AudioPlayer (DFTEditor parent, float[] left, float[] right, double masterVolume) {
+	AudioPlayer (float[] left, float[] right, double masterVolume) {
 		this.stereo = true;
 		this.left = left;
 		this.right = right;

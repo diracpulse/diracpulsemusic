@@ -12,7 +12,7 @@ public class PlayDataInWindow implements ActionListener {
 		LinearCubicSpline,
 		LinearNoise;
 	}
-	
+
 	int currentOffsetInMillis;
 	int refreshRateInMillis;
 	int endTimeInMillis;
@@ -29,7 +29,7 @@ public class PlayDataInWindow implements ActionListener {
 		timer = new Timer(refreshRateInMillis, this);
 		if(synthType == SynthType.Linear) SynthTools.createPCMDataLinear();
 		if(synthType == SynthType.LinearCubicSpline) SynthTools.createPCMDataLinearCubicSpline();
-		if(synthType == SynthType.LinearNoise) SynthTools.createPCMDataLinearNoise();
+		if(synthType == SynthType.LinearNoise) SynthTools.createPCMDataLinearNoise();		
 		JOptionPane.showMessageDialog(parent, "Ready To Play");
         timer.setInitialDelay(0);
         timer.start();
