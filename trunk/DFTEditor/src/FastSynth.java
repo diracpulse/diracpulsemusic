@@ -4,7 +4,6 @@ import java.util.ArrayList;
 public class FastSynth {
 	
 	public static int numSamples = 0;
-	private static double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
 	private static float[] sharedPCMData;
 	
 	public static float[] synthHarmonicsLinear(ArrayList<Harmonic> harmonics) {
@@ -26,6 +25,7 @@ public class FastSynth {
 	}
 	
 	private static void initSharedPCMData(ArrayList<Harmonic> harmonics) {
+		double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
 		double maxEndTime = 0;
 		for(Harmonic harmonic: harmonics) {
 			double harmonicEndTime = Math.ceil(harmonic.getEndTime());
@@ -37,6 +37,7 @@ public class FastSynth {
 	}
 	
 	private static void synthHarmonicLinearNoise(Harmonic harmonic) {
+		double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
 		if(harmonic.getAverageNote() < 10 * FDData.noteBase) {
 			synthHarmonicLinear(harmonic);
 			return;
@@ -69,6 +70,7 @@ public class FastSynth {
 	}
 	
 	private static void synthHarmonicLinear(Harmonic harmonic) {
+		double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
 		ArrayList<FDData> dataArray = new ArrayList<FDData>(harmonic.getAllDataInterpolated().values());
 		int maxArrayIndex = dataArray.size();
 		double currentPhase = 0.0;
@@ -94,6 +96,7 @@ public class FastSynth {
 	}
 	
 	private static void synthHarmonicLinearCubicSpline(Harmonic harmonic) {
+		double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
 		ArrayList<FDData> dataArray = new ArrayList<FDData>(harmonic.getAllDataInterpolated().values());
 		if(dataArray.size() < 2) return;
 		double[] times = new double[dataArray.size()];

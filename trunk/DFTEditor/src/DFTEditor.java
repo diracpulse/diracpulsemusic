@@ -22,6 +22,7 @@ public class DFTEditor extends JFrame {
 	
 	public static Channel currentChannel = Channel.STEREO;
 	public static ChannelMixer currentChannelMixer = ChannelMixer.LEFT_RIGHT;
+	public static String dftFileName = null;
 	private static final long serialVersionUID = -2291799595853726615L;
 	public static MultiWindow parent;
 	public static DFTView view;
@@ -41,7 +42,7 @@ public class DFTEditor extends JFrame {
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicLeft = null;
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicRight = null;
 	//public static int minHarmonicLength = 1;
-	public static double minLogAmplitudeThreshold = 4.0; // used by autoSelect
+	public static double minLogAmplitudeThreshold = 1.0; // used by autoSelect
 	public static int minLengthThreshold = 1;
 	public static boolean deleteSelected = false;
 	public static TreeMap<Integer, Integer> floorAmpToCount;
@@ -156,6 +157,12 @@ public class DFTEditor extends JFrame {
 		refreshView();
 	}
 	
+	public static void blankScreen() {
+		view.dftInProgress = true;
+		view.paintImmediately(0, 0, view.getWidth(), view.getHeight());
+		view.dftInProgress = false;
+	}
+	
 	public static void refreshView() {
 		view.repaint();
 	}
@@ -211,10 +218,9 @@ public class DFTEditor extends JFrame {
 		navigationBar.add(button);
 	}
 
-	public void FileDFT() {
-        String fileName = FileTools.PromptForFileOpenWAV(view);
-        DFT.FileDFTMatrix(fileName);
-    	minLogAmplitudeThreshold = 1.0; // used by autoSelect
+	public void FileDFT(boolean prompt) {
+        if(prompt || dftFileName == null) dftFileName = FileTools.PromptForFileOpenWAV(view);
+        DFT.FileDFTMatrix(dftFileName);
     	SynthTools.refresh = true;
     	SynthTools.createHarmonics();
         view.repaint();
@@ -244,7 +250,7 @@ public class DFTEditor extends JFrame {
         setSize(1500, 800);
         randomIDGenerator = new Random();
         //openFileInDFTEditor();
-        FileDFT();
+        FileDFT(true);
         view.repaint();
         //DFTUtils.testGetConsonantOvertonesBase31();
     }

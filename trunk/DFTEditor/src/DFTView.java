@@ -14,6 +14,7 @@ public class DFTView extends JComponent {
 	private static boolean useImage = true;
 	private static boolean drawPlaying = false;
 	private static int offsetInMillis;
+	public boolean dftInProgress = false;
 
 	public enum View {
 		Digits1, Digits2, Pixels1, Pixels2, Pixels3;
@@ -369,6 +370,12 @@ public class DFTView extends JComponent {
 	}
 
 	protected void paintComponent(Graphics g) {
+		if(dftInProgress) {
+			super.paintComponent(g);
+			g.setColor(new Color(0.5f, 0.5f, 1.0f));
+			g.fillRect(0, 0, getWidth(), getHeight());
+			return;
+		}
 		if (drawPlaying) {
 			double millisPerPixel = (double) FDData.timeStepInMillis
 					/ (double) getXStep();
