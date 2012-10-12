@@ -23,8 +23,7 @@
     <target name="compile" depends="clean">
     	<mkdir dir="${build.dir}" />
     	<javac srcdir="${src.dir}" destdir="${build.dir}" bootclasspath="C:\Program Files\Java\jdk1.6.0_14\jre\lib\rt.jar"
-    		debug="on"
- 			source= "1.6" target="1.6">
+    		debug="on">
  			<exclude name="DFTEditor.java"/>
     		<classpath refid="project.classpath" />
  		</javac>

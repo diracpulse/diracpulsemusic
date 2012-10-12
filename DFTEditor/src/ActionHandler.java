@@ -26,7 +26,22 @@ public class ActionHandler extends JPanel {
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			parent.FileDFT();
+			DFTEditor.blankScreen();
+			parent.FileDFT(false);
+		}
+	}
+	
+	public class DFTOpenAction extends AbstractAction {
+
+		private static final long serialVersionUID = -5323292053150793042L;
+
+		public DFTOpenAction() {
+			super("DFT Open");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			parent.FileDFT(true);
 		}
 	}	
 
@@ -201,6 +216,76 @@ public class ActionHandler extends JPanel {
 		
 	}
 	
+	public class SelectNoteBaseAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+		private int noteBase;
+		
+		public SelectNoteBaseAction(int noteBase) {
+			super("Note Base = " + noteBase);
+			this.noteBase = noteBase;
+		}
+		
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Note Base = " + noteBase);
+			FDData.noteBase = noteBase;
+		}		
+		
+	}
+	
+	public class SelectTimeStepAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+		private int timeStep;
+		
+		public SelectTimeStepAction(int timeStep) {
+			super("Time Step = " + timeStep + " ms");
+			this.timeStep = timeStep;
+		}
+		
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Time Step = " + timeStep);
+			FDData.timeStepInMillis = timeStep;
+		}		
+		
+	}
+	
+	public class SelectBinStepAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+		private double binStep;
+		
+		public SelectBinStepAction(double binStep) {
+			super("Bin Step = " + binStep);
+			this.binStep = binStep;
+		}
+		
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Bin Step = " + binStep);
+			DFT.maxBinStep = binStep;
+			DFT.InitWavelets();
+		}
+		
+	}
+	
+	public class SelectCenterFreqAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+		private double centerFreq;
+		
+		public SelectCenterFreqAction(double centerFreq) {
+			super("Center Freq = " + centerFreq);
+			this.centerFreq = centerFreq;
+		}
+		
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Center Freq = " + centerFreq);
+			DFT.centerFreq = centerFreq;
+			DFT.InitWavelets();
+		}
+		
+	}
+	
 	public JMenuBar createMenuBar() {
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
@@ -208,6 +293,7 @@ public class ActionHandler extends JPanel {
         JMenu fileMenu = new JMenu("File");
         menuBar.add(fileMenu);
         fileMenu.add(new DFTAction());
+        fileMenu.add(new DFTOpenAction());
         fileMenu.add(new ExportAllAction());
         fileMenu.add(new ExitAction());
         // Create Channel Select
@@ -247,6 +333,46 @@ public class ActionHandler extends JPanel {
         for(int minLength = 1; minLength <= 20; minLength++) {
         	minLengthMenu.add(new SelectMinLengthAction(minLength));
         }
+        JMenu noteBaseMenu = new JMenu("NoteBase");
+        menuBar.add(noteBaseMenu);      
+        noteBaseMenu.add(new SelectNoteBaseAction(7));
+        noteBaseMenu.add(new SelectNoteBaseAction(12));
+        noteBaseMenu.add(new SelectNoteBaseAction(19));
+        noteBaseMenu.add(new SelectNoteBaseAction(31));
+        noteBaseMenu.add(new SelectNoteBaseAction(43));
+        noteBaseMenu.add(new SelectNoteBaseAction(62));
+        noteBaseMenu.add(new SelectNoteBaseAction(72));
+        noteBaseMenu.add(new SelectNoteBaseAction(93));
+        noteBaseMenu.add(new SelectNoteBaseAction(124));
+        noteBaseMenu.add(new SelectNoteBaseAction(144));
+        JMenu timeStepMenu = new JMenu("TimeStep");
+        menuBar.add(timeStepMenu);      
+        timeStepMenu.add(new SelectTimeStepAction(1));
+        timeStepMenu.add(new SelectTimeStepAction(2));
+        timeStepMenu.add(new SelectTimeStepAction(5));
+        timeStepMenu.add(new SelectTimeStepAction(10));
+        timeStepMenu.add(new SelectTimeStepAction(20));
+        timeStepMenu.add(new SelectTimeStepAction(40));
+        timeStepMenu.add(new SelectTimeStepAction(80));
+        timeStepMenu.add(new SelectTimeStepAction(160));
+        timeStepMenu.add(new SelectTimeStepAction(320));
+        timeStepMenu.add(new SelectTimeStepAction(500));
+        JMenu binStepMenu = new JMenu("BinStep");
+        menuBar.add(binStepMenu);      
+        for(double binStep = 0.5; binStep <= 5.0; binStep += 0.5) {
+        	binStepMenu.add(new SelectBinStepAction(binStep));
+        }
+        JMenu centerFreqMenu = new JMenu("CenterFreq");
+        menuBar.add(centerFreqMenu);          
+        for(double centerFreq = 20; centerFreq < 100.0; centerFreq += 20) {
+        	centerFreqMenu.add(new SelectCenterFreqAction(centerFreq));
+        }
+        for(double centerFreq = 100; centerFreq < 250.0; centerFreq += 50) {
+        	centerFreqMenu.add(new SelectCenterFreqAction(centerFreq));
+        }
+        for(double centerFreq = 250; centerFreq < 2000.0; centerFreq += 250) {
+        	centerFreqMenu.add(new SelectCenterFreqAction(centerFreq));
+        }       
         return menuBar;
 	}
 
