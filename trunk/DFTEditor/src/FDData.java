@@ -24,25 +24,14 @@ public class FDData {
 	private float noteFraction = 0.0f; // frequency = 2^(note/31) + 2^(noteFraction/31);
 	private float logAmplitude = minLogAmplitude;
 	private long harmonicID = 1L;
+	private byte channel = -1;
 	
-
-	public FDData(int time, double noteComplete, double logAmplitude, long harmonicID) throws Exception {
-		int note = (int) Math.round(noteComplete);
-		double noteFraction = noteComplete - note;
-		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
-		if(!withinBounds(time, note, noteFraction, logAmplitude)) throw new Exception();
-		this.time = time;
-		this.note = (short) note;
-		this.noteFraction = (float) noteFraction;
-		this.logAmplitude = (float) logAmplitude;
-		this.harmonicID = harmonicID;
-	}
-	
-	public FDData(int time, int note, double logAmplitude, long id) throws Exception {
+	public FDData(byte channel, int time, int note, double logAmplitude, long id) throws Exception {
 		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
 		if(!withinBounds(time, note, 0.0, logAmplitude)) {
 			throw new Exception("FDData [" + time + "|" + note + "|" + logAmplitude + "]");
 		}
+		this.channel = channel;
 		this.time = time;
 		this.note = (short) note;
 		this.noteFraction = (float) 0.0;
@@ -69,13 +58,9 @@ public class FDData {
 	public int getNote() {
 		return note;
 	}
-	
-	public double getNoteFraction() {
-		return noteFraction;
-	}
-	
-	public double getNoteComplete() {
-		return note + noteFraction;
+
+	public byte getChannel() {
+		return channel;
 	}
 	
 	public double getLogAmplitude() {

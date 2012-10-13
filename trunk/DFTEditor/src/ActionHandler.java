@@ -26,7 +26,6 @@ public class ActionHandler extends JPanel {
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			DFTEditor.blankScreen();
 			parent.FileDFT(false);
 		}
 	}
@@ -103,7 +102,7 @@ public class ActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println(view.toString());
 			DFTView.setView(view);
-			DFTEditor.view.repaint();
+			DFTEditor.refreshView();
 		}
 	}
 
@@ -122,7 +121,7 @@ public class ActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println(dataView.toString());
 			DFTView.setDataView(dataView);
-			DFTEditor.view.repaint();
+			DFTEditor.refreshView();
 		}
 	}
 
@@ -159,6 +158,7 @@ public class ActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println(channel);
 			DFTEditor.currentChannel = channel;
+			DFTEditor.refreshView();
 		}
 	}
 
@@ -192,7 +192,7 @@ public class ActionHandler extends JPanel {
 			System.out.println("Cutoff = " + logCutoff);
 			DFTEditor.minLogAmplitudeThreshold = logCutoff;
 			SynthTools.createHarmonics();
-		    DFTEditor.view.repaint();
+			DFTEditor.refreshView();
 		    SynthTools.refresh = true;
 		}		
 		

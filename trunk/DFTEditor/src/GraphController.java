@@ -64,7 +64,7 @@ public class GraphController implements MouseListener, ActionListener {
 	    		}
 	    		FDData newData = null;
 	    		try {
-	    			newData = new FDData(time, note, 1.0, id);
+	    			newData = new FDData((byte) 0, time, note, 1.0, id);
 	    		} catch (Exception ex) {
 	    			System.out.println("GraphController.mousePressed (ALT): Error creating FDData");
 	    			return;

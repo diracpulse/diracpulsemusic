@@ -27,9 +27,11 @@ public class GraphView extends JComponent {
 	private static final long serialVersionUID = 2964004162144513754L;
 	
 	private static BufferedImage bi;
-	private static boolean useImage = true;
 	private static boolean drawPlaying = false;
+	private static boolean refresh = true;
 	private static int offsetInMillis = 0;
+	private int height = 0;
+	private int width = 0;
 	
 	public void drawFileData(Graphics g) {
 		double pixelsPerTime = (double) getWidth() / (double) (GraphEditor.maxViewTime - GraphEditor.minViewTime);
@@ -39,6 +41,7 @@ public class GraphView extends JComponent {
 		ArrayList<Harmonic> allHarmonics = new ArrayList<Harmonic>(GraphEditor.harmonicIDToHarmonic.values());
 		allHarmonics.addAll(GraphEditor.harmonicIDToControlPointHarmonic.values());
 		for(Harmonic harmonic: allHarmonics) {
+			if(!harmonic.isSynthesized()) continue;
 			if(harmonic.getLength() < GraphEditor.minHarmonicLength) continue;
 			if(harmonic.getAverageNote() < GraphEditor.minViewNote || harmonic.getAverageNote() > GraphEditor.maxViewNote) continue;
 			if(harmonic.getMaxLogAmplitude() < GraphEditor.minViewLogAmplitude) continue;
@@ -194,6 +197,11 @@ public class GraphView extends JComponent {
 		GraphView.offsetInMillis = (int) Math.round(offsetInMillis);
 	}
 	
+	public void refresh() {
+		refresh = true;
+		paintImmediately(0, 0, getWidth(), getHeight());
+	}
+	
 	public int getTimeAxisWidthInMillis() {
    		return (int) Math.round((GraphEditor.maxViewTime - GraphEditor.minViewTime) * FDData.timeStepInMillis);
 	}
@@ -210,16 +218,19 @@ public class GraphView extends JComponent {
     		drawPlaying = false;
     		return;
     	}
-    	if(useImage == true) {
+    	if(refresh || height != getHeight() || width != getWidth()) {
     		bi = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
     		Graphics2D g2 = bi.createGraphics();
     		super.paintComponent(g);
     		drawFileData(g2);
     		g.drawImage(bi, 0, 0, null);
+    		refresh = false;
+    		width = getWidth();
+    		height = getHeight();
     		return;
     	}
 		super.paintComponent(g);
-		drawFileData(g);
+		g.drawImage(bi, 0, 0, null);
 		return;
     	
     }

@@ -38,9 +38,7 @@ public class DFTEditor extends JFrame {
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaMono;
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaLeft;
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaRight;
-	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicMono = null;
-	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicLeft = null;
-	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicRight = null;
+	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic = null;
 	//public static int minHarmonicLength = 1;
 	public static double minLogAmplitudeThreshold = 1.0; // used by autoSelect
 	public static int minLengthThreshold = 1;
@@ -83,9 +81,7 @@ public class DFTEditor extends JFrame {
 	// they are related as calculated in noteToFreq(int note) and freqToNote(int freq)
 	
 	public static void newFileData() {
-	    harmonicIDToHarmonicMono = new TreeMap<Long, Harmonic>();
-	    harmonicIDToHarmonicLeft = new TreeMap<Long, Harmonic>();
-	    harmonicIDToHarmonicRight = new TreeMap<Long, Harmonic>();
+	    harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
 		timeToFreqsAtMaximaMono = new TreeMap<Integer, TreeSet<Integer>>();
 		timeToFreqsAtMaximaLeft = new TreeMap<Integer, TreeSet<Integer>>();
 		timeToFreqsAtMaximaRight = new TreeMap<Integer, TreeSet<Integer>>();
@@ -102,13 +98,6 @@ public class DFTEditor extends JFrame {
 		if(currentChannel == Channel.STEREO || currentChannel == Channel.MONO) return timeToFreqsAtMaximaMono;
 		if(currentChannel == Channel.LEFT) return timeToFreqsAtMaximaLeft;
 		if(currentChannel == Channel.RIGHT) return timeToFreqsAtMaximaRight;
-		return null;
-	}
-		
-	public static TreeMap<Long, Harmonic> getHarmonicIDToHarmonic() {
-		if(currentChannel == Channel.STEREO || currentChannel == Channel.MONO) return harmonicIDToHarmonicMono;
-		if(currentChannel == Channel.LEFT) return harmonicIDToHarmonicLeft;
-		if(currentChannel == Channel.RIGHT) return harmonicIDToHarmonicRight;
 		return null;
 	}
 	
@@ -157,14 +146,12 @@ public class DFTEditor extends JFrame {
 		refreshView();
 	}
 	
-	public static void blankScreen() {
-		view.dftInProgress = true;
-		view.paintImmediately(0, 0, view.getWidth(), view.getHeight());
-		view.dftInProgress = false;
+	public static void refreshView() {
+		view.refresh();
 	}
 	
-	public static void refreshView() {
-		view.repaint();
+	public static void refreshViewImmediate() {
+		view.paintImmediately(0, 0, view.getWidth(), view.getHeight());
 	}
 
 	public static long getRandomID() {
@@ -223,7 +210,7 @@ public class DFTEditor extends JFrame {
         DFT.FileDFTMatrix(dftFileName);
     	SynthTools.refresh = true;
     	SynthTools.createHarmonics();
-        parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonicMono);
+        parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonic);
         parent.graphEditorFrame.view.repaint();
         view.repaint();
 	}

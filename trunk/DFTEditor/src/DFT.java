@@ -427,10 +427,15 @@ static void FileDFTMatrix(String fileName) {
 	WaveletInfoArrayList = new ArrayList<WaveletInfo>();
 	InitWavelets();
 	int maxCenterIndex = LoadSamplesFromFile(fileName);
+	int maxTime = (int) Math.floor(maxCenterIndex / samplesPerStep);
 	for(int centerIndex = 0; centerIndex < maxCenterIndex; centerIndex += samplesPerStep) {
 		int waveletIndex = 0;
 		for(waveletIndex = 0; waveletIndex < numWavelets; waveletIndex++) {
 			SingleDFT(waveletIndex, (int) Math.round(centerIndex));
+		}
+		int currentTime = (int) Math.round(centerIndex / samplesPerStep);
+		if(currentTime % 100 == 0) {
+			System.out.println("FileDFTMatrix: " + (centerIndex / samplesPerStep) + " of " + (maxCenterIndex / samplesPerStep));
 		}
 	}
 	fillMatrix();

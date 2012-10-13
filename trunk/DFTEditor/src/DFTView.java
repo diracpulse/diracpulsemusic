@@ -11,10 +11,12 @@ public class DFTView extends JComponent {
 	private static final long serialVersionUID = 2964004162144513754L;
 
 	private static BufferedImage bi;
-	private static boolean useImage = true;
+	private static boolean refresh = true;
 	private static boolean drawPlaying = false;
 	private static int offsetInMillis;
 	public boolean dftInProgress = false;
+	private int height = 0;
+	private int width = 0;
 
 	public enum View {
 		Digits1, Digits2, Pixels1, Pixels2, Pixels3;
@@ -133,6 +135,7 @@ public class DFTView extends JComponent {
 		// clear old data
 		g.setColor(new Color(0.0f, 0.0f, 0.0f));
 		g.fillRect(DFTEditor.leftOffset, DFTEditor.upperOffset, getWidth(), getHeight());
+		if(DFTEditor.getAmplitudes() == null) return;
 		drawLeftFreqs(g);
 		drawUpperTimes(g);
 		if ((dataView == DataView.HARMONICS || dataView == DataView.HARMONIC_ID)) {
@@ -147,8 +150,7 @@ public class DFTView extends JComponent {
 	}
 
 	public void drawFileDataAsHarmonics(Graphics g) {
-		TreeMap<Long, Harmonic> harmonicIDToHarmonic = DFTEditor.getHarmonicIDToHarmonic();
-		for(Harmonic harmonic: harmonicIDToHarmonic.values()) {
+		for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonic.values()) {
 			if(!harmonic.isSynthesized()) continue;
 			FDData firstData = null;
 			for(FDData data: harmonic.getAllData()) {
@@ -368,40 +370,37 @@ public class DFTView extends JComponent {
 			return false;
 		return true;
 	}
-
+	
+	public void refresh() {
+		refresh = true;
+		paintImmediately(0, 0, getWidth(), getHeight());
+	}
+	
 	protected void paintComponent(Graphics g) {
-		if(dftInProgress) {
-			super.paintComponent(g);
-			g.setColor(new Color(0.5f, 0.5f, 1.0f));
-			g.fillRect(0, 0, getWidth(), getHeight());
-			return;
-		}
-		if (drawPlaying) {
-			double millisPerPixel = (double) FDData.timeStepInMillis
-					/ (double) getXStep();
-			int startX = (int) Math.round((double) DFTView.offsetInMillis
-					/ millisPerPixel + DFTEditor.leftOffset);
-			g.drawImage(bi, 0, 0, null);
-			g.setColor(new Color(0.5f, 0.5f, 0.5f, 0.75f));
-			g.fillRect(startX, 0, 1, getHeight());
-			drawPlaying = false;
-			return;
-		}
-		if (useImage == true) {
-			bi = new BufferedImage(getWidth(), getHeight(),
-					BufferedImage.TYPE_INT_RGB);
-			Graphics2D g2 = bi.createGraphics();
-			super.paintComponent(g);
-			drawFileData(g2, true);
-			drawHarmonicsBase31(g2);
-			g.drawImage(bi, 0, 0, null);
-			return;
-		}
+    	if(drawPlaying) {
+    		double pixelsPerTime = (double) getWidth() / (double) (GraphEditor.maxViewTime - GraphEditor.minViewTime);
+    		double millisPerPixel = (double) FDData.timeStepInMillis / pixelsPerTime;
+    		int startX = (int) Math.round((double) offsetInMillis / millisPerPixel);
+    		g.drawImage(bi, 0, 0, null);
+       		g.setColor(new Color(0.5f, 0.5f, 0.5f, 0.75f));
+    		g.fillRect(startX, 0, 1, getHeight());    		
+    		drawPlaying = false;
+    		return;
+    	}
+    	if(refresh || height != getHeight() || width != getWidth()) {
+    		bi = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+    		Graphics2D g2 = bi.createGraphics();
+    		super.paintComponent(g);
+    		drawFileData(g2, false);
+    		g.drawImage(bi, 0, 0, null);
+    		refresh = false;
+    		width = getWidth();
+    		height = getHeight();
+    		return;
+    	}
 		super.paintComponent(g);
-		drawFileData(g, true);
-		drawHarmonicsBase31(g);
+		g.drawImage(bi, 0, 0, null);
 		return;
-
 	}
 
 }

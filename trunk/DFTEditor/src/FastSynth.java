@@ -6,28 +6,38 @@ public class FastSynth {
 	public static int numSamples = 0;
 	private static float[] sharedPCMData;
 	
-	public static float[] synthHarmonicsLinear(ArrayList<Harmonic> harmonics) {
-		initSharedPCMData(harmonics);
-		for(Harmonic harmonic: harmonics) synthHarmonicLinear(harmonic);
+	public static float[] synthHarmonicsLinear(byte channel, ArrayList<Harmonic> harmonics) {
+		initSharedPCMData(channel, harmonics);
+		for(Harmonic harmonic: harmonics) {
+			if(harmonic.getChannel() != channel) continue; 
+			synthHarmonicLinear(harmonic);
+		}
 		return sharedPCMData;
 	}
 	
-	public static float[] synthHarmonicsLinearCubicSpline(ArrayList<Harmonic> harmonics) {
-		initSharedPCMData(harmonics);
-		for(Harmonic harmonic: harmonics) synthHarmonicLinearCubicSpline(harmonic);
+	public static float[] synthHarmonicsLinearCubicSpline(byte channel, ArrayList<Harmonic> harmonics) {
+		initSharedPCMData(channel, harmonics);
+		for(Harmonic harmonic: harmonics) {
+			if(harmonic.getChannel() != channel) continue;
+			synthHarmonicLinearCubicSpline(harmonic);
+		}
 		return sharedPCMData;
 	}
 	
-	public static float[] synthHarmonicsLinearNoise(ArrayList<Harmonic> harmonics) {
-		initSharedPCMData(harmonics);
-		for(Harmonic harmonic: harmonics) synthHarmonicLinearNoise(harmonic);
+	public static float[] synthHarmonicsLinearNoise(byte channel, ArrayList<Harmonic> harmonics) {
+		initSharedPCMData(channel, harmonics);
+		for(Harmonic harmonic: harmonics) {
+			if(harmonic.getChannel() != channel) continue;
+			synthHarmonicLinearNoise(harmonic);
+		}
 		return sharedPCMData;
 	}
 	
-	private static void initSharedPCMData(ArrayList<Harmonic> harmonics) {
+	private static void initSharedPCMData(byte channel, ArrayList<Harmonic> harmonics) {
 		double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
 		double maxEndTime = 0;
 		for(Harmonic harmonic: harmonics) {
+			if(harmonic.getChannel() != channel) continue;
 			double harmonicEndTime = Math.ceil(harmonic.getEndTime());
 			if(harmonicEndTime > maxEndTime) maxEndTime = harmonicEndTime;
 		}
@@ -53,8 +63,8 @@ public class FastSynth {
 			int upperTime = (int) Math.round(dataArray.get(arrayIndex + 1).getTime() * timeToSample);
 			double lowerAmplitude = Math.pow(2.0, dataArray.get(arrayIndex).getLogAmplitude());
 			double upperAmplitude = Math.pow(2.0, dataArray.get(arrayIndex + 1).getLogAmplitude());
-			double lowerFreq = Math.pow(2.0, (double) dataArray.get(arrayIndex).getNoteComplete() / FDData.noteBase);
-			double upperFreq = Math.pow(2.0, (double) dataArray.get(arrayIndex + 1).getNoteComplete() / FDData.noteBase);
+			double lowerFreq = Math.pow(2.0, (double) dataArray.get(arrayIndex).getNote() / FDData.noteBase);
+			double upperFreq = Math.pow(2.0, (double) dataArray.get(arrayIndex + 1).getNote() / FDData.noteBase);
 			double lowerDeltaPhase = (lowerFreq / SynthTools.sampleRate) * SynthTools.twoPI;
 			double upperDeltaPhase = (upperFreq / SynthTools.sampleRate) * SynthTools.twoPI;
 			double ampSlope = (upperAmplitude - lowerAmplitude) / (upperTime - lowerTime);
@@ -79,8 +89,8 @@ public class FastSynth {
 			int upperTime = (int) Math.round(dataArray.get(arrayIndex + 1).getTime() * timeToSample);
 			double lowerAmplitude = Math.pow(2.0, dataArray.get(arrayIndex).getLogAmplitude());
 			double upperAmplitude = Math.pow(2.0, dataArray.get(arrayIndex + 1).getLogAmplitude());
-			double lowerFreq = Math.pow(2.0, (double) dataArray.get(arrayIndex).getNoteComplete() / FDData.noteBase);
-			double upperFreq = Math.pow(2.0, (double) dataArray.get(arrayIndex + 1).getNoteComplete() / FDData.noteBase);
+			double lowerFreq = Math.pow(2.0, (double) dataArray.get(arrayIndex).getNote() / FDData.noteBase);
+			double upperFreq = Math.pow(2.0, (double) dataArray.get(arrayIndex + 1).getNote() / FDData.noteBase);
 			double lowerDeltaPhase = (lowerFreq / SynthTools.sampleRate) * SynthTools.twoPI;
 			double upperDeltaPhase = (upperFreq / SynthTools.sampleRate) * SynthTools.twoPI;
 			double ampSlope = (upperAmplitude - lowerAmplitude) / (upperTime - lowerTime);
@@ -105,7 +115,7 @@ public class FastSynth {
 		for(int index = 0; index < dataArray.size(); index++) {
 			times[index] = Math.round(dataArray.get(index).getTime() * timeToSample);
 			amps[index] = dataArray.get(index).getAmplitude();
-			freqs[index] = Math.pow(2.0, (double) dataArray.get(index).getNoteComplete() / FDData.noteBase);
+			freqs[index] = Math.pow(2.0, (double) dataArray.get(index).getNote() / FDData.noteBase);
 		}
 		CubicSpline timeToFreq = new CubicSpline(times, freqs);
 		CubicSpline timeToAmp = new CubicSpline(times, amps);

@@ -31,11 +31,12 @@ public class GraphFileInput {
 		try {
 			// loop is terminated by EOFException
 			while(true) {
+				byte channel = in.readByte();
 				int time = in.readInt();
-				int note = in.readInt();
+				short note = in.readShort();
 				float amp = in.readFloat();
 				long id = in.readLong();
-				FDData data = new FDData(time, note, amp, id);
+				FDData data = new FDData(channel, time, note, amp, id);
 				//System.out.println(data);
 				GraphEditor.addData(data);
 				//System.out.println(data);
