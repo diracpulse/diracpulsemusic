@@ -58,13 +58,7 @@ public class FileOutput {
 		try {
 	    	DataOutputStream selectedOut = new DataOutputStream(new
 		            BufferedOutputStream(new FileOutputStream(new String(fileName + ".harmonics"))));
-			DFTEditor.currentChannel = DFTEditor.Channel.MONO;
-			OutputHarmonicsToFile(selectedOut, (byte) 0);
-			DFTEditor.currentChannel = DFTEditor.Channel.LEFT;
-			OutputHarmonicsToFile(selectedOut, (byte) 1);
-			DFTEditor.currentChannel = DFTEditor.Channel.RIGHT;
-			OutputHarmonicsToFile(selectedOut, (byte) 2);
-            selectedOut.close();
+			OutputHarmonicsToFile(selectedOut);
 		} catch (Exception e) {
 			System.out.println("Exception in FileOutput.OutputSelectedToFile(filename)");
 			e.printStackTrace();
@@ -74,18 +68,14 @@ public class FileOutput {
 		DFTEditor.currentChannel = saveChannel;
 	}
 	
-	public static void OutputHarmonicsToFile(DataOutputStream harmonicsOut, byte channel) {
-		TreeMap<Long, Harmonic> harmonicIDToHarmonic = null;
-		if(channel == 0) harmonicIDToHarmonic = DFTEditor.harmonicIDToHarmonicMono;
-		if(channel == 1) harmonicIDToHarmonic = DFTEditor.harmonicIDToHarmonicLeft;
-		if(channel == 2) harmonicIDToHarmonic = DFTEditor.harmonicIDToHarmonicRight;
+	public static void OutputHarmonicsToFile(DataOutputStream harmonicsOut) {
 		try {
-            for(Harmonic harmonic: harmonicIDToHarmonic.values()) {
+            for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonic.values()) {
             	for(FDData data: harmonic.getAllData()) {
             		float amp = (float) data.getLogAmplitude();
-            		harmonicsOut.writeByte(channel);
+            		harmonicsOut.writeByte(data.getChannel());
             		harmonicsOut.writeInt(data.getTime());
-            		harmonicsOut.writeInt(data.getNote());
+            		harmonicsOut.writeShort(data.getNote());
             		harmonicsOut.writeFloat(amp);
             		harmonicsOut.writeLong(data.getHarmonicID());
             	}

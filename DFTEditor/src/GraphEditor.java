@@ -7,6 +7,13 @@ import java.io.*;
 
 public class GraphEditor extends JFrame {
 
+	public enum Channel {
+		LEFT,
+		RIGHT,
+		MONO,
+		STEREO,
+	}
+	
 	private static final long serialVersionUID = 6252327634736973395L;
 
 	public static MultiWindow parent;
@@ -38,6 +45,7 @@ public class GraphEditor extends JFrame {
 	public static boolean displayUnselectedHarmonics = true;
 	public static double zoomFactor = 2.0;
 	public static Random randomIDGenerator;
+	public static Channel channel = Channel.STEREO;
 	
 	public JMenuBar createMenuBar() {
         GraphActionHandler actionHandler = new GraphActionHandler(this);
@@ -104,7 +112,7 @@ public class GraphEditor extends JFrame {
 		maxViewNote = maxNote;
 		minViewLogAmplitude = 0.0;
 		maxViewLogAmplitude = maxLogAmplitude;
-		view.repaint();
+		refreshView();
 	}
 
     public GraphEditor() {
@@ -143,17 +151,17 @@ public class GraphEditor extends JFrame {
 	
 	public static void toggleClipZero() {
 		clipZero = !clipZero;
-		view.repaint();
+		refreshView();
 	}
 	
 	public static void toggleDisplaySelected() {
 		displaySelectedHarmonics = !displaySelectedHarmonics;
-		view.repaint();
+		refreshView();
 	}
 	
 	public static void toggleDisplayUnselected() {
 		displayUnselectedHarmonics = !displayUnselectedHarmonics;
-		view.repaint();
+		refreshView();
 	}
 	
 	public static int frequencyInHzToNote(double freqInHz) {
@@ -177,7 +185,7 @@ public class GraphEditor extends JFrame {
 		}
 		minViewNote = frequencyInHzToNote(octave);
 		maxViewNote = minViewNote + FDData.noteBase * 2;
-		view.repaint();
+		refreshView();
 	}
 	
 	public static void promptForColorView(GraphEditor parent) {
@@ -188,7 +196,7 @@ public class GraphEditor extends JFrame {
 		if(choice.equals("Amplitude")) GraphView.colorView = GraphView.ColorView.AMPLITUDE;
 		if(choice.equals("Frequency")) GraphView.colorView = GraphView.ColorView.FREQUENCY;
 		if(choice.equals("Harmonics")) GraphView.colorView = GraphView.ColorView.HARMONICS;
-		view.repaint();
+		refreshView();
 	}
 	
 	public static void promptForYView(GraphEditor parent) {
@@ -204,7 +212,7 @@ public class GraphEditor extends JFrame {
 			GraphView.yView = GraphView.YView.FREQUENCY;
 			GraphView.colorView = GraphView.ColorView.AMPLITUDE;
 		}
-		view.repaint();
+		refreshView();
 	}
 	
 	public static void leftClickMenu(GraphEditor parent, int x, int y) {
@@ -227,7 +235,7 @@ public class GraphEditor extends JFrame {
 			minViewTime += (maxViewTime - maxTime);
 			maxViewTime = maxTime;
 		}
-		view.repaint();
+		refreshView();
 	}
 	
 	public static void zoomInAmplitude(int y) {
@@ -245,12 +253,12 @@ public class GraphEditor extends JFrame {
 			maxViewLogAmplitude = maxLogAmplitude;
 		}
 		System.out.println(minViewLogAmplitude + " " + maxViewLogAmplitude);
-		view.repaint();
+		refreshView();
 	}
 	
 	public static void clipAmplitude(int y) {
 		minViewLogAmplitude = GraphUtils.screenYToValue(y);
-		view.repaint();
+		refreshView();
 	}
 	
 	public static void clipFrequency(GraphEditor parent, int y) {
@@ -264,7 +272,7 @@ public class GraphEditor extends JFrame {
 		if(choice.equals("Clip Bass")) {
 			minViewNote = (int) Math.round(GraphUtils.screenYToValue(y));
 		}
-		view.repaint();
+		refreshView();
 	}
 	
 	public static void zoomInFrequency(int y) {
@@ -282,7 +290,7 @@ public class GraphEditor extends JFrame {
 			maxViewNote = maxNote;
 		}
 		System.out.println(minViewNote + " " + maxViewNote);
-		view.repaint();
+		refreshView();
 	}
 	
 	public static void newControlPointHarmonic() {
@@ -307,7 +315,15 @@ public class GraphEditor extends JFrame {
 
 	public static void drawPlayTime(int offsetInMillis) {
 		view.drawPlayTime(offsetInMillis);
-		view.repaint();
+		refreshView();
+	}
+	
+	public static void refreshView() {
+		view.refresh();
+	}
+	
+	public static void refreshViewImmediate() {
+		view.paintImmediately(0, 0, view.getWidth(), view.getHeight());
 	}
 
 }

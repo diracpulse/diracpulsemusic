@@ -21,23 +21,23 @@ class SynthTools {
 
 	static void createPCMDataLinear() {
 		if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.WAV) return;
-		PCMDataMono = (float[]) FastSynth.synthHarmonicsLinear(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicMono.values()));
-		PCMDataLeft = (float[])FastSynth.synthHarmonicsLinear(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicLeft.values()));
-		PCMDataRight = (float[])FastSynth.synthHarmonicsLinear(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicRight.values()));
+		PCMDataMono = (float[]) FastSynth.synthHarmonicsLinear((byte) 0, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
+		PCMDataLeft = (float[]) FastSynth.synthHarmonicsLinear((byte) 1, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
+		PCMDataRight = (float[]) FastSynth.synthHarmonicsLinear((byte) 2, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
 	}
 	
 	static void createPCMDataLinearCubicSpline() {
 		if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.WAV) return;
-		PCMDataMono = FastSynth.synthHarmonicsLinearCubicSpline(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicMono.values()));
-		PCMDataLeft = FastSynth.synthHarmonicsLinearCubicSpline(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicLeft.values()));
-		PCMDataRight = FastSynth.synthHarmonicsLinearCubicSpline(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicRight.values()));
+		PCMDataMono = (float[]) FastSynth.synthHarmonicsLinearCubicSpline((byte) 0, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
+		PCMDataLeft = (float[]) FastSynth.synthHarmonicsLinearCubicSpline((byte) 1, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
+		PCMDataRight = (float[]) FastSynth.synthHarmonicsLinearCubicSpline((byte) 2, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
 	}
 	
 	static void createPCMDataLinearNoise() {
 		if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.WAV) return;
-		PCMDataMono = FastSynth.synthHarmonicsLinearNoise(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicMono.values()));
-		PCMDataLeft = FastSynth.synthHarmonicsLinearNoise(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicLeft.values()));
-		PCMDataRight = FastSynth.synthHarmonicsLinearNoise(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonicRight.values()));
+		PCMDataMono = (float[]) FastSynth.synthHarmonicsLinearNoise((byte) 0, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
+		PCMDataLeft = (float[]) FastSynth.synthHarmonicsLinearNoise((byte) 1, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
+		PCMDataRight = (float[]) FastSynth.synthHarmonicsLinearNoise((byte) 2, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
 	}
 	
 	static void playPCMData() {
@@ -68,16 +68,15 @@ class SynthTools {
 	}
 	
 	static void createHarmonics() {
-		createHarmonicsChannel(0);
-		createHarmonicsChannel(1);
-		createHarmonicsChannel(2);
+		DFTEditor.harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
+		createHarmonicsChannel((byte) 0);
+		createHarmonicsChannel((byte) 1);
+		createHarmonicsChannel((byte) 2);
+		DFTEditor.parent.graphEditorFrame.addHarmonicsToGraphEditor(DFTEditor.harmonicIDToHarmonic);
 	}
 
-	static void createHarmonicsChannel(int channel) {
+	static void createHarmonicsChannel(byte channel) {
 		TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
-		if(channel == 0) DFTEditor.harmonicIDToHarmonicMono = new TreeMap<Long, Harmonic>();
-		if(channel == 1) DFTEditor.harmonicIDToHarmonicLeft = new TreeMap<Long, Harmonic>();
-		if(channel == 2) DFTEditor.harmonicIDToHarmonicRight = new TreeMap<Long, Harmonic>();
 		if(channel == 0) DFTEditor.timeToFreqsAtMaximaMono = new TreeMap<Integer, TreeSet<Integer>>();
 		if(channel == 1) DFTEditor.timeToFreqsAtMaximaLeft = new TreeMap<Integer, TreeSet<Integer>>();		
 		if(channel == 2) DFTEditor.timeToFreqsAtMaximaRight = new TreeMap<Integer, TreeSet<Integer>>();
@@ -100,7 +99,7 @@ class SynthTools {
 						if(amplitudes[time][freq] <= 0) continue;
 						FDData data = null;
 						try {
-							data = new FDData(time, DFTEditor.freqToNote(freq), amplitudes[time][freq], 1L);
+							data = new FDData(channel, time, DFTEditor.freqToNote(freq), amplitudes[time][freq], 1L);
 						} catch (Exception e) {
 							System.out.println("SynthTools.createHarmonics: Error creating data time: " + time + " freq: " + freq);
 						}
@@ -180,9 +179,7 @@ class SynthTools {
 					}
 					break;
 				}
-				if(channel == 0) DFTEditor.harmonicIDToHarmonicMono.put(harmonicID, newHarmonic);
-				if(channel == 1) DFTEditor.harmonicIDToHarmonicLeft.put(harmonicID, newHarmonic);
-				if(channel == 2) DFTEditor.harmonicIDToHarmonicRight.put(harmonicID, newHarmonic);
+				DFTEditor.harmonicIDToHarmonic.put(harmonicID, newHarmonic);
 			}
 		}
 	}

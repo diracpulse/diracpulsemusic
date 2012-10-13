@@ -6,7 +6,7 @@ import java.util.TreeSet;
 
 class Interpolate {
 		
-	public static TreeMap<Integer, FDData> dataInterpolate(TreeMap<Integer, FDData> input) {
+	public static TreeMap<Integer, FDData> dataInterpolate(byte channel, TreeMap<Integer, FDData> input) {
 		TreeMap<Integer, FDData> output = new TreeMap<Integer, FDData>();
 		if(input.isEmpty()) return output;
 		if(input.size() == 1) {
@@ -25,10 +25,10 @@ class Interpolate {
 			double noteSlope = (upperNoteValue - lowerNoteValue) / (upperTime - lowerTime);
 			for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
 				double ampValue = lowerAmpValue + (timeIndex - lowerTime) * ampSlope;
-				double noteValue = lowerNoteValue + (timeIndex - lowerTime) * noteSlope;
+				int noteValue = (int) Math.round(lowerNoteValue + (timeIndex - lowerTime) * noteSlope);
 				try {
 					//System.out.println(timeIndex + " " +  noteValue + " " +  ampValue + " " +  harmonicID);
-					output.put(timeIndex, new FDData(timeIndex, noteValue, ampValue, harmonicID));
+					output.put(timeIndex, new FDData(channel, timeIndex, noteValue, ampValue, harmonicID));
 				} catch (Exception e) {
 					System.out.println("Interpolate.dataInterpolate(): error creating data");
 					return null;
@@ -40,5 +40,4 @@ class Interpolate {
 		}
 		return output;
 	}
-	
 }

@@ -153,7 +153,7 @@ public class GraphActionHandler extends JPanel {
 		
 		public void actionPerformed(ActionEvent arg0) {
 			GraphEditor.minHarmonicLength = minLength;
-		    GraphEditor.view.repaint();
+		    GraphEditor.refreshView();
 		}		
 		
 	}
@@ -168,7 +168,7 @@ public class GraphActionHandler extends JPanel {
 		
 		public void actionPerformed(ActionEvent arg0) {
 			GraphEditor.newControlPointHarmonic();
-		    GraphEditor.view.repaint();
+			GraphEditor.refreshView();
 		}		
 		
 	}
