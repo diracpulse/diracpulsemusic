@@ -44,12 +44,12 @@ public class DFTEditor extends JFrame {
 	public static int minLengthThreshold = 1;
 	public static boolean deleteSelected = false;
 	public static TreeMap<Integer, Integer> floorAmpToCount;
-	public static int xStep = 6; // one digit
-	public static int yStep = 9; // one digit;
-	public static int leftOffset = xStep * 6; // start of first data cell
-	public static int upperOffset = yStep * 6; // start of first data cell
-	public static int leftX = 0; // index of freq in leftmost data cell
-	public static int upperY = 0; // index of time in uppermost data cell
+	public static int digitWidth = 6; // one digit
+	public static int digitHeight = 9; // one digit;
+	public static int leftOffset = digitWidth * 6; // start of first data cell
+	public static int upperOffset = digitHeight * 6; // start of first data cell
+	public static int minViewTime = 0; // index of freq in leftmost data cell
+	public static int minViewFreq = 0; // index of time in uppermost data cell
 	public static int timeStepInMillis = FDData.timeStepInMillis; // time in ms = time * timeStepInMillis
 	// these are the max/min valued amplitude for the whole file
 	// they are used to calculate the color of amplitude values
@@ -67,7 +67,7 @@ public class DFTEditor extends JFrame {
 	public static int maxScreenNote;
 	public static int maxScreenFreq;
 	// maxTime = length of file in ms / timeStepInMillis
-	public static int maxTime;
+	public static int maxTime = 0;
 	// harmonic display variables
 	public static int drawHarmonicsBaseFreq = -1; // -1 means don't display
 	public static Random randomIDGenerator;
@@ -133,12 +133,26 @@ public class DFTEditor extends JFrame {
 		return timeToFreqsAtMaxima.get(time);
 	}
 
-	public int getTimeAxisWidthInMillis() {
+	public static int getTimeAxisWidthInMillis() {
 		return view.getTimeAxisWidthInMillis();
 	}
 	
+	public static int getMinViewTimeInMillis() {
+		return minViewTime * FDData.timeStepInMillis;
+	}
+	
+	public static int getMaxViewTime() {
+		int maxViewTime = minViewTime + view.getTimeAxisWidth();
+		if(maxViewTime < maxTime) return maxViewTime;
+		return maxTime;
+	}
+	
+	public static int getMaxViewTimeInMillis() {
+		return getMaxViewTime() * FDData.timeStepInMillis;
+	}
+	
 	public void playDataInCurrentWindow() {
-		new PlayDataInWindow(this, 50, view.getTimeAxisWidthInMillis());
+		new PlayDataInWindow(this, 50, getMaxViewTimeInMillis());
 	}
 	
 	public void drawPlayTime(int offsetInMillis, int refreshRateInMillis) {
@@ -148,10 +162,6 @@ public class DFTEditor extends JFrame {
 	
 	public static void refreshView() {
 		view.refresh();
-	}
-	
-	public static void refreshViewImmediate() {
-		view.paintImmediately(0, 0, view.getWidth(), view.getHeight());
 	}
 
 	public static long getRandomID() {

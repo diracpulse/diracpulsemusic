@@ -21,23 +21,56 @@ class SynthTools {
 
 	static void createPCMDataLinear() {
 		if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.WAV) return;
-		PCMDataMono = (float[]) FastSynth.synthHarmonicsLinear((byte) 0, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
-		PCMDataLeft = (float[]) FastSynth.synthHarmonicsLinear((byte) 1, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
-		PCMDataRight = (float[]) FastSynth.synthHarmonicsLinear((byte) 2, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
+		if(DFTEditor.harmonicIDToHarmonic == null || DFTEditor.harmonicIDToHarmonic.isEmpty()) return;
+		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
+		for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonic.values()) {
+			if(!harmonic.isSynthesized()) continue;
+			if(harmonic.getStartTime() > DFTEditor.getMaxViewTime()) continue;
+			if(harmonic.getEndTime() < DFTEditor.minViewTime) continue;
+			synthHarmonics.add(new Harmonic(harmonic.getHarmonicID()));
+			for(FDData data: harmonic.getTrimmedHarmonic(DFTEditor.minViewTime, DFTEditor.getMaxViewTime(), 1.0)) {
+				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
+			}
+		}
+		PCMDataMono = (float[]) FastSynth.synthHarmonicsLinear((byte) 0, new ArrayList<Harmonic>(synthHarmonics));
+		PCMDataLeft = (float[]) FastSynth.synthHarmonicsLinear((byte) 1, new ArrayList<Harmonic>(synthHarmonics));
+		PCMDataRight = (float[]) FastSynth.synthHarmonicsLinear((byte) 2, new ArrayList<Harmonic>(synthHarmonics));
 	}
 	
 	static void createPCMDataLinearCubicSpline() {
 		if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.WAV) return;
-		PCMDataMono = (float[]) FastSynth.synthHarmonicsLinearCubicSpline((byte) 0, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
-		PCMDataLeft = (float[]) FastSynth.synthHarmonicsLinearCubicSpline((byte) 1, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
-		PCMDataRight = (float[]) FastSynth.synthHarmonicsLinearCubicSpline((byte) 2, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
+		if(DFTEditor.harmonicIDToHarmonic == null || DFTEditor.harmonicIDToHarmonic.isEmpty()) return;
+		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
+		for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonic.values()) {
+			if(!harmonic.isSynthesized()) continue;
+			if(harmonic.getStartTime() > DFTEditor.getMaxViewTime()) continue;
+			if(harmonic.getEndTime() < DFTEditor.minViewTime) continue;
+			synthHarmonics.add(new Harmonic(harmonic.getHarmonicID()));
+			for(FDData data: harmonic.getTrimmedHarmonic(DFTEditor.minViewTime, DFTEditor.getMaxViewTime(), 1.0)) {
+				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
+			}
+		}
+		PCMDataMono = (float[]) FastSynth.synthHarmonicsLinearCubicSpline((byte) 0, new ArrayList<Harmonic>(synthHarmonics));
+		PCMDataLeft = (float[]) FastSynth.synthHarmonicsLinearCubicSpline((byte) 1, new ArrayList<Harmonic>(synthHarmonics));
+		PCMDataRight = (float[]) FastSynth.synthHarmonicsLinearCubicSpline((byte) 2, new ArrayList<Harmonic>(synthHarmonics));
 	}
 	
 	static void createPCMDataLinearNoise() {
 		if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.WAV) return;
-		PCMDataMono = (float[]) FastSynth.synthHarmonicsLinearNoise((byte) 0, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
-		PCMDataLeft = (float[]) FastSynth.synthHarmonicsLinearNoise((byte) 1, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
-		PCMDataRight = (float[]) FastSynth.synthHarmonicsLinearNoise((byte) 2, new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
+		if(DFTEditor.harmonicIDToHarmonic == null || DFTEditor.harmonicIDToHarmonic.isEmpty()) return;
+		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
+		for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonic.values()) {
+			if(!harmonic.isSynthesized()) continue;
+			if(harmonic.getStartTime() > DFTEditor.getMaxViewTime()) continue;
+			if(harmonic.getEndTime() < DFTEditor.minViewTime) continue;
+			synthHarmonics.add(new Harmonic(harmonic.getHarmonicID()));
+			for(FDData data: harmonic.getTrimmedHarmonic(DFTEditor.minViewTime, DFTEditor.getMaxViewTime(), 1.0)) {
+				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
+			}
+		}
+		PCMDataMono = (float[]) FastSynth.synthHarmonicsLinearNoise((byte) 0, new ArrayList<Harmonic>(synthHarmonics));
+		PCMDataLeft = (float[]) FastSynth.synthHarmonicsLinearNoise((byte) 1, new ArrayList<Harmonic>(synthHarmonics));
+		PCMDataRight = (float[]) FastSynth.synthHarmonicsLinearNoise((byte) 2, new ArrayList<Harmonic>(synthHarmonics));
 	}
 	
 	static void playPCMData() {

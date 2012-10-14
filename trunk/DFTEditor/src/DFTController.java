@@ -65,8 +65,8 @@ public class DFTController implements MouseListener, ActionListener {
 		if((DFTView.getXStep() >= 1.0) && (DFTView.getXStep() >= 1.0)) {
 			int xStep = (int) DFTView.getXStep();
 			int yStep = (int) DFTView.getYStep();
-			int time = (mouseX - DFTEditor.leftOffset) / xStep + DFTEditor.leftX;
-			int freq = (mouseY - DFTEditor.upperOffset) / yStep + DFTEditor.upperY;
+			int time = (mouseX - DFTEditor.leftOffset) / xStep + DFTEditor.minViewTime;
+			int freq = (mouseY - DFTEditor.upperOffset) / yStep + DFTEditor.minViewFreq;
 			//int realFreq = DFTEditor.maxRealFreq - freq;
 			returnVal = DFTUtils.getValue(time, freq);
 		}
@@ -77,8 +77,8 @@ public class DFTController implements MouseListener, ActionListener {
 	}
 	
     public void actionPerformed(ActionEvent e) {
-        int apOldUpperY = DFTEditor.upperY;
-        int apOldLeftX = DFTEditor.leftX;
+        int apOldUpperY = DFTEditor.minViewFreq;
+        int apOldLeftX = DFTEditor.minViewTime;
         // Frequency values have reverse sign due to screen display
         if ("F+31".equals(e.getActionCommand())) adjustY(-31);
         if ("F-31".equals(e.getActionCommand())) adjustY(31);
@@ -100,24 +100,24 @@ public class DFTController implements MouseListener, ActionListener {
         if ("-10s".equals(e.getActionCommand())) adjustX(-10000 / DFTEditor.timeStepInMillis);
         if ("-30s".equals(e.getActionCommand())) adjustX(-30000 / DFTEditor.timeStepInMillis);
     	if ("-1min".equals(e.getActionCommand())) adjustX(-60000 / DFTEditor.timeStepInMillis);
-        if((apOldUpperY != DFTEditor.upperY) || (apOldLeftX != DFTEditor.leftX)) {
-        	DFTEditor.view.repaint();
+        if((apOldUpperY != DFTEditor.minViewFreq) || (apOldLeftX != DFTEditor.minViewTime)) {
+        	DFTEditor.refreshView();
         }
     }
     
     private void adjustY(int deltaY) {
     	if(deltaY > 0) {
     		int maxY = (DFTEditor.maxScreenFreq);
-    		if((DFTEditor.upperY + deltaY) < maxY) {
-    			DFTEditor.upperY += deltaY;
+    		if((DFTEditor.minViewFreq + deltaY) < maxY) {
+    			DFTEditor.minViewFreq += deltaY;
     		} else {
-    			DFTEditor.upperY = maxY;
+    			DFTEditor.minViewFreq = maxY;
     		}
     	} else {
-    		if((DFTEditor.upperY + deltaY) > 0) {
-    			DFTEditor.upperY += deltaY;
+    		if((DFTEditor.minViewFreq + deltaY) > 0) {
+    			DFTEditor.minViewFreq += deltaY;
     		} else {
-    			DFTEditor.upperY = 0;
+    			DFTEditor.minViewFreq = 0;
     		}
     	}
     }
@@ -125,16 +125,16 @@ public class DFTController implements MouseListener, ActionListener {
     private void adjustX(int deltaX) {
     	if(deltaX > 0) {
     		int maxX = DFTEditor.maxTime;
-    		if((DFTEditor.leftX + deltaX) < maxX) {
-    			DFTEditor.leftX += deltaX;
+    		if((DFTEditor.minViewTime + deltaX) < maxX) {
+    			DFTEditor.minViewTime += deltaX;
     		} else {
-    			DFTEditor.leftX = maxX;
+    			DFTEditor.minViewTime = maxX;
     		}
     	} else {
-    		if((DFTEditor.leftX + deltaX) > 0) {
-    			DFTEditor.leftX += deltaX;
+    		if((DFTEditor.minViewTime + deltaX) > 0) {
+    			DFTEditor.minViewTime += deltaX;
     		} else {
-    			DFTEditor.leftX = 0;
+    			DFTEditor.minViewTime = 0;
     		}
     	}
     }

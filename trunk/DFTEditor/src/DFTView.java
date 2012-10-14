@@ -48,9 +48,9 @@ public class DFTView extends JComponent {
 	public static double getXStep() {
 		switch (view) {
 		case Digits1:
-			return DFTEditor.xStep;
+			return DFTEditor.digitWidth;
 		case Digits2:
-			return DFTEditor.xStep;
+			return DFTEditor.digitWidth;
 		case Pixels1:
 			return 1;
 		case Pixels2:
@@ -64,9 +64,9 @@ public class DFTView extends JComponent {
 	public static double getYStep() {
 		switch (view) {
 		case Digits1:
-			return DFTEditor.yStep;
+			return DFTEditor.digitHeight;
 		case Digits2:
-			return DFTEditor.yStep * 2;
+			return DFTEditor.digitHeight * 2;
 		case Pixels1:
 			return 1;
 		case Pixels2:
@@ -79,14 +79,14 @@ public class DFTView extends JComponent {
 
 	public void drawUpperTimes(Graphics g) {
 		int intDigits = 3;
-		int decimalStartY = intDigits * DFTEditor.yStep;
-		int endTime = (int) Math.round(DFTEditor.leftX + getWidth()
+		int decimalStartY = intDigits * DFTEditor.digitHeight;
+		int endTime = (int) Math.round(DFTEditor.minViewTime + getWidth()
 				/ getXStep());
-		double timeStep = (double) DFTEditor.xStep / (double) getXStep();
+		double timeStep = (double) DFTEditor.digitWidth / (double) getXStep();
 		int screenX = DFTEditor.leftOffset;
 		Color white = new Color(0.0f, 0.0f, 0.0f);
 		Color black = new Color(1.0f, 1.0f, 1.0f);
-		for (double dTime = DFTEditor.leftX; dTime <= endTime; dTime += timeStep) {
+		for (double dTime = DFTEditor.minViewTime; dTime <= endTime; dTime += timeStep) {
 			int time = (int) Math.round(dTime);
 			if (time >= DFTEditor.maxTime)
 				return;
@@ -97,26 +97,26 @@ public class DFTView extends JComponent {
 					.DrawIntegerVertical(g, white, black, screenX, 0, 2, intVal);
 			DFTUtils.DrawIntegerVertical(g, black, white, screenX,
 					decimalStartY, 2, decimalVal);
-			screenX += DFTEditor.xStep;
+			screenX += DFTEditor.digitWidth;
 			// System.out.println("drawUpperTimes " + intVal + " " +
 			// decimalVal);
 		}
 	}
 
 	public void drawLeftFreqs(Graphics g) {
-		double dFreqStep = (double) DFTEditor.yStep / (double) getYStep();
-		int deltaScreenY = DFTEditor.yStep;
+		double dFreqStep = (double) DFTEditor.digitHeight / (double) getYStep();
+		int deltaScreenY = DFTEditor.digitHeight;
 		int screenY = DFTEditor.upperOffset;
-		int endFreq = (int) Math.round(DFTEditor.upperY + getHeight()
+		int endFreq = (int) Math.round(DFTEditor.minViewFreq + getHeight()
 				/ getYStep());
 		// handle digits > 1
-		if (DFTEditor.yStep < getYStep()) {
+		if (DFTEditor.digitHeight < getYStep()) {
 			dFreqStep = 1.0;
 			deltaScreenY = (int) getYStep();
 		}
 		Color white = new Color(0.0f, 0.0f, 0.0f);
 		Color black = new Color(1.0f, 1.0f, 1.0f);
-		for (double dFreq = DFTEditor.upperY; dFreq < endFreq; dFreq += dFreqStep) {
+		for (double dFreq = DFTEditor.minViewFreq; dFreq < endFreq; dFreq += dFreqStep) {
 			int freq = (int) Math.round(dFreq);
 			if (freq >= DFTEditor.maxScreenFreq)
 				return;
@@ -205,9 +205,9 @@ public class DFTView extends JComponent {
 											// getTimeIncrement());
 		int pixelStepY = (int) getYStep(); // (DFTEditor.yStep /
 											// getFreqIncrement() / 2);
-		int startX = DFTEditor.leftX;
+		int startX = DFTEditor.minViewTime;
 		int endX = startX + ((getWidth() - DFTEditor.leftOffset) / pixelStepX);
-		int startY = DFTEditor.upperY;
+		int startY = DFTEditor.minViewFreq;
 		int endY = startY
 				+ ((getHeight() - DFTEditor.upperOffset) / pixelStepY);
 		for (int x = startX; x < endX; x++) {
@@ -216,9 +216,9 @@ public class DFTView extends JComponent {
 				if (!isYInBounds(y))
 					break;
 				int screenX = DFTEditor.leftOffset
-						+ ((x - DFTEditor.leftX) * pixelStepX);
+						+ ((x - DFTEditor.minViewTime) * pixelStepX);
 				int screenY = DFTEditor.upperOffset
-						+ ((y - DFTEditor.upperY) * pixelStepY);
+						+ ((y - DFTEditor.minViewFreq) * pixelStepY);
 				float amp = DFTEditor.getAmplitude(x, y);
 				if (amp == 0.0f) continue;
 				Color b = getColor(x,y);
@@ -229,16 +229,16 @@ public class DFTView extends JComponent {
 	
 	public void drawFileDataAsDerivatives(Graphics g) {
 		float ampRange = DFTEditor.maxAmplitude - DFTEditor.minAmplitude;
-		int startX = DFTEditor.leftX;
+		int startX = DFTEditor.minViewTime;
 		int endX = startX + (int) Math.round((getWidth() - DFTEditor.leftOffset) / getXStep());
-		int startY = DFTEditor.upperY;
+		int startY = DFTEditor.minViewFreq;
 		int endY = startY + (int) Math.round((getHeight() - DFTEditor.upperOffset) / getYStep());
 		for (int x = startX; x < endX; x++) {
 			if (!isXInBounds(x)) break;
 			for (int y = startY; y < endY - 1; y++) {
 				if (!isYInBounds(y)) break;
-				int screenX = DFTEditor.leftOffset + (int) Math.round((x - DFTEditor.leftX) * getXStep());
-				int screenY = DFTEditor.upperOffset + (int) Math.round((y - DFTEditor.upperY) * getYStep());
+				int screenX = DFTEditor.leftOffset + (int) Math.round((x - DFTEditor.minViewTime) * getXStep());
+				int screenY = DFTEditor.upperOffset + (int) Math.round((y - DFTEditor.minViewFreq) * getYStep());
 				float amp = DFTEditor.getAmplitude(x, y) - DFTEditor.getAmplitude(x, y + 1);
 				Color b = null;
 				float red = 0;
@@ -345,18 +345,7 @@ public class DFTView extends JComponent {
 			index++;
 		}
 	}
-
-	public void drawPlayTime(int offsetInMillis, int refreshInMillis) {
-		drawPlaying = true;
-		DFTView.offsetInMillis = offsetInMillis;
-	}
-
-	public int getTimeAxisWidthInMillis() {
-		double millisPerPixel = (double) FDData.timeStepInMillis
-				/ (double) getXStep();
-		return (int) Math.round(getWidth() * millisPerPixel);
-	}
-
+	
 	// See also DFTEditor.getAmplitude()
 	private boolean isYInBounds(int y) {
 		if (y > DFTEditor.maxScreenFreq)
@@ -371,6 +360,21 @@ public class DFTView extends JComponent {
 		return true;
 	}
 	
+	public void drawPlayTime(int offsetInMillis, int refreshInMillis) {
+		drawPlaying = true;
+		DFTView.offsetInMillis = offsetInMillis;
+	}
+	
+	public int getTimeAxisWidth() {
+		return (int) Math.round(getWidth() / getXStep());
+	}
+
+	public int getTimeAxisWidthInMillis() {
+		double millisPerPixel = (double) FDData.timeStepInMillis
+				/ (double) getXStep();
+		return (int) Math.round(getWidth() * millisPerPixel);
+	}
+
 	public void refresh() {
 		refresh = true;
 		paintImmediately(0, 0, getWidth(), getHeight());
@@ -378,12 +382,11 @@ public class DFTView extends JComponent {
 	
 	protected void paintComponent(Graphics g) {
     	if(drawPlaying) {
-    		double pixelsPerTime = (double) getWidth() / (double) (GraphEditor.maxViewTime - GraphEditor.minViewTime);
-    		double millisPerPixel = (double) FDData.timeStepInMillis / pixelsPerTime;
-    		int startX = (int) Math.round((double) offsetInMillis / millisPerPixel);
+    		double millisPerPixel = (double) (FDData.timeStepInMillis / getXStep());
+    		int startX = DFTEditor.leftOffset + (int) Math.round((offsetInMillis - DFTEditor.getMinViewTimeInMillis()) / millisPerPixel);
     		g.drawImage(bi, 0, 0, null);
-       		g.setColor(new Color(0.5f, 0.5f, 0.5f, 0.75f));
-    		g.fillRect(startX, 0, 1, getHeight());    		
+       		g.setColor(new Color(1.0f, 1.0f, 1.0f, 0.75f));
+    		g.fillRect(startX, 0, 2, getHeight());    		
     		drawPlaying = false;
     		return;
     	}
