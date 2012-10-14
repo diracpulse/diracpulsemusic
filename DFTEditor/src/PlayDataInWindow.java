@@ -23,7 +23,7 @@ public class PlayDataInWindow implements ActionListener {
 	
 	PlayDataInWindow(DFTEditor parent, int refreshRateInMillis, int endTimeInMillis) {
 		this.parent = parent;
-		this.currentOffsetInMillis = 0;
+		this.currentOffsetInMillis = DFTEditor.getMinViewTimeInMillis();
 		this.refreshRateInMillis = refreshRateInMillis;
 		this.endTimeInMillis = endTimeInMillis;
 		timer = new Timer(refreshRateInMillis, this);
@@ -43,7 +43,10 @@ public class PlayDataInWindow implements ActionListener {
 		}
 		parent.drawPlayTime(currentOffsetInMillis, refreshRateInMillis);
 		currentOffsetInMillis += refreshRateInMillis;
-		if(currentOffsetInMillis >= endTimeInMillis) timer.stop();
+		if(currentOffsetInMillis >= endTimeInMillis) {
+			parent.drawPlayTime(DFTEditor.getMaxViewTimeInMillis(), refreshRateInMillis);
+			timer.stop();
+		}
 	}
 	
 }
