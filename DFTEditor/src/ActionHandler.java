@@ -26,6 +26,7 @@ public class ActionHandler extends JPanel {
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
+			DFT.printDFTParameters();
 			parent.FileDFT(false);
 			DFTEditor.refreshView();
 		}
@@ -41,6 +42,7 @@ public class ActionHandler extends JPanel {
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
+			DFT.printDFTParameters();
 			parent.FileDFT(true);
 			DFTEditor.refreshView();
 		}
@@ -160,7 +162,6 @@ public class ActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println(channel);
 			DFTEditor.currentChannel = channel;
-			DFTEditor.refreshView();
 		}
 	}
 
@@ -195,7 +196,6 @@ public class ActionHandler extends JPanel {
 			DFTEditor.minLogAmplitudeThreshold = logCutoff;
 			SynthTools.createHarmonics();
 			DFTEditor.refreshView();
-		    SynthTools.refresh = true;
 		}		
 		
 	}
@@ -213,7 +213,7 @@ public class ActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("MinLength = " + minLength);
 			DFTEditor.minLengthThreshold = minLength;
-			SynthTools.refresh = true;
+			DFTEditor.refreshView();
 		}		
 		
 	}
@@ -231,6 +231,7 @@ public class ActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Note Base = " + noteBase);
 			FDData.noteBase = noteBase;
+			DFT.printDFTParameters();
 		}		
 		
 	}
@@ -248,6 +249,7 @@ public class ActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Time Step = " + timeStep);
 			FDData.timeStepInMillis = timeStep;
+			DFT.printDFTParameters();
 		}		
 		
 	}
@@ -265,25 +267,97 @@ public class ActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Bin Step = " + binStep);
 			DFT.maxBinStep = binStep;
-			DFT.InitWavelets();
+			DFT.printDFTParameters();
 		}
 		
 	}
 	
-	public class SelectCenterFreqAction extends AbstractAction {
+	public class SelectMidFreqAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
-		private double centerFreq;
+		private double midFreq;
 		
-		public SelectCenterFreqAction(double centerFreq) {
-			super("Center Freq = " + centerFreq);
-			this.centerFreq = centerFreq;
+		public SelectMidFreqAction(double midFreq) {
+			super("Mid Freq = " + midFreq);
+			this.midFreq = midFreq;
 		}
 		
 		public void actionPerformed(ActionEvent arg0) {
-			System.out.println("Center Freq = " + centerFreq);
-			DFT.centerFreq = centerFreq;
-			DFT.InitWavelets();
+			System.out.println("Mid Freq = " + midFreq);
+			DFT.midFreq = midFreq;
+			DFT.printDFTParameters();
+		}
+		
+	}
+	
+	public class SelectBassFreqAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+		private double bassFreq;
+		
+		public SelectBassFreqAction(double bassFreq) {
+			super("Bass Freq = " + bassFreq);
+			this.bassFreq = bassFreq;
+		}
+		
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Bass Freq = " + bassFreq);
+			DFT.bassFreq = bassFreq;
+			DFT.printDFTParameters();
+		}
+		
+	}
+	
+	public class SelectBinRangeFactorAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+		private double binRangeFactor;
+		
+		public SelectBinRangeFactorAction(double binRangeFactor) {
+			super("Bin Range Factor = " + binRangeFactor);
+			this.binRangeFactor = binRangeFactor;
+		}
+		
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Bin Range Factor = " + binRangeFactor);
+			SynthTools.binRangeFactor = binRangeFactor;
+			SynthTools.createHarmonics();
+			DFTEditor.refreshView();
+		}
+		
+	}
+	
+	public class ApplyMaskingFactorAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+		private double maskingFactor;
+		
+		public ApplyMaskingFactorAction(double maskingFactor) {
+			super("Masking Factor = " + maskingFactor);
+			this.maskingFactor = maskingFactor;
+		}
+		
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Masking Factor = " + maskingFactor);
+			DFT.maskingFactor = maskingFactor;
+			DFT.applyMasking();
+			SynthTools.createHarmonics();
+			DFTEditor.refreshView();
+		}
+		
+	}
+	
+	public class PrintDFTInfoAction extends AbstractAction {
+		
+		private static final long serialVersionUID = 1L;
+		
+		public PrintDFTInfoAction() {
+			super("PrintDFTInfo");
+		}
+		
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("DFTInfo");
+			DFT.printDFTParameters();
 		}
 		
 	}
@@ -364,17 +438,30 @@ public class ActionHandler extends JPanel {
         for(double binStep = 0.5; binStep <= 5.0; binStep += 0.5) {
         	binStepMenu.add(new SelectBinStepAction(binStep));
         }
-        JMenu centerFreqMenu = new JMenu("CenterFreq");
-        menuBar.add(centerFreqMenu);          
-        for(double centerFreq = 20; centerFreq < 100.0; centerFreq += 20) {
-        	centerFreqMenu.add(new SelectCenterFreqAction(centerFreq));
+        JMenu midFreqMenu = new JMenu("MidFreq");
+        menuBar.add(midFreqMenu);          
+        midFreqMenu.add(new SelectMidFreqAction(0.0));
+        for(double midFreq = 250; midFreq <= 8000.0; midFreq *= Math.sqrt(2.0)) {
+        	midFreqMenu.add(new SelectMidFreqAction(Math.round(midFreq)));
         }
-        for(double centerFreq = 100; centerFreq < 250.0; centerFreq += 50) {
-        	centerFreqMenu.add(new SelectCenterFreqAction(centerFreq));
+        JMenu bassFreqMenu = new JMenu("BassFreq");
+        menuBar.add(bassFreqMenu);          
+        for(double bassFreq = 20; bassFreq < 2000.0; bassFreq *= Math.sqrt(2.0)) {
+        	bassFreqMenu.add(new SelectBassFreqAction(Math.round(bassFreq)));
         }
-        for(double centerFreq = 250; centerFreq < 2000.0; centerFreq += 250) {
-        	centerFreqMenu.add(new SelectCenterFreqAction(centerFreq));
-        }       
+        JMenu binRangeFactorMenu = new JMenu("BinRange");
+        menuBar.add(binRangeFactorMenu);          
+        for(double binRangeFactor = 1.0 / 64.0; binRangeFactor <= 1.0; binRangeFactor *= 2.0) {
+        	binRangeFactorMenu.add(new SelectBinRangeFactorAction(binRangeFactor));
+        }
+        JMenu maskingFactorMenu = new JMenu("ApplyMasking");
+        menuBar.add(maskingFactorMenu);          
+        for(double maskingFactor = 16.0; maskingFactor >= 8.0; maskingFactor -= 0.5) {
+        	maskingFactorMenu.add(new ApplyMaskingFactorAction(maskingFactor));
+        }
+        JMenu dftParamsMenu = new JMenu("DFTParams");
+        menuBar.add(dftParamsMenu);          
+        dftParamsMenu.add(new PrintDFTInfoAction());
         return menuBar;
 	}
 

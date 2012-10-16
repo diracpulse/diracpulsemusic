@@ -53,6 +53,11 @@ public class Harmonic {
 		return true;
 	}
 	
+	public ArrayList<FDData> getAllDataRaw() {
+		ArrayList<FDData> returnVal = new ArrayList<FDData>(timeToData.values());
+		return returnVal;
+	}
+	
 	public ArrayList<FDData> getAllData() {
 		ArrayList<FDData> returnVal = new ArrayList<FDData>(timeToData.values());
 		if(returnVal.size() == 0) return returnVal;
@@ -106,6 +111,7 @@ public class Harmonic {
 	}
 
 	public double getTaperLength() {
+		double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
 		FDData endData = timeToData.lastEntry().getValue();
 		double endLogAmp = endData.getLogAmplitude();
 		double taperLength = 0;
@@ -114,7 +120,7 @@ public class Harmonic {
 			double cycleLength = SynthTools.sampleRate / Math.pow(FDData.logBase, endLogFreq);
 			//taperLength =  (int) Math.ceil(endLogAmp * cycleLength);
 			taperLength = cycleLength * 2;
-			taperLength /= SynthTools.timeToSample; 
+			taperLength /= timeToSample; 
 		}
 		//System.out.println("Harmonic.getTaperLength: " + taperLength);
 		return taperLength;
