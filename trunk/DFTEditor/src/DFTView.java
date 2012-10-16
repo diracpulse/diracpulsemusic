@@ -151,9 +151,20 @@ public class DFTView extends JComponent {
 
 	public void drawFileDataAsHarmonics(Graphics g) {
 		for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonic.values()) {
+			if(harmonic.getChannel() != 0) continue;
 			if(!harmonic.isSynthesized()) continue;
+			if(harmonic.getAllDataRaw().size() == 1) {
+				FDData data = harmonic.getAllDataRaw().get(0);
+				Color b = getColor(data.getLogAmplitude());
+				if(dataView == dataView.HARMONIC_ID) b = getColor(data.getHarmonicID());
+				g.setColor(b);
+				int x = DFTUtils.timeToScreenX(data.getTime());
+				int y = DFTUtils.freqToScreenY(DFTEditor.noteToFreq(data.getNote()));
+				g.fillRect(x, y, 1, 1);
+				continue;
+			}
 			FDData firstData = null;
-			for(FDData data: harmonic.getAllData()) {
+			for(FDData data: harmonic.getAllDataRaw()) {
 				if(firstData == null) {
 					firstData = data;
 					continue;

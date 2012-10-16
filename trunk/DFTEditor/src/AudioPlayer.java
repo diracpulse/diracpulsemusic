@@ -70,6 +70,7 @@ public class AudioPlayer extends Thread {
 	}
 	
 	public void PlayBuffer(float[] mono, double masterVolume) {
+		if(mono == null) return;
 		final int numberOfSamples = mono.length;
 		float[] left = new float[numberOfSamples];
 		float[] right = new float[numberOfSamples];
@@ -83,6 +84,7 @@ public class AudioPlayer extends Thread {
 	
 	/* NOTE: this version of PlayBuffer scales maxAmplitude to 1.0 */
 	public void PlayBuffer(float[] left, float[] right, double masterVolume) {
+		if(left == null || right == null) return;
 		int numberOfSamples = right.length;
 		if (left.length < right.length) numberOfSamples = left.length;
 		System.out.println("AudioPlayer.PlayBuffer: left samples = " + left.length + " | right samples = " + right.length);

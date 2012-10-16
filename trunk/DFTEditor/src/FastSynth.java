@@ -5,6 +5,10 @@ public class FastSynth {
 	
 	public static int numSamples = 0;
 	private static float[] sharedPCMData;
+	private static double timeToSample;
+	private static int grainSize = 100 / FDData.timeStepInMillis;
+	private static int minNoiseNote = 10 * FDData.noteBase;
+	private static double[][] noiseBanks = null;
 	
 	public static float[] synthHarmonicsLinear(byte channel, ArrayList<Harmonic> harmonics) {
 		initSharedPCMData(channel, harmonics);
@@ -25,6 +29,7 @@ public class FastSynth {
 	}
 	
 	public static float[] synthHarmonicsLinearNoise(byte channel, ArrayList<Harmonic> harmonics) {
+		initNoiseBanks();
 		initSharedPCMData(channel, harmonics);
 		for(Harmonic harmonic: harmonics) {
 			if(harmonic.getChannel() != channel) continue;
@@ -34,7 +39,7 @@ public class FastSynth {
 	}
 	
 	private static void initSharedPCMData(byte channel, ArrayList<Harmonic> harmonics) {
-		double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
+		timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
 		double maxEndTime = 0;
 		for(Harmonic harmonic: harmonics) {
 			if(harmonic.getChannel() != channel) continue;
@@ -46,18 +51,28 @@ public class FastSynth {
 		for(int index = 0; index < numSamples; index++) sharedPCMData[index] = 0.0f;
 	}
 	
+	private static void initNoiseBanks() {
+		timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
+		int grainSizeInSamples = (int) Math.ceil(timeToSample * grainSize);
+		int numNoiseFreqs = FDData.getMaxNote() - minNoiseNote + 1;
+		noiseBanks = new double[numNoiseFreqs][grainSizeInSamples];
+		for(int freq = 0; freq < numNoiseFreqs; freq++) {
+			noiseBanks[freq] = Filter.getFilteredNoise(grainSizeInSamples, FDData.getMaxNote() - freq, 1.0);
+		}
+	}
+	
 	private static void synthHarmonicLinearNoise(Harmonic harmonic) {
-		double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
-		if(harmonic.getAverageNote() < 10 * FDData.noteBase) {
+		if(harmonic.getAllDataRaw().size() > grainSize || harmonic.getAverageNote() < minNoiseNote) {
 			synthHarmonicLinear(harmonic);
 			return;
 		}
+		double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
 		ArrayList<FDData> dataArray = new ArrayList<FDData>(harmonic.getAllDataInterpolated().values());
 		int maxArrayIndex = dataArray.size();
 		double currentPhase = 0.0;
-		int harmonicStart = (int) Math.round(harmonic.getStartTime() * SynthTools.timeToSample);
-		int duration = (int) Math.round(harmonic.getLength() * SynthTools.timeToSample);
-		double[] noise = Filter.getFilteredNoise(duration, harmonic.getAverageNote(), 1.0);
+		int harmonicStart = (int) Math.round(harmonic.getStartTime() * timeToSample);
+		int duration = (int) Math.round(harmonic.getLength() * timeToSample);
+		double[] noise = noiseBanks[FDData.getMaxNote() - harmonic.getAverageNote()];
 		for(int arrayIndex = 0; arrayIndex < maxArrayIndex - 1; arrayIndex++) {
 			int lowerTime = (int) Math.round(dataArray.get(arrayIndex).getTime() * timeToSample);
 			int upperTime = (int) Math.round(dataArray.get(arrayIndex + 1).getTime() * timeToSample);
@@ -82,6 +97,7 @@ public class FastSynth {
 	private static void synthHarmonicLinear(Harmonic harmonic) {
 		double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
 		ArrayList<FDData> dataArray = new ArrayList<FDData>(harmonic.getAllDataInterpolated().values());
+		if(dataArray.size() < 2) return; // this is here to make identical to cubic spline
 		int maxArrayIndex = dataArray.size();
 		double currentPhase = 0.0;
 		for(int arrayIndex = 0; arrayIndex < maxArrayIndex - 1; arrayIndex++) {
@@ -108,7 +124,7 @@ public class FastSynth {
 	private static void synthHarmonicLinearCubicSpline(Harmonic harmonic) {
 		double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
 		ArrayList<FDData> dataArray = new ArrayList<FDData>(harmonic.getAllDataInterpolated().values());
-		if(dataArray.size() < 2) return;
+		if(dataArray.size() < 2) return;  // this is here because of cubic spline
 		double[] times = new double[dataArray.size()];
 		double[] amps = new double[dataArray.size()];
 		double[] freqs = new double[dataArray.size()];
