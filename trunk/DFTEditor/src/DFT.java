@@ -23,7 +23,8 @@ private static int stepIndex = 0;
 private static int maxDFTLength = 0;
 private static int debug = 0;
 public static boolean applyMasking = true;
-public static double maskingFactor = 16.0;
+public static double maskingFactor = Float.NEGATIVE_INFINITY;
+public boolean hasData = false;
 
 // Wavelet Variables
 private static final double onePI = 3.1415926535897932384626433832795;
@@ -33,7 +34,7 @@ public static double maxBinStep = 1.0;
 private static double maxWindowLength = 44100 / 5;
 private static double alpha = 5.0;
 public static double midFreq = 0.0;
-public static double bassFreq = 500.0;
+public static double bassFreq = 640.0;
 
 // Calculated Variables
 private static double maxCyclesPerWindow = 0.0;
@@ -394,6 +395,7 @@ static void fillMatrix() {
 }
 
 public static void applyMasking() {
+	if(DFTEditor.amplitudesMono == null) return;
 	int bins = FDData.noteBase / 3;
 	int numTimes = DFTEditor.amplitudesMono.length;
 	int numFreqs = DFTEditor.amplitudesMono[0].length;
@@ -401,7 +403,7 @@ public static void applyMasking() {
 		for(int freq = 0; freq < numFreqs; freq++) {
 			float amplitude = DFTEditor.amplitudesMono[time][freq];
 			for(int innerFreq = freq - bins; innerFreq <= freq + bins; innerFreq++) {
-				float maskingVal = (float) amplitude - Math.abs((freq - innerFreq) / (float) bins) * (float) maskingFactor;
+				float maskingVal = (float) amplitude + Math.abs((freq - innerFreq) / (float) bins) * (float) maskingFactor - 1.0f;
 				if(maskingVal < 0) continue;
 				if(innerFreq < 0 || innerFreq >= numFreqs || innerFreq == freq) continue;
 				if(DFTEditor.amplitudesMono[time][innerFreq] < maskingVal) DFTEditor.amplitudesMono[time][innerFreq] = 0.0f;
@@ -414,7 +416,7 @@ public static void applyMasking() {
 		for(int freq = 0; freq < numFreqs; freq++) {
 			float amplitude = DFTEditor.amplitudesLeft[time][freq];
 			for(int innerFreq = freq - bins; innerFreq <= freq + bins; innerFreq++) {
-				float maskingVal = (float) amplitude - Math.abs((freq - innerFreq) / (float) bins) * (float) maskingFactor;
+				float maskingVal = (float) amplitude + Math.abs((freq - innerFreq) / (float) bins) * (float) maskingFactor - 1.0f;
 				if(maskingVal < 0) continue;
 				if(innerFreq < 0 || innerFreq >= numFreqs || innerFreq == freq) continue;
 				if(DFTEditor.amplitudesLeft[time][innerFreq] < maskingVal) DFTEditor.amplitudesLeft[time][innerFreq] = 0.0f;
@@ -427,7 +429,7 @@ public static void applyMasking() {
 		for(int freq = 0; freq < numFreqs; freq++) {
 			float amplitude = DFTEditor.amplitudesRight[time][freq];
 			for(int innerFreq = freq - bins; innerFreq <= freq + bins; innerFreq++) {
-				float maskingVal = (float) amplitude - Math.abs((freq - innerFreq) / (float) bins) * (float) maskingFactor;
+				float maskingVal = (float) amplitude + Math.abs((freq - innerFreq) / (float) bins) * (float) maskingFactor - 1.0f;
 				if(maskingVal < 0) continue;
 				if(innerFreq < 0 || innerFreq >= numFreqs || innerFreq == freq) continue;
 				if(DFTEditor.amplitudesRight[time][innerFreq] < maskingVal) DFTEditor.amplitudesRight[time][innerFreq] = 0.0f;
@@ -493,6 +495,7 @@ public static void printDFTParameters() {
 }
 
 static void FileDFTMatrix(String fileName) {
+	maskingFactor = Float.NEGATIVE_INFINITY;
 	double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
 	InitWavelets();
 	int maxCenterIndex = LoadSamplesFromFile(fileName);

@@ -1,9 +1,12 @@
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 
@@ -11,9 +14,22 @@ public class ActionHandler extends JPanel {
 
 	private static final long serialVersionUID = 672340751348574007L;
 	private DFTEditor parent;
+	private static ArrayList<ActionHandler.Refreshable> menuItems;
 	
 	public ActionHandler(DFTEditor parent) {
 		this.parent = parent;
+	}
+	
+	private interface Refreshable {
+		
+		void refresh();
+		
+	}
+	
+	public static void refreshAll() {
+		for(Refreshable menuItem: menuItems) {
+			menuItem.refresh();
+		}
 	}
 	
 	public class DFTAction extends AbstractAction {
@@ -92,7 +108,7 @@ public class ActionHandler extends JPanel {
 		}
 	}
 	
-	public class SelectViewAction extends AbstractAction {
+	public class SelectViewAction extends AbstractAction implements Refreshable {
 
 		private static final long serialVersionUID = 1L;
 		private DFTView.View view;
@@ -100,6 +116,9 @@ public class ActionHandler extends JPanel {
 		public SelectViewAction(DFTView.View view) {
 			super(view.toString());
 			this.view = view;
+			if(DFTView.getView() == view) {
+				putValue(NAME, new String(view + " " + '\u2713'));
+			}
 		}
 
 		// @0verride
@@ -107,11 +126,20 @@ public class ActionHandler extends JPanel {
 			System.out.println(view.toString());
 			DFTView.setView(view);
 			DFTEditor.refreshView();
+			refreshAll();
+		}
+		
+		public void refresh() {
+			if(DFTView.getView() == view) {
+				putValue(NAME, new String(view + " " + '\u2713'));
+			} else {
+				putValue(NAME, view.toString());
+			}
 		}
 	}
 
 
-	public class SelectDataViewAction extends AbstractAction {
+	public class SelectDataViewAction extends AbstractAction implements Refreshable {
 
 		private static final long serialVersionUID = 1L;
 		private DFTView.DataView dataView;
@@ -119,6 +147,9 @@ public class ActionHandler extends JPanel {
 		public SelectDataViewAction(DFTView.DataView dataView) {
 			super(dataView.toString());
 			this.dataView = dataView;
+			if(DFTView.getDataView() == dataView) {
+				putValue(NAME, new String(dataView + " " + '\u2713'));
+			}
 		}
 
 		// @0verride
@@ -126,11 +157,20 @@ public class ActionHandler extends JPanel {
 			System.out.println(dataView.toString());
 			DFTView.setDataView(dataView);
 			DFTEditor.refreshView();
+			refreshAll();
+		}
+		
+		public void refresh() {
+			if(DFTView.getDataView() == dataView) {
+				putValue(NAME, new String(dataView + " " + '\u2713'));
+			} else {
+				putValue(NAME, dataView.toString());
+			}
 		}
 	}
 
 
-	public class SelectPlayAction extends AbstractAction {
+	public class SelectPlayAction extends AbstractAction implements Refreshable {
 
 		private static final long serialVersionUID = 1L;
 		private PlayDataInWindow.SynthType synthType;
@@ -146,9 +186,12 @@ public class ActionHandler extends JPanel {
 			PlayDataInWindow.synthType = synthType;
 			parent.playDataInCurrentWindow();
 		}
+		
+		public void refresh() {}
+		
 	}
 
-	public class SelectChannelAction extends AbstractAction {
+	public class SelectChannelAction extends AbstractAction implements Refreshable {
 
 		private static final long serialVersionUID = 1L;
 		private DFTEditor.Channel channel;
@@ -156,16 +199,28 @@ public class ActionHandler extends JPanel {
 		public SelectChannelAction(DFTEditor.Channel channel) {
 			super(channel.toString());
 			this.channel = channel;
+			if(DFTEditor.currentChannel == channel) {
+				putValue(NAME, new String(channel + " " + '\u2713'));
+			}
 		}
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println(channel);
 			DFTEditor.currentChannel = channel;
+			refreshAll();
+		}
+		
+		public void refresh() {
+			if(DFTEditor.currentChannel == channel) {
+				putValue(NAME, new String(channel + " " + '\u2713'));
+			} else {
+				putValue(NAME, channel.toString());
+			}
 		}
 	}
 
-	public class SelectMixerAction extends AbstractAction {
+	public class SelectMixerAction extends AbstractAction implements Refreshable {
 		
 		private static final long serialVersionUID = 1L;
 		private DFTEditor.ChannelMixer channelMixer;
@@ -173,22 +228,37 @@ public class ActionHandler extends JPanel {
 		public SelectMixerAction(DFTEditor.ChannelMixer channelMixer) {
 			super(channelMixer.toString());
 			this.channelMixer = channelMixer;
+			if(DFTEditor.currentChannelMixer == channelMixer) {
+				putValue(NAME, new String(channelMixer + " " + '\u2713'));
+			}
 		}
 		
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println(channelMixer);
 			DFTEditor.currentChannelMixer = channelMixer;
+			refreshAll();
+		}
+		
+		public void refresh() {
+			if(DFTEditor.currentChannelMixer == channelMixer) {
+				putValue(NAME, new String(channelMixer + " " + '\u2713'));
+			} else {
+				putValue(NAME, channelMixer.toString());
+			}
 		}
 	}
 	
-	public class SelectCutoffAction extends AbstractAction {
+	public class SelectCutoffAction extends AbstractAction implements Refreshable {
 		
 		private static final long serialVersionUID = 1L;
 		private int logCutoff;
 		
 		public SelectCutoffAction(int logCutoff) {
-			super("Cutoff = " + logCutoff);
+			super("Log Cutoff = " + logCutoff);
 			this.logCutoff = logCutoff;
+			if(DFTEditor.minLogAmplitudeThreshold == logCutoff) {
+				putValue(NAME, new String("Log Cutoff = " + logCutoff + " " + '\u2713'));
+			}
 		}
 		
 		public void actionPerformed(ActionEvent arg0) {
@@ -196,11 +266,20 @@ public class ActionHandler extends JPanel {
 			DFTEditor.minLogAmplitudeThreshold = logCutoff;
 			SynthTools.createHarmonics();
 			DFTEditor.refreshView();
-		}		
+			refreshAll();
+		}	
+		
+		public void refresh() {
+			if(DFTEditor.minLogAmplitudeThreshold == logCutoff) {
+				putValue(NAME, new String("Log Cutoff = " + logCutoff + " " + '\u2713'));
+			} else {
+				putValue(NAME, new String("Log Cutoff = " + logCutoff));
+			}
+		}
 		
 	}
 	
-	public class SelectMinLengthAction extends AbstractAction {
+	public class SelectMinLengthAction extends AbstractAction implements Refreshable {
 		
 		private static final long serialVersionUID = 1L;
 		private int minLength;
@@ -208,17 +287,29 @@ public class ActionHandler extends JPanel {
 		public SelectMinLengthAction(int minLength) {
 			super("Min Length = " + minLength);
 			this.minLength = minLength;
+			if(DFTEditor.minLengthThreshold == minLength) {
+				putValue(NAME, new String("Min Length = " + minLength + " " + '\u2713'));
+			}
 		}
 		
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("MinLength = " + minLength);
 			DFTEditor.minLengthThreshold = minLength;
 			DFTEditor.refreshView();
-		}		
+			refreshAll();
+		}	
+		
+		public void refresh() {
+			if(DFTEditor.minLengthThreshold == minLength) {
+				putValue(NAME, new String("Min Length = " + minLength + " " + '\u2713'));
+			} else {
+				putValue(NAME, new String("Min Length = " + minLength));
+			}
+		}
 		
 	}
 	
-	public class SelectNoteBaseAction extends AbstractAction {
+	public class SelectNoteBaseAction extends AbstractAction implements Refreshable {
 		
 		private static final long serialVersionUID = 1L;
 		private int noteBase;
@@ -226,17 +317,29 @@ public class ActionHandler extends JPanel {
 		public SelectNoteBaseAction(int noteBase) {
 			super("Note Base = " + noteBase);
 			this.noteBase = noteBase;
+			if(FDData.noteBase == noteBase) {
+				putValue(NAME, new String("Note Base = " + noteBase + " " + '\u2713'));
+			}
 		}
 		
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Note Base = " + noteBase);
 			FDData.noteBase = noteBase;
 			DFT.printDFTParameters();
+			refreshAll();
 		}		
+		
+		public void refresh() {
+			if(FDData.noteBase == noteBase) {
+				putValue(NAME, new String("Note Base = " + noteBase + " " + '\u2713'));
+			} else {
+				putValue(NAME, new String("Note Base = " + noteBase + " "));
+			}
+		}
 		
 	}
 	
-	public class SelectTimeStepAction extends AbstractAction {
+	public class SelectTimeStepAction extends AbstractAction implements Refreshable {
 		
 		private static final long serialVersionUID = 1L;
 		private int timeStep;
@@ -244,17 +347,29 @@ public class ActionHandler extends JPanel {
 		public SelectTimeStepAction(int timeStep) {
 			super("Time Step = " + timeStep + " ms");
 			this.timeStep = timeStep;
+			if(FDData.timeStepInMillis == timeStep) {
+				putValue(NAME, new String("Time Step = " + timeStep + " ms \u2713"));
+			}
 		}
 		
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Time Step = " + timeStep);
 			FDData.timeStepInMillis = timeStep;
 			DFT.printDFTParameters();
-		}		
+			refreshAll();
+		}
+		
+		public void refresh() {
+			if(FDData.timeStepInMillis == timeStep) {
+				putValue(NAME, new String("Time Step = " + timeStep + " ms \u2713"));
+			} else {
+				putValue(NAME, new String("Time Step = " + timeStep + " ms"));
+			}			
+		}
 		
 	}
 	
-	public class SelectBinStepAction extends AbstractAction {
+	public class SelectBinStepAction extends AbstractAction implements Refreshable {
 		
 		private static final long serialVersionUID = 1L;
 		private double binStep;
@@ -262,17 +377,29 @@ public class ActionHandler extends JPanel {
 		public SelectBinStepAction(double binStep) {
 			super("Bin Step = " + binStep);
 			this.binStep = binStep;
+			if(DFT.maxBinStep == binStep) {
+				putValue(NAME, new String("Bin Step = " + binStep + " " + '\u2713'));
+			}
 		}
 		
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Bin Step = " + binStep);
 			DFT.maxBinStep = binStep;
 			DFT.printDFTParameters();
+			refreshAll();
+		}
+		
+		public void refresh() {
+			if(DFT.maxBinStep == binStep) {
+				putValue(NAME, new String("Bin Step = " + binStep + " " + '\u2713'));
+			} else {
+				putValue(NAME, new String("Bin Step = " + binStep));
+			}
 		}
 		
 	}
 	
-	public class SelectMidFreqAction extends AbstractAction {
+	public class SelectMidFreqAction extends AbstractAction implements Refreshable {
 		
 		private static final long serialVersionUID = 1L;
 		private double midFreq;
@@ -280,17 +407,40 @@ public class ActionHandler extends JPanel {
 		public SelectMidFreqAction(double midFreq) {
 			super("Mid Freq = " + midFreq);
 			this.midFreq = midFreq;
+			if(DFT.midFreq == midFreq) {
+				putValue(NAME, new String("Mid Freq = " + midFreq + " " + '\u2713'));
+			}
+			if(midFreq <= DFT.bassFreq) { 
+				putValue(NAME, new String("Mid Freq (DISABLED) = " + midFreq));
+				if(DFT.midFreq == midFreq) {
+					putValue(NAME, new String("Mid Freq (DISABLED) = " + midFreq + " " + '\u2713'));
+				}
+			}
 		}
 		
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Mid Freq = " + midFreq);
 			DFT.midFreq = midFreq;
 			DFT.printDFTParameters();
+			refreshAll();
+
+		}
+		
+		public void refresh() {
+			if(DFT.midFreq == midFreq) {
+				putValue(NAME, new String("Mid Freq = " + midFreq + " " + '\u2713'));
+			}
+			if(midFreq <= DFT.bassFreq) { 
+				putValue(NAME, new String("Mid Freq (DISABLED) = " + midFreq));
+				if(DFT.midFreq == midFreq) {
+					putValue(NAME, new String("Mid Freq (DISABLED) = " + midFreq + " " + '\u2713'));
+				}
+			}
 		}
 		
 	}
 	
-	public class SelectBassFreqAction extends AbstractAction {
+	public class SelectBassFreqAction extends AbstractAction implements Refreshable {
 		
 		private static final long serialVersionUID = 1L;
 		private double bassFreq;
@@ -298,17 +448,33 @@ public class ActionHandler extends JPanel {
 		public SelectBassFreqAction(double bassFreq) {
 			super("Bass Freq = " + bassFreq);
 			this.bassFreq = bassFreq;
+			if(DFT.bassFreq == bassFreq) {
+				putValue(NAME, new String("Bass Freq = " + bassFreq + " " + '\u2713'));
+			}
 		}
 		
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Bass Freq = " + bassFreq);
 			DFT.bassFreq = bassFreq;
 			DFT.printDFTParameters();
+			if(DFT.bassFreq == bassFreq) {
+				putValue(NAME, new String("Bass Freq = " + bassFreq + " " + '\u2713'));
+			} else {
+				putValue(NAME, new String("Bass Freq = " + bassFreq));
+			}
+		}
+
+		public void refresh() {
+			if(DFT.bassFreq == bassFreq) {
+				putValue(NAME, new String("Bass Freq = " + bassFreq + " " + '\u2713'));
+			} else {
+				putValue(NAME, new String("Bass Freq = " + bassFreq));
+			}	
 		}
 		
 	}
 	
-	public class SelectBinRangeFactorAction extends AbstractAction {
+	public class SelectBinRangeFactorAction extends AbstractAction implements Refreshable {
 		
 		private static final long serialVersionUID = 1L;
 		private double binRangeFactor;
@@ -316,6 +482,9 @@ public class ActionHandler extends JPanel {
 		public SelectBinRangeFactorAction(double binRangeFactor) {
 			super("Bin Range Factor = " + binRangeFactor);
 			this.binRangeFactor = binRangeFactor;
+			if(SynthTools.binRangeFactor == binRangeFactor) {
+				putValue(NAME, new String("Bin Range Factor = " + binRangeFactor + " " + '\u2713'));
+			}
 		}
 		
 		public void actionPerformed(ActionEvent arg0) {
@@ -323,11 +492,19 @@ public class ActionHandler extends JPanel {
 			SynthTools.binRangeFactor = binRangeFactor;
 			SynthTools.createHarmonics();
 			DFTEditor.refreshView();
+			refreshAll();
 		}
 		
+		public void refresh() {
+			if(SynthTools.binRangeFactor == binRangeFactor) {
+				putValue(NAME, new String("Bin Range Factor = " + binRangeFactor + " " + '\u2713'));
+			} else {
+				putValue(NAME, new String("Bin Range Factor = " + binRangeFactor));
+			}
+		}
 	}
 	
-	public class ApplyMaskingFactorAction extends AbstractAction {
+	public class ApplyMaskingFactorAction extends AbstractAction implements Refreshable {
 		
 		private static final long serialVersionUID = 1L;
 		private double maskingFactor;
@@ -343,8 +520,18 @@ public class ActionHandler extends JPanel {
 			DFT.applyMasking();
 			SynthTools.createHarmonics();
 			DFTEditor.refreshView();
+			refreshAll();
 		}
 		
+		public void refresh() {
+			if(maskingFactor <= DFT.maskingFactor) {
+				//putValue(NAME, new String("Masking Factor = " + maskingFactor));
+				this.setEnabled(false);
+			} else {
+				//putValue(NAME, new String("Masking Factor = " + maskingFactor));
+				this.setEnabled(true);
+			}
+		}
 	}
 	
 	public class PrintDFTInfoAction extends AbstractAction {
@@ -363,6 +550,7 @@ public class ActionHandler extends JPanel {
 	}
 	
 	public JMenuBar createMenuBar() {
+		menuItems = new ArrayList<ActionHandler.Refreshable>();
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
         //Create the File menu
@@ -375,12 +563,12 @@ public class ActionHandler extends JPanel {
         // Create Channel Select
         JMenu channelMenu = new JMenu("Channel");
         for(DFTEditor.Channel channel: DFTEditor.Channel.values()) {
-        	channelMenu.add(new SelectChannelAction(channel));
+        	addAction(channelMenu, new SelectChannelAction(channel));
         }
         menuBar.add(channelMenu);
         JMenu mixerMenu = new JMenu("Mixer");
         for(DFTEditor.ChannelMixer channelMixer: DFTEditor.ChannelMixer.values()) {
-        	mixerMenu.add(new SelectMixerAction(channelMixer));
+        	addAction(mixerMenu, new SelectMixerAction(channelMixer));
         }
         menuBar.add(mixerMenu);
         //Create the Play menu
@@ -392,77 +580,68 @@ public class ActionHandler extends JPanel {
         JMenu viewMenu = new JMenu("View");
         menuBar.add(viewMenu);
         for(DFTView.View view: DFTView.View.values()) {
-        	viewMenu.add(new SelectViewAction(view));
+        	addAction(viewMenu, new SelectViewAction(view));
         }
         JMenu dataViewMenu = new JMenu("DataView");
         menuBar.add(dataViewMenu);
         for(DFTView.DataView dataView: DFTView.DataView.values()) {
-        	dataViewMenu.add(new SelectDataViewAction(dataView));
+        	addAction(dataViewMenu, new SelectDataViewAction(dataView));
         }        
         JMenu cutoffMenu = new JMenu("Cutoff");
         menuBar.add(cutoffMenu);
-        for(int logCutoff = 12; logCutoff > 2; logCutoff--) {
-        	cutoffMenu.add(new SelectCutoffAction(logCutoff));
+        for(int logCutoff = 12; logCutoff > 0; logCutoff--) {
+        	addAction(cutoffMenu, new SelectCutoffAction(logCutoff));
         }
         JMenu minLengthMenu = new JMenu("MinLength");
         menuBar.add(minLengthMenu);      
         for(int minLength = 1; minLength <= 20; minLength++) {
-        	minLengthMenu.add(new SelectMinLengthAction(minLength));
+        	addAction(minLengthMenu, new SelectMinLengthAction(minLength));
         }
         JMenu noteBaseMenu = new JMenu("NoteBase");
-        menuBar.add(noteBaseMenu);      
-        noteBaseMenu.add(new SelectNoteBaseAction(7));
-        noteBaseMenu.add(new SelectNoteBaseAction(12));
-        noteBaseMenu.add(new SelectNoteBaseAction(19));
-        noteBaseMenu.add(new SelectNoteBaseAction(31));
-        noteBaseMenu.add(new SelectNoteBaseAction(43));
-        noteBaseMenu.add(new SelectNoteBaseAction(62));
-        noteBaseMenu.add(new SelectNoteBaseAction(72));
-        noteBaseMenu.add(new SelectNoteBaseAction(93));
-        noteBaseMenu.add(new SelectNoteBaseAction(124));
-        noteBaseMenu.add(new SelectNoteBaseAction(144));
+        menuBar.add(noteBaseMenu);
+        for(int noteBase = 12; noteBase <= 144; noteBase += 12) {
+        	addAction(noteBaseMenu, new SelectNoteBaseAction(noteBase));
+        }
         JMenu timeStepMenu = new JMenu("TimeStep");
-        menuBar.add(timeStepMenu);      
-        timeStepMenu.add(new SelectTimeStepAction(1));
-        timeStepMenu.add(new SelectTimeStepAction(2));
-        timeStepMenu.add(new SelectTimeStepAction(5));
-        timeStepMenu.add(new SelectTimeStepAction(10));
-        timeStepMenu.add(new SelectTimeStepAction(20));
-        timeStepMenu.add(new SelectTimeStepAction(40));
-        timeStepMenu.add(new SelectTimeStepAction(80));
-        timeStepMenu.add(new SelectTimeStepAction(160));
-        timeStepMenu.add(new SelectTimeStepAction(320));
-        timeStepMenu.add(new SelectTimeStepAction(500));
+        menuBar.add(timeStepMenu);
+        for(int timeStep = 1; timeStep <= 256; timeStep *= 2) {
+        	addAction(timeStepMenu, new SelectTimeStepAction(timeStep));
+        }
         JMenu binStepMenu = new JMenu("BinStep");
         menuBar.add(binStepMenu);      
         for(double binStep = 0.5; binStep <= 5.0; binStep += 0.5) {
-        	binStepMenu.add(new SelectBinStepAction(binStep));
+        	addAction(binStepMenu, new SelectBinStepAction(binStep));
         }
         JMenu midFreqMenu = new JMenu("MidFreq");
-        menuBar.add(midFreqMenu);          
-        midFreqMenu.add(new SelectMidFreqAction(0.0));
+        menuBar.add(midFreqMenu);
+        addAction(midFreqMenu, new SelectMidFreqAction(0.0));
         for(double midFreq = 250; midFreq <= 8000.0; midFreq *= Math.sqrt(2.0)) {
-        	midFreqMenu.add(new SelectMidFreqAction(Math.round(midFreq)));
+        	addAction(midFreqMenu, new SelectMidFreqAction(Math.round(midFreq)));
         }
         JMenu bassFreqMenu = new JMenu("BassFreq");
         menuBar.add(bassFreqMenu);          
         for(double bassFreq = 20; bassFreq < 2000.0; bassFreq *= Math.sqrt(2.0)) {
-        	bassFreqMenu.add(new SelectBassFreqAction(Math.round(bassFreq)));
+        	addAction(bassFreqMenu, new SelectBassFreqAction(Math.round(bassFreq)));
         }
         JMenu binRangeFactorMenu = new JMenu("BinRange");
         menuBar.add(binRangeFactorMenu);          
         for(double binRangeFactor = 1.0 / 64.0; binRangeFactor <= 1.0; binRangeFactor *= 2.0) {
-        	binRangeFactorMenu.add(new SelectBinRangeFactorAction(binRangeFactor));
+        	addAction(binRangeFactorMenu, new SelectBinRangeFactorAction(binRangeFactor));
         }
         JMenu maskingFactorMenu = new JMenu("ApplyMasking");
         menuBar.add(maskingFactorMenu);          
-        for(double maskingFactor = 16.0; maskingFactor >= 8.0; maskingFactor -= 0.5) {
-        	maskingFactorMenu.add(new ApplyMaskingFactorAction(maskingFactor));
+        for(double maskingFactor = -16.0; maskingFactor <= 0.0; maskingFactor += 1.0) {
+        	addAction(maskingFactorMenu, new ApplyMaskingFactorAction(maskingFactor));
         }
         JMenu dftParamsMenu = new JMenu("DFTParams");
         menuBar.add(dftParamsMenu);          
         dftParamsMenu.add(new PrintDFTInfoAction());
         return menuBar;
+	}
+	
+	private void addAction(JMenu menu, ActionHandler.Refreshable action) {
+    	menuItems.add(action);
+    	menu.add((Action) menuItems.get(menuItems.size() - 1));
 	}
 
 }

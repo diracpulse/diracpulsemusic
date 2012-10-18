@@ -220,6 +220,7 @@ public class DFTEditor extends JFrame {
         DFT.FileDFTMatrix(dftFileName);
     	SynthTools.refresh = true;
     	SynthTools.createHarmonics();
+    	ActionHandler.refreshAll();
         parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonic);
         parent.graphEditorFrame.view.repaint();
         view.repaint();

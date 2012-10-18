@@ -2,7 +2,7 @@
 
 public class FDData {
 	
-	public static int timeStepInMillis = 5; // time in secs = this.time * timeStepInMillis / 1000
+	public static int timeStepInMillis = 8; // time in secs = this.time * timeStepInMillis / 1000
 	public static int noteBase = 72; // freq in Hz = 2.0^((this.note + this.noteFraction) / noteBase)
 	public static final double logBase = 2.0; // amplitude = logBase ^ logAmplitude
 	

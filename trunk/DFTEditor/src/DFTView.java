@@ -26,7 +26,7 @@ public class DFTView extends JComponent {
 		view = v;
 	}
 
-	public View getView() {
+	public static View getView() {
 		return view;
 	}
 
