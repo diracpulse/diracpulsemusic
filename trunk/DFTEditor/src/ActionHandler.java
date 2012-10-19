@@ -20,7 +20,7 @@ public class ActionHandler extends JPanel {
 		this.parent = parent;
 	}
 	
-	private interface Refreshable {
+	interface Refreshable {
 		
 		void refresh();
 		
@@ -209,6 +209,7 @@ public class ActionHandler extends JPanel {
 			System.out.println(channel);
 			DFTEditor.currentChannel = channel;
 			refreshAll();
+			DFTEditor.refreshView();
 		}
 		
 		public void refresh() {

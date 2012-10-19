@@ -21,7 +21,7 @@ public class GraphEditor extends JFrame {
 	public static GraphController controller;
 	public static GraphActionHandler actionHandler;
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic;
-	public static TreeMap<Long, Harmonic> harmonicIDToControlPointHarmonic;
+	//public static TreeMap<Long, Harmonic> harmonicIDToControlPointHarmonic;
 	public static HashMap<Integer, HashMap<Integer, Long>> timeToLogAmplitudeTimes10ToHarmonicID;
 	public static HashMap<Integer, HashMap<Integer, Long>> timeToNoteToHarmonicID;
 	public static HashSet<Long> selectedHarmonicIDs;
@@ -40,12 +40,13 @@ public class GraphEditor extends JFrame {
 	public static int minViewNote = 1;
 	public static double maxViewLogAmplitude = 0.0;
 	public static double minViewLogAmplitude = 1.0;
-	public static boolean clipZero = false;
+	public static double minClipThreshold = 0.0;
+	public static double maxClipThreshold = 24.0;
 	public static boolean displaySelectedHarmonics = true;
 	public static boolean displayUnselectedHarmonics = true;
 	public static double zoomFactor = 2.0;
 	public static Random randomIDGenerator;
-	public static Channel channel = Channel.STEREO;
+	public static Channel currentChannel = Channel.STEREO;
 	
 	public JMenuBar createMenuBar() {
         GraphActionHandler actionHandler = new GraphActionHandler(this);
@@ -67,9 +68,9 @@ public class GraphEditor extends JFrame {
 		timeToLogAmplitudeTimes10ToHarmonicID = new HashMap<Integer, HashMap<Integer, Long>>();
 		timeToNoteToHarmonicID = new HashMap<Integer, HashMap<Integer, Long>>();
 		selectedHarmonicIDs = new HashSet<Long>();
-		harmonicIDToControlPointHarmonic = new TreeMap<Long, Harmonic>();
+		//harmonicIDToControlPointHarmonic = new TreeMap<Long, Harmonic>();
 		activeControlPointHarmonicID = randomIDGenerator.nextLong();
-		harmonicIDToControlPointHarmonic.put(activeControlPointHarmonicID, new Harmonic(activeControlPointHarmonicID));
+		//harmonicIDToControlPointHarmonic.put(activeControlPointHarmonicID, new Harmonic(activeControlPointHarmonicID));
 		maxTime = FDData.minTime;
 		minTime = FDData.maxTime;
 		maxNote = FDData.getMinNote();
@@ -148,12 +149,7 @@ public class GraphEditor extends JFrame {
 			}
 		});
 	}
-	
-	public static void toggleClipZero() {
-		clipZero = !clipZero;
-		refreshView();
-	}
-	
+
 	public static void toggleDisplaySelected() {
 		displaySelectedHarmonics = !displaySelectedHarmonics;
 		refreshView();
@@ -294,8 +290,8 @@ public class GraphEditor extends JFrame {
 	}
 	
 	public static void newControlPointHarmonic() {
-		activeControlPointHarmonicID = randomIDGenerator.nextLong();
-		harmonicIDToControlPointHarmonic.put(activeControlPointHarmonicID, new Harmonic(activeControlPointHarmonicID));
+		//activeControlPointHarmonicID = randomIDGenerator.nextLong();
+		//harmonicIDToControlPointHarmonic.put(activeControlPointHarmonicID, new Harmonic(activeControlPointHarmonicID));
 	}
 	
 	public static void playDataInCurrentWindow(GraphEditor parent) {
@@ -309,8 +305,8 @@ public class GraphEditor extends JFrame {
 	}
 	
 	public static void playDataInControlPoints(GraphEditor parent) {
-		GraphSynthTools.createPCMControlPointData();
-		GraphSynthTools.playWindow();
+		//GraphSynthTools.createPCMControlPointData();
+		//GraphSynthTools.playWindow();
 	}
 
 	public static void drawPlayTime(int offsetInMillis) {

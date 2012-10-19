@@ -44,35 +44,6 @@ public class GraphController implements MouseListener, ActionListener {
 	    if(e.isAltDown()) {
     		int time = GraphUtils.screenXToTime(x);
     		int note = (int) Math.round(GraphUtils.screenYToValue(y));
-	    	if(GraphView.yView == GraphView.YView.FREQUENCY) {
-	    		for(Harmonic harmonic: GraphEditor.harmonicIDToControlPointHarmonic.values()) {
-	    			if(harmonic.containsData(time, note)) {
-	    				harmonic.removeData(time);
-	    				GraphEditor.view.repaint();
-	    				return;
-	    			}
-	    			if(harmonic.containsDataInterpolated(time, note)) {
-	    				GraphEditor.activeControlPointHarmonicID = harmonic.getHarmonicID();
-	    				GraphEditor.view.repaint();
-	    				return;
-	    			}	
-	    		}
-	    		long id = GraphEditor.activeControlPointHarmonicID;
-	    		Harmonic harmonic = GraphEditor.harmonicIDToControlPointHarmonic.get(id);
-	    		if(harmonic.containsTime(time)) {
-	    			harmonic.removeData(time);
-	    		}
-	    		FDData newData = null;
-	    		try {
-	    			newData = new FDData((byte) 0, time, note, 1.0, id);
-	    		} catch (Exception ex) {
-	    			System.out.println("GraphController.mousePressed (ALT): Error creating FDData");
-	    			return;
-	    		}
-	    		harmonic.addData(newData);
-	    		GraphEditor.view.repaint();
-	    		return;
-	    	}
 	    	return;
 	    }
 	    if(GraphView.yView == GraphView.YView.AMPLITUDE) {
@@ -85,10 +56,12 @@ public class GraphController implements MouseListener, ActionListener {
 	    				long harmonicID = GraphEditor.timeToLogAmplitudeTimes10ToHarmonicID.get(testTime).get(logAmplitudeTimes10);
 		    			if(GraphEditor.selectedHarmonicIDs.contains(harmonicID)) {
 		    				GraphEditor.selectedHarmonicIDs.remove(harmonicID);
+		    				System.out.println("GraphController (YView: AMPLITUDE): removed harmonic = " + harmonicID);
 		    			} else {
 		    				GraphEditor.selectedHarmonicIDs.add(harmonicID);
+		    				System.out.println("GraphController (YView: AMPLITUDE): added harmonic = " + harmonicID);
 		    			}
-	    				view.repaint();
+	    				GraphEditor.refreshView();
 	    				return;
 	    			}
 	    		}
@@ -104,10 +77,12 @@ public class GraphController implements MouseListener, ActionListener {
 	    			System.out.println("Mouse Selection " + harmonicID);
 	    			if(GraphEditor.selectedHarmonicIDs.contains(harmonicID)) {
 	    				GraphEditor.selectedHarmonicIDs.remove(harmonicID);
+	    				System.out.println("GraphController (YView: FREQUENCY): removed harmonic = " + harmonicID);
 	    			} else {
 	    				GraphEditor.selectedHarmonicIDs.add(harmonicID);
+	    				System.out.println("GraphController (YView: FREQUENCY): added harmonic = " + harmonicID);
 	    			}
-	    			view.repaint();
+	    			GraphEditor.refreshView();
 	    			return;
 	    		}
 	    	}

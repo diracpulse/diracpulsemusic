@@ -22,7 +22,7 @@ public class GraphView extends JComponent {
 	}
 
 	public static ColorView colorView = ColorView.AMPLITUDE;
-	public static YView yView = YView.FREQUENCY;
+	public static YView yView = YView.AMPLITUDE;
 	
 	private static final long serialVersionUID = 2964004162144513754L;
 	
@@ -33,33 +33,41 @@ public class GraphView extends JComponent {
 	private int height = 0;
 	private int width = 0;
 	
+	public boolean isHarmonicVisible(Harmonic harmonic) {
+		if(harmonic.getChannel() == 0 && GraphEditor.currentChannel != GraphEditor.Channel.MONO) return false;
+		if(harmonic.getChannel() == 1) {
+			if(GraphEditor.currentChannel == GraphEditor.Channel.LEFT) return true;
+			if(GraphEditor.currentChannel == GraphEditor.Channel.STEREO) return true;
+			return false;
+		}
+		if(harmonic.getChannel() == 2) {
+			if(GraphEditor.currentChannel == GraphEditor.Channel.RIGHT) return true;
+			if(GraphEditor.currentChannel == GraphEditor.Channel.STEREO) return true;
+			return false;
+		}
+		System.out.println("GraphView.isHarmonicVisible: Unknown channel");
+		return false;
+	}
+	
 	public void drawFileData(Graphics g) {
 		double pixelsPerTime = (double) getWidth() / (double) (GraphEditor.maxViewTime - GraphEditor.minViewTime);
 		double pixelsPerValue = 1;
 		if(yView == YView.AMPLITUDE) pixelsPerValue = (double) getHeight() / (double) (GraphEditor.maxViewLogAmplitude - GraphEditor.minViewLogAmplitude);
 		if(yView == YView.FREQUENCY) pixelsPerValue = (double) getHeight() / (double) (GraphEditor.maxViewNote - GraphEditor.minViewNote);
 		ArrayList<Harmonic> allHarmonics = new ArrayList<Harmonic>(GraphEditor.harmonicIDToHarmonic.values());
-		allHarmonics.addAll(GraphEditor.harmonicIDToControlPointHarmonic.values());
+		//allHarmonics.addAll(GraphEditor.harmonicIDToControlPointHarmonic.values());
 		for(Harmonic harmonic: allHarmonics) {
+			if(!isHarmonicVisible(harmonic)) continue;
 			if(!harmonic.isSynthesized()) continue;
 			if(harmonic.getLength() < GraphEditor.minHarmonicLength) continue;
 			if(harmonic.getAverageNote() < GraphEditor.minViewNote || harmonic.getAverageNote() > GraphEditor.maxViewNote) continue;
 			if(harmonic.getMaxLogAmplitude() < GraphEditor.minViewLogAmplitude) continue;
+			if(harmonic.getMaxLogAmplitude() > GraphEditor.maxViewLogAmplitude) continue;
 			ArrayList<FDData> hData = new ArrayList<FDData>(harmonic.getAllDataInterpolated().values());
 			if(hData.size() < 2) continue;
 			FDData start = hData.get(0);
 			for(int index = 1; index < hData.size(); index++) {
 				FDData end = hData.get(index);
-				if(GraphEditor.clipZero) {
-					if(start.getLogAmplitude() == 0.0) {
-						start = end;
-						continue;
-					}
-					if(end.getLogAmplitude() == 0.0) {
-						start = end;
-						continue;
-					}
-				}
 				if(start.getTime() > GraphEditor.maxViewTime) {
 					start = end;
 					continue;
@@ -89,12 +97,14 @@ public class GraphView extends JComponent {
 				if(colorView == ColorView.HARMONICS) {
 					g.setColor(getHarmonicColor(harmonic.getHarmonicID()));
 				}
+				/*
 				if(GraphEditor.harmonicIDToControlPointHarmonic.containsKey(harmonic.getHarmonicID())) {
 					if(harmonic.containsData(start.getTime(), start.getNote())) {
 						g.fillRect(startX - 1, startY - 1, 3, 3);
 						g.fillRect(endX - 1, endY - 1, 3, 3);
 					}
 				}
+				*/
 				if(GraphEditor.selectedHarmonicIDs.contains(harmonic.getHarmonicID())) {
 					if(!GraphEditor.displaySelectedHarmonics) {
 						g.setColor(new Color(0.5f, 0.5f, 0.5f, 0.75f));
