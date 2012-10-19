@@ -55,6 +55,7 @@ class GraphSynthTools {
 		PCMDataRight = FastSynth.synthHarmonicsLinear((byte) 2, synthHarmonics);
 	}
 	
+	/*
 	static void createPCMControlPointData() {
 		//PCMData = FastSynth.synthHarmonics(new ArrayList<Harmonic>(parent.harmonicIDToHarmonic.values()));
 		if(GraphEditor.harmonicIDToControlPointHarmonic.isEmpty()) return;
@@ -71,6 +72,7 @@ class GraphSynthTools {
 		PCMDataLeft = FastSynth.synthHarmonicsLinear((byte) 1, synthHarmonics);
 		PCMDataRight = FastSynth.synthHarmonicsLinear((byte) 2, synthHarmonics);
 	}
+	*/
 	
 	public static void playWindow() {
 		AudioPlayer ap = new AudioPlayer(PCMDataLeft, PCMDataRight, 1.0);

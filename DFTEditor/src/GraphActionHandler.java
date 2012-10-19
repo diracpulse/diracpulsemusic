@@ -1,18 +1,34 @@
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 public class GraphActionHandler extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 	private GraphEditor parent;
+	private static ArrayList<GraphActionHandler.Refreshable> menuItems;
 	
 	public GraphActionHandler(GraphEditor parent) {
 		this.parent = parent;
+	}
+
+	interface Refreshable {
+		
+		void refresh();
+		
+	}
+	
+	public static void refreshAll() {
+		for(Refreshable menuItem: menuItems) {
+			menuItem.refresh();
+		}
 	}
 
 	public class PlayWindowAction extends AbstractAction {
@@ -29,11 +45,11 @@ public class GraphActionHandler extends JPanel {
 		}
 	}
 	
-	public class PlaySequencerAction extends AbstractAction {
+	public class PlaySelectedAction extends AbstractAction {
 
 		private static final long serialVersionUID = 1L;
 
-		public PlaySequencerAction() {
+		public PlaySelectedAction() {
 			super("Play Sequencer");
 		}
 
@@ -42,63 +58,34 @@ public class GraphActionHandler extends JPanel {
 			GraphEditor.playDataInSequencer(parent);
 		}
 	}
-	
-	public class PlayControlPointsAction extends AbstractAction {
 
+	public class MinClipThresholdAction extends AbstractAction implements Refreshable {
+		
 		private static final long serialVersionUID = 1L;
+		private double minClipThreshold = 0.0;
 
-		public PlayControlPointsAction() {
-			super("Play Control Points");
+		public MinClipThresholdAction(double minCT) {
+			super("Min Clip Threshold = " + minCT);
+			minClipThreshold = minCT;
+			if(GraphEditor.minClipThreshold == minClipThreshold) {
+				putValue(NAME, new String("Min Clip Threshold = " + minClipThreshold + " \u2713"));
+			}
 		}
 
-		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			GraphEditor.playDataInControlPoints(parent);
+			GraphEditor.minClipThreshold = minClipThreshold;
+			refreshAll();
+		}
+		
+		public void refresh() {
+			if(GraphEditor.minClipThreshold == minClipThreshold) {
+				putValue(NAME, new String("Min Clip Threshold = " + minClipThreshold + " \u2713"));
+			} else {
+				putValue(NAME, new String("Min Clip Threshold = " + minClipThreshold));
+			}
 		}
 	}
 
-	public class ToggleClipZeroAction extends AbstractAction {
-		
-		private static final long serialVersionUID = 1L;
-
-		public ToggleClipZeroAction() {
-			super("Toggle Clip Zero");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			GraphEditor.toggleClipZero();
-		}
-	}
-	
-	public class ToggleDisplaySelectedAction extends AbstractAction {
-		
-		private static final long serialVersionUID = 1L;
-
-		public ToggleDisplaySelectedAction() {
-			super("Toggle Display Selected");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			GraphEditor.toggleDisplaySelected();
-		}
-	}
-	
-	public class ToggleDisplayUnselectedAction extends AbstractAction {
-		
-		private static final long serialVersionUID = 1L;
-
-		public ToggleDisplayUnselectedAction() {
-			super("Toggle Display Unselected");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			GraphEditor.toggleDisplayUnselected();
-		}
-	}	
-	
 	public class ZoomResetAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
@@ -158,35 +145,51 @@ public class GraphActionHandler extends JPanel {
 		
 	}
 	
-	public class NewCPHarmonicAction extends AbstractAction {
-		
+	public class SelectChannelAction extends AbstractAction implements Refreshable {
+
 		private static final long serialVersionUID = 1L;
+		private GraphEditor.Channel channel;
 		
-		public NewCPHarmonicAction() {
-			super("New CP Harmonic");
+		public SelectChannelAction(GraphEditor.Channel channel) {
+			super(channel.toString());
+			this.channel = channel;
+			if(GraphEditor.currentChannel == channel) {
+				putValue(NAME, new String(channel + " " + '\u2713'));
+			}
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println(channel);
+			GraphEditor.currentChannel = channel;
+			refreshAll();
+			GraphEditor.refreshView();
 		}
 		
-		public void actionPerformed(ActionEvent arg0) {
-			GraphEditor.newControlPointHarmonic();
-			GraphEditor.refreshView();
-		}		
-		
+		public void refresh() {
+			if(GraphEditor.currentChannel == channel) {
+				putValue(NAME, new String(channel + " " + '\u2713'));
+			} else {
+				putValue(NAME, channel.toString());
+			}
+		}
 	}
 
+
 	public JMenuBar createMenuBar() {
+		menuItems = new ArrayList<GraphActionHandler.Refreshable>();
         //Create the menu bar.
         JMenuBar menuBar = new JMenuBar();
         //Create the File menu
         JMenu playMenu = new JMenu("Play");
         menuBar.add(playMenu);
         playMenu.add(new PlayWindowAction());
-        playMenu.add(new PlaySequencerAction());
-        playMenu.add(new PlayControlPointsAction());
-        JMenu viewMenu = new JMenu("View");
-        menuBar.add(viewMenu);
-        viewMenu.add(new ToggleClipZeroAction());
-        viewMenu.add(new ToggleDisplaySelectedAction());
-        viewMenu.add(new ToggleDisplayUnselectedAction());
+        playMenu.add(new PlaySelectedAction());
+        JMenu channelMenu = new JMenu("Channel");
+        menuBar.add(channelMenu);
+        for(GraphEditor.Channel channel: GraphEditor.Channel.values()) {
+        	addAction(channelMenu, new SelectChannelAction(channel));
+        }
         JMenu zoomMenu = new JMenu("Zoom");
         menuBar.add(zoomMenu);
         zoomMenu.add(new ZoomResetAction());
@@ -196,9 +199,11 @@ public class GraphActionHandler extends JPanel {
         JMenu yViewMenu = new JMenu("YView");
         menuBar.add(yViewMenu);
         yViewMenu.add(new YViewAction());
-        JMenu controlPointMenu = new JMenu("ControlPoint");
-        menuBar.add(controlPointMenu);
-        controlPointMenu.add(new NewCPHarmonicAction());
+        JMenu minClipThresholdMenu = new JMenu("MinClipThreshold");
+        for(double minClipThreshold = 0.0; minClipThreshold <= 12.0; minClipThreshold += 1.0) {
+        	addAction(minClipThresholdMenu, new MinClipThresholdAction(minClipThreshold));
+        }
+        menuBar.add(minClipThresholdMenu);
         JMenu minLengthMenu = new JMenu("MinLength");
         menuBar.add(minLengthMenu);      
         for(int minLength = 1; minLength <= 20; minLength++) {
@@ -209,4 +214,9 @@ public class GraphActionHandler extends JPanel {
         return menuBar;
 	}
 
+	private void addAction(JMenu menu, GraphActionHandler.Refreshable action) {
+    	menuItems.add(action);
+    	menu.add((Action) menuItems.get(menuItems.size() - 1));
+	}
+	
 }
