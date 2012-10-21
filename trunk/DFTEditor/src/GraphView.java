@@ -11,8 +11,7 @@ public class GraphView extends JComponent {
 	
 	
 	public enum ColorView {
-		AMPLITUDE,
-		FREQUENCY,
+		DATA,
 		HARMONICS;
 	}
 	
@@ -20,9 +19,15 @@ public class GraphView extends JComponent {
 		AMPLITUDE,
 		FREQUENCY;
 	}
+	
+	public enum XView {
+		TIME,
+		FREQUENCY;
+	}
 
-	public static ColorView colorView = ColorView.AMPLITUDE;
+	public static ColorView colorView = ColorView.DATA;
 	public static YView yView = YView.AMPLITUDE;
+	public static XView xView = XView.TIME;
 	
 	private static final long serialVersionUID = 2964004162144513754L;
 	
@@ -34,7 +39,10 @@ public class GraphView extends JComponent {
 	private int width = 0;
 	
 	public boolean isHarmonicVisible(Harmonic harmonic) {
-		if(harmonic.getChannel() == 0 && GraphEditor.currentChannel != GraphEditor.Channel.MONO) return false;
+		if(harmonic.getChannel() == 0) {
+			if(GraphEditor.currentChannel == GraphEditor.Channel.MONO) return true;
+			return false;			
+		}
 		if(harmonic.getChannel() == 1) {
 			if(GraphEditor.currentChannel == GraphEditor.Channel.LEFT) return true;
 			if(GraphEditor.currentChannel == GraphEditor.Channel.STEREO) return true;
@@ -45,15 +53,17 @@ public class GraphView extends JComponent {
 			if(GraphEditor.currentChannel == GraphEditor.Channel.STEREO) return true;
 			return false;
 		}
-		System.out.println("GraphView.isHarmonicVisible: Unknown channel");
+		System.out.println("DFTView.isHarmonicVisible: Unknown channel");
 		return false;
 	}
 	
 	public void drawFileData(Graphics g) {
-		double pixelsPerTime = (double) getWidth() / (double) (GraphEditor.maxViewTime - GraphEditor.minViewTime);
-		double pixelsPerValue = 1;
-		if(yView == YView.AMPLITUDE) pixelsPerValue = (double) getHeight() / (double) (GraphEditor.maxViewLogAmplitude - GraphEditor.minViewLogAmplitude);
-		if(yView == YView.FREQUENCY) pixelsPerValue = (double) getHeight() / (double) (GraphEditor.maxViewNote - GraphEditor.minViewNote);
+		double pixelsPerValueY = 1;
+		double pixelsPerValueX = 1;
+		if(xView == XView.TIME) pixelsPerValueX = (double) getWidth() / (double) (GraphEditor.maxViewTime - GraphEditor.minViewTime);
+		if(xView == XView.FREQUENCY) pixelsPerValueX = (double) getWidth() / (double) (GraphEditor.maxViewNote - GraphEditor.minViewNote);
+		if(yView == YView.AMPLITUDE) pixelsPerValueY = (double) getHeight() / (double) (GraphEditor.maxViewLogAmplitude - GraphEditor.minViewLogAmplitude);
+		if(yView == YView.FREQUENCY) pixelsPerValueY = (double) getHeight() / (double) (GraphEditor.maxViewNote - GraphEditor.minViewNote);
 		ArrayList<Harmonic> allHarmonics = new ArrayList<Harmonic>(GraphEditor.harmonicIDToHarmonic.values());
 		//allHarmonics.addAll(GraphEditor.harmonicIDToControlPointHarmonic.values());
 		for(Harmonic harmonic: allHarmonics) {
@@ -72,26 +82,31 @@ public class GraphView extends JComponent {
 					start = end;
 					continue;
 				}
-				int windowStartTime = start.getTime() - GraphEditor.minViewTime;
-				int startX = (int) Math.round(pixelsPerTime * windowStartTime);
+				int startX = 0;
 				int startY = 0;
-				if(yView == YView.AMPLITUDE) startY = (int) Math.round(pixelsPerValue * (start.getLogAmplitude() - GraphEditor.minViewLogAmplitude));
-				if(yView == YView.FREQUENCY) startY = (int) Math.round(pixelsPerValue * (start.getNote() - GraphEditor.minViewNote));
+				if(xView == XView.TIME) startX = (int) Math.round(pixelsPerValueX * (start.getTime() - GraphEditor.minViewTime));
+				if(xView == XView.FREQUENCY) startX = (int) Math.round(pixelsPerValueX * (start.getNote() - GraphEditor.minViewNote));
+				if(yView == YView.AMPLITUDE) startY = (int) Math.round(pixelsPerValueY * (start.getLogAmplitude() - GraphEditor.minViewLogAmplitude));
+				if(yView == YView.FREQUENCY) startY = (int) Math.round(pixelsPerValueY * (start.getNote() - GraphEditor.minViewNote));
 				startY = getHeight() - startY;
 				if(end.getTime() < GraphEditor.minViewTime) {
 					start = end;
 					continue;					
 				}
-				int windowEndTime = end.getTime() - GraphEditor.minViewTime;
-				int endX = (int) Math.round(pixelsPerTime * windowEndTime);
+				int endX = 0;
 				int endY = 0;
-				if(yView == YView.AMPLITUDE) endY = (int) Math.round(pixelsPerValue * (end.getLogAmplitude() - GraphEditor.minViewLogAmplitude));
-				if(yView == YView.FREQUENCY) endY = (int) Math.round(pixelsPerValue * (end.getNote() - GraphEditor.minViewNote));		
+				if(xView == XView.TIME) endX = (int) Math.round(pixelsPerValueX * (end.getTime() - GraphEditor.minViewTime));
+				if(xView == XView.FREQUENCY) endX = (int) Math.round(pixelsPerValueX * (end.getNote() - GraphEditor.minViewNote));		
+				if(yView == YView.AMPLITUDE) endY = (int) Math.round(pixelsPerValueY * (end.getLogAmplitude() - GraphEditor.minViewLogAmplitude));
+				if(yView == YView.FREQUENCY) endY = (int) Math.round(pixelsPerValueY * (end.getNote() - GraphEditor.minViewNote));		
 				endY = getHeight() - endY;
-				if(colorView == ColorView.AMPLITUDE) {
+				if(xView == XView.FREQUENCY) {
+					g.setColor(getTimeColor((start.getTime() + end.getTime()) / 2));
+				}				
+				if(xView == XView.TIME && yView == YView.FREQUENCY) {
 					g.setColor(getAmplitudeColor((start.getLogAmplitude() + end.getLogAmplitude()) / 2));
 				}
-				if(colorView == ColorView.FREQUENCY) {
+				if(xView == XView.TIME && yView == YView.AMPLITUDE) {
 					g.setColor(getFrequencyColor((start.getNote() + end.getNote()) / 2));
 				}
 				if(colorView == ColorView.HARMONICS) {
@@ -155,6 +170,29 @@ public class GraphView extends JComponent {
 		float currentVal = (float) note;
 		currentVal -= GraphEditor.minNote;
 		currentVal /= noteRange;
+		if(currentVal < 0.0f) currentVal = 0.0f;
+		if(currentVal > 1.0f) currentVal = 1.0f;
+		float red = currentVal;
+		float green = 0.0f;
+		float blue = 1.0f - currentVal;
+		if(red >= 0.5f) {
+			green = (1.0f - red) * 2.0f;
+		} else {
+			green = red * 2.0f;
+		}
+		//return new Color(1.0f, 1.0f, 1.0f, 0.75f);
+		return new Color(blue, green, red, alpha);
+	}
+	
+	private Color getTimeColor(double time) {
+		return getTimeColor(time, 1.0f);
+	}
+
+	private Color getTimeColor(double time, float alpha) {
+		float timeRange = (float) (GraphEditor.maxViewTime - GraphEditor.minViewTime);
+		float currentVal = (float) time;
+		currentVal -= GraphEditor.minViewTime;
+		currentVal /= timeRange;
 		if(currentVal < 0.0f) currentVal = 0.0f;
 		if(currentVal > 1.0f) currentVal = 1.0f;
 		float red = currentVal;
