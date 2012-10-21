@@ -183,34 +183,7 @@ public class GraphEditor extends JFrame {
 		maxViewNote = minViewNote + FDData.noteBase * 2;
 		refreshView();
 	}
-	
-	public static void promptForColorView(GraphEditor parent) {
-		Object[] colorData = {"Amplitude", "Frequency", "Harmonics"};
-		String choice =  (String) JOptionPane.showInputDialog(parent, "Color Display Select", 
-										"Select Color View", JOptionPane.PLAIN_MESSAGE, null, colorData, 2);
-		if(choice == null) return;
-		if(choice.equals("Amplitude")) GraphView.colorView = GraphView.ColorView.AMPLITUDE;
-		if(choice.equals("Frequency")) GraphView.colorView = GraphView.ColorView.FREQUENCY;
-		if(choice.equals("Harmonics")) GraphView.colorView = GraphView.ColorView.HARMONICS;
-		refreshView();
-	}
-	
-	public static void promptForYView(GraphEditor parent) {
-		Object[] colorData = {"Amplitude", "Frequency"};
-		String choice =  (String) JOptionPane.showInputDialog(parent, "Y View Select", 
-										"Select Color View", JOptionPane.PLAIN_MESSAGE, null, colorData, 0);
-		if(choice == null) return;
-		if(choice.equals("Amplitude")) {
-			GraphView.yView = GraphView.YView.AMPLITUDE;
-			GraphView.colorView = GraphView.ColorView.FREQUENCY;
-		}
-		if(choice.equals("Frequency")) {
-			GraphView.yView = GraphView.YView.FREQUENCY;
-			GraphView.colorView = GraphView.ColorView.AMPLITUDE;
-		}
-		refreshView();
-	}
-	
+
 	public static void leftClickMenu(GraphEditor parent, int x, int y) {
 		if(GraphView.yView == GraphView.YView.AMPLITUDE) {
 			clipAmplitude(y);

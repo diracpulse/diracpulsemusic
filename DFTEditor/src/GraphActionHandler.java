@@ -59,33 +59,6 @@ public class GraphActionHandler extends JPanel {
 		}
 	}
 
-	public class MinClipThresholdAction extends AbstractAction implements Refreshable {
-		
-		private static final long serialVersionUID = 1L;
-		private double minClipThreshold = 0.0;
-
-		public MinClipThresholdAction(double minCT) {
-			super("Min Clip Threshold = " + minCT);
-			minClipThreshold = minCT;
-			if(GraphEditor.minClipThreshold == minClipThreshold) {
-				putValue(NAME, new String("Min Clip Threshold = " + minClipThreshold + " \u2713"));
-			}
-		}
-
-		public void actionPerformed(ActionEvent arg0) {
-			GraphEditor.minClipThreshold = minClipThreshold;
-			refreshAll();
-		}
-		
-		public void refresh() {
-			if(GraphEditor.minClipThreshold == minClipThreshold) {
-				putValue(NAME, new String("Min Clip Threshold = " + minClipThreshold + " \u2713"));
-			} else {
-				putValue(NAME, new String("Min Clip Threshold = " + minClipThreshold));
-			}
-		}
-	}
-
 	public class ZoomResetAction extends AbstractAction {
 		
 		private static final long serialVersionUID = 1L;
@@ -99,52 +72,7 @@ public class GraphActionHandler extends JPanel {
 			GraphEditor.resetView();
 		}
 	}
-	
-	public class ColorViewAction extends AbstractAction {
-		
-		private static final long serialVersionUID = 1L;
 
-		public ColorViewAction() {
-			super("Select Color View");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			GraphEditor.promptForColorView(parent);
-		}
-	}
-	
-	public class YViewAction extends AbstractAction {
-		
-		private static final long serialVersionUID = 1L;
-
-		public YViewAction() {
-			super("Select Y View");
-		}
-
-		// @0verride
-		public void actionPerformed(ActionEvent arg0) {
-			GraphEditor.promptForYView(parent);
-		}
-	}
-
-	public class SelectMinLengthAction extends AbstractAction {
-		
-		private static final long serialVersionUID = 1L;
-		private int minLength;
-		
-		public SelectMinLengthAction(int minLength) {
-			super("Min Length = " + minLength);
-			this.minLength = minLength;
-		}
-		
-		public void actionPerformed(ActionEvent arg0) {
-			GraphEditor.minHarmonicLength = minLength;
-		    GraphEditor.refreshView();
-		}		
-		
-	}
-	
 	public class SelectChannelAction extends AbstractAction implements Refreshable {
 
 		private static final long serialVersionUID = 1L;
@@ -174,6 +102,103 @@ public class GraphActionHandler extends JPanel {
 			}
 		}
 	}
+	
+	public class SelectColorViewAction extends AbstractAction implements Refreshable {
+
+		private static final long serialVersionUID = 1L;
+		private GraphView.ColorView colorView;
+		
+		public SelectColorViewAction(GraphView.ColorView colorView) {
+			super(colorView.toString());
+			this.colorView = colorView;
+			if(GraphView.colorView == colorView) {
+				putValue(NAME, new String(colorView + " " + '\u2713'));
+			}
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println(colorView);
+			GraphView.colorView = colorView;
+			refreshAll();
+			GraphEditor.refreshView();
+		}
+		
+		public void refresh() {
+			if(GraphView.colorView == colorView) {
+				putValue(NAME, new String(colorView + " " + '\u2713'));
+			} else {
+				putValue(NAME, colorView.toString());
+			}
+		}
+	}
+
+
+	public class SelectYViewAction extends AbstractAction implements Refreshable {
+
+		private static final long serialVersionUID = 1L;
+		private GraphView.YView yView;
+		
+		public SelectYViewAction(GraphView.YView yView) {
+			super(yView.toString());
+			this.yView = yView;
+			if(GraphView.yView == yView) {
+				putValue(NAME, new String(yView + " " + '\u2713'));
+			}
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println(yView);
+			GraphView.yView = yView;
+			if(GraphView.xView == GraphView.XView.FREQUENCY && GraphView.yView == GraphView.YView.FREQUENCY) {
+				GraphView.yView = GraphView.YView.AMPLITUDE;
+			}
+			refreshAll();
+			GraphEditor.refreshView();
+		}
+		
+		public void refresh() {
+			if(GraphView.yView == yView) {
+				putValue(NAME, new String(yView + " " + '\u2713'));
+			} else {
+				putValue(NAME, yView.toString());
+			}
+		}
+	}
+	
+	public class SelectXViewAction extends AbstractAction implements Refreshable {
+
+		private static final long serialVersionUID = 1L;
+		private GraphView.XView xView;
+		
+		public SelectXViewAction(GraphView.XView xView) {
+			super(xView.toString());
+			this.xView = xView;
+			if(GraphView.xView == xView) {
+				putValue(NAME, new String(xView + " " + '\u2713'));
+			}
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println(xView);
+			GraphView.xView = xView;
+			if(GraphView.xView == GraphView.XView.FREQUENCY && GraphView.yView == GraphView.YView.FREQUENCY) {
+				GraphView.yView = GraphView.YView.AMPLITUDE;
+			}
+			refreshAll();
+			GraphEditor.refreshView();
+		}
+		
+		public void refresh() {
+			if(GraphView.xView == xView) {
+				putValue(NAME, new String(xView + " " + '\u2713'));
+			} else {
+				putValue(NAME, xView.toString());
+			}
+		}
+	}
 
 
 	public JMenuBar createMenuBar() {
@@ -193,21 +218,20 @@ public class GraphActionHandler extends JPanel {
         JMenu zoomMenu = new JMenu("Zoom");
         menuBar.add(zoomMenu);
         zoomMenu.add(new ZoomResetAction());
-        JMenu colorMenu = new JMenu("Color");
-        menuBar.add(colorMenu);
-        colorMenu.add(new ColorViewAction());
+        JMenu colorViewMenu = new JMenu("ColorView");
+        menuBar.add(colorViewMenu);
+        for(GraphView.ColorView colorView: GraphView.ColorView.values()) {
+        	addAction(colorViewMenu, new SelectColorViewAction(colorView));
+        }
+        JMenu xViewMenu = new JMenu("XView");
+        menuBar.add(xViewMenu);
+        for(GraphView.XView xView: GraphView.XView.values()) {
+        	addAction(xViewMenu, new SelectXViewAction(xView));
+        }
         JMenu yViewMenu = new JMenu("YView");
         menuBar.add(yViewMenu);
-        yViewMenu.add(new YViewAction());
-        JMenu minClipThresholdMenu = new JMenu("MinClipThreshold");
-        for(double minClipThreshold = 0.0; minClipThreshold <= 12.0; minClipThreshold += 1.0) {
-        	addAction(minClipThresholdMenu, new MinClipThresholdAction(minClipThreshold));
-        }
-        menuBar.add(minClipThresholdMenu);
-        JMenu minLengthMenu = new JMenu("MinLength");
-        menuBar.add(minLengthMenu);      
-        for(int minLength = 1; minLength <= 20; minLength++) {
-        	minLengthMenu.add(new SelectMinLengthAction(minLength));
+        for(GraphView.YView yView: GraphView.YView.values()) {
+        	addAction(yViewMenu, new SelectYViewAction(yView));
         }
         JMenu playSpeedMenu = new JMenu("PlaySpeed");
         menuBar.add(playSpeedMenu);
