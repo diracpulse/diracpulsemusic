@@ -6,6 +6,24 @@ public class FastSynth {
 	public static int numSamples = 0;
 	public static double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
 	public static double[] sharedPCMData;
+	static float[] sinTable = null;
+	static float sinTableLength = 10000;
+	
+	static void createSinTable() {
+		int sinTableLength = 44100;
+		double phaseStep = (2.0 * Math.PI) / sinTableLength;
+		sinTable = new float[sinTableLength];
+		for(int index = 0; index < sinTableLength; index++) {
+			sinTable[index] = (float) Math.sin(index * phaseStep);
+		}
+	}
+	
+	private static double sinLookup(double phase) {
+		int index = (int) Math.round(phase / (2.0 * Math.PI) * sinTableLength);
+		index %= sinTableLength;
+		return sinTable[index];
+	}
+	
 	
 	private static double sawTooth(double phase) {
 		phase /= 2.0 * Math.PI;
@@ -34,6 +52,7 @@ public class FastSynth {
 	}
 	
 	public static void initSharedPCMData(ArrayList<Harmonic> harmonics) {
+		if(sinTable == null) createSinTable();
 		double maxEndTime = 0;
 		for(Harmonic harmonic: harmonics) {
 			double harmonicEndTime = Math.ceil(harmonic.getEnd().getTime());
