@@ -12,6 +12,7 @@ public class GraphView extends JComponent {
 	
 	public enum ColorView {
 		DATA,
+		CHANNEL,
 		HARMONICS;
 	}
 	
@@ -100,17 +101,33 @@ public class GraphView extends JComponent {
 				if(yView == YView.AMPLITUDE) endY = (int) Math.round(pixelsPerValueY * (end.getLogAmplitude() - GraphEditor.minViewLogAmplitude));
 				if(yView == YView.FREQUENCY) endY = (int) Math.round(pixelsPerValueY * (end.getNote() - GraphEditor.minViewNote));		
 				endY = getHeight() - endY;
-				if(xView == XView.FREQUENCY) {
-					g.setColor(getTimeColor((start.getTime() + end.getTime()) / 2));
-				}				
-				if(xView == XView.TIME && yView == YView.FREQUENCY) {
-					g.setColor(getAmplitudeColor((start.getLogAmplitude() + end.getLogAmplitude()) / 2));
-				}
-				if(xView == XView.TIME && yView == YView.AMPLITUDE) {
-					g.setColor(getFrequencyColor((start.getNote() + end.getNote()) / 2));
+				if(colorView == ColorView.DATA) {
+					if(xView == XView.FREQUENCY) {
+						g.setColor(getTimeColor((start.getTime() + end.getTime()) / 2));
+					}				
+					if(xView == XView.TIME && yView == YView.FREQUENCY) {
+						g.setColor(getAmplitudeColor((start.getLogAmplitude() + end.getLogAmplitude()) / 2));
+					}
+					if(xView == XView.TIME && yView == YView.AMPLITUDE) {
+						g.setColor(getFrequencyColor((start.getNote() + end.getNote()) / 2));
+					}
 				}
 				if(colorView == ColorView.HARMONICS) {
 					g.setColor(getHarmonicColor(harmonic.getHarmonicID()));
+				}
+				if(colorView == ColorView.CHANNEL) {
+					if(start.getChannel() == end.getChannel()) {
+						if(start.getChannel() == 0) g.setColor(Color.RED);
+						if(start.getChannel() == 1) g.setColor(Color.GREEN);
+						if(start.getChannel() == 2) g.setColor(Color.BLUE);
+						if(start.getChannel() < 0 || start.getChannel() > 2) {
+							System.out.println("GraphView.drawFileData: unknow channel");
+							g.setColor(Color.WHITE);
+						}
+					} else {
+						System.out.println("GraphView.drawFileData: different channels in same harmonic");
+						g.setColor(Color.WHITE);
+					}
 				}
 				/*
 				if(GraphEditor.harmonicIDToControlPointHarmonic.containsKey(harmonic.getHarmonicID())) {
@@ -131,6 +148,7 @@ public class GraphView extends JComponent {
 						g.setColor(new Color(0.5f, 0.5f, 0.5f, 0.75f));
 					}
 				}
+				g.fillRect(startX - 1, startY - 1, 3, 3);
 				g.drawLine(startX, startY, endX, endY);
 				start = end;
 			}

@@ -14,7 +14,13 @@ public class GraphController implements MouseListener, ActionListener {
 	
 	private GraphView view;
 	private GraphEditor parent;
+	private SelectionMode selectionMode = SelectionMode.ADD;
 
+	public enum SelectionMode {
+		ADD,
+		REMOVE;
+	}
+	
 	GraphController(GraphEditor parent) {
 		this.parent = parent;
 	}
@@ -42,12 +48,13 @@ public class GraphController implements MouseListener, ActionListener {
 	    	return;
 	    }
 	    if(e.isAltDown()) {
-    		int time = GraphUtils.screenXToTime(x);
+    		int time = (int) Math.round(GraphUtils.screenXToValue(x));
     		int note = (int) Math.round(GraphUtils.screenYToValue(y));
 	    	return;
 	    }
 	    if(GraphView.yView == GraphView.YView.AMPLITUDE) {
-	    	int time = GraphUtils.screenXToTime(x);
+	    	boolean refreshView = false;
+	    	int time = (int) Math.round(GraphUtils.screenXToValue(x));
 	    	System.out.println(GraphUtils.screenYToValue(y));
 	    	int logAmplitudeTimes10 = (int) Math.round(GraphUtils.screenYToValue(y) * 10.0);
 	    	for(int testTime = time - 2; testTime < time + 3; testTime++) {
@@ -55,37 +62,51 @@ public class GraphController implements MouseListener, ActionListener {
 	    			if(GraphEditor.timeToLogAmplitudeTimes10ToHarmonicID.get(testTime).containsKey(logAmplitudeTimes10)) {
 	    				long harmonicID = GraphEditor.timeToLogAmplitudeTimes10ToHarmonicID.get(testTime).get(logAmplitudeTimes10);
 		    			if(GraphEditor.selectedHarmonicIDs.contains(harmonicID)) {
-		    				GraphEditor.selectedHarmonicIDs.remove(harmonicID);
-		    				System.out.println("GraphController (YView: AMPLITUDE): removed harmonic = " + harmonicID);
+		    				if(selectionMode == SelectionMode.REMOVE) {
+		    					GraphEditor.selectedHarmonicIDs.remove(harmonicID);
+		    					System.out.println("GraphController (YView: AMPLITUDE): removed harmonic = " + harmonicID);
+		    					refreshView = true;
+		    				}
 		    			} else {
-		    				GraphEditor.selectedHarmonicIDs.add(harmonicID);
-		    				System.out.println("GraphController (YView: AMPLITUDE): added harmonic = " + harmonicID);
+		    				if(selectionMode == SelectionMode.ADD) {
+		    					GraphEditor.selectedHarmonicIDs.add(harmonicID);
+		    					System.out.println("GraphController (YView: AMPLITUDE): added harmonic = " + harmonicID);
+		    					refreshView = true;
+		    				}
 		    			}
-	    				GraphEditor.refreshView();
-	    				return;
 	    			}
 	    		}
 	    	}
+	    	if(refreshView) GraphEditor.refreshView();
+	    	return;
 	    }
 	    if(GraphView.yView == GraphView.YView.FREQUENCY) {
-	    	int time = GraphUtils.screenXToTime(x);
-	    	System.out.println(GraphUtils.screenYToValue(y));
-	    	int note = (int) Math.round(GraphUtils.screenYToValue(y));
-	    	if(GraphEditor.timeToNoteToHarmonicID.containsKey(time)) {
-	    		if(GraphEditor.timeToNoteToHarmonicID.get(time).containsKey(note)) {
+	    	boolean refreshView = false;
+	    	int minRangeTime = (int) Math.floor(GraphUtils.screenXToValue(x - 3));
+	    	int maxRangeTime = (int) Math.ceil(GraphUtils.screenXToValue(x + 3));
+	    	int minRangeNote = (int) Math.floor(GraphUtils.screenYToValue(y + 3));
+	    	int maxRangeNote = (int) Math.ceil(GraphUtils.screenYToValue(y - 3));	    	
+	    	for(int time = minRangeTime; time <= maxRangeTime; time++) {
+	    		for(int note = minRangeNote; note <= maxRangeNote; note++) {
+	    			if(!GraphEditor.timeToNoteToHarmonicID.containsKey(time)) continue;
+	    			if(!GraphEditor.timeToNoteToHarmonicID.get(time).containsKey(note)) continue;
 	    			long harmonicID = GraphEditor.timeToNoteToHarmonicID.get(time).get(note);
-	    			System.out.println("Mouse Selection " + harmonicID);
 	    			if(GraphEditor.selectedHarmonicIDs.contains(harmonicID)) {
-	    				GraphEditor.selectedHarmonicIDs.remove(harmonicID);
-	    				System.out.println("GraphController (YView: FREQUENCY): removed harmonic = " + harmonicID);
+	    				if(selectionMode == SelectionMode.REMOVE) {
+	    					GraphEditor.selectedHarmonicIDs.remove(harmonicID);
+	    					System.out.println("GraphController (YView: FREQUENCY): removed harmonic = " + harmonicID);
+	    					refreshView = true;
+	    				}
 	    			} else {
-	    				GraphEditor.selectedHarmonicIDs.add(harmonicID);
-	    				System.out.println("GraphController (YView: FREQUENCY): added harmonic = " + harmonicID);
+	    				if(selectionMode == SelectionMode.ADD) {
+	    					GraphEditor.selectedHarmonicIDs.add(harmonicID);
+	    					System.out.println("GraphController (YView: FREQUENCY): added harmonic = " + harmonicID);
+	    					refreshView = true;
+	    				}
 	    			}
-	    			GraphEditor.refreshView();
-	    			return;
 	    		}
 	    	}
+	    	if(refreshView) GraphEditor.refreshView();
 	    }
 	}
 	
