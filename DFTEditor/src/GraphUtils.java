@@ -1,12 +1,15 @@
 
 public class GraphUtils {
 	
-	public static int screenXToTime(double x) {
-		double timeSpan = GraphEditor.maxViewTime - GraphEditor.minViewTime;
-		double timesPerPixel = timeSpan / (double) GraphEditor.view.getWidth();
-		int returnVal = (int) Math.round(x * timesPerPixel) + GraphEditor.minViewTime;
-		//System.out.println("screenXToTime " + returnVal);
-		return returnVal;
+	public static double screenXToValue(double x) {
+		if(x < 0) x = 0;
+		if(x > GraphEditor.view.getHeight()) x = GraphEditor.view.getHeight();
+		double pixelsPerValue = 0.0;
+		if(GraphView.xView == GraphView.XView.TIME) pixelsPerValue = (double) GraphEditor.view.getWidth() / (GraphEditor.maxViewTime - GraphEditor.minViewTime);
+		if(GraphView.xView == GraphView.XView.FREQUENCY) pixelsPerValue = (double) GraphEditor.view.getWidth() / (GraphEditor.maxViewNote - GraphEditor.minViewNote);
+		if(GraphView.xView == GraphView.XView.TIME) return GraphEditor.minViewTime + (x / pixelsPerValue);
+		if(GraphView.xView == GraphView.XView.FREQUENCY) return GraphEditor.maxViewNote - (x / pixelsPerValue);
+		return -1.0;
 	}
 	
 	public static double screenYToValue(double y) {

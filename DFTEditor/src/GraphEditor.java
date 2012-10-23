@@ -194,8 +194,8 @@ public class GraphEditor extends JFrame {
 	
 	public static void zoomInX(int x) {
 		double divisor = 2 * zoomFactor;
-		minViewTime = GraphUtils.screenXToTime(x - view.getWidth() / divisor);
-		maxViewTime = GraphUtils.screenXToTime(x + view.getWidth() / divisor);
+		minViewTime = (int) Math.round(GraphUtils.screenXToValue(x - view.getWidth() / divisor));
+		maxViewTime = (int) Math.round(GraphUtils.screenXToValue(x + view.getWidth() / divisor));
 		if(minViewTime < 0) {
 			maxViewTime -= minViewTime;
 			minViewTime = 0;
@@ -291,8 +291,4 @@ public class GraphEditor extends JFrame {
 		view.refresh();
 	}
 	
-	public static void refreshViewImmediate() {
-		view.paintImmediately(0, 0, view.getWidth(), view.getHeight());
-	}
-
 }

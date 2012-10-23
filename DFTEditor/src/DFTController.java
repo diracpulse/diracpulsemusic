@@ -4,11 +4,14 @@ import java.awt.event.*;
 public class DFTController implements MouseListener, ActionListener {
 	
 	public enum ControllerAction {
-		MAKE_SELECTION,
-		ZOOM;
+		RANGE_SELECT;
 	}
 	
-	private ControllerAction currentAction = ControllerAction.MAKE_SELECTION;
+	public static int selectionIndex = -1;
+	public static int[] selectedTimes = {-1, -1};
+	public static int[] selectedFreqs = {-1, -1};
+	
+	public static ControllerAction currentAction = ControllerAction.RANGE_SELECT;
 
 	DFTController() {}
 
@@ -18,6 +21,38 @@ public class DFTController implements MouseListener, ActionListener {
 	public void mousePressed(MouseEvent e){
 	    int x = e.getX();
 	    int y = e.getY();
+	    if(selectionIndex <= 0) selectionIndex = 0;
+	    if(selectionIndex > 1) selectionIndex = 0;
+	    selectedTimes[selectionIndex] = DFTUtils.screenXToTime(x);
+	    if(selectedTimes[selectionIndex] < DFTEditor.minViewTime) selectedTimes[selectionIndex] = DFTEditor.minViewTime;
+	    if(selectedTimes[selectionIndex] > DFTEditor.maxTime) selectedTimes[selectionIndex] = DFTEditor.maxTime;
+	    selectedFreqs[selectionIndex] = DFTUtils.screenYToFreq(y);
+	    if(selectedFreqs[selectionIndex] < DFTEditor.minViewFreq) selectedFreqs[selectionIndex] = DFTEditor.minViewFreq;
+	    if(selectedFreqs[selectionIndex] > DFTEditor.maxScreenFreq) selectedFreqs[selectionIndex] = DFTEditor.maxScreenFreq;	    	
+	    selectionIndex++;
+	    if(selectionIndex == 1) {
+	    	DFTEditor.refreshView();
+	    	GraphEditor.refreshView();
+	    	return;
+	    }
+	    if(selectedTimes[1] > selectedTimes[0]) {
+	    	GraphEditor.maxViewTime = selectedTimes[1];
+	    	GraphEditor.minViewTime = selectedTimes[0];
+	    } else {
+	    	GraphEditor.maxViewTime = selectedTimes[0];
+	    	GraphEditor.minViewTime = selectedTimes[1];
+	    }
+	    int[] selectedNotes = {DFTEditor.freqToNote(selectedFreqs[0]), DFTEditor.freqToNote(selectedFreqs[1])};
+	    if(selectedNotes[1] > selectedNotes[0]) {
+	    	GraphEditor.maxViewNote = selectedNotes[1];
+	    	GraphEditor.minViewNote = selectedNotes[0];
+	    } else {
+	    	GraphEditor.maxViewNote = selectedNotes[0];
+	    	GraphEditor.minViewNote = selectedNotes[1];
+	    }
+    	DFTEditor.refreshView();
+    	GraphEditor.refreshView();
+	    return;
 	}
 	
 	

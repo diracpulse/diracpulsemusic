@@ -147,6 +147,19 @@ public class DFTView extends JComponent {
 			return;
 		}
 		drawFileDataAsPixelsOrDigits(g);
+		drawControllerStateData(g);
+	}
+	
+	public void drawControllerStateData(Graphics g) {
+		g.setColor(Color.YELLOW);
+		if(DFTController.currentAction == DFTController.ControllerAction.RANGE_SELECT) {
+			for(int index = 0; index < DFTController.selectionIndex; index++) {
+				int x = DFTUtils.timeToScreenX(DFTController.selectedTimes[index]);
+				int y = DFTUtils.freqToScreenY(DFTController.selectedFreqs[index]);
+				g.drawLine(x, 0, x, getHeight());
+				g.drawLine(0, y, getWidth(), y);
+			}
+		}
 	}
 	
 	public boolean isHarmonicVisible(Harmonic harmonic) {
