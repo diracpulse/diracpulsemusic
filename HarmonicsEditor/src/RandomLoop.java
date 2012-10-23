@@ -7,7 +7,7 @@ import java.util.TreeMap;
 public class RandomLoop {
 	
 	HarmonicsEditor parent;
-	int numBeats = 4;
+	int numBeats = 16;
 	int[] durations = {100};
 	int[] steps = {0,1,1,2,2,3,4};
 	int direction = 1;

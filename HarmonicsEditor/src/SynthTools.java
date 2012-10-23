@@ -21,7 +21,7 @@ class SynthTools {
 		PCMDataLeft = FastSynth.synthHarmonicsLinear(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonicLeft.values()));
 		PCMDataRight = FastSynth.synthHarmonicsLinear(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonicRight.values()));
 	}
-	
+		
 	static void createPCMDataNoise(HarmonicsEditor parent) {
 		if(HarmonicsEditor.harmonicIDToHarmonicMono == null || HarmonicsEditor.harmonicIDToHarmonicMono.isEmpty()) return;
 		FastSynth.initSharedPCMData(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonicMono.values()));
