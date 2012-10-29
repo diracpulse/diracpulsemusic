@@ -1,6 +1,7 @@
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
 
@@ -17,20 +18,20 @@ public class PlayDataInWindow implements ActionListener {
 	int refreshRateInMillis;
 	int endTimeInMillis;
 	Timer timer;
-	DFTEditor parent;
+	AbstractEditor parent;
 	boolean startPlay = true;
 	public static SynthType synthType = SynthType.Linear;
 	
-	PlayDataInWindow(DFTEditor parent, int refreshRateInMillis, int endTimeInMillis) {
+	PlayDataInWindow(AbstractEditor parent, int refreshRateInMillis, int endTimeInMillis) {
 		this.parent = parent;
 		this.currentOffsetInMillis = DFTEditor.getMinViewTimeInMillis();
 		this.refreshRateInMillis = refreshRateInMillis;
 		this.endTimeInMillis = endTimeInMillis;
 		timer = new Timer(refreshRateInMillis, this);
-		if(synthType == SynthType.Linear) SynthTools.createPCMDataLinear();
-		if(synthType == SynthType.LinearCubicSpline) SynthTools.createPCMDataLinearCubicSpline();
-		if(synthType == SynthType.LinearNoise) SynthTools.createPCMDataLinearNoise();		
-		JOptionPane.showMessageDialog(parent, "Ready To Play");
+		if(synthType == SynthType.Linear) parent.createPCMDataLinear();
+		if(synthType == SynthType.LinearCubicSpline) parent.createPCMDataLinearCubicSpline();
+		if(synthType == SynthType.LinearNoise) parent.createPCMDataLinearNoise();		
+		JOptionPane.showMessageDialog((JFrame) parent, "Ready To Play");
         timer.setInitialDelay(0);
         timer.start();
 	}
@@ -38,13 +39,13 @@ public class PlayDataInWindow implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		//System.out.println(currentOffsetInMillis);
 		if(startPlay) {
-			SynthTools.playPCMData();
+			parent.playPCMData();
 			startPlay = false;
 		}
-		parent.drawPlayTime(currentOffsetInMillis, refreshRateInMillis);
+		parent.drawPlayTime(currentOffsetInMillis);
 		currentOffsetInMillis += refreshRateInMillis;
 		if(currentOffsetInMillis >= endTimeInMillis) {
-			parent.drawPlayTime(DFTEditor.getMaxViewTimeInMillis(), refreshRateInMillis);
+			parent.drawPlayTime(parent.getMaxViewTimeInMillis());
 			timer.stop();
 		}
 	}

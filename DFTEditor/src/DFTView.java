@@ -440,7 +440,7 @@ public class DFTView extends JComponent {
 		return true;
 	}
 	
-	public void drawPlayTime(int offsetInMillis, int refreshInMillis) {
+	public void drawPlayTime(int offsetInMillis) {
 		drawPlaying = true;
 		DFTView.offsetInMillis = offsetInMillis;
 	}

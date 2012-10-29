@@ -3,7 +3,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 
-public class DFTEditor extends JFrame {
+public class DFTEditor extends JFrame implements AbstractEditor {
 	
 	public enum Channel {
 		LEFT,
@@ -147,7 +147,7 @@ public class DFTEditor extends JFrame {
 		return maxTime;
 	}
 	
-	public static int getMaxViewTimeInMillis() {
+	public int getMaxViewTimeInMillis() {
 		return getMaxViewTime() * FDData.timeStepInMillis;
 	}
 	
@@ -155,9 +155,25 @@ public class DFTEditor extends JFrame {
 		new PlayDataInWindow(this, 50, getMaxViewTimeInMillis());
 	}
 	
-	public void drawPlayTime(int offsetInMillis, int refreshRateInMillis) {
-		view.drawPlayTime(offsetInMillis, refreshRateInMillis);
+	public void drawPlayTime(int offsetInMillis) {
+		view.drawPlayTime(offsetInMillis);
 		refreshView();
+	}
+	
+	public void createPCMDataLinear() {
+		SynthTools.createPCMDataLinear();
+	}
+	
+	public void createPCMDataLinearCubicSpline() {
+		SynthTools.createPCMDataLinearCubicSpline();
+	}
+	
+	public void createPCMDataLinearNoise() {
+		SynthTools.createPCMDataLinearNoise();
+	}
+	
+	public void playPCMData() {
+		SynthTools.playPCMData();
 	}
 	
 	public static void refreshView() {
@@ -223,6 +239,8 @@ public class DFTEditor extends JFrame {
     	ActionHandler.refreshAll();
         parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonic);
         parent.graphEditorFrame.view.repaint();
+        parent.fdEditorFrame.addHarmonicsToFDEditor(harmonicIDToHarmonic);
+        parent.fdEditorFrame.view.repaint();
         view.repaint();
 	}
 	
@@ -267,6 +285,9 @@ public class DFTEditor extends JFrame {
 		parent.graphEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		parent.graphEditorFrame.pack();
 		parent.graphEditorFrame.setVisible(true);
+		parent.fdEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		parent.fdEditorFrame.pack();
+		parent.fdEditorFrame.setVisible(true);
 	}
 
 	public static void main(String[] args) {
