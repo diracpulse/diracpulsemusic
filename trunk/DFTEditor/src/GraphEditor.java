@@ -5,7 +5,7 @@ import java.awt.*;
 import java.util.*;
 import java.io.*;
 
-public class GraphEditor extends JFrame {
+public class GraphEditor extends JFrame implements AbstractEditor {
 
 	public enum Channel {
 		LEFT,
@@ -267,14 +267,37 @@ public class GraphEditor extends JFrame {
 		//harmonicIDToControlPointHarmonic.put(activeControlPointHarmonicID, new Harmonic(activeControlPointHarmonicID));
 	}
 	
-	public static void playDataInCurrentWindow(GraphEditor parent) {
-		GraphSynthTools.createPCMWindowData();
-		GraphSynthTools.playWindow();
+	public void createPCMDataLinear() {
+		GraphSynthTools.createPCMDataLinear();
 	}
 	
-	public static void playDataInSequencer(GraphEditor parent) {
-		GraphSynthTools.createPCMSequencerData();
-		GraphSynthTools.playWindow();
+	public void createPCMDataLinearCubicSpline() {
+		GraphSynthTools.createPCMDataLinearCubicSpline();
+	}
+	
+	public void createPCMDataLinearNoise() {
+		GraphSynthTools.createPCMDataLinearNoise();
+	}
+	
+	public void playPCMData() {
+		GraphSynthTools.playPCMData();
+	}
+
+	public int getMaxViewTime() {
+		return maxTime;
+	}
+	
+	public int getMaxViewTimeInMillis() {
+		return getMaxViewTime() * FDData.timeStepInMillis;
+	}
+	
+	public void playDataInCurrentWindow() {
+		new PlayDataInWindow(this, 50, getMaxViewTimeInMillis());
+	}
+	
+	public void drawPlayTime(int offsetInMillis) {
+		view.drawPlayTime(offsetInMillis);
+		refreshView();
 	}
 	
 	public static void playDataInControlPoints(GraphEditor parent) {
@@ -282,11 +305,6 @@ public class GraphEditor extends JFrame {
 		//GraphSynthTools.playWindow();
 	}
 
-	public static void drawPlayTime(int offsetInMillis) {
-		view.drawPlayTime(offsetInMillis);
-		refreshView();
-	}
-	
 	public static void refreshView() {
 		view.refresh();
 	}

@@ -115,6 +115,7 @@ class SynthTools {
 		createHarmonicsChannel((byte) 1);
 		createHarmonicsChannel((byte) 2);
 		DFTEditor.parent.graphEditorFrame.addHarmonicsToGraphEditor(DFTEditor.harmonicIDToHarmonic);
+		DFTEditor.parent.fdEditorFrame.addHarmonicsToFDEditor(DFTEditor.harmonicIDToHarmonic);
 	}
 
 	static void createHarmonicsChannel(byte channel) {

@@ -41,7 +41,7 @@ public class GraphActionHandler extends JPanel {
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			GraphEditor.playDataInCurrentWindow(parent);
+			parent.playDataInCurrentWindow();
 		}
 	}
 	
@@ -55,7 +55,7 @@ public class GraphActionHandler extends JPanel {
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			GraphEditor.playDataInSequencer(parent);
+			parent.playDataInCurrentWindow();
 		}
 	}
 
