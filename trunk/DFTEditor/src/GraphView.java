@@ -39,25 +39,6 @@ public class GraphView extends JComponent {
 	private int height = 0;
 	private int width = 0;
 	
-	public boolean isHarmonicVisible(Harmonic harmonic) {
-		if(harmonic.getChannel() == 0) {
-			if(GraphEditor.currentChannel == GraphEditor.Channel.MONO) return true;
-			return false;			
-		}
-		if(harmonic.getChannel() == 1) {
-			if(GraphEditor.currentChannel == GraphEditor.Channel.LEFT) return true;
-			if(GraphEditor.currentChannel == GraphEditor.Channel.STEREO) return true;
-			return false;
-		}
-		if(harmonic.getChannel() == 2) {
-			if(GraphEditor.currentChannel == GraphEditor.Channel.RIGHT) return true;
-			if(GraphEditor.currentChannel == GraphEditor.Channel.STEREO) return true;
-			return false;
-		}
-		System.out.println("DFTView.isHarmonicVisible: Unknown channel");
-		return false;
-	}
-	
 	public void drawFileData(Graphics g) {
 		double pixelsPerValueY = 1;
 		double pixelsPerValueX = 1;
@@ -68,12 +49,7 @@ public class GraphView extends JComponent {
 		ArrayList<Harmonic> allHarmonics = new ArrayList<Harmonic>(GraphEditor.harmonicIDToHarmonic.values());
 		//allHarmonics.addAll(GraphEditor.harmonicIDToControlPointHarmonic.values());
 		for(Harmonic harmonic: allHarmonics) {
-			if(!isHarmonicVisible(harmonic)) continue;
-			if(!harmonic.isSynthesized()) continue;
-			if(harmonic.getLength() < GraphEditor.minHarmonicLength) continue;
-			if(harmonic.getAverageNote() < GraphEditor.minViewNote || harmonic.getAverageNote() > GraphEditor.maxViewNote) continue;
-			if(harmonic.getMaxLogAmplitude() < GraphEditor.minViewLogAmplitude) continue;
-			if(harmonic.getMaxLogAmplitude() > GraphEditor.maxViewLogAmplitude) continue;
+			if(!GraphUtils.isHarmonicVisible(harmonic)) continue;
 			ArrayList<FDData> hData = new ArrayList<FDData>(harmonic.getAllDataInterpolated().values());
 			if(hData.size() < 2) continue;
 			FDData start = hData.get(0);
@@ -226,10 +202,10 @@ public class GraphView extends JComponent {
 	}
 	
 	private Color getHarmonicColor(long harmonicID) {
-		int red = (int) harmonicID % 64;
-		int green = (int) (harmonicID / 64) % 64;
-		int blue = (int) (harmonicID / (64 * 64)) % 64;
-		return new Color(red + 192, green + 192, blue + 192);
+		int red = (int) harmonicID % 128;
+		int green = (int) (harmonicID / 128) % 128;
+		int blue = (int) (harmonicID / (128 * 128)) % 128;
+		return new Color(red + 128, green + 128, blue + 128);
 	}
 	
 	public void drawViewInfo(Graphics g) {

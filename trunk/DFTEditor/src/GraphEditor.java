@@ -22,8 +22,8 @@ public class GraphEditor extends JFrame implements AbstractEditor {
 	public static GraphActionHandler actionHandler;
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic;
 	//public static TreeMap<Long, Harmonic> harmonicIDToControlPointHarmonic;
-	public static HashMap<Integer, HashMap<Integer, Long>> timeToLogAmplitudeTimes10ToHarmonicID;
-	public static HashMap<Integer, HashMap<Integer, Long>> timeToNoteToHarmonicID;
+	public static HashMap<Integer, HashMap<Integer, HashSet<Long>>> timeToLogAmplitudeTimes10ToHarmonicIDs;
+	public static HashMap<Integer, HashMap<Integer, HashSet<Long>>> timeToNoteToHarmonicIDs;
 	public static HashSet<Long> selectedHarmonicIDs;
 	public static long activeControlPointHarmonicID = 0;
 	public static int minHarmonicLength = 1;
@@ -65,8 +65,8 @@ public class GraphEditor extends JFrame implements AbstractEditor {
 	
 	static void initVariables() {
 		harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
-		timeToLogAmplitudeTimes10ToHarmonicID = new HashMap<Integer, HashMap<Integer, Long>>();
-		timeToNoteToHarmonicID = new HashMap<Integer, HashMap<Integer, Long>>();
+		timeToLogAmplitudeTimes10ToHarmonicIDs = new HashMap<Integer, HashMap<Integer, HashSet<Long>>>();
+		timeToNoteToHarmonicIDs = new HashMap<Integer, HashMap<Integer, HashSet<Long>>>();
 		selectedHarmonicIDs = new HashSet<Long>();
 		//harmonicIDToControlPointHarmonic = new TreeMap<Long, Harmonic>();
 		activeControlPointHarmonicID = randomIDGenerator.nextLong();
@@ -83,15 +83,6 @@ public class GraphEditor extends JFrame implements AbstractEditor {
 			harmonicIDToHarmonic.put(data.getHarmonicID(), new Harmonic(data.getHarmonicID()));
 		}
 		harmonicIDToHarmonic.get(data.getHarmonicID()).addData(data);
-		int logAmplitudeTimes10 = (int) Math.round(data.getLogAmplitude() * 10.0);
-		if(!timeToLogAmplitudeTimes10ToHarmonicID.containsKey(data.getTime())) {
-			timeToLogAmplitudeTimes10ToHarmonicID.put(data.getTime(), new HashMap<Integer, Long>());
-		}
-		timeToLogAmplitudeTimes10ToHarmonicID.get(data.getTime()).put(logAmplitudeTimes10, data.getHarmonicID());
-		if(!timeToNoteToHarmonicID.containsKey(data.getTime())) {
-			timeToNoteToHarmonicID.put(data.getTime(), new HashMap<Integer, Long>());
-		}
-		timeToNoteToHarmonicID.get(data.getTime()).put(data.getNote(), data.getHarmonicID());
 	}
 	
 	static void endReadData() {
@@ -101,6 +92,23 @@ public class GraphEditor extends JFrame implements AbstractEditor {
 			if(harmonic.getAverageNote() < minNote) minNote = harmonic.getAverageNote();
 			if(harmonic.getAverageNote() > maxNote) maxNote = harmonic.getAverageNote();
 			if(harmonic.getMaxLogAmplitude() > maxLogAmplitude) maxLogAmplitude = harmonic.getMaxLogAmplitude();
+			for(FDData data: harmonic.getAllDataInterpolated().values()) {
+				int logAmplitudeTimes10 = (int) Math.round(data.getLogAmplitude() * 10.0);
+				if(!timeToLogAmplitudeTimes10ToHarmonicIDs.containsKey(data.getTime())) {
+					timeToLogAmplitudeTimes10ToHarmonicIDs.put(data.getTime(), new HashMap<Integer, HashSet<Long>>());
+				}
+				if(!timeToLogAmplitudeTimes10ToHarmonicIDs.get(data.getTime()).containsKey(logAmplitudeTimes10)) {
+					timeToLogAmplitudeTimes10ToHarmonicIDs.get(data.getTime()).put(logAmplitudeTimes10, new HashSet<Long>());
+				}
+				timeToLogAmplitudeTimes10ToHarmonicIDs.get(data.getTime()).get(logAmplitudeTimes10).add(data.getHarmonicID());
+				if(!timeToNoteToHarmonicIDs.containsKey(data.getTime())) {
+					timeToNoteToHarmonicIDs.put(data.getTime(), new HashMap<Integer, HashSet<Long>>());
+				}
+				if(!timeToNoteToHarmonicIDs.get(data.getTime()).containsKey(data.getNote())) {
+					timeToNoteToHarmonicIDs.get(data.getTime()).put(data.getNote(), new HashSet<Long>());
+				}
+				timeToNoteToHarmonicIDs.get(data.getTime()).get(data.getNote()).add(data.getHarmonicID());
+			}
 		}
 		resetView();
 	}

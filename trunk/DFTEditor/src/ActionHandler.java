@@ -600,14 +600,19 @@ public class ActionHandler extends JPanel {
         }
         JMenu noteBaseMenu = new JMenu("NoteBase");
         menuBar.add(noteBaseMenu);
-        for(int noteBase = 12; noteBase <= 144; noteBase += 12) {
+        for(int noteBase = 31; noteBase <= 31 * 8; noteBase += 31) {
         	addAction(noteBaseMenu, new SelectNoteBaseAction(noteBase));
         }
         JMenu timeStepMenu = new JMenu("TimeStep");
         menuBar.add(timeStepMenu);
-        for(int timeStep = 1; timeStep <= 256; timeStep *= 2) {
-        	addAction(timeStepMenu, new SelectTimeStepAction(timeStep));
-        }
+        addAction(timeStepMenu, new SelectTimeStepAction(1));
+        addAction(timeStepMenu, new SelectTimeStepAction(2));
+        addAction(timeStepMenu, new SelectTimeStepAction(5));
+        addAction(timeStepMenu, new SelectTimeStepAction(10));
+        addAction(timeStepMenu, new SelectTimeStepAction(20));
+        addAction(timeStepMenu, new SelectTimeStepAction(50));
+        addAction(timeStepMenu, new SelectTimeStepAction(100));
+        addAction(timeStepMenu, new SelectTimeStepAction(200));
         JMenu binStepMenu = new JMenu("BinStep");
         menuBar.add(binStepMenu);      
         for(double binStep = 0.5; binStep <= 5.0; binStep += 0.5) {
