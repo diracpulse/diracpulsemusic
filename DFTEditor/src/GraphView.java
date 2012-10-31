@@ -113,7 +113,7 @@ public class GraphView extends JComponent {
 					}
 				}
 				*/
-				if(GraphEditor.selectedHarmonicIDs.contains(harmonic.getHarmonicID())) {
+				if(DFTEditor.getSelectedHarmonicIDs().contains(harmonic.getHarmonicID())) {
 					if(!GraphEditor.displaySelectedHarmonics) {
 						g.setColor(new Color(0.5f, 0.5f, 0.5f, 0.75f));
 					} else {

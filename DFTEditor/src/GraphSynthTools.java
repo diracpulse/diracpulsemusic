@@ -82,9 +82,9 @@ class GraphSynthTools {
 	
 	static void createPCMDataLinearNoiseSelected() {
 		//PCMData = FastSynth.synthHarmonics(new ArrayList<Harmonic>(parent.harmonicIDToHarmonic.values()));
-		if(GraphEditor.selectedHarmonicIDs == null || GraphEditor.selectedHarmonicIDs.isEmpty()) return;
+		if(DFTEditor.getSelectedHarmonicIDs() == null || DFTEditor.getSelectedHarmonicIDs().isEmpty()) return;
 		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
-		for(long harmonicID: GraphEditor.selectedHarmonicIDs) {
+		for(long harmonicID: DFTEditor.getSelectedHarmonicIDs()) {
 			Harmonic harmonic = GraphEditor.harmonicIDToHarmonic.get(harmonicID);
 			if(!harmonic.isSynthesized()) continue;
 			synthHarmonics.add(new Harmonic(harmonic.getHarmonicID()));

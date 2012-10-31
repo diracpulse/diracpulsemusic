@@ -52,43 +52,31 @@ public class GraphController implements MouseListener, ActionListener {
     		int note = (int) Math.round(GraphUtils.screenYToValue(y));
 	    	return;
 	    }
-	    if(GraphView.yView == GraphView.YView.AMPLITUDE) {
-	    	boolean refreshView = false;
-	    	int time = (int) Math.round(GraphUtils.screenXToValue(x));
+	    if(GraphView.yView == GraphView.YView.AMPLITUDE && GraphView.xView == GraphView.XView.TIME) {
+	    	int minRangeTime = (int) Math.floor(GraphUtils.screenXToValue(x - 3));
+	    	int maxRangeTime = (int) Math.ceil(GraphUtils.screenXToValue(x + 3));
+	    	int minRangeSLA = (int) Math.floor(GraphUtils.screenYToValue(y + 3) * GraphEditor.logAmplitudeScale);
+	    	int maxRangeSLA = (int) Math.ceil(GraphUtils.screenYToValue(y - 3) * GraphEditor.logAmplitudeScale);	  
 	    	System.out.println(GraphUtils.screenYToValue(y));
-	    	int lAT10 = (int) Math.round(GraphUtils.screenYToValue(y) * 10.0);
-	    	for(int logAmplitudeTimes10 = lAT10 - 1;  logAmplitudeTimes10 < lAT10 + 2; logAmplitudeTimes10 += 1) {
-	    		for(int testTime = time - 2; testTime < time + 3; testTime++) {
-	    			if(!GraphEditor.timeToLogAmplitudeTimes10ToHarmonicIDs.containsKey(testTime)) continue;
-	    			if(!GraphEditor.timeToLogAmplitudeTimes10ToHarmonicIDs.get(testTime).containsKey(logAmplitudeTimes10)) continue;
-	    			for(long harmonicID : GraphEditor.timeToLogAmplitudeTimes10ToHarmonicIDs.get(testTime).get(logAmplitudeTimes10)) {
+	    	for(int loopSLA = minRangeSLA;  loopSLA < maxRangeSLA; loopSLA++) {
+	    		for(int testTime = minRangeTime; testTime < maxRangeTime; testTime++) {
+	    			if(!GraphEditor.timeToScaledLogAmplitudeToHarmonicIDs.containsKey(testTime)) continue;
+	    			if(!GraphEditor.timeToScaledLogAmplitudeToHarmonicIDs.get(testTime).containsKey(loopSLA)) continue;
+	    			for(long harmonicID : GraphEditor.timeToScaledLogAmplitudeToHarmonicIDs.get(testTime).get(loopSLA)) {
 	    				if(!GraphUtils.isHarmonicVisible(GraphEditor.harmonicIDToHarmonic.get(harmonicID))) continue;
-	    				if(GraphEditor.selectedHarmonicIDs.contains(harmonicID)) {
-	    					if(selectionMode == SelectionMode.REMOVE) {
-	    						GraphEditor.selectedHarmonicIDs.remove(harmonicID);
-	    						FDEditor.selectedHarmonicIDs.remove(harmonicID);
-	    						System.out.println("GraphController (YView: AMPLITUDE): removed harmonic = " + harmonicID);
-	    						refreshView = true;
-	    					}
+	    				if(selectionMode == SelectionMode.REMOVE) {
+	    					DFTEditor.unselectHarmonic(harmonicID);
+	    					System.out.println("GraphController (YView: AMPLITUDE): removed harmonic = " + harmonicID);
 	    				} else {
-	    					if(selectionMode == SelectionMode.ADD) {
-	    						GraphEditor.selectedHarmonicIDs.add(harmonicID);
-	    						FDEditor.selectedHarmonicIDs.add(harmonicID);
-	    						System.out.println("GraphController (YView: AMPLITUDE): added harmonic = " + harmonicID);
-	    						refreshView = true;
-	    					}
+	    					DFTEditor.selectHarmonic(harmonicID);
+	    					System.out.println("GraphController (YView: AMPLITUDE): added harmonic = " + harmonicID);
 		    			}
 	    			}
 	    		}
 	    	}
-	    	if(refreshView) {
-	    		GraphEditor.refreshView();
-	    		FDEditor.refreshView();
-	    	}
 	    	return;
 	    }
-	    if(GraphView.yView == GraphView.YView.FREQUENCY) {
-	    	boolean refreshView = false;
+	    if(GraphView.yView == GraphView.YView.FREQUENCY && GraphView.xView == GraphView.XView.TIME) {
 	    	int minRangeTime = (int) Math.floor(GraphUtils.screenXToValue(x - 3));
 	    	int maxRangeTime = (int) Math.ceil(GraphUtils.screenXToValue(x + 3));
 	    	int minRangeNote = (int) Math.floor(GraphUtils.screenYToValue(y + 3));
@@ -99,26 +87,42 @@ public class GraphController implements MouseListener, ActionListener {
 	    			if(!GraphEditor.timeToNoteToHarmonicIDs.get(time).containsKey(note)) continue;
 	    			for(long harmonicID: GraphEditor.timeToNoteToHarmonicIDs.get(time).get(note)) {
 	    				if(!GraphUtils.isHarmonicVisible(GraphEditor.harmonicIDToHarmonic.get(harmonicID))) continue;
-	    				if(GraphEditor.selectedHarmonicIDs.contains(harmonicID)) {
-	    					if(selectionMode == SelectionMode.REMOVE) {
-	    						GraphEditor.selectedHarmonicIDs.remove(harmonicID);
-	    						System.out.println("GraphController (YView: FREQUENCY): removed harmonic = " + harmonicID);
-	    						refreshView = true;
-	    					}
+	    				if(selectionMode == SelectionMode.REMOVE) {
+	    					DFTEditor.unselectHarmonic(harmonicID);
+	    					System.out.println("GraphController (YView: AMPLITUDE): removed harmonic = " + harmonicID);
 	    				} else {
-	    					if(selectionMode == SelectionMode.ADD) {
-	    						GraphEditor.selectedHarmonicIDs.add(harmonicID);
-	    						System.out.println("GraphController (YView: FREQUENCY): added harmonic = " + harmonicID);
-	    						refreshView = true;
-	    					}
-	    				}
+	    					DFTEditor.selectHarmonic(harmonicID);
+	    					System.out.println("GraphController (YView: AMPLITUDE): added harmonic = " + harmonicID);
+		    			}
 	    			}
 	    		}
 	    	}
-	    	if(refreshView) {
-	    		GraphEditor.refreshView();
-	    		FDEditor.refreshView();
+	    	return;
+	    }
+	    if(GraphView.xView == GraphView.XView.FREQUENCY) {
+	    	boolean refreshView = false;
+	    	int minRangeNote = (int) Math.floor(GraphUtils.screenXToValue(x - 3));
+	    	int maxRangeNote = (int) Math.ceil(GraphUtils.screenXToValue(x + 3));
+	    	int minRangeSLA = (int) Math.floor(GraphUtils.screenYToValue(y + 3) * GraphEditor.logAmplitudeScale);
+	    	int maxRangeSLA = (int) Math.ceil(GraphUtils.screenYToValue(y - 3) * GraphEditor.logAmplitudeScale);	
+	    	System.out.println(GraphUtils.screenYToValue(y));
+	    	for(int loopSLA = minRangeSLA;  loopSLA < maxRangeSLA; loopSLA++) {
+	    		for(int testNote = minRangeNote; testNote < maxRangeNote; testNote++) {
+	    			if(!GraphEditor.noteToScaledLogAmplitudeToHarmonicIDs.containsKey(testNote)) continue;
+	    			if(!GraphEditor.noteToScaledLogAmplitudeToHarmonicIDs.get(testNote).containsKey(loopSLA)) continue;
+	    			for(long harmonicID : GraphEditor.noteToScaledLogAmplitudeToHarmonicIDs.get(testNote).get(loopSLA)) {
+	    				if(!GraphUtils.isHarmonicVisible(GraphEditor.harmonicIDToHarmonic.get(harmonicID))) continue;
+	    				if(selectionMode == SelectionMode.REMOVE) {
+	    					DFTEditor.unselectHarmonic(harmonicID);
+	    					System.out.println("GraphController (YView: AMPLITUDE): removed harmonic = " + harmonicID);
+	    				} else {
+	    					DFTEditor.selectHarmonic(harmonicID);
+	    					System.out.println("GraphController (YView: AMPLITUDE): added harmonic = " + harmonicID);
+		    			}
+	    			}
+	    		}
 	    	}
+	    	return;
 	    }
 	}
 	
