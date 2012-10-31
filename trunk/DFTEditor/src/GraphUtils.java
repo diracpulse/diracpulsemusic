@@ -38,7 +38,7 @@ public class GraphUtils {
 		if(GraphView.xView == GraphView.XView.TIME) pixelsPerValue = (double) GraphEditor.view.getWidth() / (GraphEditor.maxViewTime - GraphEditor.minViewTime);
 		if(GraphView.xView == GraphView.XView.FREQUENCY) pixelsPerValue = (double) GraphEditor.view.getWidth() / (GraphEditor.maxViewNote - GraphEditor.minViewNote);
 		if(GraphView.xView == GraphView.XView.TIME) return GraphEditor.minViewTime + (x / pixelsPerValue);
-		if(GraphView.xView == GraphView.XView.FREQUENCY) return GraphEditor.maxViewNote - (x / pixelsPerValue);
+		if(GraphView.xView == GraphView.XView.FREQUENCY) return GraphEditor.minViewNote + (x / pixelsPerValue);
 		return -1.0;
 	}
 	

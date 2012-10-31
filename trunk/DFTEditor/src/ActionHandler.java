@@ -265,8 +265,7 @@ public class ActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Cutoff = " + logCutoff);
 			DFTEditor.minLogAmplitudeThreshold = logCutoff;
-			SynthTools.createHarmonics();
-			DFTEditor.refreshView();
+			parent.cutoff();
 			refreshAll();
 		}	
 		
@@ -521,6 +520,8 @@ public class ActionHandler extends JPanel {
 			DFT.applyMasking();
 			SynthTools.createHarmonics();
 			DFTEditor.refreshView();
+			FDEditor.refreshView();
+			GraphEditor.refreshView();
 			refreshAll();
 		}
 		

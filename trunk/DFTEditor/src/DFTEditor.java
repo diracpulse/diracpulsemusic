@@ -39,6 +39,8 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaLeft;
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaRight;
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic = null;
+	private static HashSet<Long> selectedHarmonicIDs;
+	private static HashSet<Integer> selectedNotes;
 	//public static int minHarmonicLength = 1;
 	public static double minLogAmplitudeThreshold = 1.0; // used by autoSelect
 	public static int minLengthThreshold = 1;
@@ -81,6 +83,8 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	// they are related as calculated in noteToFreq(int note) and freqToNote(int freq)
 	
 	public static void newFileData() {
+		selectedHarmonicIDs = new HashSet<Long>();
+		selectedNotes = new HashSet<Integer>();
 	    harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
 		timeToFreqsAtMaximaMono = new TreeMap<Integer, TreeSet<Integer>>();
 		timeToFreqsAtMaximaLeft = new TreeMap<Integer, TreeSet<Integer>>();
@@ -238,11 +242,43 @@ public class DFTEditor extends JFrame implements AbstractEditor {
     	SynthTools.createHarmonics();
     	ActionHandler.refreshAll();
         parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonic);
-        parent.graphEditorFrame.view.repaint();
         parent.fdEditorFrame.addHarmonicsToFDEditor(harmonicIDToHarmonic);
-        parent.fdEditorFrame.view.repaint();
-        view.repaint();
+        refreshAllViews();
 	}
+	
+	public void cutoff() {
+		SynthTools.createHarmonics();
+        parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonic);
+        parent.fdEditorFrame.addHarmonicsToFDEditor(harmonicIDToHarmonic);
+        refreshAllViews();
+	}
+	
+	public static void selectHarmonic(long harmonicID) {
+		if(selectedHarmonicIDs.contains(harmonicID)) return;
+		selectedHarmonicIDs.add(harmonicID);
+		Harmonic harmonic = harmonicIDToHarmonic.get(harmonicID);
+    	for(FDData innerData: harmonic.getAllDataInterpolated().values()) {
+    		if(!FDEditor.selectedNotes.contains(innerData.getNote())) FDEditor.selectedNotes.add(innerData.getNote());
+    	}
+		refreshAllViews();
+	}
+	
+	public static void unselectHarmonic(long harmonicID) {
+		if(selectedHarmonicIDs.contains(harmonicID)) return;
+		selectedHarmonicIDs.remove(harmonicID);
+		refreshAllViews();
+	}
+	
+	public static HashSet<Long> getSelectedHarmonicIDs() {
+		return selectedHarmonicIDs;
+	}
+	
+	public static void refreshAllViews() {
+		view.refresh();
+		FDEditor.view.refresh();
+		GraphEditor.view.refresh();
+	}
+	
 	
 	public void exportAllFiles() {
         FileOutput.harmonicsExportAll(this);

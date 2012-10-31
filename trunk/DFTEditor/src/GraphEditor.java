@@ -22,9 +22,11 @@ public class GraphEditor extends JFrame implements AbstractEditor {
 	public static GraphActionHandler actionHandler;
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic;
 	//public static TreeMap<Long, Harmonic> harmonicIDToControlPointHarmonic;
-	public static HashMap<Integer, HashMap<Integer, HashSet<Long>>> timeToLogAmplitudeTimes10ToHarmonicIDs;
+	public static HashMap<Integer, HashMap<Integer, HashSet<Long>>> timeToScaledLogAmplitudeToHarmonicIDs;
+	public static HashMap<Integer, HashMap<Integer, HashSet<Long>>> noteToScaledLogAmplitudeToHarmonicIDs;
+	public static double logAmplitudeScale = 50.0;
 	public static HashMap<Integer, HashMap<Integer, HashSet<Long>>> timeToNoteToHarmonicIDs;
-	public static HashSet<Long> selectedHarmonicIDs;
+	//public static HashSet<Long> selectedHarmonicIDs;
 	public static long activeControlPointHarmonicID = 0;
 	public static int minHarmonicLength = 1;
 	public static int maxTime = 1;
@@ -65,9 +67,9 @@ public class GraphEditor extends JFrame implements AbstractEditor {
 	
 	static void initVariables() {
 		harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
-		timeToLogAmplitudeTimes10ToHarmonicIDs = new HashMap<Integer, HashMap<Integer, HashSet<Long>>>();
+		timeToScaledLogAmplitudeToHarmonicIDs = new HashMap<Integer, HashMap<Integer, HashSet<Long>>>();
+		noteToScaledLogAmplitudeToHarmonicIDs = new HashMap<Integer, HashMap<Integer, HashSet<Long>>>();
 		timeToNoteToHarmonicIDs = new HashMap<Integer, HashMap<Integer, HashSet<Long>>>();
-		selectedHarmonicIDs = new HashSet<Long>();
 		//harmonicIDToControlPointHarmonic = new TreeMap<Long, Harmonic>();
 		activeControlPointHarmonicID = randomIDGenerator.nextLong();
 		//harmonicIDToControlPointHarmonic.put(activeControlPointHarmonicID, new Harmonic(activeControlPointHarmonicID));
@@ -93,14 +95,21 @@ public class GraphEditor extends JFrame implements AbstractEditor {
 			if(harmonic.getAverageNote() > maxNote) maxNote = harmonic.getAverageNote();
 			if(harmonic.getMaxLogAmplitude() > maxLogAmplitude) maxLogAmplitude = harmonic.getMaxLogAmplitude();
 			for(FDData data: harmonic.getAllDataInterpolated().values()) {
-				int logAmplitudeTimes10 = (int) Math.round(data.getLogAmplitude() * 10.0);
-				if(!timeToLogAmplitudeTimes10ToHarmonicIDs.containsKey(data.getTime())) {
-					timeToLogAmplitudeTimes10ToHarmonicIDs.put(data.getTime(), new HashMap<Integer, HashSet<Long>>());
+				int scaledLogAmplitude = (int) Math.round(data.getLogAmplitude() * logAmplitudeScale);
+				if(!timeToScaledLogAmplitudeToHarmonicIDs.containsKey(data.getTime())) {
+					timeToScaledLogAmplitudeToHarmonicIDs.put(data.getTime(), new HashMap<Integer, HashSet<Long>>());
 				}
-				if(!timeToLogAmplitudeTimes10ToHarmonicIDs.get(data.getTime()).containsKey(logAmplitudeTimes10)) {
-					timeToLogAmplitudeTimes10ToHarmonicIDs.get(data.getTime()).put(logAmplitudeTimes10, new HashSet<Long>());
+				if(!timeToScaledLogAmplitudeToHarmonicIDs.get(data.getTime()).containsKey(scaledLogAmplitude)) {
+					timeToScaledLogAmplitudeToHarmonicIDs.get(data.getTime()).put(scaledLogAmplitude, new HashSet<Long>());
 				}
-				timeToLogAmplitudeTimes10ToHarmonicIDs.get(data.getTime()).get(logAmplitudeTimes10).add(data.getHarmonicID());
+				timeToScaledLogAmplitudeToHarmonicIDs.get(data.getTime()).get(scaledLogAmplitude).add(data.getHarmonicID());
+				if(!noteToScaledLogAmplitudeToHarmonicIDs.containsKey(data.getNote())) {
+					noteToScaledLogAmplitudeToHarmonicIDs.put(data.getNote(), new HashMap<Integer, HashSet<Long>>());
+				}
+				if(!noteToScaledLogAmplitudeToHarmonicIDs.get(data.getNote()).containsKey(scaledLogAmplitude)) {
+					noteToScaledLogAmplitudeToHarmonicIDs.get(data.getNote()).put(scaledLogAmplitude, new HashSet<Long>());
+				}
+				noteToScaledLogAmplitudeToHarmonicIDs.get(data.getNote()).get(scaledLogAmplitude).add(data.getHarmonicID());
 				if(!timeToNoteToHarmonicIDs.containsKey(data.getTime())) {
 					timeToNoteToHarmonicIDs.put(data.getTime(), new HashMap<Integer, HashSet<Long>>());
 				}
@@ -184,7 +193,7 @@ public class GraphEditor extends JFrame implements AbstractEditor {
 		if(octave == 0 ) {
 			minViewNote = minNote;
 			maxViewNote = maxNote;
-			view.repaint();
+			view.refresh();
 			return;
 		}
 		minViewNote = frequencyInHzToNote(octave);
