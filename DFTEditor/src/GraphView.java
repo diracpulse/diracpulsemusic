@@ -93,13 +93,9 @@ public class GraphView extends JComponent {
 				}
 				if(colorView == ColorView.CHANNEL) {
 					if(start.getChannel() == end.getChannel()) {
-						if(start.getChannel() == 0) g.setColor(Color.RED);
-						if(start.getChannel() == 1) g.setColor(Color.GREEN);
-						if(start.getChannel() == 2) g.setColor(Color.BLUE);
-						if(start.getChannel() < 0 || start.getChannel() > 2) {
-							System.out.println("GraphView.drawFileData: unknow channel");
-							g.setColor(Color.WHITE);
-						}
+						g.setColor(Color.WHITE); // White for unknown channel
+						if(start.getChannel() == FDData.Channel.LEFT) g.setColor(Color.RED);
+						if(start.getChannel() == FDData.Channel.RIGHT) g.setColor(Color.BLUE);
 					} else {
 						System.out.println("GraphView.drawFileData: different channels in same harmonic");
 						g.setColor(Color.WHITE);
@@ -130,6 +126,25 @@ public class GraphView extends JComponent {
 			}
 		}
 		drawViewInfo(g);
+	}
+
+	public void drawEnergyView(Graphics g) {
+		if(FDEditor.timeToNoteToData.isEmpty()) return;
+		double maxAmplitudeSum = 0.0;
+		double minAmplitudeSum = FDData.maxLogAmplitude;
+		TreeMap<Integer, Double> timeToLogAmplitudeSum = new TreeMap<Integer, Double>();
+		double pixelsPerValueX = (double) getWidth() / (double) (GraphEditor.maxViewTime - GraphEditor.minViewTime);
+		double pixelsPerValueY = (double) getHeight() / (double) (GraphEditor.maxViewLogAmplitude - GraphEditor.minViewLogAmplitude);
+		for(int time: FDEditor.timeToNoteToData.keySet()) {
+			double amplitudeSum = 0.0;
+			for(int note: FDEditor.timeToNoteToData.get(time).keySet()) {
+				for(FDData data: FDEditor.timeToNoteToData.get(time).get(note)) {
+					amplitudeSum += data.getAmplitude();
+				}
+			}
+			double logAmplitudeSum = Math.log(amplitudeSum) / Math.log(FDData.noteBase);
+			
+		}
 	}
 	
 	private Color getAmplitudeColor(double amplitude) {

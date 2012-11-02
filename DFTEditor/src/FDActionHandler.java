@@ -180,6 +180,37 @@ public class FDActionHandler extends JPanel {
 			}
 		}
 	}
+	
+	public class SelectChannelAction extends AbstractAction implements Refreshable {
+
+		private static final long serialVersionUID = 1L;
+		private FDEditor.Channel channel;
+		
+		public SelectChannelAction(FDEditor.Channel channel) {
+			super(channel.toString());
+			this.channel = channel;
+			if(FDEditor.currentChannel == channel) {
+				putValue(NAME, new String(channel + " " + '\u2713'));
+			}
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println(channel);
+			FDEditor.currentChannel = channel;
+			refreshAll();
+			FDEditor.refreshView();
+		}
+		
+		public void refresh() {
+			if(FDEditor.currentChannel == channel) {
+				putValue(NAME, new String(channel + " " + '\u2713'));
+			} else {
+				putValue(NAME, channel.toString());
+			}
+		}
+	}
+
 
 
 	public JMenuBar createMenuBar() {
@@ -192,6 +223,11 @@ public class FDActionHandler extends JPanel {
         fileMenu.add(new OpenAction());
         fileMenu.add(new SaveAction());
         fileMenu.add(new ExitAction());
+        JMenu channelMenu = new JMenu("Channel");
+        for(FDEditor.Channel channel: FDEditor.Channel.values()) {
+        	addAction(channelMenu, new SelectChannelAction(channel));
+        }
+        menuBar.add(channelMenu);
         //Create the Play menu
         JMenu playMenu = new JMenu("Play");
         menuBar.add(playMenu);        

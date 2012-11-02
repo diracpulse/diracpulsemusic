@@ -6,15 +6,15 @@ import java.util.*;
 import java.io.*;
 
 public class FDEditor extends JFrame implements AbstractEditor {
-	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 6252327634736973395L;
-	/**
-	 * 
-	 */
 
+	private static final long serialVersionUID = 6252327634736973395L;
+
+	public enum Channel {
+		LEFT,
+		RIGHT,
+		STEREO,
+	}
+	
 	public static MultiWindow parent;
 	public static FDView view;
 	public static FDController controller;
@@ -22,9 +22,7 @@ public class FDEditor extends JFrame implements AbstractEditor {
 	public static JToolBar navigationBar;
 	
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic;
-	public static TreeSet<Integer> availableNotes;
-	public static TreeSet<Integer> selectedNotes;
-	public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToData;
+	public static TreeMap<Integer, TreeMap<Integer, ArrayList<FDData>>>  timeToNoteToData;
 	//public static TreeSet<Long> selectedHarmonicIDs;
 	public static ArrayList<Harmonic>  harmonics;
 	public static double minLogAmplitudeThreshold = 0.0;
@@ -45,6 +43,7 @@ public class FDEditor extends JFrame implements AbstractEditor {
 	public static final int timeStepInMillis = FDData.timeStepInMillis; // timeInMillis = time * timeStepInMillis
 	public static final int noteBase = FDData.noteBase; // frequencyInHz = pow(2.0, (note / noteBase))
 	public static Random randomIDGenerator = new Random();
+	public static Channel currentChannel = Channel.STEREO;
 
 	public JMenuBar createMenuBar() {
         FDActionHandler actionHandler = new FDActionHandler(this);
@@ -135,10 +134,8 @@ public class FDEditor extends JFrame implements AbstractEditor {
 	}
 	
 	public static void clearCurrentData() {
-		timeToNoteToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
+		timeToNoteToData = new TreeMap<Integer, TreeMap<Integer, ArrayList<FDData>>>();
 		harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
-		availableNotes = new TreeSet<Integer>();
-		selectedNotes = new TreeSet<Integer>();
 	}
 	
 	public static void addData(FDData data) {
@@ -149,19 +146,19 @@ public class FDEditor extends JFrame implements AbstractEditor {
 		if(note < minNote) minNote = note;
 		long harmonicID = data.getHarmonicID();
 		if(!timeToNoteToData.containsKey(time)) {
-			timeToNoteToData.put(time, new TreeMap<Integer, FDData>());
+			timeToNoteToData.put(time, new TreeMap<Integer, ArrayList<FDData>>());
 		}
-		if(!availableNotes.contains(note)) {
-			availableNotes.add(note);
-		}
+		if(!timeToNoteToData.get(time).containsKey(note)) {
+			timeToNoteToData.get(time).put(note, new ArrayList<FDData>());
+		}		
 		if(!harmonicIDToHarmonic.containsKey(harmonicID)) {
 			harmonicIDToHarmonic.put(harmonicID, new Harmonic(harmonicID));
 		}
-		timeToNoteToData.get(time).put(note, data);
+		timeToNoteToData.get(time).get(note).add(data);
 		harmonicIDToHarmonic.get(harmonicID).addData(data);
 	}
 	
-	public static FDData getData(int time, int note) {
+	public static ArrayList<FDData> getData(int time, int note) {
 		if(timeToNoteToData == null) return null;
 		if(!timeToNoteToData.containsKey(time)) return null;
 		if(!timeToNoteToData.get(time).containsKey(note)) return null;

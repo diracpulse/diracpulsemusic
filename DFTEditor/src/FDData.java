@@ -17,6 +17,10 @@ public class FDData {
 	public enum DataType {
 		FUNDAMENTAL, HARMONIC, FORMANT, PERCUSSIVE, GRAIN
 	}
+	
+	public enum Channel {
+		LEFT, RIGHT;
+	}
 		
 	private DataType type = DataType.FUNDAMENTAL;
 	private int time = minTime;
@@ -24,9 +28,9 @@ public class FDData {
 	private float noteFraction = 0.0f; // frequency = 2^(note/31) + 2^(noteFraction/31);
 	private float logAmplitude = minLogAmplitude;
 	private long harmonicID = 1L;
-	private byte channel = -1;
+	private Channel channel = null;
 	
-	public FDData(byte channel, int time, int note, double logAmplitude, long id) throws Exception {
+	public FDData(Channel channel, int time, int note, double logAmplitude, long id) throws Exception {
 		//System.out.println("FDData: t:" + time + " n:" + note + " nf:" + noteFraction + " la:" + logAmplitude);
 		if(!withinBounds(time, note, 0.0, logAmplitude)) {
 			throw new Exception("FDData [" + time + "|" + note + "|" + logAmplitude + "]");
@@ -59,9 +63,21 @@ public class FDData {
 		return note;
 	}
 
-	public byte getChannel() {
+	public Channel getChannel() {
 		return channel;
 	}
+	
+	public byte getChannelAsByte() {
+		if(this.channel == Channel.LEFT) return 0;
+		if(this.channel == Channel.RIGHT) return 1;
+		return -1;
+	}
+	
+	public static Channel byteToChannel(byte channelByte) {
+		if(channelByte == 0) return Channel.LEFT;
+		if(channelByte == 1) return Channel.RIGHT;
+		return null;
+	}	
 	
 	public double getLogAmplitude() {
 		return logAmplitude;

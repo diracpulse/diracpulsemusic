@@ -87,23 +87,30 @@ public class FDView extends JComponent {
 		for(int time = FDEditor.minViewTime; time <= endTime; time++) {
 			for(int note = startNote; note > endNote; note--) {
 				if(dataView == DataView.SELECTED_ONLY) {
-					if(!FDEditor.selectedNotes.contains(note)) continue;
+					if(!DFTEditor.selectedNotes.contains(note)) continue;
 				}
-        		FDData data = FDEditor.getData(time, note);
-        		if(data == null) continue;
+				if(FDEditor.getData(time, note) == null) continue;
+				FDData maxData = null;
+        		for(FDData data: FDEditor.getData(time, note)) {
+        			if(maxData == null) {
+        				maxData = data;
+        				continue;
+        			}
+        			if(data.getLogAmplitude() > maxData.getLogAmplitude()) maxData = data;
+        		}
         		Color b = null;
         		if(colorView == ColorView.AMPLITUDES) {
-        			if(DFTEditor.getSelectedHarmonicIDs().contains(data.getHarmonicID())) {
-        				b = getColor(data.getLogAmplitude(), 1.0);
+        			if(DFTEditor.getSelectedHarmonicIDs().contains(maxData.getHarmonicID())) {
+        				b = getColor(maxData.getLogAmplitude(), 1.0);
         			} else {
-        				b = getColor(data.getLogAmplitude(), 0.5);
+        				b = getColor(maxData.getLogAmplitude(), 0.5);
         			}
         		}
         		if(colorView == ColorView.HARMONICS) {
-        			if(DFTEditor.getSelectedHarmonicIDs().contains(data.getHarmonicID())) {
-        				b = getColor(data.getHarmonicID(), 1.0);
+        			if(DFTEditor.getSelectedHarmonicIDs().contains(maxData.getHarmonicID())) {
+        				b = getColor(maxData.getHarmonicID(), 1.0);
         			} else {
-        				b = getColor(data.getHarmonicID(), 0.5);
+        				b = getColor(maxData.getHarmonicID(), 0.5);
         			}
         		}
         		g.setColor(b);

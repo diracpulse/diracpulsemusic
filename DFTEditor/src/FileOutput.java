@@ -73,7 +73,7 @@ public class FileOutput {
             for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonic.values()) {
             	for(FDData data: harmonic.getAllData()) {
             		float amp = (float) data.getLogAmplitude();
-            		harmonicsOut.writeByte(data.getChannel());
+            		harmonicsOut.writeByte(data.getChannelAsByte());
             		harmonicsOut.writeInt(data.getTime());
             		harmonicsOut.writeShort(data.getNote());
             		harmonicsOut.writeFloat(amp);

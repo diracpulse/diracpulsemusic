@@ -92,13 +92,11 @@ private static int LoadSamplesFromFile(String fileName) {
 	}	
 	int maxTime = ArrayListLeftRight.size() / 2;
 	LeftRight = new float[maxTime * 2];
-	SynthTools.WAVDataMono = new float[maxTime];
 	SynthTools.WAVDataLeft = new float[maxTime];	
 	SynthTools.WAVDataRight = new float[maxTime];
 	for(int index = 0; index < maxTime; index++) {
 		LeftRight[index * 2] = ArrayListLeftRight.get(index * 2);
 		LeftRight[index * 2 + 1] = ArrayListLeftRight.get(index * 2 + 1);
-		SynthTools.WAVDataMono[index] = (LeftRight[index * 2] + LeftRight[index * 2 + 1]) / 2;
 		SynthTools.WAVDataLeft[index] = LeftRight[index * 2];
 		SynthTools.WAVDataRight[index] = LeftRight[index * 2 + 1];
 	}
@@ -111,12 +109,10 @@ private static int LoadSamplesFromFile(String fileName) {
 	int numTimes = (int) Math.round(LeftRight.length / samplesPerStep / 2);
 	DFTEditor.amplitudesLeft = new float[numTimes + 1][numNotes + 1];
 	DFTEditor.amplitudesRight = new float[numTimes + 1][numNotes + 1];
-	DFTEditor.amplitudesMono = new float[numTimes + 1][numNotes + 1];
 	for(int time = 0; time <= numTimes; time++) {
 		for(int freq = 0; freq <= numNotes; freq++) {
 			DFTEditor.amplitudesLeft[time][freq] = -1.0f;
 			DFTEditor.amplitudesRight[time][freq] = -1.0f;
-			DFTEditor.amplitudesMono[time][freq] = -1.0f;
 		}	
 	}
 	DFTEditor.maxTime = numTimes;
@@ -151,7 +147,6 @@ private static void SingleDFT(int waveletIndex, int centerIndex) {
 	}
 	outputRoundedData(DFTEditor.amplitudesLeft, sinValLeft, cosValLeft, waveletIndex, centerIndex);
 	outputRoundedData(DFTEditor.amplitudesRight, sinValRight, cosValRight, waveletIndex, centerIndex);
-	outputRoundedData(DFTEditor.amplitudesMono, sinValRight + sinValLeft, cosValRight + cosValLeft, waveletIndex, centerIndex);
 }
 
 private static void outputRoundedData(float[][] matrix, double sinVal, double cosVal, int waveletIndex, int centerIndex) {
@@ -164,7 +159,7 @@ private static void outputRoundedData(float[][] matrix, double sinVal, double co
 	ampVal += cosVal * cosVal;
 	ampVal = Math.sqrt(ampVal) / WaveletInfoArrayList.get(waveletIndex).gain;
 	ampVal *= 2.0; // integral of sin, cos over time approaches 0.5
-	if(ampVal > 4.0) {
+	if(ampVal > 2.0) {
 		logAmp = Math.log(ampVal) / Math.log(2.0);
 	} else {
 		logAmp = 0.0;
@@ -311,35 +306,8 @@ private static void CalculateWavelets() {
 }
 
 static void fillMatrix() {
-	int numTimes = DFTEditor.amplitudesMono.length;
-	int numFreqs = DFTEditor.amplitudesMono[0].length;
-	for(int time = 0; time < numTimes; time++) {
-		for(int freq = 1; freq < numFreqs - 1; freq++) {
-			if(DFTEditor.amplitudesMono[time][freq] != -1.0f) continue;
-			int startFreq = freq - 1;
-			int endFreq = freq;
-			for(endFreq = freq; endFreq < numFreqs; endFreq++) {
-				if(DFTEditor.amplitudesMono[time][endFreq] != -1.0f) break;
-			}
-			if(endFreq == numFreqs) continue;
-			float startAmp = DFTEditor.amplitudesMono[time][startFreq];
-			float endAmp = DFTEditor.amplitudesMono[time][endFreq];
-			double slope = (startAmp - endAmp) / (startFreq - endFreq);
-			if(slope == 0.0f) {
-				if(Math.random() < 0.5) {
-					slope = -0.00001f;
-				} else {
-					slope = 0.00001f;
-				}
-			}
-			for(int innerFreq = startFreq + 1; innerFreq < endFreq; innerFreq++) {
-				float ampValue = (float) (startAmp + (innerFreq - startFreq) * slope);
-				DFTEditor.amplitudesMono[time][innerFreq] = ampValue;
-			}
-		}
-	}
-	numTimes = DFTEditor.amplitudesLeft.length;
-	numFreqs = DFTEditor.amplitudesLeft[0].length;
+	int numTimes = DFTEditor.amplitudesLeft.length;
+	int numFreqs = DFTEditor.amplitudesLeft[0].length;
 	for(int time = 0; time < numTimes; time++) {
 		for(int freq = 1; freq < numFreqs - 1; freq++) {
 			if(DFTEditor.amplitudesLeft[time][freq] != -1.0f) continue;
@@ -395,23 +363,11 @@ static void fillMatrix() {
 }
 
 public static void applyMasking() {
-	if(DFTEditor.amplitudesMono == null) return;
+	if(DFTEditor.amplitudesLeft == null) return;
+	if(DFTEditor.amplitudesRight == null) return;
 	int bins = FDData.noteBase / 3;
-	int numTimes = DFTEditor.amplitudesMono.length;
-	int numFreqs = DFTEditor.amplitudesMono[0].length;
-	for(int time = 0; time < numTimes; time++) {
-		for(int freq = 0; freq < numFreqs; freq++) {
-			float amplitude = DFTEditor.amplitudesMono[time][freq];
-			for(int innerFreq = freq - bins; innerFreq <= freq + bins; innerFreq++) {
-				float maskingVal = (float) amplitude + Math.abs((freq - innerFreq) / (float) bins) * (float) maskingFactor - 1.0f;
-				if(maskingVal < 0) continue;
-				if(innerFreq < 0 || innerFreq >= numFreqs || innerFreq == freq) continue;
-				if(DFTEditor.amplitudesMono[time][innerFreq] < maskingVal) DFTEditor.amplitudesMono[time][innerFreq] = 0.0f;
-			}
-		}
-	}
-	numTimes = DFTEditor.amplitudesLeft.length;
-	numFreqs = DFTEditor.amplitudesLeft[0].length;
+	int numTimes = DFTEditor.amplitudesLeft.length;
+	int numFreqs = DFTEditor.amplitudesLeft[0].length;
 	for(int time = 0; time < numTimes; time++) {
 		for(int freq = 0; freq < numFreqs; freq++) {
 			float amplitude = DFTEditor.amplitudesLeft[time][freq];
@@ -439,19 +395,8 @@ public static void applyMasking() {
 }
 
 static void filterMatrix() {
-	int numTimes = DFTEditor.amplitudesMono.length;
-	int numFreqs = DFTEditor.amplitudesMono[0].length;
-	for(int freq = 0; freq < numFreqs; freq++) {
-		double freqInHz = Math.pow(2.0, DFTEditor.freqToNote(freq) / (double) FDData.noteBase);
-		if(freqInHz < midFreq) continue;
-		double logAdjust = Math.log(freqInHz / midFreq) / Math.log(2.0) / 2.0;
-		for(int time = 0; time < numTimes; time++) {
-			DFTEditor.amplitudesMono[time][freq] += logAdjust;
-			if(DFTEditor.amplitudesMono[time][freq] < 0.0) DFTEditor.amplitudesMono[time][freq] = 0.0f;
-		}
-	}
-	numTimes = DFTEditor.amplitudesLeft.length;
-	numFreqs = DFTEditor.amplitudesLeft[0].length;
+	int numTimes = DFTEditor.amplitudesLeft.length;
+	int numFreqs = DFTEditor.amplitudesLeft[0].length;
 	for(int freq = 0; freq < numFreqs; freq++) {
 		double freqInHz = Math.pow(2.0, DFTEditor.freqToNote(freq) / (double) FDData.noteBase);
 		if(freqInHz < midFreq) continue;

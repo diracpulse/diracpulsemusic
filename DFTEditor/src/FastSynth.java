@@ -10,7 +10,7 @@ public class FastSynth {
 	private static int minNoiseNote = 10 * FDData.noteBase;
 	private static double[][] noiseBanks = null;
 	
-	public static float[] synthHarmonicsLinear(byte channel, ArrayList<Harmonic> harmonics) {
+	public static float[] synthHarmonicsLinear(FDData.Channel channel, ArrayList<Harmonic> harmonics) {
 		initSharedPCMData(channel, harmonics);
 		for(Harmonic harmonic: harmonics) {
 			if(harmonic.getChannel() != channel) continue; 
@@ -19,7 +19,7 @@ public class FastSynth {
 		return sharedPCMData;
 	}
 	
-	public static float[] synthHarmonicsLinearCubicSpline(byte channel, ArrayList<Harmonic> harmonics) {
+	public static float[] synthHarmonicsLinearCubicSpline(FDData.Channel channel, ArrayList<Harmonic> harmonics) {
 		initSharedPCMData(channel, harmonics);
 		for(Harmonic harmonic: harmonics) {
 			if(harmonic.getChannel() != channel) continue;
@@ -28,7 +28,7 @@ public class FastSynth {
 		return sharedPCMData;
 	}
 	
-	public static float[] synthHarmonicsLinearNoise(byte channel, ArrayList<Harmonic> harmonics) {
+	public static float[] synthHarmonicsLinearNoise(FDData.Channel channel, ArrayList<Harmonic> harmonics) {
 		initNoiseBanks();
 		initSharedPCMData(channel, harmonics);
 		for(Harmonic harmonic: harmonics) {
@@ -38,7 +38,7 @@ public class FastSynth {
 		return sharedPCMData;
 	}
 	
-	private static void initSharedPCMData(byte channel, ArrayList<Harmonic> harmonics) {
+	private static void initSharedPCMData(FDData.Channel channel, ArrayList<Harmonic> harmonics) {
 		timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
 		double maxEndTime = 0;
 		for(Harmonic harmonic: harmonics) {

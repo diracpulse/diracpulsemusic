@@ -1,27 +1,23 @@
 
 public class GraphUtils {
 	
-	private static boolean isChannelVisible(Harmonic harmonic) {
-		if(harmonic.getChannel() == 0) {
-			if(GraphEditor.currentChannel == GraphEditor.Channel.MONO) return true;
-			return false;			
-		}
-		if(harmonic.getChannel() == 1) {
+	public static boolean isChannelVisible(Harmonic harmonic) {
+		if(harmonic.getChannel() == FDData.Channel.LEFT) {
 			if(GraphEditor.currentChannel == GraphEditor.Channel.LEFT) return true;
 			if(GraphEditor.currentChannel == GraphEditor.Channel.STEREO) return true;
 			return false;
 		}
-		if(harmonic.getChannel() == 2) {
+		if(harmonic.getChannel() == FDData.Channel.RIGHT) {
 			if(GraphEditor.currentChannel == GraphEditor.Channel.RIGHT) return true;
 			if(GraphEditor.currentChannel == GraphEditor.Channel.STEREO) return true;
 			return false;
 		}
-		System.out.println("DFTView.isHarmonicVisible: Unknown channel");
+		System.out.println("GraphUtils.isHarmonicVisible: Unknown channel");
 		return false;
 	}
-
+	
 	public static boolean isHarmonicVisible(Harmonic harmonic) {
-		if(!isChannelVisible(harmonic)) return false;
+		if(!GraphUtils.isChannelVisible(harmonic)) return false;
 		if(!harmonic.isSynthesized()) return false;
 		if(harmonic.getLength() < GraphEditor.minHarmonicLength) return false;
 		if(harmonic.getAverageNote() < GraphEditor.minViewNote || harmonic.getAverageNote() > GraphEditor.maxViewNote) return false;
@@ -29,7 +25,6 @@ public class GraphUtils {
 		if(harmonic.getMaxLogAmplitude() > GraphEditor.maxViewLogAmplitude) return false;
 		return true;
 	}
-	
 	
 	public static double screenXToValue(double x) {
 		if(x < 0) x = 0;

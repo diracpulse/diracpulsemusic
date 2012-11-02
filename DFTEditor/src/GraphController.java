@@ -58,21 +58,23 @@ public class GraphController implements MouseListener, ActionListener {
 	    	int minRangeSLA = (int) Math.floor(GraphUtils.screenYToValue(y + 3) * GraphEditor.logAmplitudeScale);
 	    	int maxRangeSLA = (int) Math.ceil(GraphUtils.screenYToValue(y - 3) * GraphEditor.logAmplitudeScale);	  
 	    	System.out.println(GraphUtils.screenYToValue(y));
+	    	ArrayList<Long> harmonicIDs = new ArrayList<Long>();
 	    	for(int loopSLA = minRangeSLA;  loopSLA < maxRangeSLA; loopSLA++) {
 	    		for(int testTime = minRangeTime; testTime < maxRangeTime; testTime++) {
 	    			if(!GraphEditor.timeToScaledLogAmplitudeToHarmonicIDs.containsKey(testTime)) continue;
 	    			if(!GraphEditor.timeToScaledLogAmplitudeToHarmonicIDs.get(testTime).containsKey(loopSLA)) continue;
 	    			for(long harmonicID : GraphEditor.timeToScaledLogAmplitudeToHarmonicIDs.get(testTime).get(loopSLA)) {
 	    				if(!GraphUtils.isHarmonicVisible(GraphEditor.harmonicIDToHarmonic.get(harmonicID))) continue;
-	    				if(selectionMode == SelectionMode.REMOVE) {
-	    					DFTEditor.unselectHarmonic(harmonicID);
-	    					System.out.println("GraphController (YView: AMPLITUDE): removed harmonic = " + harmonicID);
-	    				} else {
-	    					DFTEditor.selectHarmonic(harmonicID);
-	    					System.out.println("GraphController (YView: AMPLITUDE): added harmonic = " + harmonicID);
-		    			}
+	    				harmonicIDs.add(harmonicID);
 	    			}
 	    		}
+	    	}
+    		if(selectionMode == SelectionMode.REMOVE) {
+    			DFTEditor.unselectHarmonics(harmonicIDs);
+    			System.out.println("GraphController (YView: AMPLITUDE): removed harmonic = " + harmonicIDs);
+    		} else {
+    			DFTEditor.selectHarmonics(harmonicIDs);
+    			System.out.println("GraphController (YView: AMPLITUDE): added harmonic = " + harmonicIDs);
 	    	}
 	    	return;
 	    }
@@ -80,47 +82,50 @@ public class GraphController implements MouseListener, ActionListener {
 	    	int minRangeTime = (int) Math.floor(GraphUtils.screenXToValue(x - 3));
 	    	int maxRangeTime = (int) Math.ceil(GraphUtils.screenXToValue(x + 3));
 	    	int minRangeNote = (int) Math.floor(GraphUtils.screenYToValue(y + 3));
-	    	int maxRangeNote = (int) Math.ceil(GraphUtils.screenYToValue(y - 3));	    	
+	    	int maxRangeNote = (int) Math.ceil(GraphUtils.screenYToValue(y - 3));
+	    	ArrayList<Long> harmonicIDs = new ArrayList<Long>();
 	    	for(int time = minRangeTime; time <= maxRangeTime; time++) {
 	    		for(int note = minRangeNote; note <= maxRangeNote; note++) {
 	    			if(!GraphEditor.timeToNoteToHarmonicIDs.containsKey(time)) continue;
-	    			if(!GraphEditor.timeToNoteToHarmonicIDs.get(time).containsKey(note)) continue;
+	    			if(!GraphEditor.timeToNoteToHarmonicIDs.get(time).containsKey(note)) continue;		
 	    			for(long harmonicID: GraphEditor.timeToNoteToHarmonicIDs.get(time).get(note)) {
 	    				if(!GraphUtils.isHarmonicVisible(GraphEditor.harmonicIDToHarmonic.get(harmonicID))) continue;
-	    				if(selectionMode == SelectionMode.REMOVE) {
-	    					DFTEditor.unselectHarmonic(harmonicID);
-	    					System.out.println("GraphController (YView: AMPLITUDE): removed harmonic = " + harmonicID);
-	    				} else {
-	    					DFTEditor.selectHarmonic(harmonicID);
-	    					System.out.println("GraphController (YView: AMPLITUDE): added harmonic = " + harmonicID);
-		    			}
+	    				harmonicIDs.add(harmonicID);
 	    			}
 	    		}
 	    	}
+	    	if(selectionMode == SelectionMode.REMOVE) {
+	    		DFTEditor.unselectHarmonics(harmonicIDs);
+	    		System.out.println("GraphController (YView: AMPLITUDE): removed harmonic = " + harmonicIDs);
+	    	} else {
+	    		DFTEditor.selectHarmonics(harmonicIDs);
+	    		System.out.println("GraphController (YView: AMPLITUDE): added harmonic = " + harmonicIDs);
+		    }
 	    	return;
 	    }
 	    if(GraphView.xView == GraphView.XView.FREQUENCY) {
-	    	boolean refreshView = false;
 	    	int minRangeNote = (int) Math.floor(GraphUtils.screenXToValue(x - 3));
 	    	int maxRangeNote = (int) Math.ceil(GraphUtils.screenXToValue(x + 3));
 	    	int minRangeSLA = (int) Math.floor(GraphUtils.screenYToValue(y + 3) * GraphEditor.logAmplitudeScale);
 	    	int maxRangeSLA = (int) Math.ceil(GraphUtils.screenYToValue(y - 3) * GraphEditor.logAmplitudeScale);	
 	    	System.out.println(GraphUtils.screenYToValue(y));
+	    	ArrayList<Long> harmonicIDs = new ArrayList<Long>();
 	    	for(int loopSLA = minRangeSLA;  loopSLA < maxRangeSLA; loopSLA++) {
 	    		for(int testNote = minRangeNote; testNote < maxRangeNote; testNote++) {
 	    			if(!GraphEditor.noteToScaledLogAmplitudeToHarmonicIDs.containsKey(testNote)) continue;
 	    			if(!GraphEditor.noteToScaledLogAmplitudeToHarmonicIDs.get(testNote).containsKey(loopSLA)) continue;
 	    			for(long harmonicID : GraphEditor.noteToScaledLogAmplitudeToHarmonicIDs.get(testNote).get(loopSLA)) {
 	    				if(!GraphUtils.isHarmonicVisible(GraphEditor.harmonicIDToHarmonic.get(harmonicID))) continue;
-	    				if(selectionMode == SelectionMode.REMOVE) {
-	    					DFTEditor.unselectHarmonic(harmonicID);
-	    					System.out.println("GraphController (YView: AMPLITUDE): removed harmonic = " + harmonicID);
-	    				} else {
-	    					DFTEditor.selectHarmonic(harmonicID);
-	    					System.out.println("GraphController (YView: AMPLITUDE): added harmonic = " + harmonicID);
-		    			}
+	    				harmonicIDs.add(harmonicID);
 	    			}
 	    		}
+	    	}
+	    	if(selectionMode == SelectionMode.REMOVE) {
+	    		DFTEditor.unselectHarmonics(harmonicIDs);
+	    		System.out.println("GraphController (YView: AMPLITUDE): removed harmonic = " + harmonicIDs);
+	    	} else {
+	    		DFTEditor.selectHarmonics(harmonicIDs);
+	    		System.out.println("GraphController (YView: AMPLITUDE): added harmonic = " + harmonicIDs);
 	    	}
 	    	return;
 	    }

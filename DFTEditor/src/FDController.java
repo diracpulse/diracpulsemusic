@@ -51,9 +51,12 @@ public class FDController implements MouseListener, ActionListener {
 	    }
 	    if(!FDEditor.timeToNoteToData.containsKey(time)) return;
 	    if(!FDEditor.timeToNoteToData.get(time).containsKey(note)) return;
-	    FDData data = FDEditor.timeToNoteToData.get(time).get(note);
-	    long harmonicID = data.getHarmonicID();
-	    DFTEditor.selectHarmonic(harmonicID);
+	    ArrayList<Long> harmonicIDs = new ArrayList<Long>();
+	    for(FDData data: FDEditor.timeToNoteToData.get(time).get(note)) {
+	    	long harmonicID = data.getHarmonicID();
+	    	if(!FDUtils.isHarmonicVisible(FDEditor.harmonicIDToHarmonic.get(harmonicID))) continue;
+	    }
+	    DFTEditor.selectHarmonics(harmonicIDs);
 	}
 	
 	void handleHarmonicsSelection(int time, int note) {
@@ -63,6 +66,7 @@ public class FDController implements MouseListener, ActionListener {
 			double frequencyInHz = Math.pow(FDData.logBase, note / FDData.noteBase) * innerFactor;
 			if(frequencyInHz > FDData.maxFrequencyInHz) return;
 			int harmonicNote = (int) Math.round(Math.log(frequencyInHz) / Math.log(2.0) * FDData.noteBase);
+			DFTEditor.selectedNotes.add(harmonicNote);
 			System.out.println(harmonicNote + " " + frequencyInHz);
 		}
 		double prevMaxInnerFactor = 8.0;
@@ -73,6 +77,7 @@ public class FDController implements MouseListener, ActionListener {
 				double frequencyInHz = Math.pow(FDData.logBase, note / FDData.noteBase) * innerFactor;
 				if(frequencyInHz > FDData.maxFrequencyInHz) return;
 				int harmonicNote = (int) Math.round(Math.log(frequencyInHz) / Math.log(2.0) * FDData.noteBase);
+				DFTEditor.selectedNotes.add(harmonicNote);
 				System.out.println(harmonicNote + " " + frequencyInHz);
 			}
 			prevMaxInnerFactor = maxInnerFactor;
