@@ -135,7 +135,6 @@ public class DFTView extends JComponent {
 		// clear old data
 		g.setColor(new Color(0.0f, 0.0f, 0.0f));
 		g.fillRect(DFTEditor.leftOffset, DFTEditor.upperOffset, getWidth(), getHeight());
-		if(DFTEditor.getAmplitudes() == null) return;
 		drawLeftFreqs(g);
 		drawUpperTimes(g);
 		if ((dataView == DataView.HARMONICS || dataView == DataView.HARMONIC_ID || dataView == DataView.CHANNEL_HARMONICS)) {
@@ -161,31 +160,10 @@ public class DFTView extends JComponent {
 			}
 		}
 	}
-	
-	public boolean isHarmonicVisible(Harmonic harmonic) {
-		if(dataView == DataView.CHANNEL_HARMONICS) return true;
-		if(harmonic.getChannel() == 0) {
-			if(DFTEditor.currentChannel == DFTEditor.Channel.MONO) return true;
-			return false;			
-		}
-		if(harmonic.getChannel() == 1) {
-			if(DFTEditor.currentChannel == DFTEditor.Channel.LEFT) return true;
-			if(DFTEditor.currentChannel == DFTEditor.Channel.STEREO) return true;
-			return false;
-		}
-		if(harmonic.getChannel() == 2) {
-			if(DFTEditor.currentChannel == DFTEditor.Channel.RIGHT) return true;
-			if(DFTEditor.currentChannel == DFTEditor.Channel.STEREO) return true;
-			return false;
-		}
-		System.out.println("DFTView.isHarmonicVisible: Unknown channel");
-		return false;
-	}
-	
 
 	public void drawFileDataAsHarmonics(Graphics g) {
 		for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonic.values()) {
-			if(!isHarmonicVisible(harmonic)) continue;
+			if(!DFTUtils.isChannelVisible(harmonic)) continue;
 			if(!harmonic.isSynthesized()) continue;
 			if(harmonic.getAllDataRaw().size() == 1) {
 				FDData data = harmonic.getAllDataRaw().get(0);
@@ -269,7 +247,7 @@ public class DFTView extends JComponent {
 				float amp = DFTEditor.getAmplitude(x, y);
 				if (amp == 0.0f) continue;
 				if(dataView == DataView.CHANNEL_DATA) {
-					Color b = getColor(DFTEditor.amplitudesMono[x][y], DFTEditor.amplitudesLeft[x][y], DFTEditor.amplitudesRight[x][y]);
+					Color b = getColor(DFTEditor.amplitudesLeft[x][y], DFTEditor.amplitudesRight[x][y]);
 					drawAmplitude(g, screenX, screenY, amp, b);
 				} else {
 					Color b = getColor(x,y);
@@ -317,30 +295,26 @@ public class DFTView extends JComponent {
 		}
 	}
 	
-	private Color getColor(float mono, float left, float right) {
-		if(mono < 0) mono = 0.0f;
+	private Color getColor(float left, float right) {
 		if(left < 0) left = 0.0f;
 		if(right < 0) right = 0.0f;
 		float ampRange = DFTEditor.maxAmplitude - DFTEditor.minAmplitude;
-		mono -= DFTEditor.minAmplitude;
 		left -= DFTEditor.minAmplitude;
 		right -= DFTEditor.minAmplitude;		
-		mono /= ampRange;
 		left /= ampRange;
 		right /= ampRange;
 		//System.out.println(mono + " " + left + " " + right);
-		return new Color(mono, left, right);
+		return new Color(left, 0.0f, right);
 	}
 	
-	private Color getColor(byte channel, double logAmplitude) {
+	private Color getColor(FDData.Channel channel, double logAmplitude) {
 		if(logAmplitude < 0) return new Color(1.0f, 1.0f, 1.0f);
 		float ampRange = DFTEditor.maxAmplitude - DFTEditor.minAmplitude;
 		float currentVal = (float) logAmplitude;
 		currentVal -= DFTEditor.minAmplitude;
 		currentVal /= ampRange;
-		if(channel == 0) return new Color(currentVal * 0.5f + 0.5f, 0.0f, 0.0f, 0.33f);
-		if(channel == 1) return new Color(0.0f, currentVal * 0.5f + 0.5f, 0.0f, 0.33f);
-		if(channel == 2) return new Color(0.0f, 0.0f, currentVal * 0.5f + 0.5f, 0.33f);
+		if(channel == FDData.Channel.LEFT) return new Color(0.0f, currentVal * 0.5f + 0.5f, 0.0f, 0.33f);
+		if(channel == FDData.Channel.RIGHT) return new Color(0.0f, 0.0f, currentVal * 0.5f + 0.5f, 0.33f);
 		//System.out.println("DFTView.getColor: unknown channel: " + channel);
 		return new Color(0.0f, 0.0f, 0.0f);
 	}
@@ -385,14 +359,12 @@ public class DFTView extends JComponent {
 		} else {
 			green = red * 2.0f;
 		}
-		if (DFTEditor.getMaximas().containsKey(time)) {
-			if(DFTEditor.getMaximas().get(time).contains(freq)) {
-				if(dataView != DataView.DATA_ONLY) {
-					red = red / 2.0f + 0.5f;
-					green = 0.0f;
-					blue = blue / 2.0f + 0.5f;
-					return new Color(red, green, blue);
-				}
+		if (DFTEditor.isMaxima(time, freq)) {
+			if(dataView != DataView.DATA_ONLY) {
+				red = red / 2.0f + 0.5f;
+				green = 0.0f;
+				blue = blue / 2.0f + 0.5f;
+				return new Color(red, green, blue);
 			}
 		}
 		return new Color(red, green, blue);
@@ -405,27 +377,6 @@ public class DFTView extends JComponent {
 		return new Color(red + 128, green + 128, blue + 128);
 	}
 
-	private void drawHarmonicsBase31(Graphics g) {
-		if (DFTEditor.drawHarmonicsBaseFreq == -1)
-			return;
-		g.setColor(new Color(1.0f, 1.0f, 1.0f, 0.25f));
-		int currentFreq = DFTEditor.drawHarmonicsBaseFreq;
-		int startX = DFTEditor.leftOffset;
-		int width = getWidth() - DFTEditor.leftOffset;
-		int height = 1; // getYStep();
-		int index = 1;
-		int outputFreq = currentFreq;
-		while (DFTUtils.freqToScreenY(outputFreq) != -1) {
-			g.fillRect(startX, DFTUtils.freqToScreenY(outputFreq), width,
-					height);
-			// REMEMBER: "freq" decreases as freqInHz increases (see comment
-			// near top of DFTEditor)
-			outputFreq = currentFreq
-					- DFTUtils.getConsonantOvertonesBase31(index);
-			index++;
-		}
-	}
-	
 	// See also DFTEditor.getAmplitude()
 	private boolean isYInBounds(int y) {
 		if (y > DFTEditor.maxScreenFreq)

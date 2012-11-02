@@ -6,7 +6,7 @@ import java.util.TreeSet;
 
 class Interpolate {
 		
-	public static TreeMap<Integer, FDData> dataInterpolate(byte channel, TreeMap<Integer, FDData> input) {
+	public static TreeMap<Integer, FDData> dataInterpolate(FDData.Channel channel, TreeMap<Integer, FDData> input) {
 		TreeMap<Integer, FDData> output = new TreeMap<Integer, FDData>();
 		if(input.isEmpty()) return output;
 		if(input.size() == 1) {

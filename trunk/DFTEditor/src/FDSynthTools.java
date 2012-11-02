@@ -24,17 +24,39 @@ class FDSynthTools {
 		for(long harmonicID: DFTEditor.getSelectedHarmonicIDs()) {
 			Harmonic harmonic = FDEditor.harmonicIDToHarmonic.get(harmonicID);
 			if(!harmonic.isSynthesized()) continue;
-			synthHarmonics.add(new Harmonic(harmonic.getHarmonicID()));
-			for(FDData data: harmonic.getPureSineHarmonic(1.0, playSpeed)) {
-				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
-			}
+			synthHarmonics.add(harmonic);
 		}
-		PCMDataMono = FastSynth.synthHarmonicsLinear((byte) 0, synthHarmonics);
-		PCMDataLeft = FastSynth.synthHarmonicsLinear((byte) 1, synthHarmonics);
-		PCMDataRight = FastSynth.synthHarmonicsLinear((byte) 2, synthHarmonics);
+		PCMDataLeft = FastSynth.synthHarmonicsLinear(FDData.Channel.LEFT, synthHarmonics);
+		PCMDataRight = FastSynth.synthHarmonicsLinear(FDData.Channel.RIGHT, synthHarmonics);
 	}
 	
 	static void createPCMDataLinearCubicSpline() {
+		//PCMData = FastSynth.synthHarmonics(new ArrayList<Harmonic>(parent.harmonicIDToHarmonic.values()));
+		if(DFTEditor.getSelectedHarmonicIDs() == null || DFTEditor.getSelectedHarmonicIDs().isEmpty()) return;
+		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
+		for(long harmonicID: DFTEditor.getSelectedHarmonicIDs()) {
+			Harmonic harmonic = FDEditor.harmonicIDToHarmonic.get(harmonicID);
+			if(!harmonic.isSynthesized()) continue;
+			synthHarmonics.add(harmonic);
+		}
+		PCMDataLeft = FastSynth.synthHarmonicsLinearCubicSpline(FDData.Channel.LEFT, synthHarmonics);
+		PCMDataRight = FastSynth.synthHarmonicsLinearCubicSpline(FDData.Channel.RIGHT, synthHarmonics);
+	}
+	
+	static void createPCMDataLinearNoise() {
+		//PCMData = FastSynth.synthHarmonics(new ArrayList<Harmonic>(parent.harmonicIDToHarmonic.values()));
+		if(DFTEditor.getSelectedHarmonicIDs() == null || DFTEditor.getSelectedHarmonicIDs().isEmpty()) return;
+		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
+		for(long harmonicID: DFTEditor.getSelectedHarmonicIDs()) {
+			Harmonic harmonic = FDEditor.harmonicIDToHarmonic.get(harmonicID);
+			if(!harmonic.isSynthesized()) continue;
+			synthHarmonics.add(harmonic);
+		}
+		PCMDataLeft = FastSynth.synthHarmonicsLinearNoise(FDData.Channel.LEFT, synthHarmonics);
+		PCMDataRight = FastSynth.synthHarmonicsLinearNoise(FDData.Channel.RIGHT, synthHarmonics);
+	}
+	
+	static void createPCMDataPureSine() {
 		//PCMData = FastSynth.synthHarmonics(new ArrayList<Harmonic>(parent.harmonicIDToHarmonic.values()));
 		if(DFTEditor.getSelectedHarmonicIDs() == null || DFTEditor.getSelectedHarmonicIDs().isEmpty()) return;
 		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
@@ -46,27 +68,10 @@ class FDSynthTools {
 				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
 			}
 		}
-		PCMDataMono = FastSynth.synthHarmonicsLinearCubicSpline((byte) 0, synthHarmonics);
-		PCMDataLeft = FastSynth.synthHarmonicsLinearCubicSpline((byte) 1, synthHarmonics);
-		PCMDataRight = FastSynth.synthHarmonicsLinearCubicSpline((byte) 2, synthHarmonics);
+		PCMDataLeft = FastSynth.synthHarmonicsLinear(FDData.Channel.LEFT, synthHarmonics);
+		PCMDataRight = FastSynth.synthHarmonicsLinear(FDData.Channel.RIGHT, synthHarmonics);
 	}
 	
-	static void createPCMDataLinearNoise() {
-		//PCMData = FastSynth.synthHarmonics(new ArrayList<Harmonic>(parent.harmonicIDToHarmonic.values()));
-		if(DFTEditor.getSelectedHarmonicIDs() == null) return;
-		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
-		for(long harmonicID: DFTEditor.getSelectedHarmonicIDs()) {
-			Harmonic harmonic = FDEditor.harmonicIDToHarmonic.get(harmonicID);
-			if(!harmonic.isSynthesized()) continue;
-			synthHarmonics.add(new Harmonic(harmonic.getHarmonicID()));
-			for(FDData data: harmonic.getPureSineHarmonic(1.0, playSpeed)) {
-				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
-			}
-		}
-		PCMDataMono = FastSynth.synthHarmonicsLinearNoise((byte) 0, synthHarmonics);
-		PCMDataLeft = FastSynth.synthHarmonicsLinearNoise((byte) 1, synthHarmonics);
-		PCMDataRight = FastSynth.synthHarmonicsLinearNoise((byte) 2, synthHarmonics);
-	}
 
 	public static void playPCMData() {
 		AudioPlayer ap = new AudioPlayer(PCMDataLeft, PCMDataRight, 1.0);

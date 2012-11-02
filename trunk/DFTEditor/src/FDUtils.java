@@ -6,30 +6,27 @@ public class FDUtils {
 	public static int pixelsPerTime = FDView.pixelsPerTime;
 	public static int minPixelsPerNote = FDView.minPixelsPerNote;
 	
-	public static class Range {
-		
-		int lower;
-		int upper;
-		
-		public Range(int val1, int val2) {
-			if(val1 < val2) {
-				lower = val1;
-				upper = val2;
-			} else {
-				lower = val2;
-				upper = val1;				
-			}
+	public static boolean isChannelVisible(Harmonic harmonic) {
+		if(harmonic.getChannel() == FDData.Channel.LEFT) {
+			if(FDEditor.currentChannel == FDEditor.Channel.LEFT) return true;
+			if(FDEditor.currentChannel == FDEditor.Channel.STEREO) return true;
+			return false;
 		}
-		
-		public int getLower() {
-			return upper;
+		if(harmonic.getChannel() == FDData.Channel.RIGHT) {
+			if(FDEditor.currentChannel == FDEditor.Channel.RIGHT) return true;
+			if(FDEditor.currentChannel == FDEditor.Channel.STEREO) return true;
+			return false;
 		}
-		
-		public int getUpper() {
-			return upper;
-		}
+		System.out.println("FDUtils.isHarmonicVisible: Unknown channel");
+		return false;
 	}
-
+	
+	public static boolean isHarmonicVisible(Harmonic harmonic) {
+		if(!FDUtils.isChannelVisible(harmonic)) return false;
+		if(!harmonic.isSynthesized()) return false;
+		return true;
+	}
+	
 	public static int noteToPixelY(int note) {
 		int maxNote = FDEditor.maxNote - FDEditor.minViewFreq;
 		int pixelY = FDEditor.upperOffset;
@@ -37,7 +34,7 @@ public class FDUtils {
 		for(int loopNote = maxNote; loopNote >= FDEditor.minNote; loopNote--) {
 			if(note == loopNote) return pixelY;
 			if(FDView.dataView == FDView.DataView.SELECTED_ONLY) {
-				if(FDEditor.selectedNotes.contains(loopNote)) {
+				if(DFTEditor.selectedNotes.contains(loopNote)) {
 					pixelY += FDEditor.yStep;
 				} else {
 					pixelY += minPixelsPerNote;
@@ -51,7 +48,7 @@ public class FDUtils {
 	
 	public static boolean noteToDrawSegment(int note) {
 		if(FDView.dataView == FDView.DataView.SELECTED_ONLY) {
-			if(!FDEditor.selectedNotes.contains(note)) return false;
+			if(!DFTEditor.selectedNotes.contains(note)) return false;
 		}
 		return true;
 	}
@@ -84,22 +81,6 @@ public class FDUtils {
 		pixelX -= FDEditor.leftOffset;
 		int time = (pixelX - FDEditor.minViewTime) / pixelsPerTime;
 		return time;
-	}
-
-	public static FDData getMaxDataInTimeRange(int startTime, int endTime, int note) {
-		FDData returnVal = FDEditor.getData(startTime, note);
-		for(int time = startTime + 1; time < endTime; time++) {
-			FDData currentVal =  FDEditor.getData(time, note);
-			if(currentVal == null) continue;
-			if(returnVal == null) {
-				returnVal = currentVal;
-				continue;
-			}
-			if(currentVal.getLogAmplitude() > returnVal.getLogAmplitude()) {
-				returnVal = currentVal;
-			}
-		}
-		return returnVal;
 	}
 
 	public static void DrawIntegerHorizontal(Graphics g, Color b, Color f, int screenX, int screenY, int numdigits, int value) {

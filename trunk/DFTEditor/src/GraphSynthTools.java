@@ -33,9 +33,8 @@ class GraphSynthTools {
 				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
 			}
 		}
-		PCMDataMono = FastSynth.synthHarmonicsLinear((byte) 0, synthHarmonics);
-		PCMDataLeft = FastSynth.synthHarmonicsLinear((byte) 1, synthHarmonics);
-		PCMDataRight = FastSynth.synthHarmonicsLinear((byte) 2, synthHarmonics);
+		PCMDataLeft = FastSynth.synthHarmonicsLinear(FDData.Channel.LEFT, synthHarmonics);
+		PCMDataRight = FastSynth.synthHarmonicsLinear(FDData.Channel.RIGHT, synthHarmonics);
 	}
 	
 	static void createPCMDataLinearCubicSpline() {
@@ -54,9 +53,8 @@ class GraphSynthTools {
 				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
 			}
 		}
-		PCMDataMono = FastSynth.synthHarmonicsLinearCubicSpline((byte) 0, synthHarmonics);
-		PCMDataLeft = FastSynth.synthHarmonicsLinearCubicSpline((byte) 1, synthHarmonics);
-		PCMDataRight = FastSynth.synthHarmonicsLinearCubicSpline((byte) 2, synthHarmonics);
+		PCMDataLeft = FastSynth.synthHarmonicsLinearCubicSpline(FDData.Channel.LEFT, synthHarmonics);
+		PCMDataRight = FastSynth.synthHarmonicsLinearCubicSpline(FDData.Channel.RIGHT, synthHarmonics);
 	}
 	
 	static void createPCMDataLinearNoise() {
@@ -75,12 +73,11 @@ class GraphSynthTools {
 				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
 			}
 		}
-		PCMDataMono = FastSynth.synthHarmonicsLinearNoise((byte) 0, synthHarmonics);
-		PCMDataLeft = FastSynth.synthHarmonicsLinearNoise((byte) 1, synthHarmonics);
-		PCMDataRight = FastSynth.synthHarmonicsLinearNoise((byte) 2, synthHarmonics);
+		PCMDataLeft = FastSynth.synthHarmonicsLinearNoise(FDData.Channel.LEFT, synthHarmonics);
+		PCMDataRight = FastSynth.synthHarmonicsLinearNoise(FDData.Channel.RIGHT, synthHarmonics);
 	}
 	
-	static void createPCMDataLinearNoiseSelected() {
+	static void createPCMDataLinearSelected() {
 		//PCMData = FastSynth.synthHarmonics(new ArrayList<Harmonic>(parent.harmonicIDToHarmonic.values()));
 		if(DFTEditor.getSelectedHarmonicIDs() == null || DFTEditor.getSelectedHarmonicIDs().isEmpty()) return;
 		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
@@ -92,9 +89,8 @@ class GraphSynthTools {
 				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
 			}
 		}
-		PCMDataMono = FastSynth.synthHarmonicsLinearNoise((byte) 0, synthHarmonics);
-		PCMDataLeft = FastSynth.synthHarmonicsLinearNoise((byte) 1, synthHarmonics);
-		PCMDataRight = FastSynth.synthHarmonicsLinearNoise((byte) 2, synthHarmonics);
+		PCMDataLeft = FastSynth.synthHarmonicsLinear(FDData.Channel.LEFT, synthHarmonics);
+		PCMDataRight = FastSynth.synthHarmonicsLinear(FDData.Channel.RIGHT, synthHarmonics);
 	}
 
 	public static void playPCMData() {

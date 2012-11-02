@@ -72,7 +72,6 @@ public class FileInput {
 		DFTEditor.maxScreenFreq = DFTEditor.maxScreenNote - DFTEditor.minScreenNote;
 		DFTEditor.maxTime = matrixValsSize / (DFTEditor.maxScreenFreq + 1);
 		DFTEditor.newFileData();
-		DFTEditor.amplitudesMono = new float[DFTEditor.maxTime + 1][DFTEditor.maxScreenFreq + 1];
 		DFTEditor.amplitudesLeft = new float[DFTEditor.maxTime + 1][DFTEditor.maxScreenFreq + 1];		
 		DFTEditor.amplitudesRight = new float[DFTEditor.maxTime + 1][DFTEditor.maxScreenFreq + 1];		
 		int index = 0;
@@ -81,7 +80,6 @@ public class FileInput {
 				if(index >= matrixValsSize) {
 					System.out.println("FileInput.ReadBinaryFileData: index out of bounds");
 				}
-				DFTEditor.amplitudesMono[time][freq] = matrixValsMono.get(index);
 				DFTEditor.amplitudesLeft[time][freq] = matrixValsLeft.get(index);
 				DFTEditor.amplitudesRight[time][freq] = matrixValsRight.get(index);
 				index++;

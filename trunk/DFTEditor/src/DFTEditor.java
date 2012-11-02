@@ -8,7 +8,6 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	public enum Channel {
 		LEFT,
 		RIGHT,
-		MONO,
 		STEREO,
 	}
 
@@ -32,15 +31,14 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	public static JToolBar navigationBar = null;
 	
 	//public static TreeMap<Integer, TreeMap<Integer, Float>> timeToFreqToAmp;
-	public static float[][] amplitudesMono; // amplitude = amplitudes[time][freq]
 	public static float[][] amplitudesLeft; // amplitude = amplitudes[time][freq]
 	public static float[][] amplitudesRight; // amplitude = amplitudes[time][freq]
-	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaMono;
+	public static float[][] amplitudesStereo; // amplitude = amplitudes[time][freq]
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaLeft;
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaRight;
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic = null;
 	private static HashSet<Long> selectedHarmonicIDs;
-	private static HashSet<Integer> selectedNotes;
+	public static HashSet<Integer> selectedNotes;
 	//public static int minHarmonicLength = 1;
 	public static double minLogAmplitudeThreshold = 1.0; // used by autoSelect
 	public static int minLengthThreshold = 1;
@@ -86,36 +84,51 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 		selectedHarmonicIDs = new HashSet<Long>();
 		selectedNotes = new HashSet<Integer>();
 	    harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
-		timeToFreqsAtMaximaMono = new TreeMap<Integer, TreeSet<Integer>>();
 		timeToFreqsAtMaximaLeft = new TreeMap<Integer, TreeSet<Integer>>();
 		timeToFreqsAtMaximaRight = new TreeMap<Integer, TreeSet<Integer>>();
 	}
-	
+	/*
 	public static float[][] getAmplitudes() {
-		if(currentChannel == Channel.STEREO || currentChannel == Channel.MONO) return amplitudesMono;
 		if(currentChannel == Channel.LEFT) return amplitudesLeft;
 		if(currentChannel == Channel.RIGHT) return amplitudesRight;
 		return null;
 	}
-	
+	*/
+	/*
 	public static TreeMap<Integer, TreeSet<Integer>> getMaximas() {
-		if(currentChannel == Channel.STEREO || currentChannel == Channel.MONO) return timeToFreqsAtMaximaMono;
 		if(currentChannel == Channel.LEFT) return timeToFreqsAtMaximaLeft;
 		if(currentChannel == Channel.RIGHT) return timeToFreqsAtMaximaRight;
 		return null;
 	}
-	
+	*/
 	public static float getAmplitude(int time, int freq) {
-		float[][] amplitudes = getAmplitudes();
-		if(time >= amplitudes.length) return 0.0f;
-		if(freq >= amplitudes[0].length) return 0.0f;
-		return amplitudes[time][freq];
+		if(amplitudesLeft == null || amplitudesRight == null) return 0.0f;
+		float leftVal = 0.0f;
+		float rightVal = 0.0f;
+		if(time < amplitudesLeft.length && freq < amplitudesLeft[0].length) leftVal = amplitudesLeft[time][freq];
+		if(time < amplitudesRight.length && freq < amplitudesRight[0].length) rightVal = amplitudesRight[time][freq]; 
+		if(currentChannel == Channel.LEFT) return leftVal;
+		if(currentChannel == Channel.RIGHT) return rightVal;
+		if(currentChannel == Channel.STEREO) {
+			if(leftVal > rightVal) return leftVal;
+			return rightVal;
+		}
+		System.out.println("DFTEditor.getAmplitude: unknown channel");
+		return -1.0f;
 	}
 	
 	public static boolean isMaxima(int time, int freq) {
+		if(timeToFreqsAtMaximaLeft == null || timeToFreqsAtMaximaRight == null) return false;
 		if(time >= maxTime && freq >= maxScreenFreq) return false;
-		TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima = getMaximas();
-		return timeToFreqsAtMaxima.get(time).contains(freq);
+		boolean left = timeToFreqsAtMaximaLeft.get(time).contains(freq);
+		boolean right = timeToFreqsAtMaximaRight.get(time).contains(freq);
+		if(currentChannel == Channel.LEFT) return left;
+		if(currentChannel == Channel.RIGHT) return right;
+		if(currentChannel == Channel.STEREO) {
+			return left || right;
+		}
+		System.out.println("DFTEditor.isMaxima: unknown channel");
+		return false;
 	}
 	
 	public static int noteToFreq(int note) {
@@ -125,7 +138,7 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	public static int freqToNote(int freq) {
 		return maxScreenNote - freq;
 	}
-
+/*
 	public static Set<Integer> timesWithMaxima() {
 		TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima = getMaximas();
 		return timeToFreqsAtMaxima.keySet();
@@ -136,7 +149,7 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 		if(!timeToFreqsAtMaxima.containsKey(time)) return new TreeSet<Integer>();
 		return timeToFreqsAtMaxima.get(time);
 	}
-
+*/
 	public static int getTimeAxisWidthInMillis() {
 		return view.getTimeAxisWidthInMillis();
 	}
@@ -253,20 +266,26 @@ public class DFTEditor extends JFrame implements AbstractEditor {
         refreshAllViews();
 	}
 	
-	public static void selectHarmonic(long harmonicID) {
-		if(selectedHarmonicIDs.contains(harmonicID)) return;
-		selectedHarmonicIDs.add(harmonicID);
-		Harmonic harmonic = harmonicIDToHarmonic.get(harmonicID);
-    	for(FDData innerData: harmonic.getAllDataInterpolated().values()) {
-    		if(!FDEditor.selectedNotes.contains(innerData.getNote())) FDEditor.selectedNotes.add(innerData.getNote());
-    	}
+	public static void selectHarmonics(ArrayList<Long> harmonicIDs) {
+		if(harmonicIDs == null) return;
+		for(long harmonicID: harmonicIDs) {
+			if(selectedHarmonicIDs.contains(harmonicID)) continue;
+			selectedHarmonicIDs.add(harmonicID);
+			Harmonic harmonic = harmonicIDToHarmonic.get(harmonicID);
+			for(FDData innerData: harmonic.getAllDataInterpolated().values()) {
+				if(!DFTEditor.selectedNotes.contains(innerData.getNote())) DFTEditor.selectedNotes.add(innerData.getNote());
+			}
+		}
 		refreshAllViews();
 	}
 	
-	public static void unselectHarmonic(long harmonicID) {
-		if(selectedHarmonicIDs.contains(harmonicID)) return;
-		selectedHarmonicIDs.remove(harmonicID);
-		refreshAllViews();
+	public static void unselectHarmonics(ArrayList<Long> harmonicIDs) {
+		if(harmonicIDs == null) return;
+		for(long harmonicID: harmonicIDs) {	
+			if(selectedHarmonicIDs.contains(harmonicID)) continue;
+			selectedHarmonicIDs.remove(harmonicID);
+			refreshAllViews();
+		}
 	}
 	
 	public static HashSet<Long> getSelectedHarmonicIDs() {

@@ -6,10 +6,8 @@ class SynthTools {
 	
 	static double sampleRate = 44100.0;
 	static double twoPI = 2.0 * Math.PI;
-	static float[] PCMDataMono = null;
 	static float[] PCMDataLeft = null;
 	static float[] PCMDataRight = null;
-	static float[] WAVDataMono = null;
 	static float[] WAVDataLeft = null;
 	static float[] WAVDataRight = null;	
 	static int deltaHarmonic = 1;
@@ -41,9 +39,8 @@ class SynthTools {
 				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
 			}
 		}
-		PCMDataMono = (float[]) FastSynth.synthHarmonicsLinear((byte) 0, new ArrayList<Harmonic>(synthHarmonics));
-		PCMDataLeft = (float[]) FastSynth.synthHarmonicsLinear((byte) 1, new ArrayList<Harmonic>(synthHarmonics));
-		PCMDataRight = (float[]) FastSynth.synthHarmonicsLinear((byte) 2, new ArrayList<Harmonic>(synthHarmonics));
+		PCMDataLeft = FastSynth.synthHarmonicsLinear(FDData.Channel.LEFT, synthHarmonics);
+		PCMDataRight = FastSynth.synthHarmonicsLinear(FDData.Channel.RIGHT, synthHarmonics);
 	}
 	
 	static void createPCMDataLinearCubicSpline() {
@@ -59,9 +56,8 @@ class SynthTools {
 				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
 			}
 		}
-		PCMDataMono = (float[]) FastSynth.synthHarmonicsLinearCubicSpline((byte) 0, new ArrayList<Harmonic>(synthHarmonics));
-		PCMDataLeft = (float[]) FastSynth.synthHarmonicsLinearCubicSpline((byte) 1, new ArrayList<Harmonic>(synthHarmonics));
-		PCMDataRight = (float[]) FastSynth.synthHarmonicsLinearCubicSpline((byte) 2, new ArrayList<Harmonic>(synthHarmonics));
+		PCMDataLeft = FastSynth.synthHarmonicsLinearCubicSpline(FDData.Channel.LEFT, synthHarmonics);
+		PCMDataRight = FastSynth.synthHarmonicsLinearCubicSpline(FDData.Channel.RIGHT, synthHarmonics);
 	}
 	
 	static void createPCMDataLinearNoise() {
@@ -77,13 +73,12 @@ class SynthTools {
 				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
 			}
 		}
-		PCMDataMono = (float[]) FastSynth.synthHarmonicsLinearNoise((byte) 0, new ArrayList<Harmonic>(synthHarmonics));
-		PCMDataLeft = (float[]) FastSynth.synthHarmonicsLinearNoise((byte) 1, new ArrayList<Harmonic>(synthHarmonics));
-		PCMDataRight = (float[]) FastSynth.synthHarmonicsLinearNoise((byte) 2, new ArrayList<Harmonic>(synthHarmonics));
+		PCMDataLeft = FastSynth.synthHarmonicsLinearNoise(FDData.Channel.LEFT, synthHarmonics);
+		PCMDataRight = FastSynth.synthHarmonicsLinearNoise(FDData.Channel.RIGHT, synthHarmonics);
 	}
 	
 	static void playPCMData() {
-		AudioPlayer ap = new AudioPlayer(PCMDataMono, 1.0);
+		AudioPlayer ap = null;
 		if(DFTEditor.currentChannel == DFTEditor.Channel.STEREO) {
 			if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.LEFT_RIGHT) {
 				ap = new AudioPlayer(PCMDataLeft, PCMDataRight, 1.0);
@@ -105,28 +100,24 @@ class SynthTools {
 			ap = new AudioPlayer(PCMDataRight, 1.0);
 		}
 		ap.start();
-		//ap = new AudioPlayer(parent, PCMDataRight, 1.0);
-		//ap.start();
 	}
 	
 	static void createHarmonics() {
 		DFTEditor.harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
-		createHarmonicsChannel((byte) 0);
-		createHarmonicsChannel((byte) 1);
-		createHarmonicsChannel((byte) 2);
+		//createHarmonicsChannel((byte) 0);
+		createHarmonicsChannel(FDData.Channel.LEFT);
+		createHarmonicsChannel(FDData.Channel.RIGHT);
 		DFTEditor.parent.graphEditorFrame.addHarmonicsToGraphEditor(DFTEditor.harmonicIDToHarmonic);
 		DFTEditor.parent.fdEditorFrame.addHarmonicsToFDEditor(DFTEditor.harmonicIDToHarmonic);
 	}
 
-	static void createHarmonicsChannel(byte channel) {
+	static void createHarmonicsChannel(FDData.Channel channel) {
 		TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
-		if(channel == 0) DFTEditor.timeToFreqsAtMaximaMono = new TreeMap<Integer, TreeSet<Integer>>();
-		if(channel == 1) DFTEditor.timeToFreqsAtMaximaLeft = new TreeMap<Integer, TreeSet<Integer>>();		
-		if(channel == 2) DFTEditor.timeToFreqsAtMaximaRight = new TreeMap<Integer, TreeSet<Integer>>();
+		if(channel == FDData.Channel.LEFT) DFTEditor.timeToFreqsAtMaximaLeft = new TreeMap<Integer, TreeSet<Integer>>();
+		if(channel == FDData.Channel.RIGHT) DFTEditor.timeToFreqsAtMaximaRight = new TreeMap<Integer, TreeSet<Integer>>();		
 		float[][] amplitudes = null;
-		if(channel == 0) amplitudes = DFTEditor.amplitudesMono;
-		if(channel == 1) amplitudes = DFTEditor.amplitudesLeft;
-		if(channel == 2) amplitudes = DFTEditor.amplitudesRight;
+		if(channel == FDData.Channel.LEFT) amplitudes = DFTEditor.amplitudesLeft;
+		if(channel == FDData.Channel.RIGHT) amplitudes = DFTEditor.amplitudesRight;
 		if(amplitudes == null) return;
 		int numTimes = amplitudes.length;
 		int numFreqs = amplitudes[0].length;
@@ -134,9 +125,8 @@ class SynthTools {
 		int freq = 0;
 		for(time = 0; time < numTimes; time++) {
 			timeToFreqToData.put(time, new TreeMap<Integer, FDData>());
-			if(channel == 0) DFTEditor.timeToFreqsAtMaximaMono.put(time, new TreeSet<Integer>());
-			if(channel == 1) DFTEditor.timeToFreqsAtMaximaLeft.put(time, new TreeSet<Integer>());
-			if(channel == 2) DFTEditor.timeToFreqsAtMaximaRight.put(time, new TreeSet<Integer>());
+			if(channel == FDData.Channel.LEFT) DFTEditor.timeToFreqsAtMaximaLeft.put(time, new TreeSet<Integer>());
+			if(channel == FDData.Channel.RIGHT) DFTEditor.timeToFreqsAtMaximaRight.put(time, new TreeSet<Integer>());
 			for(freq = 1; freq < numFreqs - 1; freq++) {
 				if(amplitudes[time][freq] >= amplitudes[time][freq - 1]) {
 					if(amplitudes[time][freq] >= amplitudes[time][freq + 1]) {
@@ -148,9 +138,8 @@ class SynthTools {
 							System.out.println("SynthTools.createHarmonics: Error creating data time: " + time + " freq: " + freq);
 						}
 						timeToFreqToData.get(time).put(freq, data);
-						if(channel == 0) DFTEditor.timeToFreqsAtMaximaMono.get(time).add(freq);
-						if(channel == 1) DFTEditor.timeToFreqsAtMaximaLeft.get(time).add(freq);
-						if(channel == 2) DFTEditor.timeToFreqsAtMaximaRight.get(time).add(freq);
+						if(channel == FDData.Channel.LEFT) DFTEditor.timeToFreqsAtMaximaLeft.get(time).add(freq);
+						if(channel == FDData.Channel.RIGHT) DFTEditor.timeToFreqsAtMaximaRight.get(time).add(freq);
 						//System.out.println(data);
 					}
 				}

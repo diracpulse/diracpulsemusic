@@ -9,7 +9,7 @@ public class Harmonic {
 	private double maxLogAmplitude = 0.0;
 	private int minNote = FDData.getMaxNote();
 	private int maxNote = FDData.getMinNote();
-	private byte channel = -1;
+	private FDData.Channel channel = null;
 
 	private long harmonicID;
 	
@@ -25,7 +25,7 @@ public class Harmonic {
 	public FDData addData(FDData data) {
 		//System.out.println(data);
 		data.setHarmonicID(this.harmonicID);
-		if(this.channel == -1) this.channel = data.getChannel();
+		if(this.channel == null) this.channel = data.getChannel();
 		if(data.getChannel() != channel) {
 			System.out.println("Harmonic.addData(): Multiple channels in same harmonic");
 			return data;
@@ -84,7 +84,7 @@ public class Harmonic {
 		return false;
 	}
 	
-	public byte getChannel() {
+	public FDData.Channel getChannel() {
 		return channel;
 	}
 	

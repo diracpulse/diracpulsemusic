@@ -10,7 +10,6 @@ public class GraphEditor extends JFrame implements AbstractEditor {
 	public enum Channel {
 		LEFT,
 		RIGHT,
-		MONO,
 		STEREO,
 	}
 	

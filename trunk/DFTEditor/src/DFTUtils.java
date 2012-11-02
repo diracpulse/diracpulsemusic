@@ -1,31 +1,22 @@
 import java.awt.*;
 
 public class DFTUtils {
+	
+	public static boolean isChannelVisible(Harmonic harmonic) {
+		if(harmonic.getChannel() == FDData.Channel.LEFT) {
+			if(GraphEditor.currentChannel == GraphEditor.Channel.LEFT) return true;
+			if(GraphEditor.currentChannel == GraphEditor.Channel.STEREO) return true;
+			return false;
+		}
+		if(harmonic.getChannel() == FDData.Channel.RIGHT) {
+			if(GraphEditor.currentChannel == GraphEditor.Channel.RIGHT) return true;
+			if(GraphEditor.currentChannel == GraphEditor.Channel.STEREO) return true;
+			return false;
+		}
+		System.out.println("DFTView.isHarmonicVisible: Unknown channel");
+		return false;
+	}
 
-	public static int getConsonantOvertonesBase31(int index) {
-		int[] first3 = {31, 18, 13};
-		int[] cycle4 = {10, 8, 7, 6};
-		int returnVal = 0;
-		for(int testIndex = 0; testIndex < 3; testIndex++) {
-			if(testIndex == index) return returnVal;
-			returnVal += first3[testIndex];
-		}
-		for(int testIndex = 0; testIndex < 12 * 4; testIndex++) {
-			if(testIndex + 3 == index) return returnVal;
-			returnVal += cycle4[testIndex % 4];
-		}
-		System.out.println("DFTUtils.getConsonantOvertonesBase31 index exceeded");
-		return returnVal;
-	}
-	
-	public static void testGetConsonantOvertonesBase31() {
-		for(int index = 0; index < 13 * 4; index++) {
-			int harmonic = getConsonantOvertonesBase31(index);
-			if(harmonic == -1) break;
-			System.out.println(Math.pow(2.0, harmonic / 31.0));
-		}
-	}
-	
 	// returns -1 if screenX is LEFT of data area
 	public static int screenXToTime(int screenX) {
 		if(screenX < DFTEditor.leftOffset) return -1;
@@ -64,7 +55,7 @@ public class DFTUtils {
 		if (freq < 0) freq = 0;		
 		try {
 			int note = DFTEditor.freqToNote(freq);
-			returnVal = new FDData((byte) 0, time, note, DFTEditor.getAmplitude(time, freq), 1L);
+			returnVal = new FDData(FDData.Channel.LEFT, time, note, DFTEditor.getAmplitude(time, freq), 1L);
 		} catch (Exception e) {
 			System.out.println("DFTUtils.getValue: Error creating FDData");
 		}
