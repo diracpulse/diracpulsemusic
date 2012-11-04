@@ -18,7 +18,8 @@ public class GraphView extends JComponent {
 	
 	public enum YView {
 		AMPLITUDE,
-		FREQUENCY;
+		FREQUENCY,
+		ENERGY;
 	}
 	
 	public enum XView {
@@ -42,6 +43,10 @@ public class GraphView extends JComponent {
 	public void drawFileData(Graphics g) {
 		double pixelsPerValueY = 1;
 		double pixelsPerValueX = 1;
+		if(yView == YView.ENERGY) {
+			drawEnergyView(g);
+			return;
+		}
 		if(xView == XView.TIME) pixelsPerValueX = (double) getWidth() / (double) (GraphEditor.maxViewTime - GraphEditor.minViewTime);
 		if(xView == XView.FREQUENCY) pixelsPerValueX = (double) getWidth() / (double) (GraphEditor.maxViewNote - GraphEditor.minViewNote);
 		if(yView == YView.AMPLITUDE) pixelsPerValueY = (double) getHeight() / (double) (GraphEditor.maxViewLogAmplitude - GraphEditor.minViewLogAmplitude);
@@ -130,20 +135,40 @@ public class GraphView extends JComponent {
 
 	public void drawEnergyView(Graphics g) {
 		if(FDEditor.timeToNoteToData.isEmpty()) return;
-		double maxAmplitudeSum = 0.0;
-		double minAmplitudeSum = FDData.maxLogAmplitude;
-		TreeMap<Integer, Double> timeToLogAmplitudeSum = new TreeMap<Integer, Double>();
-		double pixelsPerValueX = (double) getWidth() / (double) (GraphEditor.maxViewTime - GraphEditor.minViewTime);
-		double pixelsPerValueY = (double) getHeight() / (double) (GraphEditor.maxViewLogAmplitude - GraphEditor.minViewLogAmplitude);
+		TreeMap<FDData.Channel, TreeMap<Integer, Double>> channelToTimeToEnergy = new TreeMap<FDData.Channel, TreeMap<Integer, Double>>();
+		double maxLogAmplitudeSum = 0.0;
+		for(FDData.Channel channel: FDData.Channel.values()) {
+			channelToTimeToEnergy.put(channel, new TreeMap<Integer, Double>());
+		}
 		for(int time: FDEditor.timeToNoteToData.keySet()) {
-			double amplitudeSum = 0.0;
+			for(FDData.Channel channel: FDData.Channel.values()) {
+				channelToTimeToEnergy.get(channel).put(time, 2.0);
+			}
 			for(int note: FDEditor.timeToNoteToData.get(time).keySet()) {
 				for(FDData data: FDEditor.timeToNoteToData.get(time).get(note)) {
-					amplitudeSum += data.getAmplitude();
+					double sum = channelToTimeToEnergy.get(data.getChannel()).get(time);
+					sum += data.getAmplitude();
+					channelToTimeToEnergy.get(data.getChannel()).put(time, sum);
 				}
 			}
-			double logAmplitudeSum = Math.log(amplitudeSum) / Math.log(FDData.noteBase);
-			
+			for(FDData.Channel channel: FDData.Channel.values()) {
+				double sum = channelToTimeToEnergy.get(channel).get(time);
+				double logSum = Math.log(sum) / Math.log(FDData.logBase);
+				if(logSum > maxLogAmplitudeSum) maxLogAmplitudeSum = logSum;
+				channelToTimeToEnergy.get(channel).put(time, logSum);
+			}
+		}
+		double pixelsPerValueX = (double) getWidth() / (double) (GraphEditor.maxViewTime - GraphEditor.minViewTime);
+		double pixelsPerValueY = (double) getHeight() / (double) maxLogAmplitudeSum;
+		for(FDData.Channel channel: FDData.Channel.values()) {
+			g.setColor(Color.WHITE);
+			if(channel == FDData.Channel.LEFT) g.setColor(new Color(1.0f, 0.0f, 0.0f, 1.0f));
+			if(channel == FDData.Channel.RIGHT) g.setColor(new Color(0.0f, 0.0f, 1.0f, 1.0f));
+			for(int time: channelToTimeToEnergy.get(channel).keySet()) {
+				int x = (int) Math.round(pixelsPerValueX * time);
+				int y = (int) Math.round(pixelsPerValueY * (maxLogAmplitudeSum - channelToTimeToEnergy.get(channel).get(time)));
+				g.drawLine(x, y, x, getHeight());
+			}
 		}
 	}
 	

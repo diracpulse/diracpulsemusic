@@ -21,6 +21,12 @@ public class DFTController implements MouseListener, ActionListener {
 	public void mousePressed(MouseEvent e){
 	    int x = e.getX();
 	    int y = e.getY();
+	    if(e.isShiftDown()) {
+	    	int time = (int) Math.round(DFTUtils.screenXToTime(x));
+	    	DFTEditor.sliceAtTime(time);
+	    	DFTEditor.refreshAllViews();
+	    	return;
+	    }
 	    if(selectionIndex <= 0) selectionIndex = 0;
 	    if(selectionIndex > 1) selectionIndex = 0;
 	    selectedTimes[selectionIndex] = DFTUtils.screenXToTime(x);

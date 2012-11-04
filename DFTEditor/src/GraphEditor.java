@@ -45,7 +45,6 @@ public class GraphEditor extends JFrame implements AbstractEditor {
 	public static double maxClipThreshold = 24.0;
 	public static boolean displaySelectedHarmonics = true;
 	public static boolean displayUnselectedHarmonics = true;
-	public static double zoomFactor = 2.0;
 	public static Random randomIDGenerator;
 	public static Channel currentChannel = Channel.STEREO;
 	
@@ -208,8 +207,11 @@ public class GraphEditor extends JFrame implements AbstractEditor {
 		clipFrequency(parent, y);
 	}
 	
-	public static void zoomInX(int x) {
-		double divisor = 2 * zoomFactor;
+	// zoom > 1 -> Zoom In
+	// zoom < 1 -> Zoom Out
+	public static void zoomInTime(int x, double zoom) {
+		double divisor = 2 * zoom;
+		System.out.println(minViewTime + " " + maxViewTime);
 		minViewTime = (int) Math.round(GraphUtils.screenXToValue(x - view.getWidth() / divisor));
 		maxViewTime = (int) Math.round(GraphUtils.screenXToValue(x + view.getWidth() / divisor));
 		if(minViewTime < 0) {
@@ -220,15 +222,84 @@ public class GraphEditor extends JFrame implements AbstractEditor {
 			minViewTime += (maxViewTime - maxTime);
 			maxViewTime = maxTime;
 		}
-		refreshView();
+		System.out.println(minViewTime + " " + maxViewTime);
 	}
 	
-	public static void zoomInAmplitude(int y) {
-		double divisor = 2 * zoomFactor;
-		System.out.println(y);
+	public static void zoomOutTime(int x, double zoom) {
+		double divisor = 2 / zoom;
+		System.out.println(minViewTime + " " + maxViewTime);
+		minViewTime = (int) Math.round(GraphUtils.screenXToValue(x - view.getWidth() / divisor));
+		maxViewTime = (int) Math.round(GraphUtils.screenXToValue(x + view.getWidth() / divisor));
+		if(minViewTime < 0) minViewTime = 0;
+		if(maxViewTime > maxTime) maxViewTime = maxTime;
+		System.out.println(minViewTime + " " + maxViewTime);
+	}
+	
+	// zoom > 1 -> Zoom In
+	// zoom < 1 -> Zoom Out
+	public static void zoomInFrequencyX(int x, double zoom) {
+		double divisor = 2 * zoom;
+		System.out.println(minViewNote + " " + maxViewNote);
+		minViewNote = (int) Math.round(GraphUtils.screenXToValue(x + view.getWidth() / divisor));
+		maxViewNote = (int) Math.round(GraphUtils.screenXToValue(x - view.getWidth() / divisor));
+		if(minViewNote < 0) {
+			maxViewNote -= minViewNote;
+			minViewNote = 0;
+		}
+		if(maxViewNote > maxNote) {
+			minViewNote += (maxViewNote - maxNote);
+			maxViewNote = maxNote;
+		}
+		System.out.println(minViewNote + " " + maxViewNote);
+	}
+	
+	public static void zoomOutFrequencyX(int x, double zoom) {
+		double divisor = 2 / zoom;
+		System.out.println(minViewNote + " " + maxViewNote);
+		minViewNote = (int) Math.round(GraphUtils.screenXToValue(x + view.getWidth() / divisor));
+		maxViewNote = (int) Math.round(GraphUtils.screenXToValue(x - view.getWidth() / divisor));
+		if(minViewNote < 0) minViewNote = 0;
+		if(maxViewNote > maxNote) maxViewNote = maxNote;
+		System.out.println(minViewNote + " " + maxViewNote);
+	}
+	
+	// zoom > 1 -> Zoom In
+	// zoom < 1 -> Zoom Out
+	public static void zoomInFrequencyY(int y, double zoom) {
+		double divisor = 2 * zoom;
+		System.out.println(minViewNote + " " + maxViewNote);
+		minViewNote = (int) Math.round(GraphUtils.screenYToValue(y + view.getHeight() / divisor));
+		maxViewNote = (int) Math.round(GraphUtils.screenYToValue(y - view.getHeight() / divisor));
+		System.out.println(minViewNote + " " + maxViewNote);
+		if(minViewNote < minNote) {
+			maxViewNote -= (minViewNote - minNote);
+			minViewNote = minNote;
+		}
+		if(maxViewNote > maxNote) {
+			minViewNote -= (maxViewNote - maxNote);
+			maxViewNote = maxNote;
+		}
+		System.out.println(minViewNote + " " + maxViewNote);
+	}
+	
+	public static void zoomOutFrequencyY(int y, double zoom) {
+		double divisor = 2 / zoom;
+		System.out.println(minViewNote + " " + maxViewNote);
+		minViewNote = (int) Math.round(GraphUtils.screenYToValue(y + view.getHeight() / divisor));
+		maxViewNote = (int) Math.round(GraphUtils.screenYToValue(y - view.getHeight() / divisor));
+		System.out.println(minViewNote + " " + maxViewNote);
+		if(minViewNote < minNote) minViewNote = minNote;
+		if(maxViewNote > maxNote) maxViewNote = maxNote;
+		System.out.println(minViewNote + " " + maxViewNote);
+	}
+	
+	// zoom > 1 -> Zoom In
+	// zoom < 1 -> Zoom Out
+	public static void zoomInAmplitude(int y, double zoom) {
+		double divisor = 2 * zoom;
+		System.out.println(minViewLogAmplitude + " " + maxViewLogAmplitude);
 		minViewLogAmplitude = GraphUtils.screenYToValue(y + view.getHeight() / divisor);
 		maxViewLogAmplitude = GraphUtils.screenYToValue(y - view.getHeight() / divisor);
-		System.out.println(minViewLogAmplitude + " " + maxViewLogAmplitude);
 		if(minViewLogAmplitude < 0) {
 			maxViewLogAmplitude -= minViewLogAmplitude;
 			minViewLogAmplitude = 0;
@@ -238,7 +309,17 @@ public class GraphEditor extends JFrame implements AbstractEditor {
 			maxViewLogAmplitude = maxLogAmplitude;
 		}
 		System.out.println(minViewLogAmplitude + " " + maxViewLogAmplitude);
-		refreshView();
+	}
+	
+	public static void zoomOutAmplitude(int y, double zoom) {
+		double divisor = 2 / zoom;
+		System.out.println(minViewLogAmplitude + " " + maxViewLogAmplitude);
+		minViewLogAmplitude = GraphUtils.screenYToValue(y + view.getHeight() / divisor);
+		maxViewLogAmplitude = GraphUtils.screenYToValue(y - view.getHeight() / divisor);
+		System.out.println(minViewLogAmplitude + " " + maxViewLogAmplitude);
+		if(minViewLogAmplitude < 0) minViewLogAmplitude = 0;
+		if(maxViewLogAmplitude > maxLogAmplitude) maxViewLogAmplitude = maxLogAmplitude;
+		System.out.println(minViewLogAmplitude + " " + maxViewLogAmplitude);
 	}
 	
 	public static void clipAmplitude(int y) {
@@ -259,25 +340,7 @@ public class GraphEditor extends JFrame implements AbstractEditor {
 		}
 		refreshView();
 	}
-	
-	public static void zoomInFrequency(int y) {
-		double divisor = 2 * zoomFactor;
-		System.out.println(y);
-		minViewNote = (int) Math.round(GraphUtils.screenYToValue(y + view.getHeight() / divisor));
-		maxViewNote = (int) Math.round(GraphUtils.screenYToValue(y - view.getHeight() / divisor));
-		System.out.println(minViewNote + " " + maxViewNote);
-		if(minViewNote < minNote) {
-			maxViewNote -= (minViewNote - minNote);
-			minViewNote = minNote;
-		}
-		if(maxViewNote > maxNote) {
-			minViewNote -= (maxViewNote - maxNote);
-			maxViewNote = maxNote;
-		}
-		System.out.println(minViewNote + " " + maxViewNote);
-		refreshView();
-	}
-	
+
 	public static void newControlPointHarmonic() {
 		//activeControlPointHarmonicID = randomIDGenerator.nextLong();
 		//harmonicIDToControlPointHarmonic.put(activeControlPointHarmonicID, new Harmonic(activeControlPointHarmonicID));

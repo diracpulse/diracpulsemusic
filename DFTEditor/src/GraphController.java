@@ -2,6 +2,7 @@
 import java.awt.Rectangle;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.TreeMap;
 
 import javax.swing.JComboBox;
@@ -39,15 +40,23 @@ public class GraphController implements MouseListener, ActionListener {
 	    	return;
 	    }
 	    if(e.isControlDown()) {
-	    	GraphEditor.zoomInX(x);
-	    	return;
-	    }
-	    if(e.isShiftDown()) {
-	    	if(GraphView.yView == GraphView.YView.AMPLITUDE) GraphEditor.zoomInAmplitude(y);
-	    	if(GraphView.yView == GraphView.YView.FREQUENCY) GraphEditor.zoomInFrequency(y);
+	    	// Zoom in
+	    	if(GraphView.yView == GraphView.YView.AMPLITUDE) GraphEditor.zoomInAmplitude(y, 2.0);
+	    	if(GraphView.yView == GraphView.YView.FREQUENCY) GraphEditor.zoomInFrequencyY(y, 2.0);
+	    	if(GraphView.xView == GraphView.XView.TIME) GraphEditor.zoomInTime(x, 2.0);
+	    	if(GraphView.xView == GraphView.XView.FREQUENCY) GraphEditor.zoomInFrequencyX(x, 2.0);
+	    	GraphEditor.refreshView();
 	    	return;
 	    }
 	    if(e.isAltDown()) {
+	    	if(GraphView.yView == GraphView.YView.AMPLITUDE) GraphEditor.zoomOutAmplitude(y, 2.0);
+	    	if(GraphView.yView == GraphView.YView.FREQUENCY) GraphEditor.zoomOutFrequencyY(y, 2.0);
+	    	if(GraphView.xView == GraphView.XView.TIME) GraphEditor.zoomOutTime(x, 2.0);
+	    	if(GraphView.xView == GraphView.XView.FREQUENCY) GraphEditor.zoomOutFrequencyX(x, 2.0);
+	    	GraphEditor.refreshView();
+	    	return;
+	    }
+	    if(e.isShiftDown()) {
     		int time = (int) Math.round(GraphUtils.screenXToValue(x));
     		int note = (int) Math.round(GraphUtils.screenYToValue(y));
 	    	return;
@@ -58,7 +67,7 @@ public class GraphController implements MouseListener, ActionListener {
 	    	int minRangeSLA = (int) Math.floor(GraphUtils.screenYToValue(y + 3) * GraphEditor.logAmplitudeScale);
 	    	int maxRangeSLA = (int) Math.ceil(GraphUtils.screenYToValue(y - 3) * GraphEditor.logAmplitudeScale);	  
 	    	System.out.println(GraphUtils.screenYToValue(y));
-	    	ArrayList<Long> harmonicIDs = new ArrayList<Long>();
+	    	HashSet<Long> harmonicIDs = new HashSet<Long>();
 	    	for(int loopSLA = minRangeSLA;  loopSLA < maxRangeSLA; loopSLA++) {
 	    		for(int testTime = minRangeTime; testTime < maxRangeTime; testTime++) {
 	    			if(!GraphEditor.timeToScaledLogAmplitudeToHarmonicIDs.containsKey(testTime)) continue;
@@ -83,7 +92,7 @@ public class GraphController implements MouseListener, ActionListener {
 	    	int maxRangeTime = (int) Math.ceil(GraphUtils.screenXToValue(x + 3));
 	    	int minRangeNote = (int) Math.floor(GraphUtils.screenYToValue(y + 3));
 	    	int maxRangeNote = (int) Math.ceil(GraphUtils.screenYToValue(y - 3));
-	    	ArrayList<Long> harmonicIDs = new ArrayList<Long>();
+	    	HashSet<Long> harmonicIDs = new HashSet<Long>();
 	    	for(int time = minRangeTime; time <= maxRangeTime; time++) {
 	    		for(int note = minRangeNote; note <= maxRangeNote; note++) {
 	    			if(!GraphEditor.timeToNoteToHarmonicIDs.containsKey(time)) continue;
@@ -109,7 +118,7 @@ public class GraphController implements MouseListener, ActionListener {
 	    	int minRangeSLA = (int) Math.floor(GraphUtils.screenYToValue(y + 3) * GraphEditor.logAmplitudeScale);
 	    	int maxRangeSLA = (int) Math.ceil(GraphUtils.screenYToValue(y - 3) * GraphEditor.logAmplitudeScale);	
 	    	System.out.println(GraphUtils.screenYToValue(y));
-	    	ArrayList<Long> harmonicIDs = new ArrayList<Long>();
+	    	HashSet<Long> harmonicIDs = new HashSet<Long>();
 	    	for(int loopSLA = minRangeSLA;  loopSLA < maxRangeSLA; loopSLA++) {
 	    		for(int testNote = minRangeNote; testNote < maxRangeNote; testNote++) {
 	    			if(!GraphEditor.noteToScaledLogAmplitudeToHarmonicIDs.containsKey(testNote)) continue;
