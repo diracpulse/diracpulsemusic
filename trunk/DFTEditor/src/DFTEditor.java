@@ -37,7 +37,7 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaLeft;
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaRight;
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic = null;
-	private static HashSet<Long> selectedHarmonicIDs;
+	public static HashSet<Long> selectedHarmonicIDs;
 	public static HashSet<Integer> selectedNotes;
 	//public static int minHarmonicLength = 1;
 	public static double minLogAmplitudeThreshold = 1.0; // used by autoSelect
@@ -266,7 +266,7 @@ public class DFTEditor extends JFrame implements AbstractEditor {
         refreshAllViews();
 	}
 	
-	public static void selectHarmonics(ArrayList<Long> harmonicIDs) {
+	public static void selectHarmonics(HashSet<Long> harmonicIDs) {
 		if(harmonicIDs == null) return;
 		for(long harmonicID: harmonicIDs) {
 			if(selectedHarmonicIDs.contains(harmonicID)) continue;
@@ -279,7 +279,7 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 		refreshAllViews();
 	}
 	
-	public static void unselectHarmonics(ArrayList<Long> harmonicIDs) {
+	public static void unselectHarmonics(HashSet<Long> harmonicIDs) {
 		if(harmonicIDs == null) return;
 		for(long harmonicID: harmonicIDs) {	
 			if(selectedHarmonicIDs.contains(harmonicID)) continue;
@@ -289,6 +289,8 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	}
 	
 	public static HashSet<Long> getSelectedHarmonicIDs() {
+		// this is done to avoid a null error in FDSynthTools at: "if(!harmonic.isSynthesized()) continue;"
+		if(selectedHarmonicIDs == null) return new HashSet<Long>();
 		return selectedHarmonicIDs;
 	}
 	
@@ -311,6 +313,18 @@ public class DFTEditor extends JFrame implements AbstractEditor {
         JOptionPane.showMessageDialog(this, "Finished saving: " + fileNameTrimmed + ".selected");
 	}
 	
+	static void sliceAtTime(int time) {
+		int numFreqs = DFTEditor.amplitudesLeft[0].length;
+		for(int freq = 0; freq < numFreqs; freq++) {
+			DFTEditor.amplitudesLeft[time][freq] = 0.0f;
+		}
+		numFreqs = DFTEditor.amplitudesRight[0].length;
+		for(int freq = 0; freq < numFreqs; freq++) {
+			DFTEditor.amplitudesRight[time][freq] = 0.0f;
+		}
+		SynthTools.createHarmonics();
+	}
+
     public DFTEditor() {
     	//FileConvert.wavImportAll();
         view = new DFTView();

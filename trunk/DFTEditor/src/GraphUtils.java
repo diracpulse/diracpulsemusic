@@ -27,8 +27,8 @@ public class GraphUtils {
 	}
 	
 	public static double screenXToValue(double x) {
-		if(x < 0) x = 0;
-		if(x > GraphEditor.view.getWidth()) x = GraphEditor.view.getWidth();
+		//if(x < 0) x = 0;
+		//if(x > GraphEditor.view.getWidth()) x = GraphEditor.view.getWidth();
 		double pixelsPerValue = 0.0;
 		if(GraphView.xView == GraphView.XView.TIME) pixelsPerValue = (double) GraphEditor.view.getWidth() / (GraphEditor.maxViewTime - GraphEditor.minViewTime);
 		if(GraphView.xView == GraphView.XView.FREQUENCY) pixelsPerValue = (double) GraphEditor.view.getWidth() / (GraphEditor.maxViewNote - GraphEditor.minViewNote);
@@ -38,8 +38,8 @@ public class GraphUtils {
 	}
 	
 	public static double screenYToValue(double y) {
-		if(y < 0) y = 0;
-		if(y > GraphEditor.view.getHeight()) y = GraphEditor.view.getHeight();
+		//if(y < 0) y = 0;
+		//if(y > GraphEditor.view.getHeight()) y = GraphEditor.view.getHeight();
 		double pixelsPerValue = 0.0;
 		if(GraphView.yView == GraphView.YView.AMPLITUDE) pixelsPerValue = (double) GraphEditor.view.getHeight() / (GraphEditor.maxViewLogAmplitude - GraphEditor.minViewLogAmplitude);
 		if(GraphView.yView == GraphView.YView.FREQUENCY) pixelsPerValue = (double) GraphEditor.view.getHeight() / (GraphEditor.maxViewNote - GraphEditor.minViewNote);

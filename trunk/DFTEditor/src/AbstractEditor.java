@@ -3,7 +3,7 @@ import java.util.TreeMap;
 
 public interface AbstractEditor {
 	
-	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic = null;
+	//public static TreeMap<Long, Harmonic> harmonicIDToHarmonic = null;
 	abstract void drawPlayTime(int offsetInMillis);
 	abstract int getMaxViewTimeInMillis();
 	abstract void createPCMDataLinear();

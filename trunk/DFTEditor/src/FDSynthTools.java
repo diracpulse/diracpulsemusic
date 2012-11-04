@@ -22,7 +22,7 @@ class FDSynthTools {
 		if(DFTEditor.getSelectedHarmonicIDs() == null || DFTEditor.getSelectedHarmonicIDs().isEmpty()) return;
 		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
 		for(long harmonicID: DFTEditor.getSelectedHarmonicIDs()) {
-			Harmonic harmonic = FDEditor.harmonicIDToHarmonic.get(harmonicID);
+			Harmonic harmonic = DFTEditor.harmonicIDToHarmonic.get(harmonicID);
 			if(!harmonic.isSynthesized()) continue;
 			synthHarmonics.add(harmonic);
 		}
@@ -35,7 +35,7 @@ class FDSynthTools {
 		if(DFTEditor.getSelectedHarmonicIDs() == null || DFTEditor.getSelectedHarmonicIDs().isEmpty()) return;
 		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
 		for(long harmonicID: DFTEditor.getSelectedHarmonicIDs()) {
-			Harmonic harmonic = FDEditor.harmonicIDToHarmonic.get(harmonicID);
+			Harmonic harmonic = DFTEditor.harmonicIDToHarmonic.get(harmonicID);
 			if(!harmonic.isSynthesized()) continue;
 			synthHarmonics.add(harmonic);
 		}
@@ -48,7 +48,7 @@ class FDSynthTools {
 		if(DFTEditor.getSelectedHarmonicIDs() == null || DFTEditor.getSelectedHarmonicIDs().isEmpty()) return;
 		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
 		for(long harmonicID: DFTEditor.getSelectedHarmonicIDs()) {
-			Harmonic harmonic = FDEditor.harmonicIDToHarmonic.get(harmonicID);
+			Harmonic harmonic = DFTEditor.harmonicIDToHarmonic.get(harmonicID);
 			if(!harmonic.isSynthesized()) continue;
 			synthHarmonics.add(harmonic);
 		}
@@ -61,7 +61,7 @@ class FDSynthTools {
 		if(DFTEditor.getSelectedHarmonicIDs() == null || DFTEditor.getSelectedHarmonicIDs().isEmpty()) return;
 		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
 		for(long harmonicID: DFTEditor.getSelectedHarmonicIDs()) {
-			Harmonic harmonic = FDEditor.harmonicIDToHarmonic.get(harmonicID);
+			Harmonic harmonic = DFTEditor.harmonicIDToHarmonic.get(harmonicID);
 			if(!harmonic.isSynthesized()) continue;
 			synthHarmonics.add(new Harmonic(harmonic.getHarmonicID()));
 			for(FDData data: harmonic.getPureSineHarmonic(1.0, playSpeed)) {
