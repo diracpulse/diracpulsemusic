@@ -46,19 +46,19 @@ public class FileOutput {
 			}
 			for(String exportFileName: exportFileNames) {
 				FileInput.ReadBinaryFileData(parent, exportFileName + ".mono5ms", "mono5ms");
-				OutputHarmonicsToFile(exportFileName);
+				//OutputHarmonicsToFile(exportFileName);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public static void OutputHarmonicsToFile(String fileName) {
+	public static void OutputHarmonicsToFile(String fileName, ArrayList<Harmonic> harmonics) {
 		DFTEditor.Channel saveChannel = DFTEditor.currentChannel;
 		try {
 	    	DataOutputStream selectedOut = new DataOutputStream(new
 		            BufferedOutputStream(new FileOutputStream(new String(fileName + ".harmonics"))));
-			OutputHarmonicsToFile(selectedOut);
+			OutputHarmonicsToFile(selectedOut, harmonics);
 		} catch (Exception e) {
 			System.out.println("Exception in FileOutput.OutputSelectedToFile(filename)");
 			e.printStackTrace();
@@ -68,9 +68,9 @@ public class FileOutput {
 		DFTEditor.currentChannel = saveChannel;
 	}
 	
-	public static void OutputHarmonicsToFile(DataOutputStream harmonicsOut) {
+	public static void OutputHarmonicsToFile(DataOutputStream harmonicsOut, ArrayList<Harmonic> harmonics) {
 		try {
-            for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonic.values()) {
+            for(Harmonic harmonic: harmonics) {
             	for(FDData data: harmonic.getAllData()) {
             		float amp = (float) data.getLogAmplitude();
             		harmonicsOut.writeByte(data.getChannelAsByte());

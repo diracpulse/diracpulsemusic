@@ -64,7 +64,11 @@ public class FDActionHandler extends JPanel {
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			//parent.saveSelectedHarmonicsToFile();
+			ArrayList<Harmonic> harmonics = new ArrayList<Harmonic>();
+			for(long harmonicID: DFTEditor.selectedHarmonicIDs) {
+				harmonics.add(DFTEditor.harmonicIDToHarmonic.get(harmonicID));
+			}
+			parent.saveHarmonicsToFile(harmonics);
 		}
 	}	
 

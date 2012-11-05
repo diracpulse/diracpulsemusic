@@ -142,6 +142,7 @@ public class GraphEditor extends JFrame implements AbstractEditor {
         setSize(1500, 800);
         randomIDGenerator = new Random();
         initVariables();
+        this.setTitle("GraphEditor: [no file]");
     }
     
 	private static void createAndShowGUI() {
