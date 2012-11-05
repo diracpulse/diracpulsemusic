@@ -89,7 +89,7 @@ public class ActionHandler extends JPanel {
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Save Selected");
-			parent.saveHarmonicsToFile();
+			parent.saveHarmonicsToFile(new ArrayList<Harmonic>(DFTEditor.harmonicIDToHarmonic.values()));
 		}
 	}
 		

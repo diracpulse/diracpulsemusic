@@ -102,6 +102,7 @@ public class FDEditor extends JFrame implements AbstractEditor {
         controller.setView(view);
         add(view);
         setSize(1500, 800);
+        this.setTitle("FDEditor: [no file]");
     }
     
 	private static void createAndShowGUI() {
@@ -219,6 +220,12 @@ public class FDEditor extends JFrame implements AbstractEditor {
 	public static int noteToFreq(int note) {
 		return maxNote - note;
 	}
-
+	
+	public void saveHarmonicsToFile(ArrayList<Harmonic> harmonics) {
+		String fileName = DFTEditor.dftFileName;
+		String fileNameTrimmed = fileName.substring(0, fileName.length() - 4); // ".wav"
+        FileOutput.OutputHarmonicsToFile(fileNameTrimmed + ".selected", harmonics);
+        JOptionPane.showMessageDialog(this, "Finished saving: " + fileNameTrimmed + ".selected");
+	}
 
 }

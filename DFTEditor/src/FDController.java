@@ -95,9 +95,11 @@ public class FDController implements MouseListener, ActionListener {
 		int loopTime = time;
 		HashSet<Long> harmonicIDs = new HashSet<Long>();
 		while(true) {
+			int innerNote = note;
 			if(!FDEditor.timeToNoteToData.containsKey(loopTime)) break;
 			if(!FDEditor.timeToNoteToData.get(loopTime).containsKey(note)) break;
 			for(FDData data: FDEditor.timeToNoteToData.get(loopTime).get(note)) {
+				if(!DFTEditor.selectedNotes.contains(data.getNote())) DFTEditor.selectedNotes.add(data.getNote());
 				if(harmonicIDs.contains(data.getHarmonicID())) continue;
 				harmonicIDs.add(data.getHarmonicID());
 			}
@@ -109,6 +111,7 @@ public class FDController implements MouseListener, ActionListener {
 			if(!FDEditor.timeToNoteToData.containsKey(loopTime)) break;
 			if(!FDEditor.timeToNoteToData.get(loopTime).containsKey(note)) break;
 			for(FDData data: FDEditor.timeToNoteToData.get(loopTime).get(note)) {
+				if(!DFTEditor.selectedNotes.contains(data.getNote())) DFTEditor.selectedNotes.add(data.getNote());
 				if(harmonicIDs.contains(data.getHarmonicID())) continue;
 				harmonicIDs.add(data.getHarmonicID());
 			}

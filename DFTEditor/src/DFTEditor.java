@@ -249,6 +249,7 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	}
 
 	public void FileDFT(boolean prompt) {
+		newFileData();
         if(prompt || dftFileName == null) dftFileName = FileTools.PromptForFileOpenWAV(view);
         DFT.FileDFTMatrix(dftFileName);
     	SynthTools.refresh = true;
@@ -256,6 +257,9 @@ public class DFTEditor extends JFrame implements AbstractEditor {
     	ActionHandler.refreshAll();
         parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonic);
         parent.fdEditorFrame.addHarmonicsToFDEditor(harmonicIDToHarmonic);
+        parent.graphEditorFrame.setTitle("GraphEditor: " + dftFileName);
+        parent.fdEditorFrame.setTitle("FDEditor: " + dftFileName);
+        this.setTitle("DFTEditor: " + dftFileName);
         refreshAllViews();
 	}
 	
@@ -306,11 +310,11 @@ public class DFTEditor extends JFrame implements AbstractEditor {
         JOptionPane.showMessageDialog(this, "Finished exporting all files");
 	}
 	
-	public void saveHarmonicsToFile() {
-		String fileName = this.getTitle();
-		String fileNameTrimmed = fileName.substring(0, fileName.length() - 8); // ".mono5ms"
-        FileOutput.OutputHarmonicsToFile(fileNameTrimmed);
-        JOptionPane.showMessageDialog(this, "Finished saving: " + fileNameTrimmed + ".selected");
+	public void saveHarmonicsToFile(ArrayList<Harmonic> harmonics) {
+		String fileName = dftFileName;
+		String fileNameTrimmed = fileName.substring(0, fileName.length() - 4); // ".wav"
+        FileOutput.OutputHarmonicsToFile(fileNameTrimmed + ".allData", harmonics);
+        JOptionPane.showMessageDialog(this, "Finished saving: " + fileNameTrimmed + ".allData");
 	}
 	
 	static void sliceAtTime(int time) {
@@ -336,6 +340,7 @@ public class DFTEditor extends JFrame implements AbstractEditor {
         add(view);
         setSize(1500, 800);
         randomIDGenerator = new Random();
+        this.setTitle("DFTEditor: [no file]");
         //openFileInDFTEditor();
         //FileDFT(true);
         //parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonicMono);
