@@ -4,68 +4,100 @@ import java.util.ArrayList;
 public class FastSynth {
 	
 	public static int numSamples = 0;
-	public static double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
-	public static double[] sharedPCMData;
-	static float[] sinTable = null;
-	static float sinTableLength = 10000;
+	private static float[] sharedPCMData;
+	private static double timeToSample;
+	private static int grainSize = 100 / FDData.timeStepInMillis;
+	private static int minNoiseNote = 10 * FDData.noteBase;
+	private static double[][] noiseBanks = null;
 	
-	static void createSinTable() {
-		int sinTableLength = 44100;
-		double phaseStep = (2.0 * Math.PI) / sinTableLength;
-		sinTable = new float[sinTableLength];
-		for(int index = 0; index < sinTableLength; index++) {
-			sinTable[index] = (float) Math.sin(index * phaseStep);
+	public static float[] synthHarmonicsLinear(FDData.Channel channel, ArrayList<Harmonic> harmonics) {
+		initSharedPCMData(channel, harmonics);
+		for(Harmonic harmonic: harmonics) {
+			if(harmonic.getChannel() != channel) continue; 
+			synthHarmonicLinear(harmonic);
 		}
-	}
-	
-	private static double sinLookup(double phase) {
-		int index = (int) Math.round(phase / (2.0 * Math.PI) * sinTableLength);
-		index %= sinTableLength;
-		return sinTable[index];
-	}
-	
-	
-	private static double sawTooth(double phase) {
-		phase /= 2.0 * Math.PI;
-		phase -= Math.floor(phase);
-		return (phase - 0.5) / 2.0;
-	}
-	
-	private static double triangle(double phase) {
-		phase /= 2.0 * Math.PI;
-		phase -= Math.floor(phase);
-		if(phase < 0.25) return phase * 4;
-		if(phase < 0.75) return (0.5 - phase) * 4;
-		return (phase - 1.0) * 4;
-	}
-	
-	public static double[] synthHarmonicsLinear(ArrayList<Harmonic> harmonics) {
-		initSharedPCMData(harmonics);
-		for(Harmonic harmonic: harmonics) synthHarmonicLinear(harmonic);
 		return sharedPCMData;
 	}
 	
-	public static double[] synthHarmonicsLinearCubicSpline(ArrayList<Harmonic> harmonics) {
-		initSharedPCMData(harmonics);
-		for(Harmonic harmonic: harmonics) synthHarmonicLinearCubicSpline(harmonic);
+	public static float[] synthHarmonicsLinearCubicSpline(FDData.Channel channel, ArrayList<Harmonic> harmonics) {
+		initSharedPCMData(channel, harmonics);
+		for(Harmonic harmonic: harmonics) {
+			if(harmonic.getChannel() != channel) continue;
+			synthHarmonicLinearCubicSpline(harmonic);
+		}
 		return sharedPCMData;
 	}
 	
-	public static void initSharedPCMData(ArrayList<Harmonic> harmonics) {
-		if(sinTable == null) createSinTable();
+	public static float[] synthHarmonicsLinearNoise(FDData.Channel channel, ArrayList<Harmonic> harmonics) {
+		initNoiseBanks();
+		initSharedPCMData(channel, harmonics);
+		for(Harmonic harmonic: harmonics) {
+			if(harmonic.getChannel() != channel) continue;
+			synthHarmonicLinearNoise(harmonic);
+		}
+		return sharedPCMData;
+	}
+	
+	private static void initSharedPCMData(FDData.Channel channel, ArrayList<Harmonic> harmonics) {
+		timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
 		double maxEndTime = 0;
 		for(Harmonic harmonic: harmonics) {
-			double harmonicEndTime = Math.ceil(harmonic.getEnd().getTime());
+			if(harmonic.getChannel() != channel) continue;
+			double harmonicEndTime = Math.ceil(harmonic.getEndTime());
 			if(harmonicEndTime > maxEndTime) maxEndTime = harmonicEndTime;
 		}
 		int numSamples = (int) Math.ceil(maxEndTime * timeToSample);
-		sharedPCMData = new double[numSamples];
-		for(int index = 0; index < numSamples; index++) sharedPCMData[index] = 0.0;
-		System.out.println("FastSynth.initSharedPCMData() numSamples = " + numSamples);
+		sharedPCMData = new float[numSamples];
+		for(int index = 0; index < numSamples; index++) sharedPCMData[index] = 0.0f;
 	}
 	
-	public static void synthHarmonicLinear(Harmonic harmonic) {
-		ArrayList<FDData> dataArray = new ArrayList<FDData>(harmonic.getAllData());
+	private static void initNoiseBanks() {
+		timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
+		int grainSizeInSamples = (int) Math.ceil(timeToSample * grainSize);
+		int numNoiseFreqs = FDData.getMaxNote() - minNoiseNote + 1;
+		noiseBanks = new double[numNoiseFreqs][grainSizeInSamples];
+		for(int freq = 0; freq < numNoiseFreqs; freq++) {
+			noiseBanks[freq] = Filter.getFilteredNoise(grainSizeInSamples, FDData.getMaxNote() - freq, 1.0);
+		}
+	}
+	
+	private static void synthHarmonicLinearNoise(Harmonic harmonic) {
+		if(harmonic.getAllDataRaw().size() > grainSize || harmonic.getAverageNote() < minNoiseNote) {
+			synthHarmonicLinear(harmonic);
+			return;
+		}
+		double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
+		ArrayList<FDData> dataArray = new ArrayList<FDData>(harmonic.getAllDataInterpolated().values());
+		int maxArrayIndex = dataArray.size();
+		double currentPhase = 0.0;
+		int harmonicStart = (int) Math.round(harmonic.getStartTime() * timeToSample);
+		int duration = (int) Math.round(harmonic.getLength() * timeToSample);
+		double[] noise = noiseBanks[FDData.getMaxNote() - harmonic.getAverageNote()];
+		for(int arrayIndex = 0; arrayIndex < maxArrayIndex - 1; arrayIndex++) {
+			int lowerTime = (int) Math.round(dataArray.get(arrayIndex).getTime() * timeToSample);
+			int upperTime = (int) Math.round(dataArray.get(arrayIndex + 1).getTime() * timeToSample);
+			double lowerAmplitude = Math.pow(2.0, dataArray.get(arrayIndex).getLogAmplitude());
+			double upperAmplitude = Math.pow(2.0, dataArray.get(arrayIndex + 1).getLogAmplitude());
+			double lowerFreq = Math.pow(2.0, (double) dataArray.get(arrayIndex).getNote() / FDData.noteBase);
+			double upperFreq = Math.pow(2.0, (double) dataArray.get(arrayIndex + 1).getNote() / FDData.noteBase);
+			double lowerDeltaPhase = (lowerFreq / SynthTools.sampleRate) * SynthTools.twoPI;
+			double upperDeltaPhase = (upperFreq / SynthTools.sampleRate) * SynthTools.twoPI;
+			double ampSlope = (upperAmplitude - lowerAmplitude) / (upperTime - lowerTime);
+			double deltaPhaseSlope = (upperDeltaPhase - lowerDeltaPhase) / (upperTime - lowerTime);
+			for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
+				double amplitude = lowerAmplitude + (timeIndex - lowerTime) * ampSlope;
+				double deltaPhase = lowerDeltaPhase + (timeIndex - lowerTime) * deltaPhaseSlope;
+				sharedPCMData[timeIndex] += noise[timeIndex - harmonicStart] * amplitude;
+				currentPhase += deltaPhase;
+				if(currentPhase > SynthTools.twoPI) currentPhase -= SynthTools.twoPI;
+			}	
+		}
+	}
+	
+	private static void synthHarmonicLinear(Harmonic harmonic) {
+		double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
+		ArrayList<FDData> dataArray = new ArrayList<FDData>(harmonic.getAllDataInterpolated().values());
+		if(dataArray.size() < 2) return; // this is here to make identical to cubic spline
 		int maxArrayIndex = dataArray.size();
 		double currentPhase = 0.0;
 		for(int arrayIndex = 0; arrayIndex < maxArrayIndex - 1; arrayIndex++) {
@@ -73,17 +105,13 @@ public class FastSynth {
 			int upperTime = (int) Math.round(dataArray.get(arrayIndex + 1).getTime() * timeToSample);
 			double lowerAmplitude = Math.pow(2.0, dataArray.get(arrayIndex).getLogAmplitude());
 			double upperAmplitude = Math.pow(2.0, dataArray.get(arrayIndex + 1).getLogAmplitude());
-			double lowerFreq = Math.pow(2.0, (double) dataArray.get(arrayIndex).getNoteComplete() / FDData.noteBase);
-			double upperFreq = Math.pow(2.0, (double) dataArray.get(arrayIndex + 1).getNoteComplete() / FDData.noteBase);
+			double lowerFreq = Math.pow(2.0, (double) dataArray.get(arrayIndex).getNote() / FDData.noteBase);
+			double upperFreq = Math.pow(2.0, (double) dataArray.get(arrayIndex + 1).getNote() / FDData.noteBase);
 			double lowerDeltaPhase = (lowerFreq / SynthTools.sampleRate) * SynthTools.twoPI;
 			double upperDeltaPhase = (upperFreq / SynthTools.sampleRate) * SynthTools.twoPI;
 			double ampSlope = (upperAmplitude - lowerAmplitude) / (upperTime - lowerTime);
 			double deltaPhaseSlope = (upperDeltaPhase - lowerDeltaPhase) / (upperTime - lowerTime);
 			for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
-				if(timeIndex >= sharedPCMData.length) {
-					System.out.println("FastSynth.synthHarmonicLinear() timeIndex = " + timeIndex);
-					continue;
-				}
 				double amplitude = lowerAmplitude + (timeIndex - lowerTime) * ampSlope;
 				double deltaPhase = lowerDeltaPhase + (timeIndex - lowerTime) * deltaPhaseSlope;
 				sharedPCMData[timeIndex] += Math.sin(currentPhase) * amplitude;
@@ -93,16 +121,17 @@ public class FastSynth {
 		}
 	}
 	
-	public static void synthHarmonicLinearCubicSpline(Harmonic harmonic) {
-		ArrayList<FDData> dataArray = new ArrayList<FDData>(harmonic.getAllData());
-		if(dataArray.size() < 2) return;
+	private static void synthHarmonicLinearCubicSpline(Harmonic harmonic) {
+		double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
+		ArrayList<FDData> dataArray = new ArrayList<FDData>(harmonic.getAllDataInterpolated().values());
+		if(dataArray.size() < 2) return;  // this is here because of cubic spline
 		double[] times = new double[dataArray.size()];
 		double[] amps = new double[dataArray.size()];
 		double[] freqs = new double[dataArray.size()];
 		for(int index = 0; index < dataArray.size(); index++) {
 			times[index] = Math.round(dataArray.get(index).getTime() * timeToSample);
 			amps[index] = dataArray.get(index).getAmplitude();
-			freqs[index] = Math.pow(2.0, (double) dataArray.get(index).getNoteComplete() / FDData.noteBase);
+			freqs[index] = Math.pow(2.0, (double) dataArray.get(index).getNote() / FDData.noteBase);
 		}
 		CubicSpline timeToFreq = new CubicSpline(times, freqs);
 		CubicSpline timeToAmp = new CubicSpline(times, amps);

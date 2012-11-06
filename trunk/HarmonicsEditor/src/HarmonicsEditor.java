@@ -5,7 +5,7 @@ import java.awt.*;
 import java.util.*;
 import java.io.*;
 
-public class HarmonicsEditor extends JFrame {
+public class HarmonicsEditor extends JFrame implements AbstractEditor {
 	
 	/**
 	 * 
@@ -30,13 +30,12 @@ public class HarmonicsEditor extends JFrame {
 	public static HarmonicsActionHandler actionHandler;
 	public static JToolBar navigationBar;
 	public static ControlPanel controlPanel;	
-	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicMono;
-	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicLeft;
-	public static TreeMap<Long, Harmonic> harmonicIDToHarmonicRight;
+	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic;
 	public static TreeSet<Integer> averageNotes;
 	//public static TreeMap<Integer, TreeMap<Integer, FDData>>  timeToNoteToData;
 	public static ArrayList<Harmonic>  harmonics;
 	public static double minLogAmplitudeThreshold = 0.0;
+	public static int minLengthThreshold = 1;
 	public static int bpm = 120;
 	public static double maxAmplitude = 14.0;
 	public static String fileName;
@@ -98,110 +97,49 @@ public class HarmonicsEditor extends JFrame {
 		navigationBar.add(button);
 	}
 
-	public static TreeMap<Long, Harmonic> getHarmonicIDToHarmonic() {
-		if(currentChannel == Channel.STEREO || currentChannel == Channel.MONO) return harmonicIDToHarmonicMono;
-		if(currentChannel == Channel.LEFT) return harmonicIDToHarmonicLeft;
-		if(currentChannel == Channel.RIGHT) return harmonicIDToHarmonicRight;
-		return null;
-	}
-	
 	public void openFileInHarmonicsEditor(String extension) {
         fileName = FileTools.PromptForFileOpen(view, extension);
         HarmonicsFileInput.ReadBinaryFileData(fileName);
-        //removeNullHarmonics();
-        if(harmonicIDToHarmonicMono.isEmpty()) {
-        	harmonicIDToHarmonicMono = null;
-        	return;
-        }
-        if(harmonicIDToHarmonicLeft.isEmpty()) {
-        	harmonicIDToHarmonicLeft = null;
-        	return;
-        }
-        if(harmonicIDToHarmonicRight.isEmpty()) {
-        	harmonicIDToHarmonicRight = null;
-        	return;
-        }     
         this.setTitle(fileName);
-        //System.out.println(fileName);
-        //view.repaint();
 	}
 	
 	public void removeNullHarmonics() {
-		for(long harmonicID: harmonicIDToHarmonicMono.keySet()) {
-			if(harmonicIDToHarmonicMono.get(harmonicID) == null) {
+		for(long harmonicID: harmonicIDToHarmonic.keySet()) {
+			if(harmonicIDToHarmonic.get(harmonicID) == null) {
 				System.out.println("null found");
-				harmonicIDToHarmonicMono.remove(harmonicID);
+				harmonicIDToHarmonic.remove(harmonicID);
 				continue;
 			}
-			if(!harmonicIDToHarmonicMono.get(harmonicID).containsData()) {
-				System.out.println("emptyHarmonicFound");
-				harmonicIDToHarmonicMono.remove(harmonicID);
-				continue;
-			}		
-		}
-		for(long harmonicID: harmonicIDToHarmonicLeft.keySet()) {
-			if(harmonicIDToHarmonicLeft.get(harmonicID) == null) {
-				System.out.println("null found");
-				harmonicIDToHarmonicLeft.remove(harmonicID);
-				continue;
-			}
-			if(!harmonicIDToHarmonicLeft.get(harmonicID).containsData()) {
-				System.out.println("emptyHarmonicFound");
-				harmonicIDToHarmonicLeft.remove(harmonicID);
-				continue;
-			}		
-		}
-		for(long harmonicID: harmonicIDToHarmonicRight.keySet()) {
-			if(harmonicIDToHarmonicRight.get(harmonicID) == null) {
-				System.out.println("null found");
-				harmonicIDToHarmonicRight.remove(harmonicID);
-				continue;
-			}
-			if(!harmonicIDToHarmonicRight.get(harmonicID).containsData()) {
-				System.out.println("emptyHarmonicFound");
-				harmonicIDToHarmonicRight.remove(harmonicID);
-				continue;
-			}		
 		}
 	}
 	
 	public void loadInstrument() {
 		openFileInHarmonicsEditor(".harmonics");
-		SoftSynth.harmonicIDToInstrumentHarmonicMono = harmonicIDToHarmonicMono;
-		SoftSynth.harmonicIDToInstrumentHarmonicLeft = harmonicIDToHarmonicLeft;
-		SoftSynth.harmonicIDToInstrumentHarmonicRight = harmonicIDToHarmonicRight;
+		SoftSynth.harmonicIDToInstrumentHarmonic = harmonicIDToHarmonic;
 		refreshView();
 	}
 	
 	public void loadKickDrum() {
 		openFileInHarmonicsEditor(".harmonics");
-		SoftSynth.harmonicIDToKickDrumHarmonicMono = harmonicIDToHarmonicMono;
-		SoftSynth.harmonicIDToKickDrumHarmonicLeft = harmonicIDToHarmonicLeft;
-		SoftSynth.harmonicIDToKickDrumHarmonicRight = harmonicIDToHarmonicRight;
+		SoftSynth.harmonicIDToKickDrumHarmonic = harmonicIDToHarmonic;
 		refreshView();
 	}
 	
 	public void loadHighFreq() {
 		openFileInHarmonicsEditor(".harmonics");
-		SoftSynth.harmonicIDToHighFreqHarmonicMono = harmonicIDToHarmonicMono;
-		SoftSynth.harmonicIDToHighFreqHarmonicLeft = harmonicIDToHarmonicLeft;
-		SoftSynth.harmonicIDToHighFreqHarmonicRight = harmonicIDToHarmonicRight;
+		SoftSynth.harmonicIDToHighFreqHarmonic = harmonicIDToHarmonic;
 		refreshView();
 	}
 	
 	public void loadBassSynth() {
 		openFileInHarmonicsEditor(".harmonics");
-		SoftSynth.harmonicIDToBassSynthHarmonicMono = harmonicIDToHarmonicMono;
-		SoftSynth.harmonicIDToBassSynthHarmonicLeft = harmonicIDToHarmonicLeft;
-		SoftSynth.harmonicIDToBassSynthHarmonicRight = harmonicIDToHarmonicRight;
+		SoftSynth.harmonicIDToBassSynthHarmonic = harmonicIDToHarmonic;
 		refreshView();
 	}
 	
 	public void loadSnare() {
 		openFileInHarmonicsEditor(".harmonics");
-		SoftSynth.harmonicIDToSnareHarmonicMono = harmonicIDToHarmonicMono;
-		SoftSynth.harmonicIDToSnareHarmonicLeft = harmonicIDToHarmonicLeft;
-		SoftSynth.harmonicIDToSnareHarmonicRight = harmonicIDToHarmonicRight;
+		SoftSynth.harmonicIDToSnareHarmonic = harmonicIDToHarmonic;
 		refreshView();
 	}
 
@@ -280,16 +218,10 @@ public class HarmonicsEditor extends JFrame {
 
 	public static void clearCurrentData() {
 		maxTime = 0;
-		harmonicIDToHarmonicMono = new TreeMap<Long, Harmonic>();
-		harmonicIDToHarmonicLeft = new TreeMap<Long, Harmonic>();
-		harmonicIDToHarmonicRight = new TreeMap<Long, Harmonic>();
+		harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
 	}
 	
-	public static void addData(FDData data, int channel) {
-		TreeMap<Long, Harmonic> harmonicIDToHarmonic = null;
-		if(channel == 0) harmonicIDToHarmonic = harmonicIDToHarmonicMono;
-		if(channel == 1) harmonicIDToHarmonic = harmonicIDToHarmonicLeft;
-		if(channel == 2) harmonicIDToHarmonic = harmonicIDToHarmonicRight;
+	public static void addData(FDData data) {
 		int time = data.getTime();
 		int note = data.getNote();
 		if(time > maxTime) maxTime = time;
@@ -303,13 +235,12 @@ public class HarmonicsEditor extends JFrame {
 	}
 	
 	public static void playSelectedDataInCurrentWindow(HarmonicsEditor parent) {
-		int endTime = leftX + view.getTimeAxisWidthInMillis() / timeStepInMillis;
 		// HACK: view.getTimeAxisWidthInMillis() * 2; TIMES TWO IS HACK TO PLAY ALL
-		new PlayDataInWindow(parent, leftX, endTime, 50, view.getTimeAxisWidthInMillis() * 2);
+		new PlayDataInWindow(parent, 50, maxTime * FDData.timeStepInMillis);
 	}
 
 	public static void drawPlayTime(int offsetInMillis, int refreshRateInMillis) {
-		view.drawPlayTime(offsetInMillis, refreshRateInMillis);
+		view.drawPlayTime(offsetInMillis);
 		refreshView();
 	}
 	
@@ -330,15 +261,39 @@ public class HarmonicsEditor extends JFrame {
 	}
 	
 	public static void flattenAllHarmonics() {
-		for(long harmonicID: harmonicIDToHarmonicMono.keySet()) {
-			harmonicIDToHarmonicMono.get(harmonicID).flattenHarmonic();
-		}
-		for(long harmonicID: harmonicIDToHarmonicLeft.keySet()) {
-			harmonicIDToHarmonicLeft.get(harmonicID).flattenHarmonic();
-		}
-		for(long harmonicID: harmonicIDToHarmonicRight.keySet()) {
-			harmonicIDToHarmonicRight.get(harmonicID).flattenHarmonic();
+		for(long harmonicID: harmonicIDToHarmonic.keySet()) {
+			harmonicIDToHarmonic.get(harmonicID).flattenHarmonic();
 		}
 	}
+
+	public int getMaxViewTimeInMillis() {
+		return leftX * FDData.timeStepInMillis;
+	}
+	
+	public void playDataInCurrentWindow() {
+		new PlayDataInWindow(this, 50, getMaxViewTimeInMillis());
+	}
+	
+	public void drawPlayTime(int offsetInMillis) {
+		view.drawPlayTime(offsetInMillis);
+		refreshView();
+	}
+	
+	public void createPCMDataLinear() {
+		SynthTools.createPCMDataLinear();
+	}
+	
+	public void createPCMDataLinearCubicSpline() {
+		SynthTools.createPCMDataLinearCubicSpline();
+	}
+	
+	public void createPCMDataLinearNoise() {
+		SynthTools.createPCMDataLinearNoise();
+	}
+	
+	public void playPCMData() {
+		SynthTools.playPCMData();
+	}
+	
 
 }
