@@ -15,19 +15,19 @@ public class AudioPlayer extends Thread {
 	final boolean bigEndian = false;
 	final double fullScale = Short.MAX_VALUE - 1;
 	private boolean stereo;
-	private double[] mono;
-	private double[] left;
-	private double[] right;
+	private float[] mono;
+	private float[] left;
+	private float[] right;
 	private double masterVolume;
 
 	
-	AudioPlayer (HarmonicsEditor parent, double[] mono, double masterVolume) {
+	AudioPlayer (float[] mono, double masterVolume) {
 		this.stereo = false;
 		this.mono = mono;
 		this.masterVolume = masterVolume;
 	}
 	
-	AudioPlayer (HarmonicsEditor parent, double[] left, double[] right, double masterVolume) {
+	AudioPlayer (float[] left, float[] right, double masterVolume) {
 		this.stereo = true;
 		this.left = left;
 		this.right = right;
@@ -69,10 +69,11 @@ public class AudioPlayer extends Thread {
 		line.write(stereo, 0, stereo.length);
 	}
 	
-	public void PlayBuffer(double[] mono, double masterVolume) {
+	public void PlayBuffer(float[] mono, double masterVolume) {
+		if(mono == null) return;
 		final int numberOfSamples = mono.length;
-		double[] left = new double[numberOfSamples];
-		double[] right = new double[numberOfSamples];
+		float[] left = new float[numberOfSamples];
+		float[] right = new float[numberOfSamples];
 		int index;
 		for (index = 0; index < numberOfSamples; index++) { 
 			left[index] = mono[index];
@@ -82,7 +83,8 @@ public class AudioPlayer extends Thread {
 	}
 	
 	/* NOTE: this version of PlayBuffer scales maxAmplitude to 1.0 */
-	public void PlayBuffer(double[] left, double right[], double masterVolume) {
+	public void PlayBuffer(float[] left, float[] right, double masterVolume) {
+		if(left == null || right == null) return;
 		int numberOfSamples = right.length;
 		if (left.length < right.length) numberOfSamples = left.length;
 		System.out.println("AudioPlayer.PlayBuffer: left samples = " + left.length + " | right samples = " + right.length);

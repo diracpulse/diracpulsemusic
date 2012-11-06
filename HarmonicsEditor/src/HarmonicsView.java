@@ -142,7 +142,7 @@ public class HarmonicsView extends JComponent {
 	}
 	
 	public void drawFileData(Graphics g) {
-		if(HarmonicsEditor.harmonicIDToHarmonicMono == null) return;
+		if(HarmonicsEditor.harmonicIDToHarmonic == null) return;
 		HarmonicsUtils.compileNoteToPixelY();
 		//System.out.println("Finished Compiling");
 		drawLeftNotes(g);
@@ -152,7 +152,7 @@ public class HarmonicsView extends JComponent {
 		int startNote = HarmonicsUtils.pixelYToNote(HarmonicsEditor.upperOffset);
 		int endNote = HarmonicsUtils.pixelYToNote(getHeight());
 		if(endNote == -1) endNote = HarmonicsEditor.minNote;
-		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonicMono.values()) {
+		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
 			//System.out.println(harmonic.getAverageNote());
 			FDData start = harmonic.getStart();
 			FDData end = harmonic.getEnd();
@@ -165,7 +165,7 @@ public class HarmonicsView extends JComponent {
 			if(note < endNote) continue;
 			int screenY =  HarmonicsUtils.noteToPixelY(note);
 			//System.out.println(harmonic);
-			for(FDData data: harmonic.getAllDataInterpolated()) {
+			for(FDData data: harmonic.getAllDataInterpolated().values()) {
 				double logAmplitude = data.getLogAmplitude();
 				int screenX = HarmonicsUtils.timeToPixelX(data.getTime());
 				if(screenX < HarmonicsEditor.leftOffset) continue;
@@ -219,7 +219,7 @@ public class HarmonicsView extends JComponent {
 		return new Color(red + 128, green + 128, blue + 128);
 	}
 	
-	public void drawPlayTime(int offsetInMillis, int refreshInMillis) {
+	public void drawPlayTime(int offsetInMillis) {
 		drawPlaying = true;
 		HarmonicsView.offsetInMillis = offsetInMillis;
 	}

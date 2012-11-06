@@ -1,5 +1,6 @@
 import java.sql.Time;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TreeMap;
 
@@ -10,68 +11,63 @@ class SynthTools {
 	static double sampleRate = 44100.0;
 	static double twoPI = 2.0 * Math.PI;
 	static double timeToSample = sampleRate * (FDData.timeStepInMillis * 1.0 / 1000.0);
-	static double[] PCMDataMono = null;
-	static double[] PCMDataLeft = null;
-	static double[] PCMDataRight = null;
+	static float[] PCMDataMono = null;
+	static float[] PCMDataLeft = null;
+	static float[] PCMDataRight = null;
+	static double playSpeed = 1.0;
 	static HarmonicsEditor parent;
-
-	static void createPCMData(HarmonicsEditor parent) {
-		if(HarmonicsEditor.harmonicIDToHarmonicMono == null || HarmonicsEditor.harmonicIDToHarmonicMono.isEmpty()) return;
-		PCMDataMono = FastSynth.synthHarmonicsLinear(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonicMono.values()));
-		PCMDataLeft = FastSynth.synthHarmonicsLinear(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonicLeft.values()));
-		PCMDataRight = FastSynth.synthHarmonicsLinear(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonicRight.values()));
-	}
-		
-	static void createPCMDataNoise(HarmonicsEditor parent) {
-		if(HarmonicsEditor.harmonicIDToHarmonicMono == null || HarmonicsEditor.harmonicIDToHarmonicMono.isEmpty()) return;
-		FastSynth.initSharedPCMData(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonicMono.values()));
-		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonicMono.values()) {
-			int duration = harmonic.getLength();
-			int note = harmonic.getAverageNote();
-			if(note < 8 * FDData.noteBase) {
-				//FastSynth.synthHarmonicLinear(harmonic);
-				//continue;
-			}
-			int startTime = harmonic.getStartSampleOffset();
-			double amplitude = Math.pow(2.0, harmonic.getMaxLogAmplitude());
-			double[] audio = Filter.getFilteredNoise(duration, note, amplitude);
-			for(int time = startTime; time < startTime + duration; time++) {
-				FastSynth.sharedPCMData[time] += audio[time - startTime];
-			}
-			System.out.println(note + startTime + "complete");
+	
+	static void createPCMDataLinear() {
+		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
+		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
+			if(harmonic == null) continue;
+			if(!harmonic.isSynthesized()) continue;
+			synthHarmonics.add(harmonic);
 		}
-		PCMDataMono = FastSynth.sharedPCMData;
+		PCMDataLeft = FastSynth.synthHarmonicsLinear(FDData.Channel.LEFT, synthHarmonics);
+		PCMDataRight = FastSynth.synthHarmonicsLinear(FDData.Channel.RIGHT, synthHarmonics);
 	}
 	
-	static void createPCMDataFiltered(HarmonicsEditor parent) {
-		if(HarmonicsEditor.harmonicIDToHarmonicMono == null || HarmonicsEditor.harmonicIDToHarmonicMono.isEmpty()) return;
-		FastSynth.initSharedPCMData(new ArrayList<Harmonic>(HarmonicsEditor.harmonicIDToHarmonicMono.values()));
-		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonicMono.values()) {
-			int duration = harmonic.getLength();
-			int note = harmonic.getAverageNote();
-			if(note < 8 * FDData.noteBase) {
-				//FastSynth.synthHarmonicLinear(harmonic);
-				//continue;
-			}
-			int startTime = harmonic.getStartSampleOffset();
-			double amplitude = Math.pow(2.0, harmonic.getMaxLogAmplitude());
-			double[] audio = Filter.getFilteredSawtooth(duration, note, amplitude);
-			for(int time = startTime; time < startTime + duration; time++) {
-				FastSynth.sharedPCMData[time] += audio[time - startTime];
-			}
-			System.out.println(note + startTime + "complete");
+	static void createPCMDataLinearCubicSpline() {
+		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
+		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
+			if(harmonic == null) continue;
+			if(!harmonic.isSynthesized()) continue;
+			synthHarmonics.add(harmonic);
 		}
-		PCMDataMono = FastSynth.sharedPCMData;
+		PCMDataLeft = FastSynth.synthHarmonicsLinearCubicSpline(FDData.Channel.LEFT, synthHarmonics);
+		PCMDataRight = FastSynth.synthHarmonicsLinearCubicSpline(FDData.Channel.RIGHT, synthHarmonics);
 	}
-
-	public static void playWindow() {
-		AudioPlayer ap = null;
-		if(PCMDataMono == null) return;
-		if(HarmonicsEditor.currentChannel == HarmonicsEditor.Channel.STEREO) {
-			ap = new AudioPlayer(parent, PCMDataLeft, PCMDataRight, 1.0);
+	
+	static void createPCMDataLinearNoise() {
+		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
+		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
+			if(harmonic == null) continue;
+			if(!harmonic.isSynthesized()) continue;
+			synthHarmonics.add(harmonic);
 		}
+		PCMDataLeft = FastSynth.synthHarmonicsLinearNoise(FDData.Channel.LEFT, synthHarmonics);
+		PCMDataRight = FastSynth.synthHarmonicsLinearNoise(FDData.Channel.RIGHT, synthHarmonics);
+	}
+	
+	static void createPCMDataPureSine() {
+		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
+		for(Harmonic harmonic: HarmonicsEditor.harmonicIDToHarmonic.values()) {
+			if(harmonic == null) continue;
+			if(!harmonic.isSynthesized()) continue;
+			synthHarmonics.add(new Harmonic(harmonic.getHarmonicID()));
+			for(FDData data: harmonic.getPureSineHarmonic(1.0, playSpeed)) {
+				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
+			}
+		}
+		PCMDataLeft = FastSynth.synthHarmonicsLinear(FDData.Channel.LEFT, synthHarmonics);
+		PCMDataRight = FastSynth.synthHarmonicsLinear(FDData.Channel.RIGHT, synthHarmonics);
+	}
+	
+
+	public static void playPCMData() {
+		AudioPlayer ap = new AudioPlayer(PCMDataLeft, PCMDataRight, 1.0);
 		ap.start();
 	}
-
 
 }

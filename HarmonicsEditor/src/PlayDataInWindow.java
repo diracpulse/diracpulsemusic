@@ -1,25 +1,37 @@
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.Timer;
 
 
 public class PlayDataInWindow implements ActionListener {
 	
+	public enum SynthType {
+		Linear,
+		LinearCubicSpline,
+		LinearNoise;
+	}
+
 	int currentOffsetInMillis;
 	int refreshRateInMillis;
 	int endTimeInMillis;
 	Timer timer;
-	HarmonicsEditor parent;
+	AbstractEditor parent;
 	boolean startPlay = true;
+	public static SynthType synthType = SynthType.Linear;
 	
-	PlayDataInWindow(HarmonicsEditor parent, int startTime, int endTime, int refreshRateInMillis, int endTimeInMillis) {
+	PlayDataInWindow(AbstractEditor parent, int refreshRateInMillis, int endTimeInMillis) {
 		this.parent = parent;
-		this.currentOffsetInMillis = 0;
+		this.currentOffsetInMillis = HarmonicsEditor.leftX * FDData.timeStepInMillis;
 		this.refreshRateInMillis = refreshRateInMillis;
 		this.endTimeInMillis = endTimeInMillis;
 		timer = new Timer(refreshRateInMillis, this);
-		SynthTools.createPCMData(parent);
-		//SynthTools.createPCMData(parent, HarmonicsEditor.leftX, endTimeInMillis / HarmonicsEditor.timeStepInMillis);
+		if(synthType == SynthType.Linear) parent.createPCMDataLinear();
+		if(synthType == SynthType.LinearCubicSpline) parent.createPCMDataLinearCubicSpline();
+		if(synthType == SynthType.LinearNoise) parent.createPCMDataLinearNoise();		
+		JOptionPane.showMessageDialog((JFrame) parent, "Ready To Play");
         timer.setInitialDelay(0);
         timer.start();
 	}
@@ -27,17 +39,15 @@ public class PlayDataInWindow implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		//System.out.println(currentOffsetInMillis);
 		if(startPlay) {
-			SynthTools.playWindow();
+			parent.playPCMData();
 			startPlay = false;
 		}
-		HarmonicsEditor.drawPlayTime(currentOffsetInMillis, refreshRateInMillis);
+		parent.drawPlayTime(currentOffsetInMillis);
 		currentOffsetInMillis += refreshRateInMillis;
-		if(currentOffsetInMillis >= endTimeInMillis) timer.stop();
-	}
-	
-	public static void play() {
-		SynthTools.createPCMData(null);
-		SynthTools.playWindow();
+		if(currentOffsetInMillis >= endTimeInMillis) {
+			parent.drawPlayTime(parent.getMaxViewTimeInMillis());
+			timer.stop();
+		}
 	}
 	
 }
