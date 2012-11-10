@@ -7,8 +7,8 @@ import java.util.TreeMap;
 public class RandomLoop {
 	
 	HarmonicsEditor parent;
-	int numBeats = 2;
-	int[] durations = {800};
+	int numBeats = 8;
+	int[] durations = {100};
 	int[] steps = {0,1,1,2,2,3,4};
 	int direction = 1;
 	int numNotes = 7;
@@ -35,7 +35,7 @@ public class RandomLoop {
 		initLoop(numBeats, defaultDuration);
 		beatToNoteIndex = new TreeMap<Integer, Integer>();
 		beatToDuration = new TreeMap<Integer, Integer>();
-		int minNote = HarmonicsEditor.frequencyInHzToNote(256.0);
+		int minNote = HarmonicsEditor.frequencyInHzToNote(128.0);
 		int centerNote = minNote + FDData.noteBase / 2;
 		int maxNote = minNote + FDData.noteBase - 1;
 		int note = -1;
