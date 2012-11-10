@@ -170,7 +170,7 @@ public class HarmonicsView extends JComponent {
 				int screenX = HarmonicsUtils.timeToPixelX(data.getTime());
 				if(screenX < HarmonicsEditor.leftOffset) continue;
 				if(screenX > getWidth()) continue;
-				Color b = getColor(data.getLogAmplitude());
+				Color b = getColor(data.getLogAmplitude(), 0.5f);
 				if(!harmonic.containsData(data)) {
 					// data is interpolated
 					b = getColor(data.getLogAmplitude(), 0.5f);

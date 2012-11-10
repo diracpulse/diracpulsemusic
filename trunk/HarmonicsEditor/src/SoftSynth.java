@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -51,8 +52,7 @@ public class SoftSynth {
 		lowestNote += FDData.noteBase;
 		// Synth Main Instrument
 		if(harmonicIDToInstrumentHarmonic != null) {
-			synthInstrumentMatrix(startTime, endTime, baseNote, chords, harmonicIDToInstrumentHarmonic, 0.0, FDData.Channel.LEFT);
-			synthInstrumentMatrix(startTime, endTime, baseNote, chords, harmonicIDToInstrumentHarmonic, 0.0, FDData.Channel.RIGHT);
+			synthInstrumentHarmonics(startTime, endTime, baseNote, chords, harmonicIDToInstrumentHarmonic, 0.0);
 			//synthInstrument(startTime, endTime, baseNote, chords, harmonicIDToInstrumentHarmonicMono, -6.0, 0);
 			//synthInstrument(startTime, endTime, baseNote, chords, harmonicIDToInstrumentHarmonicLeft, -6.0, 1);
 			//synthInstrument(startTime, endTime, baseNote, chords, harmonicIDToInstrumentHarmonicRight, -6.0, 2);
@@ -68,7 +68,7 @@ public class SoftSynth {
 		}
 		// Synth Bass Instrument
 		if(harmonicIDToBassSynthHarmonic != null) {
-			synthInstrument(startTime, endTime, lowestNote, null, harmonicIDToBassSynthHarmonic, 0.0);
+			synthInstrument(startTime, endTime, baseNote, null, harmonicIDToBassSynthHarmonic, 0.0);
 		} else {
 			//synthBassNoteWithOvertones(startTime, endTime, lowestNote, baseNote, 14.0);
 		}
@@ -128,63 +128,112 @@ public class SoftSynth {
 		}
 	}
 	
-	private static void synthInstrumentMatrix(int startTime, int endTime, int baseNote, int[] chords, TreeMap<Long, Harmonic> harmonics, double gain, FDData.Channel channel) {
+	private static void synthInstrumentHarmonics(int startTime, int endTime, int baseNote, int[] chords, TreeMap<Long, Harmonic> harmonics, double gain) {
+		HashMap<FDData.Channel, double[][]> channelToMatrix = new HashMap<FDData.Channel, double[][]>();
 		int numTimes = endTime - startTime;
 		int numNotes = FDData.getMaxNote() - FDData.getMinNote();
-		double[][] EQMatrix = new double[numTimes][numNotes];
-		for(int time = 0; time < numTimes; time++) {
-			for(int note = 0; note < numNotes; note++) {
-				EQMatrix[time][note] = 0.0;			
+		// Init matrix data
+		for(FDData.Channel channel: FDData.Channel.values()) {
+			channelToMatrix.put(channel, new double[numTimes][numNotes]);
+			double[][] currentMatrix = channelToMatrix.get(channel);
+			for(int time = 0; time < numTimes; time++) {
+				for(int note = 0; note < numNotes; note++) {
+					currentMatrix[time][note] = 0.0;
+				}
 			}
 		}
-		double maxAmplitude = 0.0;
-		int maxNote = FDData.getMinNote();
+		// Find minimum note
+		int minNoteLeft = FDData.getMaxNote();
+		HashMap<FDData.Channel, Integer> channelToMinNote = new HashMap<FDData.Channel, Integer>();
+		for(FDData.Channel channel: FDData.Channel.values()) {
+			channelToMinNote.put(channel, FDData.getMaxNote());
+		}
 		for(Harmonic harmonic: harmonics.values()) {
 			for(FDData data: harmonic.getAllData()) {
-				if(data.getLogAmplitude() > maxAmplitude) {
-					maxAmplitude = data.getLogAmplitude();
-					maxNote = data.getNote();
+				if(data.getNote() < channelToMinNote.get(data.getChannel())) {
+					channelToMinNote.put(data.getChannel(), data.getNote());
 				}
 				if(data.getTime() >= numTimes) continue;
-				EQMatrix[data.getTime()][data.getNote() - FDData.getMinNote()] = data.getLogAmplitude();
 			}
 		}
-		int deltaNote = baseNote - maxNote;
-		ArrayList<Integer> baseNotes = new ArrayList<Integer>();
-		int noteVal = baseNote;
-		baseNotes.add(noteVal);
-		if(chords != null) {
-			for(int chord: chords) {
-				noteVal += chord;
-				baseNotes.add(noteVal);
+		// Fill in array with harmonics, adjusted to correspond to base note of chord
+		for(FDData.Channel channel: FDData.Channel.values()) {
+			int deltaNote = baseNote - channelToMinNote.get(channel);
+			for(Harmonic harmonic: harmonics.values()) {
+				double[][] EQMatrix = channelToMatrix.get(harmonic.getChannel());
+				for(FDData data: harmonic.getAllData()) {
+					if(data.getTime() >= numTimes) continue;
+					int innerNote = data.getNote() + deltaNote - FDData.getMinNote();
+					if(innerNote <0 || innerNote >= numNotes) continue;
+					EQMatrix[data.getTime()][data.getNote() + deltaNote - FDData.getMinNote()] = data.getLogAmplitude();
+				}
 			}
 		}
-		for(int currentNote: baseNotes) {
-			int innerDeltaNote = (int) Math.round(currentNote - baseNote);
-			for(int note = currentNote - FDData.noteBase; note < FDData.getMaxNote(); note++) {
-				long harmonicID = HarmonicsEditor.getRandomID();
-				Harmonic newHarmonic = new Harmonic(harmonicID);
-				double logAmpVal = 0.0; 
-				for(int time = 0; time < numTimes; time++) {
-					try {
-						int noteIndex = (int) Math.round(note) - FDData.getMinNote() - innerDeltaNote - deltaNote;
-						if(noteIndex < 0 || noteIndex >= numNotes) break;
-						double upperlogAmpVal = EQMatrix[time][noteIndex + 1];
-						logAmpVal = EQMatrix[time][noteIndex];
-						double lowerlogAmpVal = EQMatrix[time][noteIndex - 1];
-						if(logAmpVal < upperlogAmpVal || logAmpVal < lowerlogAmpVal) continue;
-						if(logAmpVal <= 0.0) continue;
-						FDData data = new FDData(channel, time + startTime, note, logAmpVal, harmonicID);
-						newHarmonic.addData(data);
-					} catch (Exception e) {
-						System.out.println("synthInstrumentEQ: Error creating data: " + time + startTime + " " + note + " " + logAmpVal);
+		// Fill in chords
+		for(FDData.Channel channel: FDData.Channel.values()) {
+			double[][] EQMatrix = channelToMatrix.get(channel);
+			for(int time = 0; time < numTimes; time++) {
+				int note = baseNote;
+				for(int chord: chords) {
+					int octave = 0;
+					note += chord;
+					while(true) {
+						if(note + octave >= FDData.getMaxNote()) break;
+						double amp1 = Math.pow(FDData.logBase, EQMatrix[time][note + octave - FDData.getMinNote()]);
+						double amp2 = Math.pow(FDData.logBase, EQMatrix[time][baseNote + octave - FDData.getMinNote()]);
+						double logAmpVal =  Math.log(amp1 + amp2) / Math.log(2.0);
+						EQMatrix[time][note + octave - FDData.getMinNote()] = logAmpVal;
+						//System.out.println(time + " " + (note + octave) + " " + (baseNote + octave) + " " + logAmpVal);
+						octave += FDData.noteBase;
 					}
 				}
-				beatStartTimeToHarmonics.get(startTime).add(newHarmonic);
+			}
+		}
+		for(FDData.Channel channel: FDData.Channel.values()) {
+			double[][] EQMatrix = channelToMatrix.get(channel);
+			removeDissonance(EQMatrix);
+		}
+		// Synthesize
+		for(FDData.Channel channel: FDData.Channel.values()) {
+			double[][] EQMatrix = channelToMatrix.get(channel);
+			for(int note = 0; note < numNotes; note++) {
+				long harmonicID = HarmonicsEditor.getRandomID();
+				Harmonic harmonic = new Harmonic(HarmonicsEditor.getRandomID());
+				double maxLogAmplitude = 0.0;
+				for(int time = 0; time < numTimes; time++) {
+					double logAmplitude = EQMatrix[time][note];
+					if(logAmplitude > maxLogAmplitude) maxLogAmplitude = logAmplitude;
+					try {
+						harmonic.addData(new FDData(channel, time + startTime, note + FDData.getMinNote(), logAmplitude, harmonicID));
+					} catch (Exception e) {
+						System.out.println("HarmonicsEditor: SoftSynth.SynthInstrumentHarmonics error creating data");
+					}
+				}
+				if(maxLogAmplitude > 0) {
+					beatStartTimeToHarmonics.get(startTime).add(harmonic);
+				}
 			}
 		}
 	}
 
+	public static void removeDissonance(double[][] matrix) {
+		double maskingFactor = -1.0;
+		int bins = FDData.noteBase / 3;
+		int numTimes = matrix.length;
+		int numFreqs = matrix[0].length;
+		for(int time = 0; time < numTimes; time++) {
+			for(int freq = 0; freq < numFreqs; freq++) {
+				double amplitude = matrix[time][freq];
+				for(int innerFreq = freq - bins; innerFreq <= freq + bins; innerFreq++) {
+					double maskingVal = amplitude + Math.abs((freq - innerFreq) / (double) bins) * maskingFactor;
+					if(maskingVal < 0) continue;
+					if(innerFreq < 0 || innerFreq >= numFreqs || innerFreq == freq) continue;
+					if(matrix[time][innerFreq] < maskingVal) matrix[time][innerFreq] = 0.0f;
+				}
+			}
+		}
+	}
+	
 	private static double sawTooth(double phase) {
 		phase /= 2.0 * Math.PI;
 		phase -= Math.floor(phase);
