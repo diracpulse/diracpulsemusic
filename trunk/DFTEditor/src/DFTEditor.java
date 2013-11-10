@@ -251,7 +251,7 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	public void FileDFT(boolean prompt) {
 		newFileData();
         if(prompt || dftFileName == null) dftFileName = FileTools.PromptForFileOpenWAV(view);
-        DFT.FileDFTMatrix(dftFileName);
+        DFT2.FileDFTMatrix(dftFileName);
     	SynthTools.refresh = true;
     	SynthTools.createHarmonics();
     	ActionHandler.refreshAll();
