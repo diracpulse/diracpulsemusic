@@ -209,6 +209,7 @@ public class DFT2 {
 	}
 	
 	static void FileDFTMatrix(String fileName) {
+		Filter.findMinFilterLength();
 		double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
 		double maxBins = maxBinStep / (Math.pow(2.0, 1.0 / (double) FDData.noteBase) - 1.0);
 		int maxWaveletLength = (int) Math.round(SynthTools.sampleRate / 4.0);
