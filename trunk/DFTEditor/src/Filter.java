@@ -143,30 +143,30 @@ public class Filter {
 		}
 		return returnVal;	
 	}
-	/*
-	public static double[] applyLPFilter(double[] samples, double passFreq) {
-		double samplesPerCycle = samplingRate / passFreq;
-		int filterLength = (int) Math.round(samplesPerCycle * 4.0);
+
+	public static double[] decimate(double[] samples) {
+		int filterLength = 42;
 		filter = new double[filterLength + 1];
-		LPFilter(passFreq, filterLength, alpha);
-		double[] lpFilter = filter;
-		/
+		LPFilter(7612.5, filterLength, alpha);
+		double[] filteredSamples = new double[samples.length + 1];
 		for(int index = 0; index < samples.length - filterLength; index++) {
+			filteredSamples[index] = 0.0;
 			for(int filterIndex = 0; filterIndex < filter.length; filterIndex++) {
-				passValue += pass[index + filterIndex] * lpFilter[filterIndex];
-				rejectValue += reject[index + filterIndex] * lpFilter[filterIndex];
-				passValueUnfiltered += pass[index + filterIndex];
-				rejectValueUnfiltered += reject[index + filterIndex];
+				int innerIndex = index + filterIndex - filterIndex / 2;
+				if(innerIndex < 0) continue;
+				if(innerIndex == samples.length) break;
+				filteredSamples[index] += samples[innerIndex] * filter[filterIndex];
 			}
-			if(Math.abs(passValue) > maxFilteredValue) maxFilteredValue = passValue;
-			passSum += Math.abs(passValue);
-			rejectSum += Math.abs(rejectValue);
-			passSumUnfiltered += Math.abs(passValueUnfiltered);
-			rejectSumUnfiltered += Math.abs(rejectValueUnfiltered);
-			
 		}
+		int outputLength = 0;
+		for(int index = 0; index < samples.length; index += 2) outputLength++;
+		double[] output = new double[outputLength];
+		for(int index = 0; index < samples.length; index += 2) {
+			output[index / 2] = filteredSamples[index];
+		}
+		return output;
 	}
-	*/
+	
 	public static boolean testLPFilter(int filterLength, double passFreq, double rejectFreq, double cutoffFreq) {
 		double upperPassFreq = passFreq * Math.pow(2.0, 1.0 / 4.0);
 		double samplesPerCycle = samplingRate / passFreq;
@@ -218,22 +218,23 @@ public class Filter {
 			if(Math.abs(rejectValue) > maxRejectValue) maxRejectValue = rejectValue;
 			if(Math.abs(cutoffValue) > maxCutoffValue) maxCutoffValue = cutoffValue;
 		}
-		if(maxPassValue < Math.pow(0.5, 1.0 / 8.0)) return false;
-		// Reject Value < -45db (-90dB);
-		if(Math.log(maxCutoffValue) / Math.log(10.0) > -4.5) return false;
+		// Pass Value > -0.1db
+		if(maxPassValue < Math.pow(10.0, -0.01)) return false;
+		// Reject Value < -48db (-96dB);
+		if(maxCutoffValue > Math.pow(10.0,  -4.8)) return false;
 		System.out.println(rejectFreq + " " + (float) filterLength + " " + (float) bins + " " + (float) maxPassValue + " " + (float) maxUpperPassValue + " " + (float) maxRejectValue + " " + (float) maxCutoffValue);
 		return true;
 	}
 	
 	public static void findMinFilterLength() {
-		double passFreq = 2000;
+		double passFreq = samplingRate / 8.0;
 		// double rejectFreq = 2770; // OPTIMAL for 2000, 4000
-		double cutoffFreq = 4000;
+		double cutoffFreq = samplingRate / 4.0;
 		double samplesPerCycle = samplingRate / passFreq;
 		int minFilterLength = (int) Math.ceil(samplesPerCycle);
 		int maxFilterLength = (int) Math.ceil(samplesPerCycle * 10);
 		minFilterLength = minFilterLength - minFilterLength % 2;
-		for(double rejectFreq = passFreq; rejectFreq < cutoffFreq; rejectFreq += 10) {
+		for(double rejectFreq = passFreq; rejectFreq < cutoffFreq; rejectFreq += 100) {
 			for(int filterLength = minFilterLength; filterLength < maxFilterLength; filterLength += 2) {
 				if(testLPFilter(filterLength, passFreq, rejectFreq, cutoffFreq)) break;
 			}
