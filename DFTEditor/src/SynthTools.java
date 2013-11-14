@@ -135,7 +135,7 @@ class SynthTools {
 						try {
 							data = new FDData(channel, time, DFTEditor.freqToNote(freq), amplitudes[time][freq], 1L);
 						} catch (Exception e) {
-							System.out.println("SynthTools.createHarmonics: Error creating data time: " + time + " freq: " + freq);
+							System.out.println("SynthTools.createHarmonics: Error " + e.getMessage());
 						}
 						timeToFreqToData.get(time).put(freq, data);
 						if(channel == FDData.Channel.LEFT) DFTEditor.timeToFreqsAtMaximaLeft.get(time).add(freq);
