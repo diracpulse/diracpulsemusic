@@ -1,3 +1,5 @@
+import java.util.TreeMap;
+
 
 public class Filter {
 
@@ -8,6 +10,8 @@ public class Filter {
 	final static double halfPI = 1.5707963267948966192313216916398;
 	final static double samplingRate = 44100.0;
 	final static double maxBinStep = 1.0;
+	final static double optimalLPRejectRatio = 1.38;
+	public static TreeMap<Float, Integer> passFreqToFilterLength = null;
 
 	final static double alpha = 10.0;
 	
@@ -43,6 +47,14 @@ public class Filter {
 		double w1 = w * onePI;
 		CreateFilter(w0, w1, order, alpha);
 	}
+	
+	static void LPFilterPrintInfo(double freq, int order, double alpha) {
+		double w = 2.0 * (freq / samplingRate);
+		double w0 = 0.0;
+		double w1 = w * onePI;
+		CreateFilterPrintInfo(w0, w1, order, alpha);
+	}
+
 
 	static void HPFilter(double freq, int order, double alpha) {
 		double w = 2.0 * (freq / samplingRate);
@@ -73,11 +85,45 @@ public class Filter {
 			filter[n] = Math.sin(dn*w1)*Math.cos(dn*w0)/(dn*onePI);
 			filter[n] *= BesselI0(alpha * Math.sqrt(1.0 - (dn/dm) * (dn/dm))) / I0alpha;
 		}
+		
 			
 		// shift impulse response to make filter causal:
 		for (n=m+1; n<=order; n++) filter[n] = filter[n - m];
 		for (n=0; n<=m-1; n++) filter[n] = filter[order - n];
 		filter[m] = w1 / onePI;
+		return;
+	}
+	
+	static void CreateFilterPrintInfo(double w0, double w1, int order, double alpha) {
+		//filter = new double[order];
+		int m = order / 2;
+		int n;
+		double dn;
+		double dm = (double) m;
+		double I0alpha = BesselI0(alpha);
+		
+		filter[0] = w1 / onePI;
+			
+		for (n=1; n <= m; n++) {
+			dn = (double) n;
+			filter[n] = Math.sin(dn*w1)*Math.cos(dn*w0)/(dn*onePI);
+			filter[n] *= BesselI0(alpha * Math.sqrt(1.0 - (dn/dm) * (dn/dm))) / I0alpha;
+		}
+		
+		for (n=1; n <= order; n++) {
+			System.out.println("BEFORE" + n + " " + filter[n]);
+		}
+		
+			
+		// shift impulse response to make filter causal:
+		for (n=m+1; n<=order; n++) filter[n] = filter[n - m];
+		for (n=0; n<=m-1; n++) filter[n] = filter[order - n];
+		filter[m] = w1 / onePI;
+		
+		for (n=1; n <= order; n++) {
+			System.out.println("AFTER" + n + " " + filter[n]);
+		}
+		
 		return;
 	}
 	
@@ -149,10 +195,10 @@ public class Filter {
 		filter = new double[filterLength + 1];
 		LPFilter(7612.5, filterLength, alpha);
 		double[] filteredSamples = new double[samples.length + 1];
-		for(int index = 0; index < samples.length - filterLength; index++) {
+		for(int index = 0; index < samples.length; index++) {
 			filteredSamples[index] = 0.0;
 			for(int filterIndex = 0; filterIndex < filter.length; filterIndex++) {
-				int innerIndex = index + filterIndex - filterIndex / 2;
+				int innerIndex = index + filterIndex - filterLength / 2;
 				if(innerIndex < 0) continue;
 				if(innerIndex == samples.length) break;
 				filteredSamples[index] += samples[innerIndex] * filter[filterIndex];
@@ -167,77 +213,124 @@ public class Filter {
 		return output;
 	}
 	
-	public static boolean testLPFilter(int filterLength, double passFreq, double rejectFreq, double cutoffFreq) {
-		double upperPassFreq = passFreq * Math.pow(2.0, 1.0 / 4.0);
-		double samplesPerCycle = samplingRate / passFreq;
-		double bins = (double) filterLength / samplesPerCycle;
-		int signalLength = (int) Math.ceil(samplesPerCycle * 100);
-		double[] pass = new double[signalLength + filterLength];
-		double[] upperPass = new double[signalLength + filterLength];
-		double[] reject = new double[signalLength + filterLength];
-		double[] cutoff = new double[signalLength + filterLength];
-		double maxPassValue = 0.0;
-		double maxUpperPassValue = 0.0;
-		double maxRejectValue = 0.0;
-		double maxCutoffValue = 0.0;
+	public static double[] filterAndMultiply(double testFreq, double[] samples) {
+		//if(passFreqToFilterLength == null) FilterConstants.initPassFreqToFilterLength();
+		int filterLength = (int) Math.round((samplingRate / testFreq) * 6.0);
+		filterLength = filterLength + filterLength % 2;
+		//if(passFreqToFilterLength.containsKey((float)testFreq)) filterLength = passFreqToFilterLength.get((float)testFreq);
 		filter = new double[filterLength + 1];
-		LPFilter(rejectFreq, filterLength, alpha);
-		double[] lpFilter = filter;
-		double phasePass = 0.0;
-		double phaseUpperPass = 0.0;
-		double phaseReject = 0.0;
-		double phaseCutoff = 0.0;
-		double deltaPhasePass = (passFreq / SynthTools.sampleRate) * SynthTools.twoPI;
-		double deltaUpperPhasePass = (upperPassFreq / SynthTools.sampleRate) * SynthTools.twoPI;
-		double deltaPhaseReject = (rejectFreq / SynthTools.sampleRate) * SynthTools.twoPI;
-		double deltaPhaseCutoff = (cutoffFreq / SynthTools.sampleRate) * SynthTools.twoPI;
-		for(int index = 0; index < pass.length; index += 1) {
-			double sinWindow = Math.sin((double) index / signalLength * Math.PI);
-			pass[index] = Math.sin(phasePass) * sinWindow;
-			upperPass[index] = Math.sin(phaseUpperPass) * sinWindow;
-			reject[index] = Math.sin(phaseReject) * sinWindow;
-			cutoff[index] = Math.sin(phaseCutoff) * sinWindow;
-			phasePass += deltaPhasePass;
-			phaseUpperPass += deltaUpperPhasePass;
-			phaseReject += deltaPhaseReject;
-			phaseCutoff += deltaPhaseCutoff;
-		}
-		for(int index = 0; index < signalLength - filterLength; index++) {
-			double passValue = 0.0;
-			double upperPassValue = 0.0;
-			double rejectValue = 0.0;
-			double cutoffValue = 0.0;
+		LPFilter(testFreq * optimalLPRejectRatio, filterLength, alpha);
+		double[] filteredSamples = new double[samples.length + 1];
+		double deltaPhase = (testFreq / SynthTools.sampleRate) * SynthTools.twoPI;
+		double phase = 0.0;
+		for(int index = 0; index < samples.length; index++) {
+			filteredSamples[index] = 0.0;
 			for(int filterIndex = 0; filterIndex < filter.length; filterIndex++) {
-				passValue += pass[index + filterIndex] * lpFilter[filterIndex];
-				upperPassValue += upperPass[index + filterIndex] * lpFilter[filterIndex];
-				rejectValue += reject[index + filterIndex] * lpFilter[filterIndex];
-				cutoffValue += cutoff[index + filterIndex] * lpFilter[filterIndex];
+				int innerIndex = index + filterIndex - filterLength / 2;
+				if(innerIndex < 0) continue;
+				if(innerIndex == samples.length) break;
+				filteredSamples[index] += samples[innerIndex] * filter[filterIndex];
 			}
-			if(Math.abs(passValue) > maxPassValue) maxPassValue = passValue;
-			if(Math.abs(upperPassValue) > maxUpperPassValue) maxUpperPassValue = upperPassValue;
-			if(Math.abs(rejectValue) > maxRejectValue) maxRejectValue = rejectValue;
-			if(Math.abs(cutoffValue) > maxCutoffValue) maxCutoffValue = cutoffValue;
 		}
-		// Pass Value > -0.1db
-		if(maxPassValue < Math.pow(10.0, -0.01)) return false;
-		// Reject Value < -48db (-96dB);
-		if(maxCutoffValue > Math.pow(10.0,  -4.8)) return false;
-		System.out.println(rejectFreq + " " + (float) filterLength + " " + (float) bins + " " + (float) maxPassValue + " " + (float) maxUpperPassValue + " " + (float) maxRejectValue + " " + (float) maxCutoffValue);
-		return true;
+		for(int index = 0; index < samples.length; index++) {
+			filteredSamples[index] *= Math.sin(phase) * 2.0;
+			phase += deltaPhase;
+		}
+		return filteredSamples;
 	}
 	
-	public static void findMinFilterLength() {
-		double passFreq = samplingRate / 8.0;
-		// double rejectFreq = 2770; // OPTIMAL for 2000, 4000
-		double cutoffFreq = samplingRate / 4.0;
+	public static void testBPFilter(int filterLength, double passFreq) {
 		double samplesPerCycle = samplingRate / passFreq;
-		int minFilterLength = (int) Math.ceil(samplesPerCycle);
-		int maxFilterLength = (int) Math.ceil(samplesPerCycle * 10);
+		int signalLength = (int) Math.ceil(samplesPerCycle * 100) + filterLength;
+		double[] testFreqs = {passFreq * .5, passFreq * .75, passFreq, passFreq * 1.5, passFreq * 2.0};
+		double[][] testSignals = new double[testFreqs.length][signalLength];
+ 		double[] maxTestValue = new double[testFreqs.length];
+ 		for(int index = 0; index < testFreqs.length; index++) maxTestValue[index] = 0.0;
+		filter = new double[filterLength + 1];
+		BPFilter(passFreq, filterLength, alpha);
+		double[] lpFilter = filter;
+		double deltaPhase[] = new double[testFreqs.length];
+		for(int index = 0; index < testFreqs.length; index++) deltaPhase[index] = (testFreqs[index] / SynthTools.sampleRate) * SynthTools.twoPI;
+		for(int freqIndex = 0; freqIndex < testFreqs.length; freqIndex++) {
+			double phase = 0.0;
+			for(int index = 0; index < signalLength; index++) {
+				double sinWindow = Math.sin((double) index / signalLength * Math.PI);
+				testSignals[freqIndex][index] = Math.sin(phase) * sinWindow;
+				phase += deltaPhase[freqIndex];
+			}
+		}
+		for(int freqIndex = 0; freqIndex < testFreqs.length; freqIndex++) {
+			for(int index = 0; index < signalLength; index++) {
+				double testValue = 0.0;
+				for(int filterIndex = 0; filterIndex < filter.length; filterIndex++) {
+					int innerIndex = index + filterIndex;
+					if(innerIndex < 0) continue;
+					if(innerIndex >= signalLength) break;
+					testValue += testSignals[freqIndex][innerIndex] * lpFilter[filterIndex];
+				}
+				if(Math.abs(testValue) > maxTestValue[freqIndex]) maxTestValue[freqIndex] = testValue;
+			}
+		}
+		System.out.print(filterLength + " :");
+		for(int freqIndex = 0; freqIndex < testFreqs.length; freqIndex++) {	
+			System.out.print((float) testFreqs[freqIndex] / passFreq + " = " + (float) Math.round(maxTestValue[freqIndex] * 1000.0) / 1000.0 + " | ");
+		}
+		System.out.println();
+		return;
+	}
+	
+	public static void testFilters() {
+		filter = new double[43];
+		LPFilterPrintInfo(7612.5, 42, alpha);
+		double minFreq = samplingRate / 8.0;
+		// double rejectFreq = 2770; // OPTIMAL for 2000, 4000
+		double maxFreq = samplingRate / 4.0;
+		double samplesPerCycle = samplingRate / minFreq;
+		int minFilterLength = (int) Math.ceil(samplesPerCycle * 5);
+		int maxFilterLength = (int) Math.ceil(samplesPerCycle * 20);
 		minFilterLength = minFilterLength - minFilterLength % 2;
-		for(double rejectFreq = passFreq; rejectFreq < cutoffFreq; rejectFreq += 100) {
+		for(double testFreq = minFreq; testFreq < maxFreq; testFreq += 10000) {
 			for(int filterLength = minFilterLength; filterLength < maxFilterLength; filterLength += 2) {
-				if(testLPFilter(filterLength, passFreq, rejectFreq, cutoffFreq)) break;
+				testBPFilter(filterLength, testFreq);
 			}
 		}
 	}
+	
+	public static void calculatePassFreqToMinFilterLength() {
+		passFreqToFilterLength = new TreeMap<Float, Integer>();
+		double noteRatio = Math.pow(2.0, -1.0 / FDData.noteBase);
+		for(double passFreq = samplingRate / 4.0; passFreq >= samplingRate / 32.0; passFreq *= noteRatio) {
+			passFreqToFilterLength.put((float) passFreq, Integer.MAX_VALUE);
+			findMinFilterLength(passFreq);
+			System.out.println(passFreq);
+		}
+		for(float passFreq: passFreqToFilterLength.keySet()) {
+			System.out.println("Filter.passFreqToFilterLength.put(" + passFreq + ", " + passFreqToFilterLength.get(passFreq) + ");");
+		}
+	}
+	
+	public static void findMinFilterLength(double passFreq) {
+		// double rejectFreq = 2770; // OPTIMAL for 2000, 4000
+		double cutoffFreq = passFreq * 2.0;
+		double maxRejectFreq = passFreq * 2.0;
+		double minRejectFreq = passFreq;
+		double samplesPerCycle = samplingRate / passFreq;
+		int minFilterLength = (int) Math.ceil(samplesPerCycle);
+		int maxFilterLength = (int) Math.ceil(samplesPerCycle * 32);
+		minFilterLength = minFilterLength - minFilterLength % 2;
+		double rejectFreqStep = (maxRejectFreq - minRejectFreq) / 100.0;
+		for(double rejectFreq = minRejectFreq; rejectFreq <= maxRejectFreq; rejectFreq += rejectFreqStep) {
+			for(int filterLength = minFilterLength; filterLength < maxFilterLength; filterLength += 2) {
+				double bins = (double) filterLength / samplesPerCycle;
+				if(bins > 6.0) continue;
+				/*if(testLPFilter(filterLength, passFreq, rejectFreq, cutoffFreq)) {
+					if(passFreqToFilterLength.get((float) passFreq) > filterLength) {
+						passFreqToFilterLength.put((float) passFreq, filterLength);
+					}
+				}
+				*/
+			}
+		}
+	}
+
 }
