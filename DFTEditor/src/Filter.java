@@ -213,6 +213,7 @@ public class Filter {
 		return output;
 	}
 	
+	// IMPORTANT: (testFreq < samplingRate / 8.0) to avoid aliasing
 	public static double[] filterAndMultiply(double testFreq, double[] samples) {
 		//if(passFreqToFilterLength == null) FilterConstants.initPassFreqToFilterLength();
 		int filterLength = (int) Math.round((samplingRate / testFreq) * 6.0);
@@ -220,9 +221,18 @@ public class Filter {
 		//if(passFreqToFilterLength.containsKey((float)testFreq)) filterLength = passFreqToFilterLength.get((float)testFreq);
 		filter = new double[filterLength + 1];
 		LPFilter(testFreq * optimalLPRejectRatio, filterLength, alpha);
+		double filterGain = 0.0;
 		double[] filteredSamples = new double[samples.length + 1];
-		double deltaPhase = (testFreq / SynthTools.sampleRate) * SynthTools.twoPI;
 		double phase = 0.0;
+		double deltaPhase = (testFreq / SynthTools.sampleRate) * SynthTools.twoPI;
+		/*
+		for(int index = 0; index < filterLength; index++) {
+			filterGain += Math.abs(filter[index]);
+			phase += deltaPhase;
+		}
+		System.out.println(filterGain);
+		phase = 0.0;
+		*/
 		for(int index = 0; index < samples.length; index++) {
 			filteredSamples[index] = 0.0;
 			for(int filterIndex = 0; filterIndex < filter.length; filterIndex++) {
