@@ -15,7 +15,7 @@ public class DFT {
 	
 private static int MAXDFTWINDOW = 44100;
 private static int MAXWAVELETS = 62 * 12;
-private static float LeftRight[] = null;
+private static double LeftRight[] = null;
 private static int stereo = 2;
 private static int headerLengthInBytes = 56; // changed from 44 to accomodate newer .wav files
 private static int sampleLengthInBytes = 4;
@@ -91,9 +91,9 @@ private static int LoadSamplesFromFile(String fileName) {
 		return 0;
 	}	
 	int maxTime = ArrayListLeftRight.size() / 2;
-	LeftRight = new float[maxTime * 2];
-	SynthTools.WAVDataLeft = new float[maxTime];	
-	SynthTools.WAVDataRight = new float[maxTime];
+	LeftRight = new double[maxTime * 2];
+	SynthTools.WAVDataLeft = new double[maxTime];	
+	SynthTools.WAVDataRight = new double[maxTime];
 	for(int index = 0; index < maxTime; index++) {
 		LeftRight[index * 2] = ArrayListLeftRight.get(index * 2);
 		LeftRight[index * 2 + 1] = ArrayListLeftRight.get(index * 2 + 1);

@@ -30,7 +30,7 @@ public class DFT2 {
 	private static final double onePI = 3.1415926535897932384626433832795;
 	private static final double twoPI = 6.283185307179586476925286766559;
 	private static double samplingRate = 44100.0;
-	public static double maxBinStep = 1.0;
+	public static double maxBinStep = 2.0;
 	//private static double maxFreqHz = samplingRate / 2.0;
 	//private static double minFreqHz = 20.0;
 	private static double maxWindowLength = 44100 / 5;
@@ -109,17 +109,16 @@ public class DFT2 {
 			System.out.println("DFTEditor: " + fileName + ".[suffix] not found");
 			return 0;
 		}
-	    /* Test white noise
+	    // Test white noise
 	    ArrayListLeftRight = new ArrayList<Float>();
 	    for(int time = 0; time < 44100 * 2; time++) {
 	    	ArrayListLeftRight.add((float) ((Math.random() - 0.5) * 65534.0));
 	    	ArrayListLeftRight.add((float) ((Math.random() - 0.5) * 65534.0));
 	    }
-	    */
 		int maxTime = ArrayListLeftRight.size() / 2;
 		LeftRight = new float[maxTime * 2];
-		SynthTools.WAVDataLeft = new float[maxTime];	
-		SynthTools.WAVDataRight = new float[maxTime];
+		SynthTools.WAVDataLeft = new double[maxTime];	
+		SynthTools.WAVDataRight = new double[maxTime];
 		for(int index = 0; index < maxTime; index++) {
 			LeftRight[index * 2] = ArrayListLeftRight.get(index * 2);
 			LeftRight[index * 2 + 1] = ArrayListLeftRight.get(index * 2 + 1);
@@ -170,11 +169,11 @@ public class DFT2 {
 		matrix[currentTime][currentFreq] = (float) logAmp;
 	}
 	
-	private static double noteToFrequency(int note) {
+	public static double noteToFrequency(int note) {
 		return Math.pow(2.0, note / (double) FDData.noteBase);
 	}
 	
-	private static int frequencyToNote(double frequency) {
+	public static int frequencyToNote(double frequency) {
 		return (int) Math.round(Math.log(frequency) / Math.log(2.0) * (double) FDData.noteBase);
 	}
 	
@@ -243,7 +242,7 @@ public class DFT2 {
 				if(note < frequencyToNote(samplingRate / 8.0)) {
 					double innerNoteBase = FDData.noteBase * Math.sqrt(noteToFrequency(note) / (samplingRate / 8.0));
 					bins = maxBinStep / (Math.pow(2.0, 1.0 / (double) innerNoteBase) - 1.0);
-					System.out.println(noteToFrequency(note) + " " + innerNoteBase);
+					//System.out.println(noteToFrequency(note) + " " + innerNoteBase);
 				}
 				Wavelet currentWavelet = createWavelet(freqInHz, bins);
 				for(double centerIndex = 0; centerIndex < maxCenterIndex; centerIndex += samplesPerStep) {
@@ -331,7 +330,6 @@ public class DFT2 {
 	}
 	
 	static void FileDFTMatrix(String fileName) {
-		//Filter.testFilters();
 		double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
 		int maxCenterIndex = LoadSamplesFromFile(fileName);
 		int maxTime = (int) Math.floor(maxCenterIndex / samplesPerStep);

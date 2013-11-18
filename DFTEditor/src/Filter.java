@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+import java.util.Random;
 import java.util.TreeMap;
 
 
@@ -12,8 +14,86 @@ public class Filter {
 	final static double maxBinStep = 1.0;
 	final static double optimalLPRejectRatio = 1.38;
 	public static TreeMap<Float, Integer> passFreqToFilterLength = null;
+	public static ArrayList<CriticalBand> criticalBands = null;
 
 	final static double alpha = 10.0;
+	
+	public static class CriticalBand {
+		
+		double lowerBound;
+		double upperBound;
+		int filterLength;
+		double centerGain;
+		
+		CriticalBand(double lowerBound, double upperBound) {
+			this.upperBound = upperBound;
+			this.lowerBound = lowerBound;
+		}
+		
+		double getLowerBound() {
+			return lowerBound;
+		}
+		
+		double getUpperBound() {
+			return upperBound;
+		}
+		
+		double getCenterFreq() {
+			//return Math.sqrt(upperBound * lowerBound);
+			return (upperBound + lowerBound) / 2.0;
+		}
+		
+		void setFilterLength(int filterLength) {
+			this.filterLength = filterLength; 
+		}
+		
+		void setCenterGain(double centerGain) {
+			this.centerGain = centerGain; 
+		}
+		
+		// designed to have -3dB at endPoints
+		void synthNoise(TreeMap<Integer, Float[]> noteToSamples, double[] sharedPCMData, int startTime, int endTime) {
+			Random random = new Random();
+			double amplitude = 0.0;
+			int numDataPoints = 0;
+			for(int note = DFT2.frequencyToNote(lowerBound); note < DFT2.frequencyToNote(upperBound); note++) {
+				Float[] amplitudes = noteToSamples.get(note);
+				if(amplitudes == null) continue;
+				for(int time = startTime; time < endTime; time++) {
+					amplitude += Math.pow(FDData.logBase, amplitudes[time]);
+				}
+				numDataPoints++;
+			}
+			amplitude /= numDataPoints;
+			filter = new double[filterLength + 1];
+			BPFilter(getCenterFreq(), filterLength, alpha);
+			double maxNoiseSample = 1.0 / 65536.0;
+			double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
+			double[] noise = new double[sharedPCMData.length]; // NEEDS TO BE CALCULATED
+			double[] filteredNoise = new double[noise.length];
+			for(int index = 0; index < noise.length; index++) noise[index] = random.nextGaussian();
+			for(int index = 0; index < noise.length; index++) {
+				for(int filterIndex = 0; filterIndex < filter.length; filterIndex++) {
+					int innerIndex = index + filterIndex - filterIndex / 2;
+					if(innerIndex < 0) continue;
+					if(innerIndex == noise.length) break;
+					filteredNoise[index] += noise[innerIndex] * filter[filterIndex];
+				}
+				if(filteredNoise[index] > maxNoiseSample) maxNoiseSample = Math.abs(filteredNoise[index]);
+			}
+			for(int index = 0; index < filteredNoise.length; index++) {
+				sharedPCMData[index + startTime] += filteredNoise[index] *= amplitude / maxNoiseSample;
+			}
+		}
+	}
+	
+	public static void createBackgroundNoise(TreeMap<Integer, Float[]> noteToAmplitudes, double[] sharedPCMData) {
+		createCriticalBands();
+		for(CriticalBand criticalBand: criticalBands) {
+			criticalBand.synthNoise(noteToAmplitudes, sharedPCMData, 0, noteToAmplitudes.get(noteToAmplitudes.firstKey()).length);
+		}
+		
+	}
 	
 	static double BesselI0(double x) {
 	   double denominator;
@@ -299,7 +379,70 @@ public class Filter {
 		return;
 	}
 	
-	public static void testFilters() {
+	// returns true when optimum filter is found, start with filterBins low and run until true
+	public static boolean testBPFilter(CriticalBand criticalBand, double filterBins) {
+		double passFreq = criticalBand.getCenterFreq();
+		int filterLength = (int) Math.round((samplingRate / passFreq) * filterBins);
+		filterLength = filterLength + filterLength % 2;
+		double samplesPerCycle = samplingRate / passFreq;
+		int signalLength = (int) Math.ceil(samplesPerCycle * 100) + filterLength;
+		double[] testFreqs = {criticalBand.getLowerBound(), criticalBand.getCenterFreq(), criticalBand.getUpperBound()};
+		double[][] testSignals = new double[testFreqs.length][signalLength];
+ 		double[] maxTestValue = new double[testFreqs.length];
+ 		for(int index = 0; index < testFreqs.length; index++) maxTestValue[index] = 0.0;
+		filter = new double[filterLength + 1];
+		BPFilter(passFreq, filterLength, alpha);
+		double deltaPhase[] = new double[testFreqs.length];
+		for(int index = 0; index < testFreqs.length; index++) deltaPhase[index] = (testFreqs[index] / SynthTools.sampleRate) * SynthTools.twoPI;
+		for(int freqIndex = 0; freqIndex < testFreqs.length; freqIndex++) {
+			double phase = 0.0;
+			for(int index = 0; index < signalLength; index++) {
+				double sinWindow = Math.sin((double) index / signalLength * Math.PI);
+				testSignals[freqIndex][index] = Math.sin(phase) * sinWindow;
+				phase += deltaPhase[freqIndex];
+			}
+		}
+		for(int freqIndex = 0; freqIndex < testFreqs.length; freqIndex++) {
+			for(int index = 0; index < signalLength; index++) {
+				double testValue = 0.0;
+				for(int filterIndex = 0; filterIndex < filter.length; filterIndex++) {
+					int innerIndex = index + filterIndex;
+					if(innerIndex < 0) continue;
+					if(innerIndex >= signalLength) break;
+					testValue += testSignals[freqIndex][innerIndex] * filter[filterIndex];
+				}
+				if(Math.abs(testValue) > maxTestValue[freqIndex]) maxTestValue[freqIndex] = testValue;
+			}
+		}
+		double valueAtLowerBound = maxTestValue[0];
+		double valueAtCenterFreq = maxTestValue[1];
+		double valueAtUpperBound = maxTestValue[2];
+		if((valueAtLowerBound / valueAtCenterFreq) < 0.5 && (valueAtUpperBound / valueAtCenterFreq) < 0.5) {
+			System.out.print((float) passFreq + " " + (float) filterBins + " : ");
+			for(int freqIndex = 0; freqIndex < testFreqs.length; freqIndex++) {	
+				System.out.print((float) (testFreqs[freqIndex] / passFreq) + " = " + (float) (Math.round(maxTestValue[freqIndex] * 1000.0) / 1000.0) + " | ");
+			}
+			System.out.println();
+			criticalBand.setCenterGain(valueAtCenterFreq);
+			criticalBand.setFilterLength(filterLength);
+			return true;
+		}
+		return false;
+	}
+
+	public static void createCriticalBands() {
+		if(criticalBands != null) return;
+		initFullCriticalBands();
+		double minFilterBins = 1.0;
+		double maxFilterBins = 42.0;
+		for(CriticalBand bounds: criticalBands) {
+			for(double filterBins = minFilterBins; filterBins < maxFilterBins; filterBins += 0.5) {
+				if(testBPFilter(bounds, filterBins)) break;
+			}
+		}
+	}
+	
+	public static void testLPFilters() {
 		double minRejectRatio = 1.4;
 		double maxRejectRatio = 1.7;
 		double minFilterBins = 1.0;
@@ -350,6 +493,88 @@ public class Filter {
 				*/
 			}
 		}
+	}
+	
+	public static void initFullCriticalBands() {
+		criticalBands = new ArrayList<CriticalBand>();
+		criticalBands.add(new CriticalBand(20, 100));
+		criticalBands.add(new CriticalBand(100, 200));
+		criticalBands.add(new CriticalBand(200, 300));
+		criticalBands.add(new CriticalBand(300, 400));
+		criticalBands.add(new CriticalBand(400, 510));
+		criticalBands.add(new CriticalBand(510, 630));
+		criticalBands.add(new CriticalBand(630, 770));
+		criticalBands.add(new CriticalBand(770, 920));
+		criticalBands.add(new CriticalBand(920, 1080));
+		criticalBands.add(new CriticalBand(1080, 1270));
+		criticalBands.add(new CriticalBand(1270, 1480));
+		criticalBands.add(new CriticalBand(1480, 1720));
+		criticalBands.add(new CriticalBand(1720, 2000));
+		criticalBands.add(new CriticalBand(2000, 2320));
+		criticalBands.add(new CriticalBand(2320, 2700));
+		criticalBands.add(new CriticalBand(2700, 3150));
+		criticalBands.add(new CriticalBand(3150, 3700));
+		criticalBands.add(new CriticalBand(3700, 4400));
+		criticalBands.add(new CriticalBand(4440, 5300));
+		criticalBands.add(new CriticalBand(5300, 6400));
+		criticalBands.add(new CriticalBand(6400, 7700));
+		criticalBands.add(new CriticalBand(7700, 9500));
+		criticalBands.add(new CriticalBand(9500, 12000));
+		criticalBands.add(new CriticalBand(12000, 15500));
+		criticalBands.add(new CriticalBand(15500, samplingRate / 2.0));
+	}
+	
+	public static void initHalfCriticalBands() {
+		criticalBands = new ArrayList<CriticalBand>();
+		criticalBands.add(new CriticalBand(20, 50));
+		criticalBands.add(new CriticalBand(50, 100));
+		criticalBands.add(new CriticalBand(100, 150));
+		criticalBands.add(new CriticalBand(150, 200));
+		criticalBands.add(new CriticalBand(200, 250));
+		criticalBands.add(new CriticalBand(250, 300));
+		criticalBands.add(new CriticalBand(300, 350));
+		criticalBands.add(new CriticalBand(350, 400));
+		criticalBands.add(new CriticalBand(400, 450));
+		criticalBands.add(new CriticalBand(450, 510));
+		criticalBands.add(new CriticalBand(510, 570));
+		criticalBands.add(new CriticalBand(570, 630));
+		criticalBands.add(new CriticalBand(630, 700));
+		criticalBands.add(new CriticalBand(700, 770));
+		criticalBands.add(new CriticalBand(770, 840));
+		criticalBands.add(new CriticalBand(840, 920));
+		criticalBands.add(new CriticalBand(920, 1000));
+		criticalBands.add(new CriticalBand(1000, 1080));
+		criticalBands.add(new CriticalBand(1080, 1170));
+		criticalBands.add(new CriticalBand(1170, 1270));
+		criticalBands.add(new CriticalBand(1270, 1370));
+		criticalBands.add(new CriticalBand(1370, 1480));
+		criticalBands.add(new CriticalBand(1480, 1600));
+		criticalBands.add(new CriticalBand(1600, 1720));
+		criticalBands.add(new CriticalBand(1720, 1850));
+		criticalBands.add(new CriticalBand(1850, 2000));
+		criticalBands.add(new CriticalBand(2000, 2150));
+		criticalBands.add(new CriticalBand(2150, 2320));
+		criticalBands.add(new CriticalBand(2320, 2500));
+		criticalBands.add(new CriticalBand(2500, 2700));
+		criticalBands.add(new CriticalBand(2700, 2900));
+		criticalBands.add(new CriticalBand(2900, 3150));
+		criticalBands.add(new CriticalBand(3150, 3400));
+		criticalBands.add(new CriticalBand(3400, 3700));
+		criticalBands.add(new CriticalBand(3700, 4000));
+		criticalBands.add(new CriticalBand(4000, 4400));
+		criticalBands.add(new CriticalBand(4440, 4800));
+		criticalBands.add(new CriticalBand(4800, 5300));
+		criticalBands.add(new CriticalBand(5300, 5800));
+		criticalBands.add(new CriticalBand(5800, 6400));
+		criticalBands.add(new CriticalBand(6400, 7000));
+		criticalBands.add(new CriticalBand(7000, 7700));
+		criticalBands.add(new CriticalBand(7700, 8500));
+		criticalBands.add(new CriticalBand(8500, 9500));
+		criticalBands.add(new CriticalBand(9500, 10500));
+		criticalBands.add(new CriticalBand(10500, 12000));
+		criticalBands.add(new CriticalBand(12000, 13500));
+		criticalBands.add(new CriticalBand(13500, 15500));
+		criticalBands.add(new CriticalBand(15500, samplingRate / 2.0));
 	}
 
 }

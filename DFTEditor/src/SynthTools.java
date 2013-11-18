@@ -6,10 +6,10 @@ class SynthTools {
 	
 	static double sampleRate = 44100.0;
 	static double twoPI = 2.0 * Math.PI;
-	static float[] PCMDataLeft = null;
-	static float[] PCMDataRight = null;
-	static float[] WAVDataLeft = null;
-	static float[] WAVDataRight = null;	
+	static double[] PCMDataLeft = null;
+	static double[] PCMDataRight = null;
+	static double[] WAVDataLeft = null;
+	static double[] WAVDataRight = null;	
 	static int deltaHarmonic = 1;
 	static DFTEditor parent;
 	public static boolean refresh = true;
