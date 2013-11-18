@@ -11,9 +11,9 @@ class GraphSynthTools {
 	static double sampleRate = 44100.0;
 	static double twoPI = 2.0 * Math.PI;
 	static double timeToSample = sampleRate * (FDData.timeStepInMillis * 1.0 / 1000.0);
-	static float[] PCMDataMono = null;
-	static float[] PCMDataLeft = null;
-	static float[] PCMDataRight = null;
+	static double[] PCMDataMono = null;
+	static double[] PCMDataLeft = null;
+	static double[] PCMDataRight = null;
 	static double playSpeed = 1.0;
 	static GraphEditor parent;
 

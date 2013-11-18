@@ -1,17 +1,19 @@
 import java.util.ArrayList;
+import java.util.TreeMap;
 
 
 public class FastSynth {
 	
 	public static int numSamples = 0;
-	private static float[] sharedPCMData;
+	private static double[] sharedPCMData;
 	private static double timeToSample;
-	private static int grainSize = 100 / FDData.timeStepInMillis;
+	private static int grainSize = 1000 / FDData.timeStepInMillis;
 	private static int minNoiseNote = 10 * FDData.noteBase;
 	private static double[][] noiseBanks = null;
 	
-	public static float[] synthHarmonicsLinear(FDData.Channel channel, ArrayList<Harmonic> harmonics) {
+	public static double[] synthHarmonicsLinear(FDData.Channel channel, ArrayList<Harmonic> harmonics) {
 		initSharedPCMData(channel, harmonics);
+		synthBackgroundNoise(channel);
 		for(Harmonic harmonic: harmonics) {
 			if(harmonic.getChannel() != channel) continue; 
 			synthHarmonicLinear(harmonic);
@@ -19,7 +21,7 @@ public class FastSynth {
 		return sharedPCMData;
 	}
 	
-	public static float[] synthHarmonicsLinearCubicSpline(FDData.Channel channel, ArrayList<Harmonic> harmonics) {
+	public static double[] synthHarmonicsLinearCubicSpline(FDData.Channel channel, ArrayList<Harmonic> harmonics) {
 		initSharedPCMData(channel, harmonics);
 		for(Harmonic harmonic: harmonics) {
 			if(harmonic.getChannel() != channel) continue;
@@ -28,13 +30,28 @@ public class FastSynth {
 		return sharedPCMData;
 	}
 	
-	public static float[] synthHarmonicsLinearNoise(FDData.Channel channel, ArrayList<Harmonic> harmonics) {
+	public static double[] synthHarmonicsLinearNoise(FDData.Channel channel, ArrayList<Harmonic> harmonics) {
 		initNoiseBanks();
 		initSharedPCMData(channel, harmonics);
 		for(Harmonic harmonic: harmonics) {
 			if(harmonic.getChannel() != channel) continue;
 			synthHarmonicLinearNoise(harmonic);
 		}
+		return sharedPCMData;
+	}
+	
+	public static double[] synthBackgroundNoise(FDData.Channel channel) {
+		float[][] matrix = DFTEditor.amplitudesLeft;
+		if(channel == FDData.Channel.RIGHT) matrix = DFTEditor.amplitudesRight;
+		TreeMap<Integer, Float[]> noteToAmplitudes = new TreeMap<Integer, Float[]>();
+		for(int note = DFTEditor.minScreenNote; note < DFTEditor.maxScreenNote; note++) {
+			Float[] amplitudes = new Float[matrix.length];
+			for(int index = 0; index < amplitudes.length; index++) {
+				amplitudes[index] = matrix[index][DFTEditor.maxScreenNote - note];
+			}
+			noteToAmplitudes.put(new Integer(note), amplitudes);
+		}
+		Filter.createBackgroundNoise(noteToAmplitudes, sharedPCMData);
 		return sharedPCMData;
 	}
 	
@@ -47,7 +64,7 @@ public class FastSynth {
 			if(harmonicEndTime > maxEndTime) maxEndTime = harmonicEndTime;
 		}
 		int numSamples = (int) Math.ceil(maxEndTime * timeToSample);
-		sharedPCMData = new float[numSamples];
+		sharedPCMData = new double[numSamples];
 		for(int index = 0; index < numSamples; index++) sharedPCMData[index] = 0.0f;
 	}
 	
