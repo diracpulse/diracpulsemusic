@@ -30,7 +30,7 @@ public class DFT2 {
 	private static final double onePI = 3.1415926535897932384626433832795;
 	private static final double twoPI = 6.283185307179586476925286766559;
 	private static double samplingRate = 44100.0;
-	public static double maxBinStep = 2.0;
+	public static double maxBinStep = 1.0;
 	//private static double maxFreqHz = samplingRate / 2.0;
 	//private static double minFreqHz = 20.0;
 	private static double maxWindowLength = 44100 / 5;
@@ -224,6 +224,7 @@ public class DFT2 {
 		}
 		double noteRatio = Math.pow(2.0, -1.0 / (double) FDData.noteBase);
 		double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
+		double maxSamplesPerStep = samplesPerStep;
 		double bins = maxBinStep / (Math.pow(2.0, 1.0 / (double) FDData.noteBase) - 1.0);
 		// 22050 -> 5512.5
 		double upperClipRatio = 1.0;
@@ -237,11 +238,53 @@ public class DFT2 {
 			}
 			note--;
 		}
-		//gain = 1.0 / 2.0;
+		while(true) {
+			for(double freqInHz = samplingRate / 8.0  * upperClipRatio; Math.round(freqInHz * 10000.0) / 10000.0 > samplingRate / 16.0  * upperClipRatio; freqInHz *= noteRatio) {
+				if(note < frequencyToNote(samplingRate / 8.0)) {
+					double innerNoteBase = FDData.noteBase * Math.sqrt(noteToFrequency(note) / (samplingRate / 8.0));
+					bins = maxBinStep / (Math.pow(2.0, 1.0 / (double) innerNoteBase) - 1.0);
+					System.out.println(noteToFrequency(note) + " " + innerNoteBase);
+				}
+				Wavelet currentWavelet = createWavelet(freqInHz, bins);
+				for(double centerIndex = 0; centerIndex < maxCenterIndex; centerIndex += samplesPerStep) {
+					if(note == frequencyToNote(samplingRate / 2048.0)) return;
+					SingleDFT(currentWavelet, (int) Math.round(centerIndex), note, left, right, samplesPerStep, gain);
+				}
+				note--;
+			}
+			left = Filter.decimate(left);
+			right = Filter.decimate(right);
+			maxCenterIndex /= 2;
+			samplesPerStep /= 2;
+			System.out.println("decimate");
+		}
+	}
+	
+	static void DFTWithDecimateAndMultiply(int maxCenterIndex) {
+		double left[] = new double[LeftRight.length / 2];
+		double right[] = new double[LeftRight.length / 2];
+		for(int index = 0; index < LeftRight.length / 2; index++) {
+			left[index] = (double) LeftRight[index * 2];
+			right[index] = (double) LeftRight[index * 2 + 1];
+		}
+		double noteRatio = Math.pow(2.0, -1.0 / (double) FDData.noteBase);
+		double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
+		double bins = maxBinStep / (Math.pow(2.0, 1.0 / (double) FDData.noteBase) - 1.0);
+		double upperClipRatio = 1.0;
+		double gain = 1.0;
+		int note = frequencyToNote(samplingRate / 2.0 * upperClipRatio);
+		for(double freqInHz = samplingRate / 2.0 * upperClipRatio; Math.round(freqInHz * 10000.0) / 10000.0 > samplingRate / 8.0 * upperClipRatio; freqInHz *= noteRatio) {
+			Wavelet currentWavelet = createWavelet(freqInHz, bins);
+			for(double centerIndex = 0; centerIndex < maxCenterIndex; centerIndex += samplesPerStep) {
+				if(note == frequencyToNote(samplingRate / 2048.0)) return;
+				SingleDFT(currentWavelet, (int) Math.round(centerIndex), note, left, right, samplesPerStep, gain);
+			}
+			note--;
+		}
 		for(double freqInHz = samplingRate / 8.0 * upperClipRatio; Math.round(freqInHz * 10000.0) / 10000.0 > samplingRate / 16.0 * upperClipRatio; freqInHz *= noteRatio) {
 			Wavelet currentWavelet = createWavelet(freqInHz * 2, bins);
 			double[] tempLeft = Filter.filterAndMultiply(freqInHz, left);
-			double[] tempRight = Filter.filterAndMultiply(freqInHz, right);
+			double[] tempRight = Filter.filterAndMultiply(freqInHz, right);			
 			for(double centerIndex = 0; centerIndex < maxCenterIndex; centerIndex += samplesPerStep) {
 				if(note == frequencyToNote(samplingRate / 2048.0)) return;
 				SingleDFT(currentWavelet, (int) Math.round(centerIndex), note, tempLeft, tempRight, samplesPerStep, gain);
@@ -288,7 +331,7 @@ public class DFT2 {
 	}
 	
 	static void FileDFTMatrix(String fileName) {
-		Filter.testFilters();
+		//Filter.testFilters();
 		double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
 		int maxCenterIndex = LoadSamplesFromFile(fileName);
 		int maxTime = (int) Math.floor(maxCenterIndex / samplesPerStep);
