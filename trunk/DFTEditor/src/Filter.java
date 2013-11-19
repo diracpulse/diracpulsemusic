@@ -23,11 +23,16 @@ public class Filter {
 		double lowerBound;
 		double upperBound;
 		int filterLength;
-		double centerGain;
 		
 		CriticalBand(double lowerBound, double upperBound) {
 			this.upperBound = upperBound;
 			this.lowerBound = lowerBound;
+		}
+		
+		CriticalBand(double lowerBound, double upperBound, int filterLength) {
+			this.upperBound = upperBound;
+			this.lowerBound = lowerBound;
+			this.filterLength = filterLength;
 		}
 		
 		double getLowerBound() {
@@ -42,17 +47,16 @@ public class Filter {
 			//return Math.sqrt(upperBound * lowerBound);
 			return (upperBound + lowerBound) / 2.0;
 		}
+				
+		int getFilterLength() {
+			return filterLength; 
+		}
 		
 		void setFilterLength(int filterLength) {
 			this.filterLength = filterLength; 
 		}
-		
-		void setCenterGain(double centerGain) {
-			this.centerGain = centerGain; 
-		}
-		
-		// designed to have -3dB at endPoints
-		void synthNoise(TreeMap<Integer, Float[]> noteToSamples, double[] sharedPCMData, int startTime, int endTime) {
+
+		void synthNoise(TreeMap<Integer, Float[]> noteToSamples, double[] sharedPCMData, double[] noise, int startTime, int endTime) {
 			Random random = new Random();
 			double amplitude = 0.0;
 			int numDataPoints = 0;
@@ -60,39 +64,50 @@ public class Filter {
 				Float[] amplitudes = noteToSamples.get(note);
 				if(amplitudes == null) continue;
 				for(int time = startTime; time < endTime; time++) {
-					amplitude += Math.pow(FDData.logBase, amplitudes[time]);
+					double maxAmplitude = 0.0;
+					if(DFTEditor.isMaxima(time, DFTEditor.maxScreenNote - note)) {
+						amplitude += Math.pow(FDData.logBase, amplitudes[time]);
+						numDataPoints++;
+					}
 				}
-				numDataPoints++;
 			}
 			amplitude /= numDataPoints;
 			filter = new double[filterLength + 1];
 			BPFilter(getCenterFreq(), filterLength, alpha);
 			double maxNoiseSample = 1.0 / 65536.0;
 			double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
-			double[] noise = new double[sharedPCMData.length]; // NEEDS TO BE CALCULATED
-			double[] filteredNoise = new double[noise.length];
-			for(int index = 0; index < noise.length; index++) noise[index] = random.nextGaussian();
-			for(int index = 0; index < noise.length; index++) {
+			int startSample = (int) Math.round(startTime * timeToSample);
+			int endSample = (int) Math.round(endTime * timeToSample);
+			double[] filteredNoise = new double[endSample - startSample];
+			for(int index = startSample; index < endSample; index++) {
 				for(int filterIndex = 0; filterIndex < filter.length; filterIndex++) {
-					int innerIndex = index + filterIndex - filterIndex / 2;
+					int innerIndex = index + filterIndex - filter.length / 2;
 					if(innerIndex < 0) continue;
-					if(innerIndex == noise.length) break;
-					filteredNoise[index] += noise[innerIndex] * filter[filterIndex];
+					if(innerIndex >= noise.length) break;
+					filteredNoise[index - startSample] += noise[innerIndex] * filter[filterIndex];
 				}
-				if(filteredNoise[index] > maxNoiseSample) maxNoiseSample = Math.abs(filteredNoise[index]);
+				if(filteredNoise[index - startSample] > maxNoiseSample) maxNoiseSample = Math.abs(filteredNoise[index - startSample]);
 			}
 			for(int index = 0; index < filteredNoise.length; index++) {
-				sharedPCMData[index + startTime] += filteredNoise[index] *= amplitude / maxNoiseSample;
+				if(index + startSample >= sharedPCMData.length - 1) break;
+				sharedPCMData[index + startSample] += filteredNoise[index] *= amplitude / maxNoiseSample;
 			}
 		}
 	}
 	
 	public static void createBackgroundNoise(TreeMap<Integer, Float[]> noteToAmplitudes, double[] sharedPCMData) {
 		createCriticalBands();
+		Random random = new Random();
+		double[] noise = new double[sharedPCMData.length];
+		for(int sample = 0; sample < sharedPCMData.length; sample++) noise[sample] = (Math.random() - 0.5) * 65534.0;
 		for(CriticalBand criticalBand: criticalBands) {
-			criticalBand.synthNoise(noteToAmplitudes, sharedPCMData, 0, noteToAmplitudes.get(noteToAmplitudes.firstKey()).length);
+			System.out.println(criticalBand.getCenterFreq());
+			double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
+			int timeStep = (int) Math.ceil(criticalBand.getFilterLength() / timeToSample);
+			for(int time = 0; time < noteToAmplitudes.get(noteToAmplitudes.firstKey()).length - timeStep; time += timeStep) {
+				criticalBand.synthNoise(noteToAmplitudes, sharedPCMData, noise, time, time + timeStep);
+			}
 		}
-		
 	}
 	
 	static double BesselI0(double x) {
@@ -385,7 +400,7 @@ public class Filter {
 		int filterLength = (int) Math.round((samplingRate / passFreq) * filterBins);
 		filterLength = filterLength + filterLength % 2;
 		double samplesPerCycle = samplingRate / passFreq;
-		int signalLength = (int) Math.ceil(samplesPerCycle * 100) + filterLength;
+		int signalLength = (int) filterLength * 4;
 		double[] testFreqs = {criticalBand.getLowerBound(), criticalBand.getCenterFreq(), criticalBand.getUpperBound()};
 		double[][] testSignals = new double[testFreqs.length][signalLength];
  		double[] maxTestValue = new double[testFreqs.length];
@@ -417,13 +432,18 @@ public class Filter {
 		double valueAtLowerBound = maxTestValue[0];
 		double valueAtCenterFreq = maxTestValue[1];
 		double valueAtUpperBound = maxTestValue[2];
-		if((valueAtLowerBound / valueAtCenterFreq) < 0.5 && (valueAtUpperBound / valueAtCenterFreq) < 0.5) {
-			System.out.print((float) passFreq + " " + (float) filterBins + " : ");
+		//System.out.print((float) passFreq + " " + (float) filterBins + " " + filterLength + " : ");
+		for(int freqIndex = 0; freqIndex < testFreqs.length; freqIndex++) {	
+			//System.out.print((float) (testFreqs[freqIndex] / passFreq) + " = " + (float) (Math.round(maxTestValue[freqIndex] * 1000.0) / 1000.0) + " | ");
+		}
+		//System.out.println();
+		if((valueAtLowerBound / valueAtCenterFreq) < 0.6 && (valueAtUpperBound / valueAtCenterFreq) < 0.6) {
+			System.out.println("criticalBands.add(new CriticalBand(" + criticalBand.getLowerBound() + ", " + criticalBand.getUpperBound() + ", " + filterLength + "));");
+			//System.out.print((float) passFreq + " " + (float) filterBins + " " + filterLength + " : ");
 			for(int freqIndex = 0; freqIndex < testFreqs.length; freqIndex++) {	
-				System.out.print((float) (testFreqs[freqIndex] / passFreq) + " = " + (float) (Math.round(maxTestValue[freqIndex] * 1000.0) / 1000.0) + " | ");
+				//System.out.print((float) (testFreqs[freqIndex] / passFreq) + " = " + (float) (Math.round(maxTestValue[freqIndex] * 1000.0) / 1000.0) + " | ");
 			}
-			System.out.println();
-			criticalBand.setCenterGain(valueAtCenterFreq);
+			//System.out.println();
 			criticalBand.setFilterLength(filterLength);
 			return true;
 		}
@@ -434,7 +454,7 @@ public class Filter {
 		if(criticalBands != null) return;
 		initFullCriticalBands();
 		double minFilterBins = 1.0;
-		double maxFilterBins = 42.0;
+		double maxFilterBins = 1000.0;
 		for(CriticalBand bounds: criticalBands) {
 			for(double filterBins = minFilterBins; filterBins < maxFilterBins; filterBins += 0.5) {
 				if(testBPFilter(bounds, filterBins)) break;
@@ -525,6 +545,7 @@ public class Filter {
 	}
 	
 	public static void initHalfCriticalBands() {
+		if(criticalBands != null) return;
 		criticalBands = new ArrayList<CriticalBand>();
 		criticalBands.add(new CriticalBand(20, 50));
 		criticalBands.add(new CriticalBand(50, 100));
