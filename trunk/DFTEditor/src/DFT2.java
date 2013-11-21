@@ -157,7 +157,7 @@ public class DFT2 {
 		double minFreqHz = (samplingRate / 32.0);
 		for(double freqInHz = maxFreqHz ; Math.round(freqInHz * 10000.0) / 10000.0 >= minFreqHz; freqInHz *= noteRatio) {
 			double samplesPerCycle = samplingRate / freqInHz;
-			double noteBase = FDData.noteBase * Math.sqrt(freqInHz / (samplingRate / 8.0));
+			double noteBase = FDData.noteBase; Math.sqrt(freqInHz / (samplingRate / 8.0));
 			if(noteBase > FDData.noteBase) noteBase = FDData.noteBase;
 			double bins = maxBinStep / (Math.pow(2.0, 1.0 / (double) noteBase) - 1.0);
 			double currentPhase = 0.0;
@@ -187,7 +187,7 @@ public class DFT2 {
 			double currentPhase = Math.random();
 			double deltaPhase = (freqInHz / SynthTools.sampleRate) * SynthTools.twoPI;
 			int noteIndex = frequencyToNote(maxFreqHz) - frequencyToNote(freqInHz);
-			if(noteIndex % 6 != 0) {
+			if(noteIndex % 1 != 0) {
 				testAmplitudes[noteIndex] = 0.0;
 				continue;
 			}
@@ -217,6 +217,32 @@ public class DFT2 {
 			System.out.printf("%.6f] = ", responseOfWaveletToNote[xDimension - 1][yIndex]);
 			System.out.printf("%.6f", testAmplitudes[yIndex]);
 		}
+		double[][] A = responseOfWaveletToNote;
+		for(int x = 0; x < yDimension; x++) {
+			double divisor = A[x][x];
+			for(int x2 = x; x2 < xDimension; x2++) A[x2][x] /= divisor;
+			for(int y = 0; y < yDimension; y++) {
+				if(y == x) continue;
+				double multiplier = A[x][y];
+				for(int x2 = x; x2 < xDimension; x2++) {
+					A[x2][y] -= A[x2][x] * multiplier;
+				}
+			}
+			System.out.println(x);
+		}
+		responseOfWaveletToNote = A;
+		for(double freqInHz = maxFreqHz ; Math.round(freqInHz * 10000.0) / 10000.0 >= minFreqHz; freqInHz *= noteRatio) {
+			System.out.print("[");
+			int yIndex = frequencyToNote(maxFreqHz) - frequencyToNote(freqInHz);
+			for(double innerFreqInHz = maxFreqHz; Math.round(innerFreqInHz * 10000.0) / 10000.0 >= minFreqHz; innerFreqInHz *= noteRatio) {
+				int xIndex = frequencyToNote(maxFreqHz) - frequencyToNote(innerFreqInHz);
+				System.out.printf("%.3f", responseOfWaveletToNote[xIndex][yIndex]);
+				System.out.print(",");
+			}
+			System.out.printf("%.10f] = ", responseOfWaveletToNote[xDimension - 1][yIndex]);
+			System.out.printf("%.10f", testAmplitudes[yIndex]);
+		}
+		System.out.println();
 		System.out.println();
 	}
 
