@@ -3,8 +3,8 @@
 public class FDData {
 	
 	public static int timeStepInMillis = 5; // time in secs = this.time * timeStepInMillis / 1000
-	public static int noteBase = 62; // freq in Hz = 2.0^((this.note + this.noteFraction) / noteBase)
-	public static final double logBase = 2.0; // amplitude = logBase ^ logAmplitude
+	public static int noteBase = 31; // freq in Hz = 2.0^((this.note + this.noteFraction) / noteBase)
+	public static final double logBase = 12.0; // amplitude = logBase ^ logAmplitude
 	
 	//Data Bounds
 	public static final int minTime = 0;
