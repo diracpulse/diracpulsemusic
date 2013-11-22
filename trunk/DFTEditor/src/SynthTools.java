@@ -16,6 +16,7 @@ class SynthTools {
 	public static boolean flatHarmonics = false;
 	static double maxDeltaFreq = 1;
 	static double binRangeFactor = 1.0;
+	private static CubicSpline barkRatioToMaskingLevel = null;
 	
 	static int freqToBinRange(int freq) {
 		int note = DFTEditor.freqToNote(freq);
@@ -145,6 +146,7 @@ class SynthTools {
 				}
 			}
 		}
+		timeToFreqToData = applyFreqMasking(channel, timeToFreqToData);
 		for(time = 0; time < numTimes; time++) {
 			TreeMap<Integer, FDData> outerFreqToData = timeToFreqToData.get(time);
 			while(!outerFreqToData.isEmpty()) {
@@ -223,5 +225,92 @@ class SynthTools {
 		}
 		return output;
 	}
+	
+	static class XYPair {
+		
+		public double x;
+		public double y;
+		
+		XYPair(double x, double y) {
+			this.x = x;
+			this.y = y;
+		}
+		
+	}
+	
+	static TreeMap<Integer, TreeMap<Integer, FDData>> applyFreqMasking(FDData.Channel channel, TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData) {
+		TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima = null;
+		if(channel == FDData.Channel.LEFT) timeToFreqsAtMaxima = DFTEditor.timeToFreqsAtMaximaLeft;
+		if(channel == FDData.Channel.RIGHT) timeToFreqsAtMaxima = DFTEditor.timeToFreqsAtMaximaRight;
+		float[][] amplitudes = null;
+		if(channel == FDData.Channel.LEFT) amplitudes = DFTEditor.amplitudesLeft;
+		if(channel == FDData.Channel.RIGHT) amplitudes = DFTEditor.amplitudesRight;
+		int numTimes = amplitudes.length;
+		for(int time = 0; time < numTimes; time++) {
+			TreeSet<Integer> outputFreqsAtMaxima = new TreeSet<Integer>();
+			TreeMap<Integer, FDData> outputFreqToData = new TreeMap<Integer, FDData>();
+			TreeSet<Integer> freqsAtMaxima = timeToFreqsAtMaxima.get(time);
+			TreeMap<Integer, FDData> freqToData = timeToFreqToData.get(time);
+			for(Integer freq: freqToData.keySet()) outputFreqToData.put(freq, freqToData.get(freq));
+			for(Integer freq: freqsAtMaxima) outputFreqsAtMaxima.add(freq);
+			for(Integer freq: freqsAtMaxima) {
+				if(!outputFreqsAtMaxima.contains(freq)) continue;
+				for(Integer innerFreq: freqsAtMaxima) {
+					if(freq == innerFreq) continue;
+					if(!outputFreqsAtMaxima.contains(innerFreq)) continue;
+					if(isMaskedByData1(freqToData.get(freq), freqToData.get(innerFreq))) {
+						outputFreqsAtMaxima.remove(innerFreq);
+						outputFreqToData.remove(innerFreq);
+						//System.out.print("m");
+					}
+				}
+			}
+			timeToFreqsAtMaxima.remove(time);
+			timeToFreqsAtMaxima.put(time, outputFreqsAtMaxima);
+			timeToFreqToData.remove(time);
+			timeToFreqToData.put(time, outputFreqToData);
+		}
+		return timeToFreqToData;
+	}
+	
+	static boolean isMaskedByData1(FDData data1, FDData data2) {
+		if(data2.getLogAmplitude() > data1.getLogAmplitude()) return false;
+		double bark1 = 13.0 * Math.atan(0.00076 * data1.getFrequencyInHz()) + 3.5 * Math.atan((data1.getFrequencyInHz() / 7500.0) * (data1.getFrequencyInHz() / 7500.0));
+		double bark2 = 13.0 * Math.atan(0.00076 * data2.getFrequencyInHz()) + 3.5 * Math.atan((data2.getFrequencyInHz() / 7500.0) * (data2.getFrequencyInHz() / 7500.0));
+		double barkRatio = bark2 / bark1;
+		if(barkRatio < 87.0/104.0 || barkRatio > 109.0/78.0) return false;
+		if(barkRatioToMaskingLevel == null) {
+			ArrayList<XYPair> masking = new ArrayList<XYPair>();
+			masking.add(new XYPair(87.0/104.0, Math.pow(10.0, -5.0 / 2)));
+			masking.add(new XYPair(45.0/52.0, Math.pow(10.0, -4.0 / 2)));
+			masking.add(new XYPair(93.0/104.0, Math.pow(10.0, -3.0 / 2)));
+			masking.add(new XYPair(11.0/12.0, Math.pow(10.0, -2.0 / 2)));
+			masking.add(new XYPair(49.0/52.0, Math.pow(10.0, -1.0 / 2)));
+			masking.add(new XYPair(23.0/24.0, Math.pow(10.0, -0.5 / 2)));
+			masking.add(new XYPair(101.0/104.0, Math.pow(10.0, -0.25 / 2)));
+			masking.add(new XYPair(1.0/1.0, Math.pow(10.0, -0.0)));
+			masking.add(new XYPair(107.0/104.0, Math.pow(10.0, -0.25 / 2)));
+			masking.add(new XYPair(109.0/104.0, Math.pow(10.0, -0.5 / 2)));
+			masking.add(new XYPair(14.0/13.0, Math.pow(10.0, -1.0 / 2)));
+			masking.add(new XYPair(119.0/104.0, Math.pow(10.0, -2.0 / 2)));
+			masking.add(new XYPair(95.0/78.0, Math.pow(10.0, -3.0 / 2)));
+			masking.add(new XYPair(17.0/13.0, Math.pow(10.0, -4.0 / 2)));
+			masking.add(new XYPair(109.0/78.0, Math.pow(10.0, -5.0 / 2)));
+			double[] x = new double[masking.size()];
+			double[] y = new double[masking.size()];
+			int index = 0;
+			for(XYPair xyPair: masking) {
+				x[index] = xyPair.x;
+				y[index] = Math.log(xyPair.y) / Math.log(2.0);
+				System.out.println("Masking:" + x[index] + " : " + y[index]);
+				index++;
+			}
+			barkRatioToMaskingLevel = new CubicSpline(x, y);
+		}
+		double maskingLevel = barkRatioToMaskingLevel.interpolate(barkRatio);
+		if(data2.getLogAmplitude() - data1.getLogAmplitude() > maskingLevel) return false;
+		return true;
+	}
+	
 
 }
