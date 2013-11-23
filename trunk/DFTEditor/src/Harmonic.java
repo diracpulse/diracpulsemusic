@@ -91,7 +91,7 @@ public class Harmonic {
 	public FDData getStart() {
 		return timeToData.get(timeToData.firstKey());
 	}
-	
+
 	public FDData getEnd() {
 		if(timeToData.isEmpty()) return null;
 		FDData taperData = null;
@@ -108,6 +108,13 @@ public class Harmonic {
 	public int getLength() {
 		if(timeToData.isEmpty()) return 0;
 		return (getEnd().getTime() - getStart().getTime());
+	}
+	
+	public int getLengthNoTaper() {
+		if(timeToData.isEmpty()) return 0;
+		FDData startData = timeToData.get(timeToData.firstKey());
+		FDData endData = timeToData.get(timeToData.lastKey());
+		return endData.getTime() - startData.getTime();
 	}
 
 	public double getTaperLength() {

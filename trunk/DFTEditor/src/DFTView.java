@@ -359,7 +359,7 @@ public class DFTView extends JComponent {
 		} else {
 			green = red * 2.0f;
 		}
-		if (DFTEditor.isMaxima(time, freq)) {
+		if(DFTEditor.isMaxima(time, freq)) {
 			if(dataView != DataView.DATA_ONLY) {
 				red = red / 2.0f + 0.5f;
 				green = 0.0f;

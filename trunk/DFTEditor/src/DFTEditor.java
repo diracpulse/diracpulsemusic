@@ -117,6 +117,16 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 		return -1.0f;
 	}
 	
+	public static boolean isMaxima(FDData.Channel channel, int time, int freq) {
+		TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima = null;
+		if(channel == FDData.Channel.LEFT) timeToFreqsAtMaxima = timeToFreqsAtMaximaLeft;
+		if(channel == FDData.Channel.RIGHT) timeToFreqsAtMaxima = timeToFreqsAtMaximaRight;
+		if(timeToFreqsAtMaxima == null) return false;
+		if(time >= maxTime || freq >= maxScreenFreq) return false;
+		if(!timeToFreqsAtMaxima.containsKey(time)) return false;
+		return timeToFreqsAtMaxima.get(time).contains(freq);
+	}
+	
 	public static boolean isMaxima(int time, int freq) {
 		if(timeToFreqsAtMaximaLeft == null || timeToFreqsAtMaximaRight == null) return false;
 		if(time >= maxTime && freq >= maxScreenFreq) return false;
