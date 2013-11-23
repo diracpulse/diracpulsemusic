@@ -17,6 +17,7 @@ class SynthTools {
 	static double maxDeltaFreq = 1;
 	static double binRangeFactor = 1.0;
 	private static CubicSpline barkRatioToMaskingLevel = null;
+	private static double[] noteToBarkRatio = null;
 	
 	static int freqToBinRange(int freq) {
 		int note = DFTEditor.freqToNote(freq);
@@ -146,6 +147,7 @@ class SynthTools {
 				}
 			}
 		}
+		Filter.removeNoiseMaximas(channel, timeToFreqToData);
 		timeToFreqToData = applyFreqMasking(channel, timeToFreqToData);
 		for(time = 0; time < numTimes; time++) {
 			TreeMap<Integer, FDData> outerFreqToData = timeToFreqToData.get(time);
@@ -196,6 +198,19 @@ class SynthTools {
 				}
 				DFTEditor.harmonicIDToHarmonic.put(harmonicID, newHarmonic);
 			}
+		}
+		// Remove Harmonic Fragments
+		ArrayList<Long> harmonicIDsToRemove = new ArrayList<Long>();
+		for(Long harmonicID: DFTEditor.harmonicIDToHarmonic.keySet()) {
+			Harmonic harmonic = DFTEditor.harmonicIDToHarmonic.get(harmonicID);
+			if(harmonic.getChannel() != channel) continue;
+			int length = harmonic.getLengthNoTaper();
+			double lengthInSeconds = length * (FDData.timeStepInMillis / 1000.0);
+			double cycleLengthInSeconds = 1.0 / DFT2.noteToFrequency(harmonic.getMaxNote());
+			if(lengthInSeconds / cycleLengthInSeconds < 4.0) harmonicIDsToRemove.add(harmonicID);
+		}
+		for(Long harmonicID: harmonicIDsToRemove) {
+			DFTEditor.harmonicIDToHarmonic.remove(harmonicID);
 		}
 	}
 	
@@ -275,8 +290,14 @@ class SynthTools {
 	
 	static boolean isMaskedByData1(FDData data1, FDData data2) {
 		if(data2.getLogAmplitude() > data1.getLogAmplitude()) return false;
-		double bark1 = 13.0 * Math.atan(0.00076 * data1.getFrequencyInHz()) + 3.5 * Math.atan((data1.getFrequencyInHz() / 7500.0) * (data1.getFrequencyInHz() / 7500.0));
-		double bark2 = 13.0 * Math.atan(0.00076 * data2.getFrequencyInHz()) + 3.5 * Math.atan((data2.getFrequencyInHz() / 7500.0) * (data2.getFrequencyInHz() / 7500.0));
+		if(noteToBarkRatio == null) {
+			noteToBarkRatio = new double[DFTEditor.maxScreenNote + 1];
+			for(int note = 0; note < noteToBarkRatio.length; note++) {
+				noteToBarkRatio[note] = 13.0 * Math.atan(0.00076 * DFT2.noteToFrequency(note)) + 3.5 * Math.atan((DFT2.noteToFrequency(note) / 7500.0) * (DFT2.noteToFrequency(note) / 7500.0));
+			}
+		}
+		double bark1 = noteToBarkRatio[data1.getNote()];
+		double bark2 = noteToBarkRatio[data2.getNote()];
 		double barkRatio = bark2 / bark1;
 		if(barkRatio < 87.0/104.0 || barkRatio > 109.0/78.0) return false;
 		if(barkRatioToMaskingLevel == null) {
