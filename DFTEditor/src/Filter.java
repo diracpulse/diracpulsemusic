@@ -23,19 +23,14 @@ public class Filter {
 		
 		double lowerBound;
 		double upperBound;
-		int filterLength;
+		double filter[] = null;
+		TreeMap<FDData.Channel, double[]> channelToTimeToNoiseAmplitude = new TreeMap<FDData.Channel, double[]>();
 		
 		CriticalBand(double lowerBound, double upperBound) {
 			this.upperBound = upperBound;
 			this.lowerBound = lowerBound;
 		}
-		
-		CriticalBand(double lowerBound, double upperBound, int filterLength) {
-			this.upperBound = upperBound;
-			this.lowerBound = lowerBound;
-			this.filterLength = filterLength;
-		}
-		
+	
 		double getLowerBound() {
 			return lowerBound;
 		}
@@ -49,101 +44,96 @@ public class Filter {
 			return (upperBound + lowerBound) / 2.0;
 		}
 				
-		int getFilterLength() {
-			return filterLength; 
+		void setFilter(double[] filter) {
+			this.filter = filter;
 		}
 		
-		void setFilterLength(int filterLength) {
-			this.filterLength = filterLength; 
-		}
-
-		void synthNoise(TreeMap<Integer, Float[]> noteToSamples, double[] sharedPCMData, double[] noise, int startTime, int endTime) {
-			double amplitude = 0.0;
-			int numDataPoints = 0;
-			for(int note = DFT2.frequencyToNote(lowerBound); note < DFT2.frequencyToNote(upperBound); note++) {
-				Float[] amplitudes = noteToSamples.get(note);
-				if(amplitudes == null) continue;
-				for(int time = startTime; time < endTime; time++) {
-					amplitude += Math.pow(FDData.logBase, amplitudes[time]);
-				}
-				numDataPoints++;
-			}
-			double maxFreqInHz = DFT2.noteToFrequency(DFTEditor.maxScreenNote);
-			double minFreqInHz = DFT2.noteToFrequency(DFTEditor.minScreenNote);
-			amplitude /= numDataPoints;
-			amplitude *= Math.pow((upperBound - lowerBound) / (maxFreqInHz - minFreqInHz), 1.0 / 4.0);
-			filter = new double[filterLength + 1];
-			BPFilter(getCenterFreq(), filterLength, alpha);
-			double maxNoiseSample = 1.0 / 65536.0;
-			double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
-			int startSample = (int) Math.round(startTime * timeToSample);
-			int endSample = (int) Math.round(endTime * timeToSample);
-			double[] filteredNoise = new double[endSample - startSample];
-			for(int index = startSample; index < endSample; index++) {
-				for(int filterIndex = 0; filterIndex < filter.length; filterIndex++) {
-					int innerIndex = index + filterIndex - filter.length / 2;
-					if(innerIndex < 0) continue;
-					if(innerIndex >= noise.length) break;
-					filteredNoise[index - startSample] += noise[innerIndex] * filter[filterIndex];
-				}
-				if(filteredNoise[index - startSample] > maxNoiseSample) maxNoiseSample = Math.abs(filteredNoise[index - startSample]);
-			}
-			for(int index = 0; index < filteredNoise.length; index++) {
-				if(index + startSample >= sharedPCMData.length - 1) break;
-				sharedPCMData[index + startSample] += filteredNoise[index] *= amplitude / maxNoiseSample;
-			}
-		}
-		
-		void removeNoiseMaximas(FDData.Channel channel, TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData) {
+		void initNoise(FDData.Channel channel, TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData) {
 			TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima = null;
-			float[][] amplitudes = null;
 			if(channel == FDData.Channel.LEFT) timeToFreqsAtMaxima = DFTEditor.timeToFreqsAtMaximaLeft;
 			if(channel == FDData.Channel.RIGHT) timeToFreqsAtMaxima = DFTEditor.timeToFreqsAtMaximaRight;
-			if(channel == FDData.Channel.LEFT) amplitudes = DFTEditor.amplitudesLeft;
-			if(channel == FDData.Channel.RIGHT) amplitudes = DFTEditor.amplitudesRight;
-			for(int time = 0; time < DFTEditor.maxTime; time++) {
+			this.channelToTimeToNoiseAmplitude.put(channel, new double[DFTEditor.maxTime]);
+			for(int time = 0; time < timeToFreqToData.lastKey(); time++) {
+				if(!timeToFreqToData.containsKey(time)) continue;
 				TreeMap<Double, Integer> logAmplitudeToNote = new TreeMap<Double, Integer>();
 				for(int note = DFT2.frequencyToNote(lowerBound); note < DFT2.frequencyToNote(upperBound); note++) {
-					if(DFTEditor.isMaxima(channel, time, DFTEditor.noteToFreq(note))) {
-						double logAmplitude = amplitudes[time][DFTEditor.noteToFreq(note)];
-						// Slight posibility of two equal floats
+					if(timeToFreqToData.get(time).containsKey(DFTEditor.noteToFreq(note))) {
+						double logAmplitude = timeToFreqToData.get(time).get(DFTEditor.noteToFreq(note)).getLogAmplitude();
 						while(logAmplitudeToNote.containsKey(logAmplitude)) logAmplitude += 0.0000001; 
 						logAmplitudeToNote.put(logAmplitude, note);
 					}
 				}
-				int numMaximas = logAmplitudeToNote.size();
-				int numMaximasToRemove = numMaximas - 4;
-				if(numMaximasToRemove <= 0) continue;
-				while(logAmplitudeToNote.size() > numMaximasToRemove) logAmplitudeToNote.remove(logAmplitudeToNote.lastKey());
-				for(double logAmplitude: logAmplitudeToNote.keySet()) {
-					int note = logAmplitudeToNote.get(logAmplitude);
-					timeToFreqsAtMaxima.get(time).remove(DFTEditor.noteToFreq(note));
-					timeToFreqToData.get(time).remove(DFTEditor.noteToFreq(note));
+				if(logAmplitudeToNote.size() < 3) {
+					channelToTimeToNoiseAmplitude.get(channel)[time] = 0.0;
+					continue;
 				}
+				logAmplitudeToNote.remove(logAmplitudeToNote.lastKey());
+				logAmplitudeToNote.remove(logAmplitudeToNote.lastKey());
+				double averageNoise = logAmplitudeToNote.lastKey();
+				logAmplitudeToNote.remove(logAmplitudeToNote.lastKey());
+				int numNoiseNotes = 1;
+				for(double logAmp: logAmplitudeToNote.keySet()) {
+					averageNoise += logAmp;
+					numNoiseNotes++;
+				}
+				averageNoise /= numNoiseNotes;
+				for(int note: logAmplitudeToNote.values()) {
+					timeToFreqToData.get(time).remove(DFTEditor.noteToFreq(note));
+					timeToFreqsAtMaxima.get(time).remove(DFTEditor.noteToFreq(note));
+				}
+				channelToTimeToNoiseAmplitude.get(channel)[time] = Math.pow(FDData.logBase, averageNoise);
 			}
 		}
-		
-		
-	}
-	
-	public static void createBackgroundNoise(TreeMap<Integer, Float[]> noteToAmplitudes, double[] sharedPCMData) {
-		createCriticalBands();
-		Random random = new Random();
-		double[] noise = new double[sharedPCMData.length];
-		for(int sample = 0; sample < sharedPCMData.length; sample++) noise[sample] = (Math.random() - 0.5) * 65534.0;
-		for(CriticalBand criticalBand: criticalBands) {
-			System.out.println(criticalBand.getCenterFreq());
+
+		void synthNoise(FDData.Channel channel, double[] sharedPCMData, double[] noise) {
+			double[] filteredNoise = new double[sharedPCMData.length];
+			double maxFilteredSample = 0.0;
+			for(int time = 0; time < filteredNoise.length; time++) {
+				double filteredSample = 0.0;
+				for(int filterIndex = 0; filterIndex < filter.length; filterIndex++) {
+					filteredSample += noise[time + filterIndex] * filter[filterIndex];
+				}
+				if(filteredSample > maxFilteredSample) maxFilteredSample = filteredSample;
+				filteredNoise[time] = filteredSample;
+			}
+			double[] timeToNoiseAmplitude = channelToTimeToNoiseAmplitude.get(channel);
 			double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
-			int timeStep = (int) Math.ceil(criticalBand.getFilterLength() / timeToSample);
-			for(int time = 0; time < noteToAmplitudes.get(noteToAmplitudes.firstKey()).length - timeStep; time += timeStep) {
-				criticalBand.synthNoise(noteToAmplitudes, sharedPCMData, noise, time, time + timeStep);
+			for(int time = 0; time < DFTEditor.maxTime - 1; time++) {
+				int lowerTime = (int) Math.round(time * timeToSample);
+				int upperTime = (int) Math.round((time + 1) * timeToSample);
+				double lowerAmplitude = timeToNoiseAmplitude[time];
+				double upperAmplitude = timeToNoiseAmplitude[time + 1];
+				double ampSlope = (upperAmplitude - lowerAmplitude) / (upperTime - lowerTime);
+				for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
+					if(timeIndex >= sharedPCMData.length) break;
+					double amplitude = lowerAmplitude + (timeIndex - lowerTime) * ampSlope;
+					sharedPCMData[timeIndex] += (amplitude * filteredNoise[timeIndex]) / maxFilteredSample;
+				}	
 			}
 		}
 	}
 	
-	public static void removeNoiseMaximas(FDData.Channel channel, TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData) {
+	public static void createBackgroundNoise(FDData.Channel channel, double[] sharedPCMData) {
 		createCriticalBands();
-		for(CriticalBand criticalBand: criticalBands) criticalBand.removeNoiseMaximas(channel, timeToFreqToData);
+		int maxFilterLength = 0;
+		for(int index = 0; index < criticalBands.size(); index++) {
+			if(criticalBands.get(index).filter.length > maxFilterLength) {
+				maxFilterLength = criticalBands.get(index).filter.length;
+			}
+		}
+		Random random = new Random();
+		double[] noise = new double[sharedPCMData.length + maxFilterLength];
+		for(int sample = 0; sample < sharedPCMData.length; sample++) {
+			noise[sample] = random.nextDouble() - 0.5;
+		}
+		for(CriticalBand criticalBand: criticalBands) {
+			criticalBand.synthNoise(channel, sharedPCMData, noise);
+		}
+	}
+	
+	public static void initNoise(FDData.Channel channel, TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData) {
+		createCriticalBands();
+		for(CriticalBand criticalBand: criticalBands) criticalBand.initNoise(channel, timeToFreqToData);
 	}
 	
 	static double BesselI0(double x) {
@@ -480,7 +470,7 @@ public class Filter {
 				//System.out.print((float) (testFreqs[freqIndex] / passFreq) + " = " + (float) (Math.round(maxTestValue[freqIndex] * 1000.0) / 1000.0) + " | ");
 			}
 			//System.out.println();
-			criticalBand.setFilterLength(filterLength);
+			criticalBand.setFilter(filter);
 			return true;
 		}
 		return false;
