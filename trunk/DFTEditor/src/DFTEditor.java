@@ -130,8 +130,14 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	public static boolean isMaxima(int time, int freq) {
 		if(timeToFreqsAtMaximaLeft == null || timeToFreqsAtMaximaRight == null) return false;
 		if(time >= maxTime && freq >= maxScreenFreq) return false;
-		boolean left = timeToFreqsAtMaximaLeft.get(time).contains(freq);
-		boolean right = timeToFreqsAtMaximaRight.get(time).contains(freq);
+		boolean left = false;
+		boolean right = false;
+		if(timeToFreqsAtMaximaLeft.containsKey(time)) {
+			left = timeToFreqsAtMaximaLeft.get(time).contains(freq);
+		}
+		if(timeToFreqsAtMaximaRight.containsKey(time)) {
+			right = timeToFreqsAtMaximaRight.get(time).contains(freq);
+		}
 		if(currentChannel == Channel.LEFT) return left;
 		if(currentChannel == Channel.RIGHT) return right;
 		if(currentChannel == Channel.STEREO) {

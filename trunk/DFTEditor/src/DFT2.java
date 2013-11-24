@@ -114,8 +114,8 @@ public class DFT2 {
 	    /*
 	    ArrayListLeftRight = new ArrayList<Float>();
 	    for(int time = 0; time < 44100 * 2; time++) {
-	    	ArrayListLeftRight.add((float) ((Math.random() - 0.5) * 65534.0));
-	    	ArrayListLeftRight.add((float) ((Math.random() - 0.5) * 65534.0));
+	    	ArrayListLeftRight.add((float) ((Math.pow(Math.random(), 1.0 / 1.0) - 0.5) * 65534.0));
+	    	ArrayListLeftRight.add((float) ((Math.pow(Math.random(), 1.0 / 1.0) - 0.5) * 65534.0));
 	    }
 	    */
 		int maxTime = ArrayListLeftRight.size() / 2;

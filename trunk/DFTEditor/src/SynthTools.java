@@ -147,8 +147,8 @@ class SynthTools {
 				}
 			}
 		}
-		Filter.removeNoiseMaximas(channel, timeToFreqToData);
-		timeToFreqToData = applyFreqMasking(channel, timeToFreqToData);
+		Filter.initNoise(channel, timeToFreqToData);
+		//timeToFreqToData = applyFreqMasking(channel, timeToFreqToData);
 		for(time = 0; time < numTimes; time++) {
 			TreeMap<Integer, FDData> outerFreqToData = timeToFreqToData.get(time);
 			while(!outerFreqToData.isEmpty()) {
@@ -199,6 +199,7 @@ class SynthTools {
 				DFTEditor.harmonicIDToHarmonic.put(harmonicID, newHarmonic);
 			}
 		}
+		/*
 		// Remove Harmonic Fragments
 		ArrayList<Long> harmonicIDsToRemove = new ArrayList<Long>();
 		for(Long harmonicID: DFTEditor.harmonicIDToHarmonic.keySet()) {
@@ -212,6 +213,7 @@ class SynthTools {
 		for(Long harmonicID: harmonicIDsToRemove) {
 			DFTEditor.harmonicIDToHarmonic.remove(harmonicID);
 		}
+		*/
 	}
 	
 	static void printHarmonics(ArrayList<Harmonic> harmonics) {
@@ -289,6 +291,7 @@ class SynthTools {
 	}
 	
 	static boolean isMaskedByData1(FDData data1, FDData data2) {
+		if(data1 == null || data2 == null) return false;
 		if(data2.getLogAmplitude() > data1.getLogAmplitude()) return false;
 		if(noteToBarkRatio == null) {
 			noteToBarkRatio = new double[DFTEditor.maxScreenNote + 1];

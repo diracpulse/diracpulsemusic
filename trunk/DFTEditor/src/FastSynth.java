@@ -31,12 +31,8 @@ public class FastSynth {
 	}
 	
 	public static double[] synthHarmonicsLinearNoise(FDData.Channel channel, ArrayList<Harmonic> harmonics) {
-		initNoiseBanks();
 		initSharedPCMData(channel, harmonics);
-		for(Harmonic harmonic: harmonics) {
-			if(harmonic.getChannel() != channel) continue;
-			synthHarmonicLinearNoise(harmonic);
-		}
+		synthBackgroundNoise(channel);
 		return sharedPCMData;
 	}
 	
@@ -51,7 +47,7 @@ public class FastSynth {
 			}
 			noteToAmplitudes.put(new Integer(note), amplitudes);
 		}
-		Filter.createBackgroundNoise(noteToAmplitudes, sharedPCMData);
+		Filter.createBackgroundNoise(channel, sharedPCMData);
 		return sharedPCMData;
 	}
 	
@@ -63,7 +59,7 @@ public class FastSynth {
 			double harmonicEndTime = Math.ceil(harmonic.getEndTime());
 			if(harmonicEndTime > maxEndTime) maxEndTime = harmonicEndTime;
 		}
-		int numSamples = (int) Math.ceil(maxEndTime * timeToSample);
+		int numSamples = (int) Math.ceil(DFTEditor.maxTime * timeToSample); // (int) Math.ceil(maxEndTime * timeToSample);
 		sharedPCMData = new double[numSamples];
 		for(int index = 0; index < numSamples; index++) sharedPCMData[index] = 0.0f;
 	}
@@ -129,6 +125,7 @@ public class FastSynth {
 			double ampSlope = (upperAmplitude - lowerAmplitude) / (upperTime - lowerTime);
 			double deltaPhaseSlope = (upperDeltaPhase - lowerDeltaPhase) / (upperTime - lowerTime);
 			for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
+				if(timeIndex >= sharedPCMData.length) break;
 				double amplitude = lowerAmplitude + (timeIndex - lowerTime) * ampSlope;
 				double deltaPhase = lowerDeltaPhase + (timeIndex - lowerTime) * deltaPhaseSlope;
 				sharedPCMData[timeIndex] += Math.sin(currentPhase) * amplitude;
@@ -156,6 +153,7 @@ public class FastSynth {
 		int upperTime = (int) Math.round(dataArray.get(dataArray.size() - 1).getTime() * timeToSample);
 		double currentPhase = 0.0;
 		for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
+			if(timeIndex >= sharedPCMData.length) break;
 			double amplitude = timeToAmp.interpolate(timeIndex);
 			double frequency = timeToFreq.interpolate(timeIndex);
 			double deltaPhase = (frequency / SynthTools.sampleRate) * SynthTools.twoPI;
