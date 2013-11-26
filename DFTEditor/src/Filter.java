@@ -3,7 +3,6 @@ import java.util.Random;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-
 public class Filter {
 
 	static double[] filter = null;
@@ -48,7 +47,9 @@ public class Filter {
 			this.filter = filter;
 		}
 		
-		void initNoise(FDData.Channel channel, TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData) {
+		void filterMaximas(FDData.Channel channel, 
+						   TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData,
+						   TreeMap<Double, SynthTools.IntPair> amplitudeToTimeAndFreq) {
 			TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima = null;
 			double[][] logAmplitudes = null;
 			if(channel == FDData.Channel.LEFT) timeToFreqsAtMaxima = DFTEditor.timeToFreqsAtMaximaLeft;
@@ -79,6 +80,7 @@ public class Filter {
 				for(int note: logAmplitudeToNote.values()) {
 					timeToFreqToData.get(time).remove(DFTEditor.noteToFreq(note));
 					timeToFreqsAtMaxima.get(time).remove(DFTEditor.noteToFreq(note));
+					amplitudeToTimeAndFreq.remove(logAmplitudes[time][DFTEditor.noteToFreq(note)]);
 				}
 			}
 		}
@@ -132,9 +134,11 @@ public class Filter {
 		}
 	}
 	
-	public static void initNoise(FDData.Channel channel, TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData) {
+	public static void applyCriticalBandFiltering(FDData.Channel channel, 
+												  TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData,
+												  TreeMap<Double, SynthTools.IntPair> amplitudeToTimeAndFreq) {
 		createCriticalBands();
-		for(CriticalBand criticalBand: criticalBands) criticalBand.initNoise(channel, timeToFreqToData);
+		for(CriticalBand criticalBand: criticalBands) criticalBand.filterMaximas(channel, timeToFreqToData, amplitudeToTimeAndFreq);
 	}
 	
 	static double BesselI0(double x) {

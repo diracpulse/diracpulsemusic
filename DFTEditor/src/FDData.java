@@ -9,8 +9,8 @@ public class FDData {
 	//Data Bounds
 	public static final int minTime = 0;
 	public static final int maxTime = 10 * 60 * (1000 / timeStepInMillis);
-	public static final float minLogAmplitude = 0.0f;
-	public static final float maxLogAmplitude = 24.0f;
+	public static final double minLogAmplitude = 0.0f;
+	public static final double maxLogAmplitude = 24.0f;
 	public static final double minFrequencyInHz = DFT2.minFreqHz;
 	public static final double maxFrequencyInHz = DFT2.maxFreqHz;
 	
@@ -25,8 +25,8 @@ public class FDData {
 	private DataType type = DataType.FUNDAMENTAL;
 	private int time = minTime;
 	private short note = (short) (noteBase * 4); // out of bounds stored at 16Hz
-	private float noteFraction = 0.0f; // frequency = 2^(note/31) + 2^(noteFraction/31);
-	private float logAmplitude = minLogAmplitude;
+	private double noteFraction = 0.0f; // frequency = 2^(note/31) + 2^(noteFraction/31);
+	private double logAmplitude = minLogAmplitude;
 	private long harmonicID = 1L;
 	private Channel channel = null;
 	
@@ -38,8 +38,8 @@ public class FDData {
 		this.channel = channel;
 		this.time = time;
 		this.note = (short) note;
-		this.noteFraction = (float) 0.0;
-		this.logAmplitude = (float) logAmplitude;
+		this.noteFraction = 0.0;
+		this.logAmplitude = logAmplitude;
 		this.harmonicID = id;
 	}
 

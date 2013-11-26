@@ -16,7 +16,7 @@ public class DFT2 {
 	private static int MAXDFTWINDOW = 44100;
 	private static int MAXSAMPLES = 44100 * 10;
 	private static int MAXWAVELETS = 62 * 12;
-	private static float LeftRight[] = null;
+	private static double LeftRight[] = null;
 	private static int stereo = 2;
 	private static int headerLengthInBytes = 56; // changed from 44 to accomodate newer .wav files
 	private static int sampleLengthInBytes = 4;
@@ -88,14 +88,14 @@ public class DFT2 {
 			System.out.println("DFTEditor: " + fileName + ".[suffix] not found");
 			return 0;
 		}
-		ArrayList<Float> ArrayListLeftRight = new ArrayList<Float>();
+		ArrayList<Double> ArrayListLeftRight = new ArrayList<Double>();
 		try {
 			in.skip(headerLengthInBytes);
 			System.out.println(in.available());
 			while(true) {
 				int sample = in.readShort();
 				sample = (short) (((sample & 0xFF00) >> 8) | ((sample & 0x00FF) << 8));
-				ArrayListLeftRight.add((float) sample);
+				ArrayListLeftRight.add(sample + (Math.random() - 0.5) * 1.0 / 256.0);
 			}
 		} catch (IOException e) {
 			if(e instanceof EOFException) {
@@ -114,12 +114,12 @@ public class DFT2 {
 	    /*
 	    ArrayListLeftRight = new ArrayList<Float>();
 	    for(int time = 0; time < 44100 * 2; time++) {
-	    	ArrayListLeftRight.add((float) ((Math.pow(Math.random(), 1.0 / 1.0) - 0.5) * 65534.0));
-	    	ArrayListLeftRight.add((float) ((Math.pow(Math.random(), 1.0 / 1.0) - 0.5) * 65534.0));
+	    	ArrayListLeftRight.add((Math.pow(Math.random(), 1.0 / 1.0) - 0.5) * 65534.0));
+	    	ArrayListLeftRight.add((Math.pow(Math.random(), 1.0 / 1.0) - 0.5) * 65534.0));
 	    }
 	    */
 		int maxTime = ArrayListLeftRight.size() / 2;
-		LeftRight = new float[maxTime * 2];
+		LeftRight = new double[maxTime * 2];
 		SynthTools.WAVDataLeft = new double[maxTime];	
 		SynthTools.WAVDataRight = new double[maxTime];
 		for(int index = 0; index < maxTime; index++) {
