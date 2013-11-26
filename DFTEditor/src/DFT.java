@@ -52,8 +52,8 @@ private static class WaveletInfo {
 	double gain;
 	int length;
 	int note;
-	float sinArray[];//[MAXDFTWINDOW];
-	float cosArray[];//[MAXDFTWINDOW];
+	double sinArray[];//[MAXDFTWINDOW];
+	double cosArray[];//[MAXDFTWINDOW];
 } 
 
 private static ArrayList<WaveletInfo> WaveletInfoArrayList = new ArrayList<WaveletInfo>();
@@ -68,14 +68,14 @@ private static int LoadSamplesFromFile(String fileName) {
 		System.out.println("DFTEditor: " + fileName + ".[suffix] not found");
 		return 0;
 	}
-	ArrayList<Float> ArrayListLeftRight = new ArrayList<Float>();
+	ArrayList<Double> ArrayListLeftRight = new ArrayList<Double>();
 	try {
 		in.skip(headerLengthInBytes);
 		System.out.println(in.available());
 		while(true) {
 			int sample = in.readShort();
 			sample = (short) (((sample & 0xFF00) >> 8) | ((sample & 0x00FF) << 8));
-			ArrayListLeftRight.add((float) sample);
+			ArrayListLeftRight.add((double) sample);
 		}
 	} catch (IOException e) {
 		if(e instanceof EOFException) {
@@ -107,8 +107,8 @@ private static int LoadSamplesFromFile(String fileName) {
 	}
 	int numNotes = maxNote - minNote;
 	int numTimes = (int) Math.round(LeftRight.length / samplesPerStep / 2);
-	DFTEditor.amplitudesLeft = new float[numTimes + 1][numNotes + 1];
-	DFTEditor.amplitudesRight = new float[numTimes + 1][numNotes + 1];
+	DFTEditor.amplitudesLeft = new double[numTimes + 1][numNotes + 1];
+	DFTEditor.amplitudesRight = new double[numTimes + 1][numNotes + 1];
 	for(int time = 0; time <= numTimes; time++) {
 		for(int freq = 0; freq <= numNotes; freq++) {
 			DFTEditor.amplitudesLeft[time][freq] = -1.0f;
@@ -149,7 +149,7 @@ private static void SingleDFT(int waveletIndex, int centerIndex) {
 	outputRoundedData(DFTEditor.amplitudesRight, sinValRight, cosValRight, waveletIndex, centerIndex);
 }
 
-private static void outputRoundedData(float[][] matrix, double sinVal, double cosVal, int waveletIndex, int centerIndex) {
+private static void outputRoundedData(double[][] matrix, double sinVal, double cosVal, int waveletIndex, int centerIndex) {
 	double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
 	int currentTime = 	(int) Math.round(centerIndex / samplesPerStep);
 	int currentFreq = WaveletInfoArrayList.get(0).note - WaveletInfoArrayList.get(waveletIndex).note;
@@ -172,10 +172,10 @@ private static void outputRoundedData(float[][] matrix, double sinVal, double co
 	if(endTime >= matrix.length) endTime = matrix.length - 1;
 	if(matrix[startTime][currentFreq] != -1.0f) return;
 	for(int time = startTime; time <= endTime; time++) {
-		matrix[time][currentFreq] = (float) logAmp;
+		matrix[time][currentFreq] = (double) logAmp;
 	}
 	*/
-	matrix[currentTime][currentFreq] = (float) logAmp;
+	matrix[currentTime][currentFreq] = (double) logAmp;
 }
 
 private static double noteToFrequency(int note) {
@@ -276,10 +276,10 @@ private static void printWaveletInfo(WaveletInfo wavelet) {
 	double length = wavelet.length;
 	double samplesPerCycle = samplingRate / freqInHz;
 	double bins = length / samplesPerCycle;
-	System.out.print(" | HZ: " + (float) freqInHz);
-	System.out.print(" | BINS: " + (float) bins);
+	System.out.print(" | HZ: " + (double) freqInHz);
+	System.out.print(" | BINS: " + (double) bins);
 	//System.out.print("gain: " + wavelet.gain + " ");
-	System.out.print(" | LENGTH: " + (float) wavelet.length); // pass as int
+	System.out.print(" | LENGTH: " + (double) wavelet.length); // pass as int
 	//System.out.print("*sin[]: %x ", wavelet.sinArray);
 	//System.out.print("*cos[]: %x ", wavelet.cosArray);
 	System.out.print("\n");
@@ -291,14 +291,14 @@ private static void CalculateWavelets() {
 		int length = WaveletInfoArrayList.get(waveletIndex).length;
 		double radianFreq = WaveletInfoArrayList.get(waveletIndex).radianFreq;
 		//System.out.print("malloc %d %d %d\n", waveletIndex, numWavelets, length);
-		WaveletInfoArrayList.get(waveletIndex).sinArray = new float[length];
-		WaveletInfoArrayList.get(waveletIndex).cosArray = new float[length];
+		WaveletInfoArrayList.get(waveletIndex).sinArray = new double[length];
+		WaveletInfoArrayList.get(waveletIndex).cosArray = new double[length];
 		Filter.CreateWindow(KaiserWindow, length, alpha);
 		for(int index = 0; index < length; index++) {
 			double dIndex = (double) index;
 			gain += KaiserWindow[index];
-			WaveletInfoArrayList.get(waveletIndex).sinArray[index] = (float) (Math.sin(dIndex * radianFreq) * KaiserWindow[index]);
-			WaveletInfoArrayList.get(waveletIndex).cosArray[index] = (float) (Math.cos(dIndex * radianFreq) * KaiserWindow[index]);
+			WaveletInfoArrayList.get(waveletIndex).sinArray[index] = (double) (Math.sin(dIndex * radianFreq) * KaiserWindow[index]);
+			WaveletInfoArrayList.get(waveletIndex).cosArray[index] = (double) (Math.cos(dIndex * radianFreq) * KaiserWindow[index]);
 		}
 		WaveletInfoArrayList.get(waveletIndex).gain = gain;
 		//printWaveletInfo(WaveletInfoArrayList.get(waveletIndex), waveletIndex);
@@ -317,8 +317,8 @@ static void fillMatrix() {
 				if(DFTEditor.amplitudesLeft[time][endFreq] != -1.0f) break;
 			}
 			if(endFreq == numFreqs) continue;
-			float startAmp = DFTEditor.amplitudesLeft[time][startFreq];
-			float endAmp = DFTEditor.amplitudesLeft[time][endFreq];
+			double startAmp = DFTEditor.amplitudesLeft[time][startFreq];
+			double endAmp = DFTEditor.amplitudesLeft[time][endFreq];
 			double slope = (startAmp - endAmp) / (startFreq - endFreq);
 			if(slope == 0.0f) {
 				if(Math.random() < 0.5) {
@@ -328,7 +328,7 @@ static void fillMatrix() {
 				}
 			}
 			for(int innerFreq = startFreq + 1; innerFreq < endFreq; innerFreq++) {
-				float ampValue = (float) (startAmp + (innerFreq - startFreq) * slope);
+				double ampValue = (double) (startAmp + (innerFreq - startFreq) * slope);
 				DFTEditor.amplitudesLeft[time][innerFreq] = ampValue;
 			}
 		}
@@ -344,8 +344,8 @@ static void fillMatrix() {
 				if(DFTEditor.amplitudesRight[time][endFreq] != -1.0f) break;
 			}
 			if(endFreq == numFreqs) continue;
-			float startAmp = DFTEditor.amplitudesRight[time][startFreq];
-			float endAmp = DFTEditor.amplitudesRight[time][endFreq];
+			double startAmp = DFTEditor.amplitudesRight[time][startFreq];
+			double endAmp = DFTEditor.amplitudesRight[time][endFreq];
 			double slope = (startAmp - endAmp) / (startFreq - endFreq);
 			if(slope == 0.0f) {
 				if(Math.random() < 0.5) {
@@ -355,7 +355,7 @@ static void fillMatrix() {
 				}
 			}
 			for(int innerFreq = startFreq + 1; innerFreq < endFreq; innerFreq++) {
-				float ampValue = (float) (startAmp + (innerFreq - startFreq) * slope);
+				double ampValue = (double) (startAmp + (innerFreq - startFreq) * slope);
 				DFTEditor.amplitudesRight[time][innerFreq] = ampValue;
 			}
 		}
@@ -370,9 +370,9 @@ public static void applyMasking() {
 	int numFreqs = DFTEditor.amplitudesLeft[0].length;
 	for(int time = 0; time < numTimes; time++) {
 		for(int freq = 0; freq < numFreqs; freq++) {
-			float amplitude = DFTEditor.amplitudesLeft[time][freq];
+			double amplitude = DFTEditor.amplitudesLeft[time][freq];
 			for(int innerFreq = freq - bins; innerFreq <= freq + bins; innerFreq++) {
-				float maskingVal = (float) amplitude + Math.abs((freq - innerFreq) / (float) bins) * (float) maskingFactor - 1.0f;
+				double maskingVal = (double) amplitude + Math.abs((freq - innerFreq) / (double) bins) * (double) maskingFactor - 1.0f;
 				if(maskingVal < 0) continue;
 				if(innerFreq < 0 || innerFreq >= numFreqs || innerFreq == freq) continue;
 				if(DFTEditor.amplitudesLeft[time][innerFreq] < maskingVal) DFTEditor.amplitudesLeft[time][innerFreq] = 0.0f;
@@ -383,9 +383,9 @@ public static void applyMasking() {
 	numFreqs = DFTEditor.amplitudesRight[0].length;
 	for(int time = 0; time < numTimes; time++) {
 		for(int freq = 0; freq < numFreqs; freq++) {
-			float amplitude = DFTEditor.amplitudesRight[time][freq];
+			double amplitude = DFTEditor.amplitudesRight[time][freq];
 			for(int innerFreq = freq - bins; innerFreq <= freq + bins; innerFreq++) {
-				float maskingVal = (float) amplitude + Math.abs((freq - innerFreq) / (float) bins) * (float) maskingFactor - 1.0f;
+				double maskingVal = (double) amplitude + Math.abs((freq - innerFreq) / (double) bins) * (double) maskingFactor - 1.0f;
 				if(maskingVal < 0) continue;
 				if(innerFreq < 0 || innerFreq >= numFreqs || innerFreq == freq) continue;
 				if(DFTEditor.amplitudesRight[time][innerFreq] < maskingVal) DFTEditor.amplitudesRight[time][innerFreq] = 0.0f;

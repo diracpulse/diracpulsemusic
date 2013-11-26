@@ -30,10 +30,10 @@ public class DFT2 {
 	// Wavelet Variables
 	private static final double onePI = 3.1415926535897932384626433832795;
 	private static final double twoPI = 6.283185307179586476925286766559;
-	private static double samplingRate = 44100.0;
+	private static double samplingRate = SynthTools.sampleRate;
 	public static double maxBinStep = 1.0;
-	//private static double maxFreqHz = samplingRate / 2.0;
-	//private static double minFreqHz = 20.0;
+	public static final double maxFreqHz = samplingRate / 2.0;
+	public static final double minFreqHz = samplingRate / 2048.0;
 	private static double maxWindowLength = 44100 / 5;
 	private static double alpha = 1.0;
 	public static double midFreq = 0.0;
@@ -61,7 +61,7 @@ public class DFT2 {
 	
 	public static void printDFTParameters() {
 		int freq = 0;
-		for(double freqInHz = samplingRate / 2048.0; freqInHz <= samplingRate / 2.0; freqInHz *= Math.pow(2.0, 1.0 / (double) FDData.noteBase)) {
+		for(double freqInHz = minFreqHz; freqInHz <= maxFreqHz; freqInHz *= Math.pow(2.0, 1.0 / (double) FDData.noteBase)) {
 			if(freq % FDData.noteBase == 0) {
 				System.out.print(freq);
 				//printWaveletInfo(waveletInfo);
@@ -270,9 +270,9 @@ public class DFT2 {
 		outputRoundedData(DFTEditor.amplitudesRight, sinValRight, cosValRight, wavelet, note, centerIndex, samplesPerStep, gain);
 	}
 	
-	private static void outputRoundedData(float[][] matrix, double sinVal, double cosVal, Wavelet wavelet, int note, int centerIndex, double samplesPerStep, double gain) {
+	private static void outputRoundedData(double[][] matrix, double sinVal, double cosVal, Wavelet wavelet, int note, int centerIndex, double samplesPerStep, double gain) {
 		int currentTime = (int) Math.round(centerIndex / samplesPerStep);
-		int currentFreq = frequencyToNote(samplingRate / 2.0) - note;
+		int currentFreq = frequencyToNote(maxFreqHz) - note;
 		double logAmp = 0.0;
 		//double roundedLogAmp = 0.0;
 		double ampVal = sinVal * sinVal;
@@ -284,7 +284,7 @@ public class DFT2 {
 		} else {
 			logAmp = 0.0;
 		}
-		matrix[currentTime][currentFreq] = (float) logAmp;
+		matrix[currentTime][currentFreq] = logAmp;
 	}
 	
 	public static double noteToFrequency(int note) {
@@ -346,11 +346,11 @@ public class DFT2 {
 		// 22050 -> 5512.5
 		double upperClipRatio = 1.0;
 		double gain = 1.0;
-		int note = frequencyToNote(samplingRate / 2.0 * upperClipRatio);
-		for(double freqInHz = samplingRate / 2.0 * upperClipRatio; Math.round(freqInHz * 10000.0) / 10000.0 > samplingRate / 8.0 * upperClipRatio; freqInHz *= noteRatio) {
+		int note = frequencyToNote(maxFreqHz * upperClipRatio);
+		for(double freqInHz = maxFreqHz * upperClipRatio; Math.round(freqInHz * 10000.0) / 10000.0 > samplingRate / 8.0 * upperClipRatio; freqInHz *= noteRatio) {
 			Wavelet currentWavelet = createWavelet(freqInHz, bins);
 			for(double centerIndex = 0; centerIndex < maxCenterIndex; centerIndex += samplesPerStep) {
-				if(note == frequencyToNote(samplingRate / 2048.0)) return;
+				if(note == frequencyToNote(minFreqHz)) return;
 				SingleDFT(currentWavelet, (int) Math.round(centerIndex), note, left, right, samplesPerStep, gain);
 			}
 			note--;
@@ -364,7 +364,7 @@ public class DFT2 {
 				}
 				Wavelet currentWavelet = createWavelet(freqInHz, bins);
 				for(double centerIndex = 0; centerIndex < maxCenterIndex; centerIndex += samplesPerStep) {
-					if(note == frequencyToNote(samplingRate / 2048.0)) return;
+					if(note == frequencyToNote(minFreqHz)) return;
 					SingleDFT(currentWavelet, (int) Math.round(centerIndex), note, left, right, samplesPerStep, gain);
 				}
 				note--;
@@ -389,11 +389,11 @@ public class DFT2 {
 		double bins = maxBinStep / (Math.pow(2.0, 1.0 / (double) FDData.noteBase) - 1.0);
 		double upperClipRatio = 1.0;
 		double gain = 1.0;
-		int note = frequencyToNote(samplingRate / 2.0 * upperClipRatio);
-		for(double freqInHz = samplingRate / 2.0 * upperClipRatio; Math.round(freqInHz * 10000.0) / 10000.0 > samplingRate / 8.0 * upperClipRatio; freqInHz *= noteRatio) {
+		int note = frequencyToNote(maxFreqHz * upperClipRatio);
+		for(double freqInHz = maxFreqHz * upperClipRatio; Math.round(freqInHz * 10000.0) / 10000.0 > samplingRate / 8.0 * upperClipRatio; freqInHz *= noteRatio) {
 			Wavelet currentWavelet = createWavelet(freqInHz, bins);
 			for(double centerIndex = 0; centerIndex < maxCenterIndex; centerIndex += samplesPerStep) {
-				if(note == frequencyToNote(samplingRate / 2048.0)) return;
+				if(note == frequencyToNote(minFreqHz)) return;
 				SingleDFT(currentWavelet, (int) Math.round(centerIndex), note, left, right, samplesPerStep, gain);
 			}
 			note--;
@@ -403,7 +403,7 @@ public class DFT2 {
 			double[] tempLeft = Filter.filterAndMultiply(freqInHz, left);
 			double[] tempRight = Filter.filterAndMultiply(freqInHz, right);			
 			for(double centerIndex = 0; centerIndex < maxCenterIndex; centerIndex += samplesPerStep) {
-				if(note == frequencyToNote(samplingRate / 2048.0)) return;
+				if(note == frequencyToNote(minFreqHz)) return;
 				SingleDFT(currentWavelet, (int) Math.round(centerIndex), note, tempLeft, tempRight, samplesPerStep, gain);
 			}
 			note--;
@@ -417,7 +417,7 @@ public class DFT2 {
 			tempLeft = Filter.filterAndMultiply(freqInHz * 2, tempLeft);
 			tempRight = Filter.filterAndMultiply(freqInHz * 2, tempRight);
 			for(double centerIndex = 0; centerIndex < maxCenterIndex; centerIndex += samplesPerStep) {
-				if(note == frequencyToNote(samplingRate / 2048.0)) return;
+				if(note == frequencyToNote(minFreqHz)) return;
 				SingleDFT(currentWavelet, (int) Math.round(centerIndex), note, tempLeft, tempRight, samplesPerStep, gain);
 			}
 			note--;
@@ -434,7 +434,7 @@ public class DFT2 {
 				tempLeft = Filter.filterAndMultiply(freqInHz * 4, tempLeft);
 				tempRight = Filter.filterAndMultiply(freqInHz * 4, tempRight);
 				for(double centerIndex = 0; centerIndex < maxCenterIndex; centerIndex += samplesPerStep) {
-					if(note == frequencyToNote(samplingRate / 2048.0)) return;
+					if(note == frequencyToNote(minFreqHz)) return;
 					SingleDFT(currentWavelet, (int) Math.round(centerIndex), note, tempLeft, tempRight, samplesPerStep, gain);
 				}
 				note--;
@@ -457,9 +457,9 @@ public class DFT2 {
 			System.out.println("File Too Large: Truncating");
 			maxCenterIndex = MAXSAMPLES;
 		}
-		int numFreqs = frequencyToNote(samplingRate / 2.0) - frequencyToNote(samplingRate / 2048.0) + 1;
-		DFTEditor.amplitudesLeft = new float[maxTime + 1][numFreqs + 1];
-		DFTEditor.amplitudesRight = new float[maxTime + 1][numFreqs + 1];
+		int numFreqs = frequencyToNote(maxFreqHz) - frequencyToNote(minFreqHz) + 1;
+		DFTEditor.amplitudesLeft = new double[maxTime + 1][numFreqs + 1];
+		DFTEditor.amplitudesRight = new double[maxTime + 1][numFreqs + 1];
 		for(int time = 0; time <= maxTime; time++) {
 			for(int freq = 0; freq <= numFreqs; freq++) {
 				DFTEditor.amplitudesLeft[time][freq] = 0.0f;
@@ -481,8 +481,8 @@ public class DFT2 {
 		}
 		*/
 		DFTEditor.maxTime = maxTime;
-		DFTEditor.maxScreenNote = frequencyToNote(samplingRate / 2.0);
-		DFTEditor.minScreenNote = frequencyToNote(samplingRate / 2048.0);
+		DFTEditor.maxScreenNote = frequencyToNote(maxFreqHz);
+		DFTEditor.minScreenNote = frequencyToNote(minFreqHz);
 		DFTEditor.maxScreenFreq = numFreqs;
 	}
 	

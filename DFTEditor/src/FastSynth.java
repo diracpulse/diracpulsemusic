@@ -37,11 +37,11 @@ public class FastSynth {
 	}
 	
 	public static double[] synthBackgroundNoise(FDData.Channel channel) {
-		float[][] matrix = DFTEditor.amplitudesLeft;
+		double[][] matrix = DFTEditor.amplitudesLeft;
 		if(channel == FDData.Channel.RIGHT) matrix = DFTEditor.amplitudesRight;
-		TreeMap<Integer, Float[]> noteToAmplitudes = new TreeMap<Integer, Float[]>();
+		TreeMap<Integer, Double[]> noteToAmplitudes = new TreeMap<Integer, Double[]>();
 		for(int note = DFTEditor.minScreenNote; note < DFTEditor.maxScreenNote; note++) {
-			Float[] amplitudes = new Float[matrix.length];
+			Double[] amplitudes = new Double[matrix.length];
 			for(int index = 0; index < amplitudes.length; index++) {
 				amplitudes[index] = matrix[index][DFTEditor.maxScreenNote - note];
 			}

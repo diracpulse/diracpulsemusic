@@ -20,17 +20,20 @@ class SynthTools {
 	private static double[] noteToBarkRatio = null;
 	
 	static int freqToBinRange(int freq) {
+		return 1;
+		/*
 		int note = DFTEditor.freqToNote(freq);
 		double freqInHz = Math.pow(FDData.logBase, (double) note / (double) FDData.noteBase);
 		if(DFT.bassFreq > DFT.midFreq) {
 			return (int) Math.ceil(binRangeFactor * DFT.bassFreq / freqInHz);
 		}
 		return (int) Math.ceil(binRangeFactor * DFT.midFreq / (2.0 * freqInHz));
+		*/
 	}
 
 	static void createPCMDataLinear() {
 		if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.WAV) return;
-		if(DFTEditor.harmonicIDToHarmonic == null || DFTEditor.harmonicIDToHarmonic.isEmpty()) return;
+		if(DFTEditor.harmonicIDToHarmonic == null) return;
 		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
 		for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonic.values()) {
 			if(!harmonic.isSynthesized()) continue;
@@ -47,7 +50,7 @@ class SynthTools {
 	
 	static void createPCMDataLinearCubicSpline() {
 		if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.WAV) return;
-		if(DFTEditor.harmonicIDToHarmonic == null || DFTEditor.harmonicIDToHarmonic.isEmpty()) return;
+		if(DFTEditor.harmonicIDToHarmonic == null) return;
 		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
 		for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonic.values()) {
 			if(!harmonic.isSynthesized()) continue;
@@ -64,7 +67,7 @@ class SynthTools {
 	
 	static void createPCMDataLinearNoise() {
 		if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.WAV) return;
-		if(DFTEditor.harmonicIDToHarmonic == null || DFTEditor.harmonicIDToHarmonic.isEmpty()) return;
+		if(DFTEditor.harmonicIDToHarmonic == null) return;
 		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
 		for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonic.values()) {
 			if(!harmonic.isSynthesized()) continue;
@@ -117,7 +120,7 @@ class SynthTools {
 		TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
 		if(channel == FDData.Channel.LEFT) DFTEditor.timeToFreqsAtMaximaLeft = new TreeMap<Integer, TreeSet<Integer>>();
 		if(channel == FDData.Channel.RIGHT) DFTEditor.timeToFreqsAtMaximaRight = new TreeMap<Integer, TreeSet<Integer>>();		
-		float[][] amplitudes = null;
+		double[][] amplitudes = null;
 		if(channel == FDData.Channel.LEFT) amplitudes = DFTEditor.amplitudesLeft;
 		if(channel == FDData.Channel.RIGHT) amplitudes = DFTEditor.amplitudesRight;
 		if(amplitudes == null) return;
@@ -199,7 +202,6 @@ class SynthTools {
 				DFTEditor.harmonicIDToHarmonic.put(harmonicID, newHarmonic);
 			}
 		}
-		/*
 		// Remove Harmonic Fragments
 		ArrayList<Long> harmonicIDsToRemove = new ArrayList<Long>();
 		for(Long harmonicID: DFTEditor.harmonicIDToHarmonic.keySet()) {
@@ -213,7 +215,6 @@ class SynthTools {
 		for(Long harmonicID: harmonicIDsToRemove) {
 			DFTEditor.harmonicIDToHarmonic.remove(harmonicID);
 		}
-		*/
 	}
 	
 	static void printHarmonics(ArrayList<Harmonic> harmonics) {
@@ -259,7 +260,7 @@ class SynthTools {
 		TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima = null;
 		if(channel == FDData.Channel.LEFT) timeToFreqsAtMaxima = DFTEditor.timeToFreqsAtMaximaLeft;
 		if(channel == FDData.Channel.RIGHT) timeToFreqsAtMaxima = DFTEditor.timeToFreqsAtMaximaRight;
-		float[][] amplitudes = null;
+		double[][] amplitudes = null;
 		if(channel == FDData.Channel.LEFT) amplitudes = DFTEditor.amplitudesLeft;
 		if(channel == FDData.Channel.RIGHT) amplitudes = DFTEditor.amplitudesRight;
 		int numTimes = amplitudes.length;

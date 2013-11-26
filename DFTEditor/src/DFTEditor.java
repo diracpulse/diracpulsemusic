@@ -31,9 +31,9 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	public static JToolBar navigationBar = null;
 	
 	//public static TreeMap<Integer, TreeMap<Integer, Float>> timeToFreqToAmp;
-	public static float[][] amplitudesLeft; // amplitude = amplitudes[time][freq]
-	public static float[][] amplitudesRight; // amplitude = amplitudes[time][freq]
-	public static float[][] amplitudesStereo; // amplitude = amplitudes[time][freq]
+	public static double[][] amplitudesLeft; // amplitude = amplitudes[time][freq]
+	public static double[][] amplitudesRight; // amplitude = amplitudes[time][freq]
+	public static double[][] amplitudesStereo; // amplitude = amplitudes[time][freq]
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaLeft;
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaRight;
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic = null;
@@ -57,11 +57,8 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	public static float minAmplitude = 0.0f;
 	// the maximum summed value at any given time
 	public static float maxAmplitudeSum;
-	//Freq ranges from minRealFreq to maxRealFreq, it does not start at 0 (Direct Current)
-	//minRealFreq = log(minRealFreqInHz) * freqsPerOctave
-	//maxRealFreq = log(maxRealFreqInHz) * freqsPerOctave
-	//maxScreenFreq = maxRealFreq - minRealFreq
-	//(where log is base 2, of course)
+	public static double minFreqHz = DFT2.minFreqHz;
+	public static double maxFreqHz = DFT2.maxFreqHz;
 	public static int freqsPerOctave = FDData.noteBase;
 	public static int minScreenNote;
 	public static int maxScreenNote;
@@ -101,10 +98,10 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 		return null;
 	}
 	*/
-	public static float getAmplitude(int time, int freq) {
+	public static double getAmplitude(int time, int freq) {
 		if(amplitudesLeft == null || amplitudesRight == null) return 0.0f;
-		float leftVal = 0.0f;
-		float rightVal = 0.0f;
+		double leftVal = 0.0f;
+		double rightVal = 0.0f;
 		if(time < amplitudesLeft.length && freq < amplitudesLeft[0].length) leftVal = amplitudesLeft[time][freq];
 		if(time < amplitudesRight.length && freq < amplitudesRight[0].length) rightVal = amplitudesRight[time][freq]; 
 		if(currentChannel == Channel.LEFT) return leftVal;

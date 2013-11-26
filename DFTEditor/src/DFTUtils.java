@@ -4,13 +4,13 @@ public class DFTUtils {
 	
 	public static boolean isChannelVisible(Harmonic harmonic) {
 		if(harmonic.getChannel() == FDData.Channel.LEFT) {
-			if(GraphEditor.currentChannel == GraphEditor.Channel.LEFT) return true;
-			if(GraphEditor.currentChannel == GraphEditor.Channel.STEREO) return true;
+			if(DFTEditor.currentChannel == DFTEditor.Channel.LEFT) return true;
+			if(DFTEditor.currentChannel == DFTEditor.Channel.STEREO) return true;
 			return false;
 		}
 		if(harmonic.getChannel() == FDData.Channel.RIGHT) {
-			if(GraphEditor.currentChannel == GraphEditor.Channel.RIGHT) return true;
-			if(GraphEditor.currentChannel == GraphEditor.Channel.STEREO) return true;
+			if(DFTEditor.currentChannel == DFTEditor.Channel.RIGHT) return true;
+			if(DFTEditor.currentChannel == DFTEditor.Channel.STEREO) return true;
 			return false;
 		}
 		System.out.println("DFTView.isHarmonicVisible: Unknown channel");
