@@ -72,8 +72,8 @@ public class FileInput {
 		DFTEditor.maxScreenFreq = DFTEditor.maxScreenNote - DFTEditor.minScreenNote;
 		DFTEditor.maxTime = matrixValsSize / (DFTEditor.maxScreenFreq + 1);
 		DFTEditor.newFileData();
-		DFTEditor.amplitudesLeft = new float[DFTEditor.maxTime + 1][DFTEditor.maxScreenFreq + 1];		
-		DFTEditor.amplitudesRight = new float[DFTEditor.maxTime + 1][DFTEditor.maxScreenFreq + 1];		
+		DFTEditor.amplitudesLeft = new double[DFTEditor.maxTime + 1][DFTEditor.maxScreenFreq + 1];		
+		DFTEditor.amplitudesRight = new double[DFTEditor.maxTime + 1][DFTEditor.maxScreenFreq + 1];		
 		int index = 0;
 		for(int time = 0; time < DFTEditor.maxTime; time++) {
 			for(int freq = 0; freq <= DFTEditor.maxScreenFreq; freq++) {

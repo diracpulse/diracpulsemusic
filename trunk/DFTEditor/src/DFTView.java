@@ -244,10 +244,10 @@ public class DFTView extends JComponent {
 						+ ((x - DFTEditor.minViewTime) * pixelStepX);
 				int screenY = DFTEditor.upperOffset
 						+ ((y - DFTEditor.minViewFreq) * pixelStepY);
-				float amp = DFTEditor.getAmplitude(x, y);
+				float amp = (float) DFTEditor.getAmplitude(x, y);
 				if (amp == 0.0f) continue;
 				if(dataView == DataView.CHANNEL_DATA) {
-					Color b = getColor(DFTEditor.amplitudesLeft[x][y], DFTEditor.amplitudesRight[x][y]);
+					Color b = getColor((float)DFTEditor.amplitudesLeft[x][y], (float)DFTEditor.amplitudesRight[x][y]);
 					drawAmplitude(g, screenX, screenY, amp, b);
 				} else {
 					Color b = getColor(x,y);
@@ -269,7 +269,7 @@ public class DFTView extends JComponent {
 				if (!isYInBounds(y)) break;
 				int screenX = DFTEditor.leftOffset + (int) Math.round((x - DFTEditor.minViewTime) * getXStep());
 				int screenY = DFTEditor.upperOffset + (int) Math.round((y - DFTEditor.minViewFreq) * getYStep());
-				float amp = DFTEditor.getAmplitude(x, y) - DFTEditor.getAmplitude(x, y + 1);
+				float amp = (float) (DFTEditor.getAmplitude(x, y) - DFTEditor.getAmplitude(x, y + 1));
 				Color b = null;
 				float red = 0;
 				float green = 0;
@@ -343,7 +343,7 @@ public class DFTView extends JComponent {
 
 	private Color getColor(int time, int freq) {
 		float ampRange = DFTEditor.maxAmplitude - DFTEditor.minAmplitude;
-		float currentVal = DFTEditor.getAmplitude(time, freq);
+		float currentVal = (float) DFTEditor.getAmplitude(time, freq);
 		if(currentVal < 0) return new Color(1.0f, 1.0f, 1.0f);
 		currentVal -= DFTEditor.minAmplitude;
 		currentVal /= ampRange;
