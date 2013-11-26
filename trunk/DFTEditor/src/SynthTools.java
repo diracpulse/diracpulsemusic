@@ -115,9 +115,21 @@ class SynthTools {
 		DFTEditor.parent.graphEditorFrame.addHarmonicsToGraphEditor(DFTEditor.harmonicIDToHarmonic);
 		DFTEditor.parent.fdEditorFrame.addHarmonicsToFDEditor(DFTEditor.harmonicIDToHarmonic);
 	}
+	
+	public static class IntPair {
+		
+		public int time;
+		public int freq;
+		
+		IntPair(int time, int freq) {
+			this.time = time;
+			this.freq = freq;
+		}
+	}
 
 	static void createHarmonicsChannel(FDData.Channel channel) {
 		TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData = new TreeMap<Integer, TreeMap<Integer, FDData>>();
+		TreeMap<Double, IntPair> amplitudeToTimeAndFreq = new TreeMap<Double, IntPair>();
 		if(channel == FDData.Channel.LEFT) DFTEditor.timeToFreqsAtMaximaLeft = new TreeMap<Integer, TreeSet<Integer>>();
 		if(channel == FDData.Channel.RIGHT) DFTEditor.timeToFreqsAtMaximaRight = new TreeMap<Integer, TreeSet<Integer>>();		
 		double[][] amplitudes = null;
@@ -142,6 +154,7 @@ class SynthTools {
 						} catch (Exception e) {
 							System.out.println("SynthTools.createHarmonics: Error " + e.getMessage());
 						}
+						amplitudeToTimeAndFreq.put(amplitudes[time][freq], new IntPair(time, freq));
 						timeToFreqToData.get(time).put(freq, data);
 						if(channel == FDData.Channel.LEFT) DFTEditor.timeToFreqsAtMaximaLeft.get(time).add(freq);
 						if(channel == FDData.Channel.RIGHT) DFTEditor.timeToFreqsAtMaximaRight.get(time).add(freq);
@@ -150,57 +163,75 @@ class SynthTools {
 				}
 			}
 		}
-		Filter.initNoise(channel, timeToFreqToData);
-		//timeToFreqToData = applyFreqMasking(channel, timeToFreqToData);
-		for(time = 0; time < numTimes; time++) {
-			TreeMap<Integer, FDData> outerFreqToData = timeToFreqToData.get(time);
-			while(!outerFreqToData.isEmpty()) {
-				long harmonicID = DFTEditor.getRandomID();
-				Harmonic newHarmonic = new Harmonic(harmonicID);
-				freq = outerFreqToData.firstKey();
-				FDData currentData = outerFreqToData.get(freq);
-				outerFreqToData.remove(freq);
-				currentData.setHarmonicID(harmonicID);
-				newHarmonic.addData(currentData);
-				int startFreq = freq;
-				boolean continueHarmonic = true;
-				int maxBinRange = freqToBinRange(startFreq);
-				for(int innerTime = time + 1; innerTime < numTimes; innerTime++) {
-					if(!continueHarmonic) break;
-					TreeMap<Integer, FDData> innerFreqToData = timeToFreqToData.get(innerTime);
-					if(innerFreqToData.containsKey(freq)) {
-						FDData innerData = innerFreqToData.get(freq);
-						innerFreqToData.remove(freq);
-						innerData.setHarmonicID(harmonicID);
-						newHarmonic.addData(innerData);
-						//System.out.println("0:" + harmonicID + " " + innerData);
+		Filter.applyCriticalBandFiltering(channel, timeToFreqToData, amplitudeToTimeAndFreq);
+		while(!amplitudeToTimeAndFreq.isEmpty()) {
+			//System.out.println(amplitudeToTimeAndFreq.size());
+			IntPair timeAndFreq = amplitudeToTimeAndFreq.get(amplitudeToTimeAndFreq.lastKey());
+			int outerTime = timeAndFreq.time;
+			int outerFreq = timeAndFreq.freq;
+			Harmonic newHarmonic = new Harmonic(DFTEditor.getRandomID());
+			/*
+			if(!timeToFreqToData.get(time).containsKey(freq)) {
+				amplitudeToTimeAndFreq.remove(amplitudeToTimeAndFreq.lastKey());
+				System.out.println(time + " " + freq);
+				continue;
+			}
+			*/
+			int[] timeSteps = {-1, 1};
+			for(int timeStep: timeSteps) {
+				int continues = 0;
+				time = outerTime + 1;
+				freq = outerFreq;
+				if(timeStep == 1) time = outerTime;
+				while(continues < 3) {
+					time += timeStep;
+					if(time < 0) break;
+					if(time == numTimes) break;
+					FDData data0 = null;
+					FDData dataPlus1 = null;
+					FDData dataMinus1 = null;
+					if(timeToFreqToData.get(time).containsKey(freq)) data0 = timeToFreqToData.get(time).get(freq);
+					if(timeToFreqToData.get(time).containsKey(freq + 1)) dataPlus1 = timeToFreqToData.get(time).get(freq + 1);
+					if(timeToFreqToData.get(time).containsKey(freq - 1)) dataMinus1 = timeToFreqToData.get(time).get(freq - 1);
+					if(data0 != null) {
+						newHarmonic.addData(data0);
+						timeToFreqToData.get(time).remove(freq);
+						amplitudeToTimeAndFreq.remove(data0.getLogAmplitude());
 						continue;
 					}
-					if(flatHarmonics) break;
-					continueHarmonic = false;
-					for(int binRange = 1; binRange <= maxBinRange; binRange++) {
-						if(innerFreqToData.containsKey(freq + binRange)) {
-							freq += binRange;
-							FDData innerData = innerFreqToData.get(freq);
-							innerFreqToData.remove(freq);
-							innerData.setHarmonicID(harmonicID);
-							newHarmonic.addData(innerData);
-							continueHarmonic = true;
-							break;
-						}
-						if(innerFreqToData.containsKey(freq - binRange)) {
-							freq -= binRange;
-							FDData innerData = innerFreqToData.get(freq);
-							innerFreqToData.remove(freq);
-							innerData.setHarmonicID(harmonicID);
-							newHarmonic.addData(innerData);
-							continueHarmonic = true;
-							break;
+					if((dataPlus1 != null) && (dataMinus1 != null)) {
+						if(dataPlus1.getLogAmplitude() > dataMinus1.getLogAmplitude()) {
+							freq += 1;
+							newHarmonic.addData(dataPlus1);
+							timeToFreqToData.get(time).remove(freq);
+							amplitudeToTimeAndFreq.remove(dataPlus1.getLogAmplitude());
+							continue;
+						} else {
+							freq -= 1;
+							newHarmonic.addData(dataMinus1);
+							timeToFreqToData.get(time).remove(freq);
+							amplitudeToTimeAndFreq.remove(dataMinus1.getLogAmplitude());
+							continue;
 						}
 					}
+					if(dataPlus1 != null) {
+						freq += 1;
+						newHarmonic.addData(dataPlus1);
+						timeToFreqToData.get(time).remove(freq);
+						amplitudeToTimeAndFreq.remove(dataPlus1.getLogAmplitude());
+						continue;
+					}
+					if(dataMinus1 != null) {
+						freq -= 1;
+						newHarmonic.addData(dataMinus1);
+						timeToFreqToData.get(time).remove(freq);
+						amplitudeToTimeAndFreq.remove(dataMinus1.getLogAmplitude());
+						continue;
+					}
+					continues += 1;
 				}
-				DFTEditor.harmonicIDToHarmonic.put(harmonicID, newHarmonic);
 			}
+			DFTEditor.harmonicIDToHarmonic.put(newHarmonic.getHarmonicID(), newHarmonic);
 		}
 		// Remove Harmonic Fragments
 		ArrayList<Long> harmonicIDsToRemove = new ArrayList<Long>();
