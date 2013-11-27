@@ -36,19 +36,8 @@ public class FastSynth {
 		return sharedPCMData;
 	}
 	
-	public static double[] synthBackgroundNoise(FDData.Channel channel) {
-		double[][] matrix = DFTEditor.amplitudesLeft;
-		if(channel == FDData.Channel.RIGHT) matrix = DFTEditor.amplitudesRight;
-		TreeMap<Integer, Double[]> noteToAmplitudes = new TreeMap<Integer, Double[]>();
-		for(int note = DFTEditor.minScreenNote; note < DFTEditor.maxScreenNote; note++) {
-			Double[] amplitudes = new Double[matrix.length];
-			for(int index = 0; index < amplitudes.length; index++) {
-				amplitudes[index] = matrix[index][DFTEditor.maxScreenNote - note];
-			}
-			noteToAmplitudes.put(new Integer(note), amplitudes);
-		}
-		Filter.createBackgroundNoise(channel, sharedPCMData);
-		return sharedPCMData;
+	public static void synthBackgroundNoise(FDData.Channel channel) {
+		Filter.createBackgroundNoise(channel, sharedPCMData, 0.0);
 	}
 	
 	private static void initSharedPCMData(FDData.Channel channel, ArrayList<Harmonic> harmonics) {

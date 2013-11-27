@@ -50,7 +50,7 @@ public class DFT2 {
 	private static double KaiserWindow[] = new double[MAXDFTWINDOW];
 	private static double initialTaper = 1.0; // used by InitWavelets
 	
-	private static class Wavelet {
+	public static class Wavelet {
 		double radianFreq;
 		double freqInHz;
 		double gain;
@@ -112,10 +112,10 @@ public class DFT2 {
 		}
 	    // Test white noise
 	    /*
-	    ArrayListLeftRight = new ArrayList<Float>();
+	    ArrayListLeftRight = new ArrayList<Double>();
 	    for(int time = 0; time < 44100 * 2; time++) {
-	    	ArrayListLeftRight.add((Math.pow(Math.random(), 1.0 / 1.0) - 0.5) * 65534.0));
-	    	ArrayListLeftRight.add((Math.pow(Math.random(), 1.0 / 1.0) - 0.5) * 65534.0));
+	    	ArrayListLeftRight.add((Math.pow(Math.random(), 1.0 / 1.0) - 0.5) * 65534.0);
+	    	ArrayListLeftRight.add((Math.pow(Math.random(), 1.0 / 1.0) - 0.5) * 65534.0);
 	    }
 	    */
 		int maxTime = ArrayListLeftRight.size() / 2;
@@ -132,7 +132,7 @@ public class DFT2 {
 	}
 	
 	// Returns amplitude NOT log(amplitude)
-	private static double singleDFTTest(Wavelet wavelet, double[] mono) {
+	public static double singleDFTTest(Wavelet wavelet, double[] mono) {
 		double sinVal = 0.0;
 		double cosVal = 0.0;
 		for(int index = 0; index < wavelet.length; index++) {
@@ -145,105 +145,6 @@ public class DFT2 {
 		ampVal = Math.sqrt(ampVal) / wavelet.gain;
 		ampVal *= 2.0; // integral of sin, cos over time approaches 0.5
 		return ampVal;
-	}
-
-	static void disentangleWithMatrix() {
-		// create responseOfWaveletToNote
-		int xDimension = FDData.noteBase + 2;
-		int yDimension = FDData.noteBase + 1;
-		double[][] responseOfWaveletToNote = new double[xDimension][yDimension];
-		double noteRatio = Math.pow(2.0, -1.0 / (double) FDData.noteBase);
-		double maxFreqHz = samplingRate / 16.0;
-		double minFreqHz = (samplingRate / 32.0);
-		for(double freqInHz = maxFreqHz ; Math.round(freqInHz * 10000.0) / 10000.0 >= minFreqHz; freqInHz *= noteRatio) {
-			double samplesPerCycle = samplingRate / freqInHz;
-			double noteBase = FDData.noteBase; Math.sqrt(freqInHz / (samplingRate / 8.0));
-			if(noteBase > FDData.noteBase) noteBase = FDData.noteBase;
-			double bins = maxBinStep / (Math.pow(2.0, 1.0 / (double) noteBase) - 1.0);
-			double currentPhase = 0.0;
-			double deltaPhase = (freqInHz / SynthTools.sampleRate) * SynthTools.twoPI;
-			double[] mono = new double[(int) Math.ceil(bins * samplesPerCycle * 2.0)]; // MAXWINDOWLENGTH eventually
-			for(int index = 0; index < mono.length; index++) {
-				mono[index] = Math.sin(currentPhase);
-				currentPhase += deltaPhase;
-			}
-			for(double innerFreqInHz = maxFreqHz; Math.round(innerFreqInHz * 10000.0) / 10000.0 >= minFreqHz; innerFreqInHz *= noteRatio) {
-				double innerNoteBase = FDData.noteBase * Math.sqrt(innerFreqInHz / (samplingRate / 8.0));
-				if(innerNoteBase > FDData.noteBase) innerNoteBase = FDData.noteBase;
-				bins = maxBinStep / (Math.pow(2.0, 1.0 / (double) innerNoteBase) - 1.0);
-				Wavelet currentWavelet = createWavelet(innerFreqInHz, bins);
-				int xIndex = frequencyToNote(maxFreqHz) - frequencyToNote(innerFreqInHz);
-				int yIndex = frequencyToNote(maxFreqHz) - frequencyToNote(freqInHz);
-				responseOfWaveletToNote[xIndex][yIndex] = singleDFTTest(currentWavelet, mono);
-			}
-		}
-		// create test signal
-		double maxSamplesPerCycle = samplingRate / minFreqHz;
-		double bins = maxBinStep / (Math.pow(2.0, 1.0 / (double) FDData.noteBase) - 1.0);
-		double[] mono = new double[(int) Math.ceil(bins * maxSamplesPerCycle * 2.0)]; // MAXWINDOWLENGTH eventually
-		double[] testAmplitudes = new double[FDData.noteBase + 1];
-		for(int index = 0; index < testAmplitudes.length; index++) testAmplitudes[index] = Math.random();
-		for(double freqInHz = maxFreqHz ; Math.round(freqInHz * 10000.0) / 10000.0 >= minFreqHz; freqInHz *= noteRatio) {
-			double currentPhase = Math.random();
-			double deltaPhase = (freqInHz / SynthTools.sampleRate) * SynthTools.twoPI;
-			int noteIndex = frequencyToNote(maxFreqHz) - frequencyToNote(freqInHz);
-			if(noteIndex % 1 != 0) {
-				testAmplitudes[noteIndex] = 0.0;
-				continue;
-			}
-			for(int index = 0; index < mono.length; index++) {
-				mono[index] += Math.sin(currentPhase) * testAmplitudes[noteIndex];
-				currentPhase += deltaPhase;
-			}
-		}
-		// analyse test signal
-		for(double freqInHz = maxFreqHz ; Math.round(freqInHz * 10000.0) / 10000.0 >= minFreqHz; freqInHz *= noteRatio) {
-			double innerNoteBase = FDData.noteBase * Math.sqrt(freqInHz / (samplingRate / 8.0));
-			if(innerNoteBase > FDData.noteBase) innerNoteBase = FDData.noteBase;
-			bins = maxBinStep / (Math.pow(2.0, 1.0 / (double) innerNoteBase) - 1.0);
-			Wavelet currentWavelet = createWavelet(freqInHz, bins);
-			int index = frequencyToNote(maxFreqHz) - frequencyToNote(freqInHz);
-			responseOfWaveletToNote[xDimension - 1][index] = singleDFTTest(currentWavelet, mono);
-		}
-		// print system to solve
-		for(double freqInHz = maxFreqHz ; Math.round(freqInHz * 10000.0) / 10000.0 >= minFreqHz; freqInHz *= noteRatio) {
-			System.out.print("[");
-			int yIndex = frequencyToNote(maxFreqHz) - frequencyToNote(freqInHz);
-			for(double innerFreqInHz = maxFreqHz; Math.round(innerFreqInHz * 10000.0) / 10000.0 >= minFreqHz; innerFreqInHz *= noteRatio) {
-				int xIndex = frequencyToNote(maxFreqHz) - frequencyToNote(innerFreqInHz);
-				System.out.printf("%.3f", responseOfWaveletToNote[xIndex][yIndex]);
-				System.out.print(",");
-			}
-			System.out.printf("%.6f] = ", responseOfWaveletToNote[xDimension - 1][yIndex]);
-			System.out.printf("%.6f", testAmplitudes[yIndex]);
-		}
-		double[][] A = responseOfWaveletToNote;
-		for(int x = 0; x < yDimension; x++) {
-			double divisor = A[x][x];
-			for(int x2 = x; x2 < xDimension; x2++) A[x2][x] /= divisor;
-			for(int y = 0; y < yDimension; y++) {
-				if(y == x) continue;
-				double multiplier = A[x][y];
-				for(int x2 = x; x2 < xDimension; x2++) {
-					A[x2][y] -= A[x2][x] * multiplier;
-				}
-			}
-			System.out.println(x);
-		}
-		responseOfWaveletToNote = A;
-		for(double freqInHz = maxFreqHz ; Math.round(freqInHz * 10000.0) / 10000.0 >= minFreqHz; freqInHz *= noteRatio) {
-			System.out.print("[");
-			int yIndex = frequencyToNote(maxFreqHz) - frequencyToNote(freqInHz);
-			for(double innerFreqInHz = maxFreqHz; Math.round(innerFreqInHz * 10000.0) / 10000.0 >= minFreqHz; innerFreqInHz *= noteRatio) {
-				int xIndex = frequencyToNote(maxFreqHz) - frequencyToNote(innerFreqInHz);
-				System.out.printf("%.3f", responseOfWaveletToNote[xIndex][yIndex]);
-				System.out.print(",");
-			}
-			System.out.printf("%.10f] = ", responseOfWaveletToNote[xDimension - 1][yIndex]);
-			System.out.printf("%.10f", testAmplitudes[yIndex]);
-		}
-		System.out.println();
-		System.out.println();
 	}
 
 	private static void SingleDFT(Wavelet wavelet, int centerIndex, int note, double[] left, double[] right, double samplesPerStep, double gain) {

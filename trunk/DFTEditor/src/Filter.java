@@ -15,6 +15,7 @@ public class Filter {
 	final static double optimalLPRejectRatio = 1.38;
 	public static TreeMap<Float, Integer> passFreqToFilterLength = null;
 	public static ArrayList<CriticalBand> criticalBands = null;
+	public static ArrayList<CriticalBand> noiseCriticalBands = null;
 
 	final static double alpha = 1.0;
 	
@@ -22,9 +23,9 @@ public class Filter {
 		
 		double lowerBound;
 		double upperBound;
-		double filter[] = null;
-		TreeMap<FDData.Channel, double[]> channelToTimeToNoiseAmplitude = new TreeMap<FDData.Channel, double[]>();
-		
+		double lpFilter[] = null;
+		double hpFilter[] = null;
+
 		CriticalBand(double lowerBound, double upperBound) {
 			this.upperBound = upperBound;
 			this.lowerBound = lowerBound;
@@ -43,8 +44,18 @@ public class Filter {
 			return (upperBound + lowerBound) / 2.0;
 		}
 				
-		void setFilter(double[] filter) {
-			this.filter = filter;
+		void setLPFilter(double[] filter) {
+			this.lpFilter = filter;
+		}
+		
+		void setHPFilter(double[] filter) {
+			this.hpFilter = filter;
+		}
+		
+		int getMaxFilterLength() {
+			if(lpFilter == null || hpFilter == null) return -1;
+			if(lpFilter.length > hpFilter.length) return lpFilter.length;
+			return hpFilter.length;
 		}
 		
 		void filterMaximas(FDData.Channel channel, 
@@ -56,25 +67,16 @@ public class Filter {
 			if(channel == FDData.Channel.RIGHT) timeToFreqsAtMaxima = DFTEditor.timeToFreqsAtMaximaRight;
 			if(channel == FDData.Channel.LEFT) logAmplitudes = DFTEditor.amplitudesLeft;
 			if(channel == FDData.Channel.RIGHT) logAmplitudes = DFTEditor.amplitudesRight;
-			this.channelToTimeToNoiseAmplitude.put(channel, new double[DFTEditor.maxTime]);
-			int numNotes = DFT2.frequencyToNote(upperBound) - DFT2.frequencyToNote(lowerBound);
 			for(int time = 0; time < timeToFreqToData.lastKey(); time++) {
-				int numNotMaxima = 0;
 				if(!timeToFreqToData.containsKey(time)) continue;
-				double averageAmplitudeAllBins = 0.0;
 				TreeMap<Double, Integer> logAmplitudeToNote = new TreeMap<Double, Integer>();
 				for(int note = DFT2.frequencyToNote(lowerBound); note < DFT2.frequencyToNote(upperBound); note++) {
 					if(timeToFreqToData.get(time).containsKey(DFTEditor.noteToFreq(note))) {
 						double logAmplitude = timeToFreqToData.get(time).get(DFTEditor.noteToFreq(note)).getLogAmplitude();
 						while(logAmplitudeToNote.containsKey(logAmplitude)) logAmplitude += 0.0000001; 
 						logAmplitudeToNote.put(logAmplitude, note);
-						averageAmplitudeAllBins += Math.pow(FDData.logBase, logAmplitudes[time][DFTEditor.noteToFreq(note)]);
-					} else {
-						numNotMaxima++;
-						averageAmplitudeAllBins += Math.pow(FDData.logBase, logAmplitudes[time][DFTEditor.noteToFreq(note)]);
 					}
 				}
-				channelToTimeToNoiseAmplitude.get(channel)[time] = averageAmplitudeAllBins / numNotes;
 				if(logAmplitudeToNote.isEmpty()) continue;
 				logAmplitudeToNote.remove(logAmplitudeToNote.lastKey());
 				for(int note: logAmplitudeToNote.values()) {
@@ -85,19 +87,40 @@ public class Filter {
 			}
 		}
 
+		// Returns average noise
 		void synthNoise(FDData.Channel channel, double[] sharedPCMData, double[] noise) {
-			if(filter == null) return;
-			double[] filteredNoise = new double[sharedPCMData.length];
+			if(getMaxFilterLength() == -1) return;
+			double[][] amplitudes = null;
+			if(channel == FDData.Channel.LEFT) amplitudes = DFTEditor.amplitudesLeft;
+			if(channel == FDData.Channel.RIGHT) amplitudes = DFTEditor.amplitudesRight;
+			int numNotes = DFT2.frequencyToNote(upperBound) - DFT2.frequencyToNote(lowerBound);
+			double bandwidth = upperBound - lowerBound;
+			double[] timeToNoiseAmplitude = new double[DFTEditor.maxTime];
+			for(int time = 0; time < DFTEditor.maxTime; time++) {
+				timeToNoiseAmplitude[time] = 0.0;
+				for(int note = DFT2.frequencyToNote(lowerBound); note < DFT2.frequencyToNote(upperBound); note++) {
+					timeToNoiseAmplitude[time] += Math.pow(FDData.logBase, amplitudes[time][DFTEditor.noteToFreq(note)]);
+				}
+				timeToNoiseAmplitude[time] /= numNotes;
+			}
+			double[] lpFilteredNoise = new double[sharedPCMData.length + hpFilter.length];
+			double[] hpFilteredNoise = new double[sharedPCMData.length];
 			double maxFilteredSample = 0.0;
-			for(int time = 0; time < filteredNoise.length; time++) {
+			for(int time = 0; time < lpFilteredNoise.length; time++) {
 				double filteredSample = 0.0;
-				for(int filterIndex = 0; filterIndex < filter.length; filterIndex++) {
-					filteredSample += noise[time + filterIndex] * filter[filterIndex];
+				for(int filterIndex = 0; filterIndex < lpFilter.length; filterIndex++) {
+					filteredSample += noise[time + filterIndex] * lpFilter[filterIndex];
+				}
+				lpFilteredNoise[time] = filteredSample;
+			}
+			for(int time = 0; time < hpFilteredNoise.length; time++) {
+				double filteredSample = 0.0;
+				for(int filterIndex = 0; filterIndex < hpFilter.length; filterIndex++) {
+					filteredSample += lpFilteredNoise[time + filterIndex] * hpFilter[filterIndex];
 				}
 				if(filteredSample > maxFilteredSample) maxFilteredSample = filteredSample;
-				filteredNoise[time] = filteredSample;
+				hpFilteredNoise[time] = filteredSample;
 			}
-			double[] timeToNoiseAmplitude = channelToTimeToNoiseAmplitude.get(channel);
 			double timeToSample = SynthTools.sampleRate * (FDData.timeStepInMillis / 1000.0);
 			for(int time = 0; time < DFTEditor.maxTime - 1; time++) {
 				int lowerTime = (int) Math.round(time * timeToSample);
@@ -108,29 +131,37 @@ public class Filter {
 				for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
 					if(timeIndex >= sharedPCMData.length) break;
 					double amplitude = lowerAmplitude + (timeIndex - lowerTime) * ampSlope;
-					sharedPCMData[timeIndex] += (amplitude * filteredNoise[timeIndex]) / maxFilteredSample;
+					sharedPCMData[timeIndex] += (amplitude * hpFilteredNoise[timeIndex]) / maxFilteredSample;
 				}	
 			}
 		}
 	}
 	
-	public static void createBackgroundNoise(FDData.Channel channel, double[] sharedPCMData) {
+	public static void createBackgroundNoise(FDData.Channel channel, double[] sharedPCMData, double logNoiseVolume) {
 		createCriticalBands();
+		double[] outputPCM = new double[sharedPCMData.length];
+		for(int index = 0; index < outputPCM.length; index++) {
+			outputPCM[index] = 0.0;
+		}
 		int maxFilterLength = 0;
-		for(int index = 0; index < criticalBands.size(); index++) {
-			if(criticalBands.get(index).filter == null) return;
-			if(criticalBands.get(index).filter.length > maxFilterLength) {
-				if(criticalBands.get(index).filter == null) return;
-				maxFilterLength = criticalBands.get(index).filter.length;
-			}
+		for(CriticalBand criticalBand: noiseCriticalBands) {
+			if(criticalBand.getMaxFilterLength() > maxFilterLength) maxFilterLength = criticalBand.getMaxFilterLength();
 		}
 		Random random = new Random();
-		double[] noise = new double[sharedPCMData.length + maxFilterLength];
+		double[] noise = new double[sharedPCMData.length + maxFilterLength * 2];
 		for(int sample = 0; sample < sharedPCMData.length; sample++) {
 			noise[sample] = random.nextDouble() - 0.5;
 		}
-		for(CriticalBand criticalBand: criticalBands) {
-			criticalBand.synthNoise(channel, sharedPCMData, noise);
+		for(CriticalBand criticalBand: noiseCriticalBands) {
+			criticalBand.synthNoise(channel, outputPCM, noise);
+		}
+		double maxAmplitude = 0.0;
+		for(int index = 0; index < outputPCM.length; index++) {
+			if(outputPCM[index] > Math.abs(maxAmplitude)) maxAmplitude = Math.abs(outputPCM[index]);
+		}
+		double noiseVolume = Math.pow(FDData.logBase, logNoiseVolume);
+		for(int index = 0; index < outputPCM.length; index++) {
+			sharedPCMData[index] += (outputPCM[index] / maxAmplitude) * noiseVolume;
 		}
 	}
 	
@@ -383,46 +414,47 @@ public class Filter {
 		return filteredSamples;
 	}
 
-	public static void testLPFilter(double passFreq, double rejectRatio, double filterBins) {
-		int filterLength = (int) Math.round((samplingRate / passFreq) * filterBins);
-		filterLength = filterLength + filterLength % 2;
-		double samplesPerCycle = samplingRate / passFreq;
-		int signalLength = (int) Math.ceil(samplesPerCycle * 100) + filterLength;
-		double[] testFreqs = {passFreq, passFreq * 1.25, passFreq * 1.5, passFreq * 2.0};
-		double[][] testSignals = new double[testFreqs.length][signalLength];
- 		double[] maxTestValue = new double[testFreqs.length];
- 		for(int index = 0; index < testFreqs.length; index++) maxTestValue[index] = 0.0;
-		filter = new double[filterLength + 1];
-		LPFilter(passFreq * rejectRatio, filterLength, alpha);
-		double[] lpFilter = filter;
-		double deltaPhase[] = new double[testFreqs.length];
-		for(int index = 0; index < testFreqs.length; index++) deltaPhase[index] = (testFreqs[index] / SynthTools.sampleRate) * SynthTools.twoPI;
-		for(int freqIndex = 0; freqIndex < testFreqs.length; freqIndex++) {
-			double phase = 0.0;
-			for(int index = 0; index < signalLength; index++) {
-				double sinWindow = Math.sin((double) index / signalLength * Math.PI);
-				testSignals[freqIndex][index] = Math.sin(phase) * sinWindow;
-				phase += deltaPhase[freqIndex];
-			}
+	public static double[] getFilter(double passFreq, double rejectFreq, int type) {
+		double minFilterBins = 2.0;
+		double maxFilterBins = 100.0;
+		double minRejectRatio = 0.51;
+		int signalLength = (int) Math.round((samplingRate / passFreq) * maxFilterBins * 3.0);
+		double[] passFreqArray = new double[signalLength];
+		double[] rejectFreqArray = new double[signalLength];
+		double passFreqPhase = 0.0;
+		double rejectFreqPhase = 0.0;
+		double deltaPassFreqPhase = (passFreq / samplingRate) * Math.PI * 2.0;
+		double deltaRejectFreqPhase = (rejectFreq / samplingRate) * Math.PI * 2.0;
+		for(int index = 0; index < signalLength; index++) {
+			passFreqArray[index] = Math.sin(passFreqPhase);
+			rejectFreqArray[index] = Math.sin(rejectFreqPhase);
+			passFreqPhase += deltaPassFreqPhase;
+			rejectFreqPhase += deltaRejectFreqPhase;
 		}
-		for(int freqIndex = 0; freqIndex < testFreqs.length; freqIndex++) {
-			for(int index = 0; index < signalLength; index++) {
-				double testValue = 0.0;
-				for(int filterIndex = 0; filterIndex < filter.length; filterIndex++) {
-					int innerIndex = index + filterIndex;
-					if(innerIndex < 0) continue;
-					if(innerIndex >= signalLength) break;
-					testValue += testSignals[freqIndex][innerIndex] * lpFilter[filterIndex];
+		for(double filterBins = minFilterBins; filterBins <= maxFilterBins; filterBins += 0.5) {
+			int filterLength = (int) Math.round((samplingRate / passFreq) * filterBins);
+			filterLength = filterLength + filterLength % 2;
+			filter = new double[filterLength + 1];
+			if(type == 0) LPFilter(rejectFreq, filterLength, alpha);
+			if(type == 1) HPFilter(rejectFreq, filterLength, alpha);
+			double maxPassValue = 0.0;
+			double maxRejectValue = 0.0;
+			for(int index = 0; index < signalLength - filterLength; index++) {
+				double passValue = 0.0;
+				double rejectValue = 0.0;
+				for(int filterIndex = 0; filterIndex < filterLength; filterIndex++) {
+					passValue += passFreqArray[index + filterIndex] * filter[filterIndex];
+					rejectValue += rejectFreqArray[index + filterIndex] * filter[filterIndex];
 				}
-				if(Math.abs(testValue) > maxTestValue[freqIndex]) maxTestValue[freqIndex] = testValue;
+				if(passValue > maxPassValue) maxPassValue = passValue;
+				if(rejectValue > maxRejectValue) maxRejectValue = rejectValue;
+			}
+			if((maxRejectValue / maxPassValue) <= minRejectRatio) {
+				System.out.println(filterBins);
+				return filter;
 			}
 		}
-		System.out.print((float) rejectRatio + " " + (float) passFreq + " " + (float) filterBins + " : ");
-		for(int freqIndex = 0; freqIndex < testFreqs.length; freqIndex++) {	
-			System.out.print((float) (testFreqs[freqIndex] / passFreq) + " = " + (float) (Math.round(maxTestValue[freqIndex] * 1000.0) / 1000.0) + " | ");
-		}
-		System.out.println();
-		return;
+		return filter;
 	}
 	
 	// returns true when optimum filter is found, start with filterBins low and run until true
@@ -437,7 +469,7 @@ public class Filter {
  		double[] maxTestValue = new double[testFreqs.length];
  		for(int index = 0; index < testFreqs.length; index++) maxTestValue[index] = 0.0;
 		filter = new double[filterLength + 1];
-		BPFilter(passFreq, filterLength, alpha);
+		BPFilter(testFreqs[1], filterLength, alpha);
 		double deltaPhase[] = new double[testFreqs.length];
 		for(int index = 0; index < testFreqs.length; index++) deltaPhase[index] = (testFreqs[index] / SynthTools.sampleRate) * SynthTools.twoPI;
 		for(int freqIndex = 0; freqIndex < testFreqs.length; freqIndex++) {
@@ -463,97 +495,44 @@ public class Filter {
 		double valueAtLowerBound = maxTestValue[0];
 		double valueAtCenterFreq = maxTestValue[1];
 		double valueAtUpperBound = maxTestValue[2];
-		//System.out.print((float) passFreq + " " + (float) filterBins + " " + filterLength + " : ");
+		System.out.print((float) passFreq + " " + (float) filterBins + " " + filterLength + " : ");
 		for(int freqIndex = 0; freqIndex < testFreqs.length; freqIndex++) {	
 			//System.out.print((float) (testFreqs[freqIndex] / passFreq) + " = " + (float) (Math.round(maxTestValue[freqIndex] * 1000.0) / 1000.0) + " | ");
+			System.out.print((float) (testFreqs[freqIndex]) + " = " + (float) (Math.round(maxTestValue[freqIndex] * 1000.0) / 1000.0) + " | ");
 		}
-		//System.out.println();
+		System.out.println();
 		if((valueAtLowerBound / valueAtCenterFreq) < 0.6 && (valueAtUpperBound / valueAtCenterFreq) < 0.6) {
-			System.out.println("criticalBands.add(new CriticalBand(" + criticalBand.getLowerBound() + ", " + criticalBand.getUpperBound() + ", " + filterLength + "));");
+			//System.out.println("criticalBands.add(new CriticalBand(" + criticalBand.getLowerBound() + ", " + criticalBand.getUpperBound() + ", " + filterLength + "));");
 			//System.out.print((float) passFreq + " " + (float) filterBins + " " + filterLength + " : ");
 			for(int freqIndex = 0; freqIndex < testFreqs.length; freqIndex++) {	
 				//System.out.print((float) (testFreqs[freqIndex] / passFreq) + " = " + (float) (Math.round(maxTestValue[freqIndex] * 1000.0) / 1000.0) + " | ");
 			}
 			//System.out.println();
-			criticalBand.setFilter(filter);
-			return true;
+			//criticalBand.setFilter(filter);
+			//return true;
 		}
 		return false;
 	}
 
 	public static void createCriticalBands() {
 		if(criticalBands != null) return;
-		calculateCriticalBands();
-		double minFilterBins = 1.0;
-		double maxFilterBins = 1000.0;
-		for(CriticalBand bounds: criticalBands) {
-			for(double filterBins = minFilterBins; filterBins < maxFilterBins; filterBins += 0.5) {
-				//if(testBPFilter(bounds, filterBins)) break;
-			}
+		criticalBands = calculateCriticalBands(0.5);
+		noiseCriticalBands = calculateCriticalBands(1.0);
+		for(int index = noiseCriticalBands.size() - 1; index > -1; index--) {
+			CriticalBand criticalBand = noiseCriticalBands.get(index);
+			criticalBand.setHPFilter(getFilter(criticalBand.getCenterFreq(), criticalBand.getLowerBound(), 1));
+			criticalBand.setLPFilter(getFilter(criticalBand.getCenterFreq(), criticalBand.getUpperBound(), 0));
+			System.out.println("CriticalBand center = " + criticalBand.getCenterFreq() + " lengths: " + criticalBand.lpFilter.length + " " + criticalBand.hpFilter.length);
 		}
 	}
-	
-	public static void testLPFilters() {
-		double minRejectRatio = 1.4;
-		double maxRejectRatio = 1.7;
-		double minFilterBins = 1.0;
-		double maxFilterBins = 10.0;
-		double minFreq = samplingRate / 32.0;
-		double maxFreq = samplingRate / 8.0;
-		for(double rejectRatio = minRejectRatio; rejectRatio <= maxRejectRatio; rejectRatio += 0.1) {
-			for(double testFreq = minFreq; testFreq <= maxFreq; testFreq *= Math.pow(2.0, 1.0 / 2.0)) {
-				for(double filterBins = minFilterBins; filterBins < maxFilterBins; filterBins += 0.5) {
-					testLPFilter(testFreq, rejectRatio, filterBins);
-				}
-			}
-		}
-	}
-	
-	public static void calculatePassFreqToMinFilterLength() {
-		passFreqToFilterLength = new TreeMap<Float, Integer>();
-		double noteRatio = Math.pow(2.0, -1.0 / FDData.noteBase);
-		for(double passFreq = samplingRate / 4.0; passFreq >= samplingRate / 32.0; passFreq *= noteRatio) {
-			passFreqToFilterLength.put((float) passFreq, Integer.MAX_VALUE);
-			findMinFilterLength(passFreq);
-			System.out.println(passFreq);
-		}
-		for(float passFreq: passFreqToFilterLength.keySet()) {
-			System.out.println("Filter.passFreqToFilterLength.put(" + passFreq + ", " + passFreqToFilterLength.get(passFreq) + ");");
-		}
-	}
-	
-	public static void findMinFilterLength(double passFreq) {
-		// double rejectFreq = 2770; // OPTIMAL for 2000, 4000
-		double cutoffFreq = passFreq * 2.0;
-		double maxRejectFreq = passFreq * 2.0;
-		double minRejectFreq = passFreq;
-		double samplesPerCycle = samplingRate / passFreq;
-		int minFilterLength = (int) Math.ceil(samplesPerCycle);
-		int maxFilterLength = (int) Math.ceil(samplesPerCycle * 32);
-		minFilterLength = minFilterLength - minFilterLength % 2;
-		double rejectFreqStep = (maxRejectFreq - minRejectFreq) / 100.0;
-		for(double rejectFreq = minRejectFreq; rejectFreq <= maxRejectFreq; rejectFreq += rejectFreqStep) {
-			for(int filterLength = minFilterLength; filterLength < maxFilterLength; filterLength += 2) {
-				double bins = (double) filterLength / samplesPerCycle;
-				if(bins > 6.0) continue;
-				/*if(testLPFilter(filterLength, passFreq, rejectFreq, cutoffFreq)) {
-					if(passFreqToFilterLength.get((float) passFreq) > filterLength) {
-						passFreqToFilterLength.put((float) passFreq, filterLength);
-					}
-				}
-				*/
-			}
-		}
-	}
-	
-	public static void calculateCriticalBands() {
-		criticalBands = new ArrayList<CriticalBand>();
+
+	public static ArrayList<CriticalBand> calculateCriticalBands(double barkStep) {
+		ArrayList<CriticalBand> criticalBands = new ArrayList<CriticalBand>();
 		double startFreqInHz = FDData.minFrequencyInHz;
 		double startBark = 13.0 * Math.atan(0.00076 * startFreqInHz) + 3.5 * Math.atan((startFreqInHz / 7500.0) * (startFreqInHz / 7500.0));
 		double endBark = 0.0;
 		double endFreqInHz = startFreqInHz;
 		double minRatio = Math.pow(2.0, 1 / 1000.0);
-		double barkStep = 0.5;
 		while(endFreqInHz < FDData.maxFrequencyInHz) {
 			endFreqInHz *= minRatio;
 			endBark = 13.0 * Math.atan(0.00076 * endFreqInHz) + 3.5 * Math.atan((endFreqInHz / 7500.0) * (endFreqInHz / 7500.0));
@@ -567,89 +546,8 @@ public class Filter {
 		for(CriticalBand bounds: criticalBands) {
 			System.out.println("Critical Band: " + bounds.getLowerBound() + " " + bounds.getUpperBound());
 		}
-	}
-	
-	public static void initFullCriticalBands() {
-		criticalBands = new ArrayList<CriticalBand>();
-		criticalBands.add(new CriticalBand(FDData.minFrequencyInHz, 100));
-		criticalBands.add(new CriticalBand(100, 200));
-		criticalBands.add(new CriticalBand(200, 300));
-		criticalBands.add(new CriticalBand(300, 400));
-		criticalBands.add(new CriticalBand(400, 510));
-		criticalBands.add(new CriticalBand(510, 630));
-		criticalBands.add(new CriticalBand(630, 770));
-		criticalBands.add(new CriticalBand(770, 920));
-		criticalBands.add(new CriticalBand(920, 1080));
-		criticalBands.add(new CriticalBand(1080, 1270));
-		criticalBands.add(new CriticalBand(1270, 1480));
-		criticalBands.add(new CriticalBand(1480, 1720));
-		criticalBands.add(new CriticalBand(1720, 2000));
-		criticalBands.add(new CriticalBand(2000, 2320));
-		criticalBands.add(new CriticalBand(2320, 2700));
-		criticalBands.add(new CriticalBand(2700, 3150));
-		criticalBands.add(new CriticalBand(3150, 3700));
-		criticalBands.add(new CriticalBand(3700, 4400));
-		criticalBands.add(new CriticalBand(4400, 5300));
-		criticalBands.add(new CriticalBand(5300, 6400));
-		criticalBands.add(new CriticalBand(6400, 7700));
-		criticalBands.add(new CriticalBand(7700, 9500));
-		criticalBands.add(new CriticalBand(9500, 12000));
-		criticalBands.add(new CriticalBand(12000, 15500));
-		criticalBands.add(new CriticalBand(15500, FDData.maxFrequencyInHz));
-	}
-	
-	public static void initHalfCriticalBands() {
-		if(criticalBands != null) return;
-		criticalBands = new ArrayList<CriticalBand>();
-		criticalBands.add(new CriticalBand(FDData.minFrequencyInHz, 50));
-		criticalBands.add(new CriticalBand(50, 100));
-		criticalBands.add(new CriticalBand(100, 150));
-		criticalBands.add(new CriticalBand(150, 200));
-		criticalBands.add(new CriticalBand(200, 250));
-		criticalBands.add(new CriticalBand(250, 300));
-		criticalBands.add(new CriticalBand(300, 350));
-		criticalBands.add(new CriticalBand(350, 400));
-		criticalBands.add(new CriticalBand(400, 450));
-		criticalBands.add(new CriticalBand(450, 510));
-		criticalBands.add(new CriticalBand(510, 570));
-		criticalBands.add(new CriticalBand(570, 630));
-		criticalBands.add(new CriticalBand(630, 700));
-		criticalBands.add(new CriticalBand(700, 770));
-		criticalBands.add(new CriticalBand(770, 840));
-		criticalBands.add(new CriticalBand(840, 920));
-		criticalBands.add(new CriticalBand(920, 1000));
-		criticalBands.add(new CriticalBand(1000, 1080));
-		criticalBands.add(new CriticalBand(1080, 1170));
-		criticalBands.add(new CriticalBand(1170, 1270));
-		criticalBands.add(new CriticalBand(1270, 1370));
-		criticalBands.add(new CriticalBand(1370, 1480));
-		criticalBands.add(new CriticalBand(1480, 1600));
-		criticalBands.add(new CriticalBand(1600, 1720));
-		criticalBands.add(new CriticalBand(1720, 1850));
-		criticalBands.add(new CriticalBand(1850, 2000));
-		criticalBands.add(new CriticalBand(2000, 2150));
-		criticalBands.add(new CriticalBand(2150, 2320));
-		criticalBands.add(new CriticalBand(2320, 2500));
-		criticalBands.add(new CriticalBand(2500, 2700));
-		criticalBands.add(new CriticalBand(2700, 2900));
-		criticalBands.add(new CriticalBand(2900, 3150));
-		criticalBands.add(new CriticalBand(3150, 3400));
-		criticalBands.add(new CriticalBand(3400, 3700));
-		criticalBands.add(new CriticalBand(3700, 4000));
-		criticalBands.add(new CriticalBand(4000, 4400));
-		criticalBands.add(new CriticalBand(4400, 4800));
-		criticalBands.add(new CriticalBand(4800, 5300));
-		criticalBands.add(new CriticalBand(5300, 5800));
-		criticalBands.add(new CriticalBand(5800, 6400));
-		criticalBands.add(new CriticalBand(6400, 7000));
-		criticalBands.add(new CriticalBand(7000, 7700));
-		criticalBands.add(new CriticalBand(7700, 8500));
-		criticalBands.add(new CriticalBand(8500, 9500));
-		criticalBands.add(new CriticalBand(9500, 10500));
-		criticalBands.add(new CriticalBand(10500, 12000));
-		criticalBands.add(new CriticalBand(12000, 13500));
-		criticalBands.add(new CriticalBand(13500, 15500));
-		criticalBands.add(new CriticalBand(15500, FDData.maxFrequencyInHz));
+		return criticalBands;
+		
 	}
 
 }

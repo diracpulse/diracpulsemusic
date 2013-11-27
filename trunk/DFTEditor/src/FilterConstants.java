@@ -1,8 +1,9 @@
+import java.util.ArrayList;
 import java.util.TreeMap;
 
-
-
 public class FilterConstants {
+	
+	public static ArrayList<Filter.CriticalBand> criticalBands = null;
 	
 	public static void initPassFreqToFilterLength() {
 		Filter.passFreqToFilterLength = new TreeMap<Float, Integer>();
@@ -101,4 +102,89 @@ public class FilterConstants {
 		Filter.passFreqToFilterLength.put((float)10781.221, 22);
 		Filter.passFreqToFilterLength.put((float)11025.0, 22);
 	}
+	
+	
+	public static void initFullCriticalBands() {
+		criticalBands = new ArrayList<Filter.CriticalBand>();
+		criticalBands.add(new Filter.CriticalBand(FDData.minFrequencyInHz, 100));
+		criticalBands.add(new Filter.CriticalBand(100, 200));
+		criticalBands.add(new Filter.CriticalBand(200, 300));
+		criticalBands.add(new Filter.CriticalBand(300, 400));
+		criticalBands.add(new Filter.CriticalBand(400, 510));
+		criticalBands.add(new Filter.CriticalBand(510, 630));
+		criticalBands.add(new Filter.CriticalBand(630, 770));
+		criticalBands.add(new Filter.CriticalBand(770, 920));
+		criticalBands.add(new Filter.CriticalBand(920, 1080));
+		criticalBands.add(new Filter.CriticalBand(1080, 1270));
+		criticalBands.add(new Filter.CriticalBand(1270, 1480));
+		criticalBands.add(new Filter.CriticalBand(1480, 1720));
+		criticalBands.add(new Filter.CriticalBand(1720, 2000));
+		criticalBands.add(new Filter.CriticalBand(2000, 2320));
+		criticalBands.add(new Filter.CriticalBand(2320, 2700));
+		criticalBands.add(new Filter.CriticalBand(2700, 3150));
+		criticalBands.add(new Filter.CriticalBand(3150, 3700));
+		criticalBands.add(new Filter.CriticalBand(3700, 4400));
+		criticalBands.add(new Filter.CriticalBand(4400, 5300));
+		criticalBands.add(new Filter.CriticalBand(5300, 6400));
+		criticalBands.add(new Filter.CriticalBand(6400, 7700));
+		criticalBands.add(new Filter.CriticalBand(7700, 9500));
+		criticalBands.add(new Filter.CriticalBand(9500, 12000));
+		criticalBands.add(new Filter.CriticalBand(12000, 15500));
+		criticalBands.add(new Filter.CriticalBand(15500, FDData.maxFrequencyInHz));
+	}
+	
+	public static void initHalfCriticalBands() {
+		if(criticalBands != null) return;
+		criticalBands = new ArrayList<Filter.CriticalBand>();
+		criticalBands.add(new Filter.CriticalBand(FDData.minFrequencyInHz, 50));
+		criticalBands.add(new Filter.CriticalBand(50, 100));
+		criticalBands.add(new Filter.CriticalBand(100, 150));
+		criticalBands.add(new Filter.CriticalBand(150, 200));
+		criticalBands.add(new Filter.CriticalBand(200, 250));
+		criticalBands.add(new Filter.CriticalBand(250, 300));
+		criticalBands.add(new Filter.CriticalBand(300, 350));
+		criticalBands.add(new Filter.CriticalBand(350, 400));
+		criticalBands.add(new Filter.CriticalBand(400, 450));
+		criticalBands.add(new Filter.CriticalBand(450, 510));
+		criticalBands.add(new Filter.CriticalBand(510, 570));
+		criticalBands.add(new Filter.CriticalBand(570, 630));
+		criticalBands.add(new Filter.CriticalBand(630, 700));
+		criticalBands.add(new Filter.CriticalBand(700, 770));
+		criticalBands.add(new Filter.CriticalBand(770, 840));
+		criticalBands.add(new Filter.CriticalBand(840, 920));
+		criticalBands.add(new Filter.CriticalBand(920, 1000));
+		criticalBands.add(new Filter.CriticalBand(1000, 1080));
+		criticalBands.add(new Filter.CriticalBand(1080, 1170));
+		criticalBands.add(new Filter.CriticalBand(1170, 1270));
+		criticalBands.add(new Filter.CriticalBand(1270, 1370));
+		criticalBands.add(new Filter.CriticalBand(1370, 1480));
+		criticalBands.add(new Filter.CriticalBand(1480, 1600));
+		criticalBands.add(new Filter.CriticalBand(1600, 1720));
+		criticalBands.add(new Filter.CriticalBand(1720, 1850));
+		criticalBands.add(new Filter.CriticalBand(1850, 2000));
+		criticalBands.add(new Filter.CriticalBand(2000, 2150));
+		criticalBands.add(new Filter.CriticalBand(2150, 2320));
+		criticalBands.add(new Filter.CriticalBand(2320, 2500));
+		criticalBands.add(new Filter.CriticalBand(2500, 2700));
+		criticalBands.add(new Filter.CriticalBand(2700, 2900));
+		criticalBands.add(new Filter.CriticalBand(2900, 3150));
+		criticalBands.add(new Filter.CriticalBand(3150, 3400));
+		criticalBands.add(new Filter.CriticalBand(3400, 3700));
+		criticalBands.add(new Filter.CriticalBand(3700, 4000));
+		criticalBands.add(new Filter.CriticalBand(4000, 4400));
+		criticalBands.add(new Filter.CriticalBand(4400, 4800));
+		criticalBands.add(new Filter.CriticalBand(4800, 5300));
+		criticalBands.add(new Filter.CriticalBand(5300, 5800));
+		criticalBands.add(new Filter.CriticalBand(5800, 6400));
+		criticalBands.add(new Filter.CriticalBand(6400, 7000));
+		criticalBands.add(new Filter.CriticalBand(7000, 7700));
+		criticalBands.add(new Filter.CriticalBand(7700, 8500));
+		criticalBands.add(new Filter.CriticalBand(8500, 9500));
+		criticalBands.add(new Filter.CriticalBand(9500, 10500));
+		criticalBands.add(new Filter.CriticalBand(10500, 12000));
+		criticalBands.add(new Filter.CriticalBand(12000, 13500));
+		criticalBands.add(new Filter.CriticalBand(13500, 15500));
+		criticalBands.add(new Filter.CriticalBand(15500, FDData.maxFrequencyInHz));
+	}
+
 }
