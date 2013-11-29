@@ -16,6 +16,8 @@ public class Filter {
 	public static TreeMap<Float, Integer> passFreqToFilterLength = null;
 	public static ArrayList<CriticalBand> criticalBands = null;
 	public static ArrayList<CriticalBand> noiseCriticalBands = null;
+	public static double criticalBandBarkStep = 0.5;
+	public static double noiseCriticalBandBarkStep = 1.0;
 
 	final static double alpha = 1.0;
 	
@@ -516,8 +518,8 @@ public class Filter {
 
 	public static void createCriticalBands() {
 		if(criticalBands != null) return;
-		criticalBands = calculateCriticalBands(0.5);
-		noiseCriticalBands = calculateCriticalBands(1.0);
+		criticalBands = calculateCriticalBands(criticalBandBarkStep);
+		noiseCriticalBands = calculateCriticalBands(noiseCriticalBandBarkStep);
 		for(int index = noiseCriticalBands.size() - 1; index > -1; index--) {
 			CriticalBand criticalBand = noiseCriticalBands.get(index);
 			criticalBand.setHPFilter(getFilter(criticalBand.getCenterFreq(), criticalBand.getLowerBound(), 1));
