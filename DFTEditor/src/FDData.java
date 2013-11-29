@@ -5,11 +5,12 @@ public class FDData {
 	public static int timeStepInMillis = 5; // time in secs = this.time * timeStepInMillis / 1000
 	public static int noteBase = 144; // freq in Hz = 2.0^((this.note + this.noteFraction) / noteBase)
 	public static final double logBase = 2.0; // amplitude = logBase ^ logAmplitude
+	public static final int bitDepth = 16;
 	
 	//Data Bounds
 	public static final int minTime = 0;
 	public static final int maxTime = 10 * 60 * (1000 / timeStepInMillis);
-	public static final double minLogAmplitude = 0.0f;
+	public static final double minLogAmplitude = -1.0 * (bitDepth + 1);
 	public static final double maxLogAmplitude = 24.0f;
 	public static final double minFrequencyInHz = DFT2.minFreqHz;
 	public static final double maxFrequencyInHz = DFT2.maxFreqHz;

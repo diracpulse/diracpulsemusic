@@ -276,6 +276,20 @@ public class DFTEditor extends JFrame implements AbstractEditor {
         refreshAllViews();
 	}
 	
+	public void TestDFT() {
+		newFileData();
+        DFT2.TestDFTMatrix();
+    	SynthTools.refresh = true;
+    	SynthTools.createHarmonics();
+    	ActionHandler.refreshAll();
+        parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonic);
+        parent.fdEditorFrame.addHarmonicsToFDEditor(harmonicIDToHarmonic);
+        parent.graphEditorFrame.setTitle("GraphEditor: " + dftFileName);
+        parent.fdEditorFrame.setTitle("FDEditor: " + dftFileName);
+        this.setTitle("DFTEditor: " + dftFileName);
+        refreshAllViews();
+	}
+	
 	public void cutoff() {
 		SynthTools.createHarmonics();
         parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonic);

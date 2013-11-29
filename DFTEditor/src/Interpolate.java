@@ -40,4 +40,70 @@ class Interpolate {
 		}
 		return output;
 	}
+	
+	public static double[] synthTAPairsLinear(ArrayList<TestSignals.TAPair> TAPairs) {
+		double[] returnVal;
+		if(TAPairs.isEmpty() || TAPairs == null) return null;
+		if(TAPairs.size() == 2) {
+			returnVal = new double[TAPairs.get(0).getTimeInSamples() + 1];
+			for(int index = 0; index < returnVal.length - 1; index++) {
+				returnVal[index] = 0.0;
+			}
+			returnVal[returnVal.length - 1] = TAPairs.get(0).getAbsoluteAmplitude();
+			return returnVal;
+		}
+		returnVal = new double[TAPairs.get(TAPairs.size() - 1).getTimeInSamples() + 1];
+		for(int index = 0; index < returnVal.length - 1; index++) {
+			returnVal[index] = 0.0;
+		}
+		int maxArrayIndex = TAPairs.size();
+		for(int arrayIndex = 0; arrayIndex < maxArrayIndex - 1; arrayIndex++) {
+			int lowerTime = TAPairs.get(arrayIndex).getTimeInSamples();
+			int upperTime = TAPairs.get(arrayIndex + 1).getTimeInSamples();
+			double lowerAmplitude = TAPairs.get(arrayIndex).getAbsoluteAmplitude();
+			double upperAmplitude = TAPairs.get(arrayIndex + 1).getAbsoluteAmplitude();
+			if(upperTime - lowerTime <= 0) return null;
+			double ampSlope = (upperAmplitude - lowerAmplitude) / (upperTime - lowerTime);
+			for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
+				if(timeIndex >= returnVal.length) break;
+				returnVal[timeIndex] += lowerAmplitude + (timeIndex - lowerTime) * ampSlope;
+			}	
+		}
+		return returnVal;
+	}
+	
+	public static double[] synthTAPairsLog(ArrayList<TestSignals.TAPair> TAPairs) {
+		double[] returnVal;
+		if(TAPairs.isEmpty() || TAPairs == null) return null;
+		if(TAPairs.size() == 2) {
+			returnVal = new double[TAPairs.get(0).getTimeInSamples() + 1];
+			for(int index = 0; index < returnVal.length - 1; index++) {
+				returnVal[index] = 0.0;
+			}
+			returnVal[returnVal.length - 1] = TAPairs.get(0).getAbsoluteAmplitude();
+			return returnVal;
+		}
+		returnVal = new double[TAPairs.get(TAPairs.size() - 1).getTimeInSamples() + 1];
+		for(int index = 0; index < returnVal.length - 1; index++) {
+			returnVal[index] = 0.0;
+		}
+		int maxArrayIndex = TAPairs.size();
+		for(int arrayIndex = 0; arrayIndex < maxArrayIndex - 1; arrayIndex++) {
+			int lowerTime = TAPairs.get(arrayIndex).getTimeInSamples();
+			int upperTime = TAPairs.get(arrayIndex + 1).getTimeInSamples();
+			double lowerAmplitude = TAPairs.get(arrayIndex).getLogAmplitude();
+			double upperAmplitude = TAPairs.get(arrayIndex + 1).getLogAmplitude();
+			if(upperTime - lowerTime <= 0) return null;
+			double ampSlope = (upperAmplitude - lowerAmplitude) / (upperTime - lowerTime);
+			for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
+				if(timeIndex >= returnVal.length) break;
+				returnVal[timeIndex] += lowerAmplitude + (timeIndex - lowerTime) * ampSlope;
+			}	
+		}
+		for(int index = 0; index < returnVal.length; index++) {
+			returnVal[index] = Math.pow(FDData.logBase, returnVal[index]);
+		}
+		return returnVal;
+	}
+	
 }

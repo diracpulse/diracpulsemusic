@@ -164,6 +164,22 @@ class SynthTools {
 			}
 		}
 		Filter.applyCriticalBandFiltering(channel, timeToFreqToData, amplitudeToTimeAndFreq);
+		/*
+		// START: ApplyFreqMasking
+		applyFreqMasking(channel, timeToFreqToData);
+		ArrayList<Double> amplitudesToRemove = new ArrayList<Double>();
+		for(double amplitude: amplitudeToTimeAndFreq.keySet()) {
+			time = amplitudeToTimeAndFreq.get(amplitude).time;
+			freq = amplitudeToTimeAndFreq.get(amplitude).freq;
+			if(!timeToFreqToData.get(time).containsKey(freq)) {
+				amplitudesToRemove.add(amplitude);
+			}
+		}
+		for(double amplitude: amplitudesToRemove) {
+			amplitudeToTimeAndFreq.remove(amplitude);
+		}
+		// END: ApplyFreqMasking
+		*/
 		while(!amplitudeToTimeAndFreq.isEmpty()) {
 			//System.out.println(amplitudeToTimeAndFreq.size());
 			IntPair timeAndFreq = amplitudeToTimeAndFreq.get(amplitudeToTimeAndFreq.lastKey());
@@ -177,68 +193,136 @@ class SynthTools {
 				continue;
 			}
 			*/
-			int[] timeSteps = {-1, 1};
-			for(int timeStep: timeSteps) {
-				int continues = 0;
-				time = outerTime + 1;
-				freq = outerFreq;
-				if(timeStep == 1) time = outerTime;
-				while(continues < 3) {
-					time += timeStep;
-					if(time < 0) break;
-					if(time == numTimes) break;
+			int maxTimeJump = 1;
+			int maxFreqJump = 1;
+			int continues = 0;
+			time = outerTime - 1;
+			freq = outerFreq;
+			while(continues <= maxTimeJump) {
+				time += 1;
+				if(time == numTimes) break;
+				boolean continueHarmonic = false;
+				for(int freqDifference = 1; freqDifference <= maxFreqJump; freqDifference++) {
 					FDData data0 = null;
 					FDData dataPlus1 = null;
 					FDData dataMinus1 = null;
 					if(timeToFreqToData.get(time).containsKey(freq)) data0 = timeToFreqToData.get(time).get(freq);
-					if(timeToFreqToData.get(time).containsKey(freq + 1)) dataPlus1 = timeToFreqToData.get(time).get(freq + 1);
-					if(timeToFreqToData.get(time).containsKey(freq - 1)) dataMinus1 = timeToFreqToData.get(time).get(freq - 1);
+					if(timeToFreqToData.get(time).containsKey(freq + freqDifference)) dataPlus1 = timeToFreqToData.get(time).get(freq + freqDifference);
+					if(timeToFreqToData.get(time).containsKey(freq - freqDifference)) dataMinus1 = timeToFreqToData.get(time).get(freq - freqDifference);
 					if(data0 != null) {
 						newHarmonic.addData(data0);
 						timeToFreqToData.get(time).remove(freq);
 						amplitudeToTimeAndFreq.remove(data0.getLogAmplitude());
-						continue;
+						continues = -1;
+						break;
 					}
 					if((dataPlus1 != null) && (dataMinus1 != null)) {
 						if(dataPlus1.getLogAmplitude() > dataMinus1.getLogAmplitude()) {
-							freq += 1;
+							freq += freqDifference;
 							newHarmonic.addData(dataPlus1);
 							timeToFreqToData.get(time).remove(freq);
 							amplitudeToTimeAndFreq.remove(dataPlus1.getLogAmplitude());
-							continue;
+							continues = -1;
+							break;
 						} else {
-							freq -= 1;
+							freq -= freqDifference;
 							newHarmonic.addData(dataMinus1);
 							timeToFreqToData.get(time).remove(freq);
 							amplitudeToTimeAndFreq.remove(dataMinus1.getLogAmplitude());
-							continue;
+							continues = -1;
+							break;
 						}
 					}
 					if(dataPlus1 != null) {
-						freq += 1;
+						freq += freqDifference;
 						newHarmonic.addData(dataPlus1);
 						timeToFreqToData.get(time).remove(freq);
 						amplitudeToTimeAndFreq.remove(dataPlus1.getLogAmplitude());
-						continue;
+						continues = -1;
+						break;
 					}
 					if(dataMinus1 != null) {
-						freq -= 1;
+						freq -= freqDifference;
 						newHarmonic.addData(dataMinus1);
 						timeToFreqToData.get(time).remove(freq);
 						amplitudeToTimeAndFreq.remove(dataMinus1.getLogAmplitude());
-						continue;
+						continues = 0;
+						break;
 					}
-					continues += 1;
 				}
+				continues++;
+			}
+			continues = 0;
+			time = outerTime;
+			freq = outerFreq;
+			while(continues <= maxTimeJump) {
+				time--;
+				if(time < 0) break;
+				if(time == numTimes) break;
+				boolean continueHarmonic = false;
+				for(int freqDifference = 1; freqDifference <= maxFreqJump; freqDifference++) {
+					FDData data0 = null;
+					FDData dataPlus1 = null;
+					FDData dataMinus1 = null;
+					if(timeToFreqToData.get(time).containsKey(freq)) data0 = timeToFreqToData.get(time).get(freq);
+					if(timeToFreqToData.get(time).containsKey(freq + freqDifference)) dataPlus1 = timeToFreqToData.get(time).get(freq + freqDifference);
+					if(timeToFreqToData.get(time).containsKey(freq - freqDifference)) dataMinus1 = timeToFreqToData.get(time).get(freq - freqDifference);
+					if(data0 != null) {
+						newHarmonic.addData(data0);
+						timeToFreqToData.get(time).remove(freq);
+						amplitudeToTimeAndFreq.remove(data0.getLogAmplitude());
+						continues = -1;
+						break;
+					}
+					if((dataPlus1 != null) && (dataMinus1 != null)) {
+						if(dataPlus1.getLogAmplitude() > dataMinus1.getLogAmplitude()) {
+							freq += freqDifference;
+							newHarmonic.addData(dataPlus1);
+							timeToFreqToData.get(time).remove(freq);
+							amplitudeToTimeAndFreq.remove(dataPlus1.getLogAmplitude());
+							continues = -1;
+							break;
+						} else {
+							freq -= freqDifference;
+							newHarmonic.addData(dataMinus1);
+							timeToFreqToData.get(time).remove(freq);
+							amplitudeToTimeAndFreq.remove(dataMinus1.getLogAmplitude());
+							continues = -1;
+							break;
+						}
+					}
+					if(dataPlus1 != null) {
+						freq += freqDifference;
+						newHarmonic.addData(dataPlus1);
+						timeToFreqToData.get(time).remove(freq);
+						amplitudeToTimeAndFreq.remove(dataPlus1.getLogAmplitude());
+						continues = -1;
+						break;
+					}
+					if(dataMinus1 != null) {
+						freq -= freqDifference;
+						newHarmonic.addData(dataMinus1);
+						timeToFreqToData.get(time).remove(freq);
+						amplitudeToTimeAndFreq.remove(dataMinus1.getLogAmplitude());
+						continues = 0;
+						break;
+					}
+				}
+				continues++;
 			}
 			DFTEditor.harmonicIDToHarmonic.put(newHarmonic.getHarmonicID(), newHarmonic);
 		}
-		// Remove Harmonic Fragments
+		// START: Remove Harmonic Fragments
+		/*
 		ArrayList<Long> harmonicIDsToRemove = new ArrayList<Long>();
 		for(Long harmonicID: DFTEditor.harmonicIDToHarmonic.keySet()) {
 			Harmonic harmonic = DFTEditor.harmonicIDToHarmonic.get(harmonicID);
 			if(harmonic.getChannel() != channel) continue;
 			int length = harmonic.getLengthNoTaper();
+			if(length < 4) {
+				harmonicIDsToRemove.add(harmonicID);
+				continue;
+			}
 			double lengthInSeconds = length * (FDData.timeStepInMillis / 1000.0);
 			double cycleLengthInSeconds = 1.0 / DFT2.noteToFrequency(harmonic.getMaxNote());
 			if(lengthInSeconds / cycleLengthInSeconds < 4.0) harmonicIDsToRemove.add(harmonicID);
@@ -246,6 +330,8 @@ class SynthTools {
 		for(Long harmonicID: harmonicIDsToRemove) {
 			DFTEditor.harmonicIDToHarmonic.remove(harmonicID);
 		}
+		END: Remove Harmonic Fragments
+		*/
 	}
 	
 	static void printHarmonics(ArrayList<Harmonic> harmonics) {

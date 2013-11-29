@@ -42,7 +42,6 @@ public class ActionHandler extends JPanel {
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			DFT.printDFTParameters();
 			parent.FileDFT(false);
 			DFTEditor.refreshView();
 		}
@@ -58,7 +57,6 @@ public class ActionHandler extends JPanel {
 
 		// @0verride
 		public void actionPerformed(ActionEvent arg0) {
-			DFT.printDFTParameters();
 			parent.FileDFT(true);
 			DFTEditor.refreshView();
 		}
@@ -105,6 +103,21 @@ public class ActionHandler extends JPanel {
 		public void actionPerformed(ActionEvent arg0) {
 			System.out.println("Export All Selected");
 			parent.exportAllFiles();
+		}
+	}
+	
+	public class TestSignalAction extends AbstractAction {
+
+		private static final long serialVersionUID = 1L;
+
+		public TestSignalAction() {
+			super("Test Signal");
+		}
+
+		// @0verride
+		public void actionPerformed(ActionEvent arg0) {
+			System.out.println("Test Signal");
+			parent.TestDFT();
 		}
 	}
 	
@@ -562,6 +575,10 @@ public class ActionHandler extends JPanel {
         fileMenu.add(new DFTOpenAction());
         fileMenu.add(new ExportAllAction());
         fileMenu.add(new ExitAction());
+        // Create Test menu
+        JMenu testMenu = new JMenu("Test");
+        menuBar.add(testMenu);
+        testMenu.add(new TestSignalAction());
         // Create Channel Select
         JMenu channelMenu = new JMenu("Channel");
         for(DFTEditor.Channel channel: DFTEditor.Channel.values()) {
