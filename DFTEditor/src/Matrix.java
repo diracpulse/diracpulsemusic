@@ -6,7 +6,7 @@ class Matrix {
 		int xDimension = FDData.noteBase + 2;
 		int yDimension = FDData.noteBase + 1;
 		double[][] responseOfWaveletToNote = new double[xDimension][yDimension];
-		double noteRatio = Math.pow(2.0, -1.0 / (double) FDData.noteBase);
+		double noteRatio = Math.pow(2.0, -1.0 / (double) 31);
 		double maxFreqHz = SynthTools.sampleRate / 16.0;
 		double minFreqHz = (SynthTools.sampleRate / 32.0);
 		for(double freqInHz = maxFreqHz ; Math.round(freqInHz * 10000.0) / 10000.0 >= minFreqHz; freqInHz *= noteRatio) {

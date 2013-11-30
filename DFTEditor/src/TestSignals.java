@@ -203,6 +203,68 @@ public class TestSignals {
 		}
 	}
 	
+	public static class KarplusStrong implements Generator {
+		
+		double[] samples = new double[44100];
+		
+		public KarplusStrong(int p) {
+			for(int index = 0; index <= p; index++) {
+				samples[index] = Math.random();
+			}
+			for(int index = p + 1; index < samples.length; index++) {
+				samples[index] = 0.0;
+			}
+			for(int index = p + 1; index < samples.length; index++) {
+				samples[index] += 0.5 * (samples[index - p] + samples[index - p - 1]);
+			}
+			for(int index = p; index < samples.length; index++) {
+				samples[index] *= 32000.0;
+			}
+		}
+		
+		public double[] getSamples() {
+			return samples;
+		}
+		
+		public double[] addTo(double[] input) {
+			double[] returnVal = null;
+			if(input.length > samples.length) {
+				returnVal = new double[input.length];
+			} else {
+				returnVal = new double[samples.length];
+			}
+			for(int index = 0; index < returnVal.length; index++) {
+				if(index >= samples.length || index >= input.length) {
+					returnVal[index] = 0.0;
+					continue;
+				}
+				returnVal[index] = samples[index] + input[index];
+			}
+			return returnVal;
+		}
+		
+		public double[] modulateAM(double[] input) {
+			double[] returnVal = null;
+			if(input.length > samples.length) {
+				returnVal = new double[input.length];
+			} else {
+				returnVal = new double[samples.length];
+			}
+			for(int index = 0; index < returnVal.length; index++) {
+				if(index >= samples.length || index >= input.length) {
+					returnVal[index] = 0.0;
+					continue;
+				}
+				returnVal[index] = samples[index] * input[index];
+			}
+			return returnVal;
+		}
+		
+		public double[] modulateFM(double[] input) {
+			return null;
+		}
+	}
+	
 	public static ADSR getEnvelope() {
 		ArrayList<TAPair> values = new ArrayList<TAPair>();
 		values.add(new TAPair(TAPair.TimeFormat.SECONDS, TAPair.AmplitudeFormat.LOG, 0.0, -2.0));
@@ -214,13 +276,19 @@ public class TestSignals {
 		
 	}
 	
-	public static double[] getTestSignal() {
+	public static double[] getTestSignal0() {
 		TAPair sin0Pair =  new TAPair(TAPair.TimeFormat.SECONDS, TAPair.AmplitudeFormat.ABSOLUTE, 4.0, 1.0);
 		TAPair sin1Pair =  new TAPair(TAPair.TimeFormat.SECONDS, TAPair.AmplitudeFormat.ABSOLUTE, 4.0, 1.0);
 		PureSine sin0 = new PureSine(2000.0, sin0Pair);
 		PureSine sin1 = new PureSine(100, sin1Pair);
 		double[] returnVal = sin0.modulateFM(sin1.getSamples());
 		return getEnvelope().modulateAM(returnVal);
+	}
+	
+	public static double[] getTestSignal() {
+		KarplusStrong ks = new KarplusStrong(441);
+		KarplusStrong ks2 = new KarplusStrong(441 * 2);
+		return ks.addTo(ks2.getSamples());
 	}
 	
 }

@@ -35,7 +35,7 @@ public class DFT2 {
 	public static final double maxFreqHz = samplingRate / 2.0;
 	public static final double minFreqHz = samplingRate / 2048.0;
 	private static double maxWindowLength = 44100 / 5;
-	private static double alpha = 5.0;
+	private static double alpha = 1.0;
 	public static double midFreq = 0.0;
 	public static double bassFreq = 640.0;
 	
@@ -394,6 +394,7 @@ public class DFT2 {
 	}
 	
 	public static void TestDFTMatrix() {
+		//Matrix.disentangleWithMatrix();
 		double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
 		int maxCenterIndex = GenerateTestSignal();
 		int maxTime = (int) Math.floor(maxCenterIndex / samplesPerStep);
