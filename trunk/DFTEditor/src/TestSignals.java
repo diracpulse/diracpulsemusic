@@ -276,16 +276,16 @@ public class TestSignals {
 		
 	}
 	
-	public static double[] getTestSignal0() {
+	public static double[] getTestSignal() {
 		TAPair sin0Pair =  new TAPair(TAPair.TimeFormat.SECONDS, TAPair.AmplitudeFormat.ABSOLUTE, 4.0, 1.0);
 		TAPair sin1Pair =  new TAPair(TAPair.TimeFormat.SECONDS, TAPair.AmplitudeFormat.ABSOLUTE, 4.0, 1.0);
 		PureSine sin0 = new PureSine(2000.0, sin0Pair);
-		PureSine sin1 = new PureSine(100, sin1Pair);
+		PureSine sin1 = new PureSine(10, sin1Pair);
 		double[] returnVal = sin0.modulateFM(sin1.getSamples());
 		return getEnvelope().modulateAM(returnVal);
 	}
 	
-	public static double[] getTestSignal() {
+	public static double[] getTestSignal1() {
 		KarplusStrong ks = new KarplusStrong(441);
 		KarplusStrong ks2 = new KarplusStrong(441 * 2);
 		return ks.addTo(ks2.getSamples());

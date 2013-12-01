@@ -114,8 +114,8 @@ class SynthTools {
 		//createHarmonicsChannel((byte) 0);
 		createHarmonicsChannel(FDData.Channel.LEFT);
 		createHarmonicsChannel(FDData.Channel.RIGHT);
-		DFTEditor.parent.graphEditorFrame.addHarmonicsToGraphEditor(DFTEditor.harmonicIDToHarmonic);
-		DFTEditor.parent.fdEditorFrame.addHarmonicsToFDEditor(DFTEditor.harmonicIDToHarmonic);
+		//DFTEditor.parent.graphEditorFrame.addHarmonicsToGraphEditor(DFTEditor.harmonicIDToHarmonic);
+		//DFTEditor.parent.fdEditorFrame.addHarmonicsToFDEditor(DFTEditor.harmonicIDToHarmonic);
 	}
 	
 	public static class IntPair {

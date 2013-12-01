@@ -282,10 +282,10 @@ public class DFTEditor extends JFrame implements AbstractEditor {
     	SynthTools.refresh = true;
     	SynthTools.createHarmonics();
     	ActionHandler.refreshAll();
-        parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonic);
-        parent.fdEditorFrame.addHarmonicsToFDEditor(harmonicIDToHarmonic);
-        parent.graphEditorFrame.setTitle("GraphEditor: " + dftFileName);
-        parent.fdEditorFrame.setTitle("FDEditor: " + dftFileName);
+        //parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonic);
+        //parent.fdEditorFrame.addHarmonicsToFDEditor(harmonicIDToHarmonic);
+        //parent.graphEditorFrame.setTitle("GraphEditor: " + dftFileName);
+        //parent.fdEditorFrame.setTitle("FDEditor: " + dftFileName);
         this.setTitle("DFTEditor: " + dftFileName);
         refreshAllViews();
 	}
@@ -327,8 +327,8 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	
 	public static void refreshAllViews() {
 		view.refresh();
-		FDEditor.view.refresh();
-		GraphEditor.view.refresh();
+		//FDEditor.view.refresh();
+		//GraphEditor.view.refresh();
 	}
 	
 	
