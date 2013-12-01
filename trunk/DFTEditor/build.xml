@@ -4,7 +4,7 @@
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="classes.dir" value="${build.dir}/classes"/>
     <property name="jar.dir"     value="${build.dir}/jar"/>
-    <property name="main-class"  value="DFTEditor"/>
+    <property name="main-class"  value="main.DFTEditor"/>
 
 	<path id="project.classpath">
 		<!-- for database connectivity -->
