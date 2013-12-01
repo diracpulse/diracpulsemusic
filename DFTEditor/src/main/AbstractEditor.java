@@ -1,5 +1,6 @@
-import java.util.TreeMap;
+package main;
 
+import java.util.TreeMap;
 
 public interface AbstractEditor {
 	
