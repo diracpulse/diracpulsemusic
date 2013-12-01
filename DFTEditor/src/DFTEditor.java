@@ -383,12 +383,15 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 		parent.dftEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		parent.dftEditorFrame.pack();
 		parent.dftEditorFrame.setVisible(true);
-		parent.graphEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		parent.graphEditorFrame.pack();
-		parent.graphEditorFrame.setVisible(true);
-		parent.fdEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		parent.fdEditorFrame.pack();
-		parent.fdEditorFrame.setVisible(true);
+		//parent.graphEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		//parent.graphEditorFrame.pack();
+		//parent.graphEditorFrame.setVisible(true);
+		//parent.fdEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		//parent.fdEditorFrame.pack();
+		//parent.fdEditorFrame.setVisible(true);
+		parent.moduleEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		parent.moduleEditorFrame.pack();
+		parent.moduleEditorFrame.setVisible(true);
 	}
 
 	public static void main(String[] args) {
