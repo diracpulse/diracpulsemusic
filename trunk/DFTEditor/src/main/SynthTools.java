@@ -1,10 +1,11 @@
+package main;
 import java.util.ArrayList;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-class SynthTools {
+public class SynthTools {
 	
-	static double sampleRate = 44100.0;
+	public static double sampleRate = 44100.0;
 	static double twoPI = 2.0 * Math.PI;
 	static double[] PCMDataLeft = null;
 	static double[] PCMDataRight = null;
@@ -146,16 +147,14 @@ class SynthTools {
 		for(time = 1; time < numTimes - 1; time++) {
 			if(channel == FDData.Channel.LEFT) DFTEditor.timeToFreqsAtMaximaLeft.put(time, new TreeSet<Integer>());
 			if(channel == FDData.Channel.RIGHT) DFTEditor.timeToFreqsAtMaximaRight.put(time, new TreeSet<Integer>());
-			for(freq = 2; freq < numFreqs - 2; freq++) {
-				if(amplitudes[time][freq] >= amplitudes[time][freq - 1]) {
-					if(amplitudes[time][freq] >= amplitudes[time][freq + 1]) {
-						/*
-						if(amplitudes[time][freq] <= 0) continue;
-						if(amplitudes[time][freq + 1] <= 0) continue;
-						if(amplitudes[time][freq - 1] <= 0) continue;
-						if(amplitudes[time][freq + 2] <= 0) continue;
-						if(amplitudes[time][freq - 2] <= 0) continue;
-						*/
+			for(freq = 1; freq < numFreqs - 1; freq++) {
+				double centerAmplitude = amplitudes[time][freq];
+				double upperAmplitude = amplitudes[time][freq - 1];
+				double lowerAmplitude = amplitudes[time][freq + 1];
+				if(centerAmplitude >= upperAmplitude) {
+					if(centerAmplitude >= lowerAmplitude) {
+						if(centerAmplitude - lowerAmplitude > 1.0) continue;
+						if(centerAmplitude - upperAmplitude > 1.0) continue;
 						FDData data = null;
 						try {
 							data = new FDData(channel, time, DFTEditor.freqToNote(freq), amplitudes[time][freq], 1L);
@@ -171,7 +170,7 @@ class SynthTools {
 				}
 			}
 		}
-		Filter.applyCriticalBandFiltering(channel, timeToFreqToData, amplitudeToTimeAndFreq);
+		//Filter.applyCriticalBandFiltering(channel, timeToFreqToData, amplitudeToTimeAndFreq);
 		/*
 		// START: ApplyFreqMasking
 		applyFreqMasking(channel, timeToFreqToData);

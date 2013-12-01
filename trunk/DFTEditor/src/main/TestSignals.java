@@ -1,3 +1,4 @@
+package main;
 import java.util.ArrayList;
 
 
@@ -196,7 +197,7 @@ public class TestSignals {
 			double deltaPhase = freqInHz / sampleRate * Math.PI;
 			double phase = 0;
 			for(int index  = 0; index < returnVal.length; index++) {
-				returnVal[index] = Math.sin(phase + input[index] * Math.PI * 2.0) * amplitude;
+				returnVal[index] = Math.sin(phase + input[index]) * amplitude;
 				phase += deltaPhase;
 			}
 			return returnVal;
@@ -280,7 +281,7 @@ public class TestSignals {
 		TAPair sin0Pair =  new TAPair(TAPair.TimeFormat.SECONDS, TAPair.AmplitudeFormat.ABSOLUTE, 4.0, 1.0);
 		TAPair sin1Pair =  new TAPair(TAPair.TimeFormat.SECONDS, TAPair.AmplitudeFormat.ABSOLUTE, 4.0, 1.0);
 		PureSine sin0 = new PureSine(2000.0, sin0Pair);
-		PureSine sin1 = new PureSine(10, sin1Pair);
+		PureSine sin1 = new PureSine(100, sin1Pair);
 		double[] returnVal = sin0.modulateFM(sin1.getSamples());
 		return getEnvelope().modulateAM(returnVal);
 	}

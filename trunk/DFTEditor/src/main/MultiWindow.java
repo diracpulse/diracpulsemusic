@@ -1,3 +1,4 @@
+package main;
 import java.awt.event.WindowAdapter;
 
 public class MultiWindow extends WindowAdapter {

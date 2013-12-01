@@ -1,3 +1,5 @@
+package main;
+
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.TreeMap;
@@ -141,6 +143,9 @@ public class Filter {
 	
 	public static void createBackgroundNoise(FDData.Channel channel, double[] sharedPCMData, double logNoiseVolume) {
 		createCriticalBands();
+		if(noiseCriticalBands.get(0).lpFilter == null) {
+			createCriticalBandFilters();
+		}
 		double[] outputPCM = new double[sharedPCMData.length];
 		for(int index = 0; index < outputPCM.length; index++) {
 			outputPCM[index] = 0.0;
@@ -520,6 +525,9 @@ public class Filter {
 		if(criticalBands != null) return;
 		criticalBands = calculateCriticalBands(criticalBandBarkStep);
 		noiseCriticalBands = calculateCriticalBands(noiseCriticalBandBarkStep);
+	}
+	
+	public static void createCriticalBandFilters() {
 		for(int index = noiseCriticalBands.size() - 1; index > -1; index--) {
 			CriticalBand criticalBand = noiseCriticalBands.get(index);
 			criticalBand.setHPFilter(getFilter(criticalBand.getCenterFreq(), criticalBand.getLowerBound(), 1));
