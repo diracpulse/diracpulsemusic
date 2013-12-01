@@ -209,7 +209,7 @@ public class TestSignals {
 		
 		public KarplusStrong(int p) {
 			for(int index = 0; index <= p; index++) {
-				samples[index] = Math.random();
+				samples[index] = Math.random() - 0.5;
 			}
 			for(int index = p + 1; index < samples.length; index++) {
 				samples[index] = 0.0;
