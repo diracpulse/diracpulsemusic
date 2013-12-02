@@ -277,7 +277,7 @@ public class TestSignals {
 		
 	}
 	
-	public static double[] getTestSignal() {
+	public static double[] getTestSignal0() {
 		TAPair sin0Pair =  new TAPair(TAPair.TimeFormat.SECONDS, TAPair.AmplitudeFormat.ABSOLUTE, 4.0, 1.0);
 		TAPair sin1Pair =  new TAPair(TAPair.TimeFormat.SECONDS, TAPair.AmplitudeFormat.ABSOLUTE, 4.0, 1.0);
 		PureSine sin0 = new PureSine(2000.0, sin0Pair);
@@ -286,7 +286,7 @@ public class TestSignals {
 		return getEnvelope().modulateAM(returnVal);
 	}
 	
-	public static double[] getTestSignal1() {
+	public static double[] getTestSignal() {
 		KarplusStrong ks = new KarplusStrong(441);
 		KarplusStrong ks2 = new KarplusStrong(441 * 2);
 		return ks.addTo(ks2.getSamples());

@@ -258,10 +258,14 @@ public class DFT2 {
 	static void DFTWithDecimate(int maxCenterIndex) {
 		double left[] = new double[LeftRight.length / 2];
 		double right[] = new double[LeftRight.length / 2];
+		double tempLeft[] = new double[LeftRight.length / 2];
+		double tempRight[] = new double[LeftRight.length / 2];
 		for(int index = 0; index < LeftRight.length / 2; index++) {
 			left[index] = (double) LeftRight[index * 2];
 			right[index] = (double) LeftRight[index * 2 + 1];
 		}
+		tempLeft = Filter.applyFilter(samplingRate / 16.0, 100.0, left, Filter.FilterType.HIGHPASS);
+		tempRight = Filter.applyFilter(samplingRate / 16.0, 100.0, right, Filter.FilterType.HIGHPASS);
 		double noteRatio = Math.pow(2.0, -1.0 / (double) FDData.noteBase);
 		double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
 		double maxSamplesPerStep = samplesPerStep;
@@ -274,7 +278,7 @@ public class DFT2 {
 			Wavelet currentWavelet = createWavelet(freqInHz, bins);
 			for(double centerIndex = 0; centerIndex < maxCenterIndex; centerIndex += samplesPerStep) {
 				if(note == frequencyToNote(minFreqHz)) return;
-				SingleDFT(currentWavelet, (int) Math.round(centerIndex), note, left, right, samplesPerStep, gain);
+				SingleDFT(currentWavelet, (int) Math.round(centerIndex), note, tempLeft, tempRight, samplesPerStep, gain);
 			}
 			note--;
 		}
@@ -288,12 +292,16 @@ public class DFT2 {
 				Wavelet currentWavelet = createWavelet(freqInHz, bins);
 				for(double centerIndex = 0; centerIndex < maxCenterIndex; centerIndex += samplesPerStep) {
 					if(note == frequencyToNote(minFreqHz)) return;
-					SingleDFT(currentWavelet, (int) Math.round(centerIndex), note, left, right, samplesPerStep, gain);
+					SingleDFT(currentWavelet, (int) Math.round(centerIndex), note, tempLeft, tempRight, samplesPerStep, gain);
 				}
 				note--;
 			}
 			left = Filter.decimate(left);
 			right = Filter.decimate(right);
+			tempLeft = Filter.applyFilter(samplingRate / 8.0, 100.0, left, Filter.FilterType.LOWPASS);
+			tempRight = Filter.applyFilter(samplingRate / 8.0, 100.0, right, Filter.FilterType.LOWPASS);
+			tempLeft = Filter.applyFilter(samplingRate / 16.0, 100.0, tempLeft, Filter.FilterType.HIGHPASS);
+			tempRight = Filter.applyFilter(samplingRate / 16.0, 100.0, tempRight, Filter.FilterType.HIGHPASS);
 			maxCenterIndex /= 2;
 			samplesPerStep /= 2;
 			System.out.println("decimate");

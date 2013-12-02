@@ -37,6 +37,8 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	public static double[][] amplitudesStereo; // amplitude = amplitudes[time][freq]
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaLeft;
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaRight;
+	public static TreeMap<Integer, TreeSet<Integer>> timeToNoiseFreqsAtMaximaLeft;
+	public static TreeMap<Integer, TreeSet<Integer>> timeToNoiseFreqsAtMaximaRight;
 	public static TreeMap<Long, Harmonic> harmonicIDToHarmonic = null;
 	public static HashSet<Long> selectedHarmonicIDs;
 	public static HashSet<Integer> selectedNotes;
@@ -84,6 +86,8 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	    harmonicIDToHarmonic = new TreeMap<Long, Harmonic>();
 		timeToFreqsAtMaximaLeft = new TreeMap<Integer, TreeSet<Integer>>();
 		timeToFreqsAtMaximaRight = new TreeMap<Integer, TreeSet<Integer>>();
+		timeToNoiseFreqsAtMaximaLeft = new TreeMap<Integer, TreeSet<Integer>>();
+		timeToNoiseFreqsAtMaximaRight = new TreeMap<Integer, TreeSet<Integer>>();
 	}
 	/*
 	public static float[][] getAmplitudes() {
