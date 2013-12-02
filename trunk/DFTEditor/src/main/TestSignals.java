@@ -286,10 +286,18 @@ public class TestSignals {
 		return getEnvelope().modulateAM(returnVal);
 	}
 	
-	public static double[] getTestSignal() {
+	public static double[] getTestSignal1() {
 		KarplusStrong ks = new KarplusStrong(441);
 		KarplusStrong ks2 = new KarplusStrong(441 * 2);
 		return ks.addTo(ks2.getSamples());
+	}
+	
+	public static double[] getTestSignal() {
+		double[] samples = new double[44100 * 3];
+		for(int index = 0; index < samples.length; index++) {
+			samples[index] = (Math.random() - 0.5) * Math.pow(2.0, 14.0);
+		}
+		return samples;
 	}
 	
 }
