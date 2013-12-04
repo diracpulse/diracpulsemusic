@@ -161,6 +161,7 @@ public class SynthTools {
 								if(channel == FDData.Channel.RIGHT) DFTEditor.timeToNoiseFreqsAtMaximaRight.get(time).add(freq);						
 							}
 						}
+						if(centerAmplitude == 0.0f) continue;
 						FDData data = null;
 						try {
 							data = new FDData(channel, time, DFTEditor.freqToNote(freq), amplitudes[time][freq], 1L);
@@ -212,6 +213,7 @@ public class SynthTools {
 		}
 		// END: Apply A Weighting
 		*/
+		/*
 		createHarmonics(channel, timeToFreqToData, amplitudeToTimeAndFreq, numTimes, numFreqs);
 		// START: Remove Harmonic Fragments
 		ArrayList<Long> harmonicIDsToRemove = new ArrayList<Long>();
@@ -248,6 +250,8 @@ public class SynthTools {
 		Filter.applyCriticalBandFiltering(channel, timeToFreqToData, amplitudeToTimeAndFreq);
 		createHarmonics(channel, timeToFreqToData, amplitudeToTimeAndFreq, numTimes, numFreqs);
 		// END: Refilter Data Based on Harmonic Length
+		*/
+		Filter.calculateRandomness(channel);
 	}
 	
 	static void createHarmonics(FDData.Channel channel, TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData,

@@ -277,7 +277,7 @@ public class TestSignals {
 		
 	}
 	
-	public static double[] getTestSignal0() {
+	public static double[] getTestSignal() {
 		TAPair sin0Pair =  new TAPair(TAPair.TimeFormat.SECONDS, TAPair.AmplitudeFormat.ABSOLUTE, 4.0, 1.0);
 		TAPair sin1Pair =  new TAPair(TAPair.TimeFormat.SECONDS, TAPair.AmplitudeFormat.ABSOLUTE, 4.0, 1.0);
 		PureSine sin0 = new PureSine(2000.0, sin0Pair);
@@ -292,7 +292,7 @@ public class TestSignals {
 		return ks.addTo(ks2.getSamples());
 	}
 	
-	public static double[] getTestSignal() {
+	public static double[] getTestSignal0() {
 		double[] samples = new double[44100 * 3];
 		for(int index = 0; index < samples.length; index++) {
 			samples[index] = (Math.random() - 0.5) * Math.pow(2.0, 14.0);

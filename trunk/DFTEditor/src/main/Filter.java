@@ -70,6 +70,67 @@ public class Filter {
 			return hpFilter.length;
 		}
 		
+		void calculateRandomness(FDData.Channel channel) {
+			TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima = null;
+			double[][] logAmplitudes = null;
+			double[][] randomness = null;
+			if(channel == FDData.Channel.LEFT) logAmplitudes = DFTEditor.amplitudesLeft;
+			if(channel == FDData.Channel.RIGHT) logAmplitudes = DFTEditor.amplitudesRight;
+			if(channel == FDData.Channel.LEFT) timeToFreqsAtMaxima = DFTEditor.timeToFreqsAtMaximaLeft;
+			if(channel == FDData.Channel.RIGHT) timeToFreqsAtMaxima = DFTEditor.timeToFreqsAtMaximaRight;
+			if(channel == FDData.Channel.LEFT) randomness = DFTEditor.randomnessLeft;
+			if(channel == FDData.Channel.RIGHT) randomness = DFTEditor.randomnessRight;
+			double absMaxDerivative = 0.0;
+			int timeStep = 10;
+			int startNote = DFT2.frequencyToNote(lowerBound);
+			int endNote = DFT2.frequencyToNote(upperBound);
+			int numNotes = endNote - startNote + 1;
+			for(int outerTime = 0; outerTime < DFTEditor.maxTime; outerTime += timeStep) {
+				double[] derivatives = new double[timeStep * numNotes];
+				int dIndex = 0;
+				for(int innerTime = outerTime; innerTime < outerTime + timeStep; innerTime++) {
+					if(innerTime >= DFTEditor.maxTime) break;
+					for(int note = startNote; note < endNote; note++) {
+						if(DFTEditor.noteToFreq(note) == 0) {
+							derivatives[dIndex] = logAmplitudes[innerTime][DFTEditor.noteToFreq(note)];
+							continue;
+						}
+						derivatives[dIndex] = logAmplitudes[innerTime][DFTEditor.noteToFreq(note) - 1] - logAmplitudes[innerTime][DFTEditor.noteToFreq(note)];
+						if(Math.abs(derivatives[dIndex]) > absMaxDerivative) absMaxDerivative = Math.abs(derivatives[dIndex]);
+						dIndex++;
+					}
+				}
+				if(absMaxDerivative == 0.0) absMaxDerivative = 1.0; // All zeros so just divide by one;
+				double[] C = new double[timeStep * numNotes];
+				for(int k = 0; k < C.length; k++) {
+					C[k] = 0.0;
+					if(derivatives[k] <= 0) derivatives[k] = -1;
+					if(derivatives[k] > 0) derivatives[k] = 1;
+				}
+				for(int k = 0; k < C.length; k++) {
+					for(int j = 0; j < C.length; j++) {
+						C[k] += derivatives[j] * derivatives[(k + j) % C.length];
+					}
+					C[k] /= (C.length);
+				}
+				double r = 0;
+				for(int k = 0; k < C.length; k++) {
+					r += Math.abs(C[k]);
+				}
+				r = 1.0 - (1.0 / (C.length) * r);
+				//System.out.println(r);
+				r = Math.pow(r, 3.0);
+				//r = 1 / (-1.0 * Math.log(r)/Math.log(2.0));
+				for(int time = outerTime; time < outerTime + timeStep; time++) {
+					if(time >= DFTEditor.maxTime) break;
+					for(int note = startNote; note < endNote; note++) {
+						randomness[time][DFTEditor.noteToFreq(note)] = r;
+						//System.out.println(randomness[time][DFTEditor.noteToFreq(note)]);
+					}
+				}
+			}
+		}
+		
 		void filterMaximasByAmplitude(FDData.Channel channel, 
 						   TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData,
 						   TreeMap<Double, SynthTools.IntPair> amplitudeToTimeAndFreq) {
@@ -241,6 +302,11 @@ public class Filter {
 												  TreeMap<Double, SynthTools.IntPair> amplitudeToTimeAndFreq) {
 		createCriticalBands();
 		for(CriticalBand criticalBand: criticalBands) criticalBand.filterMaximasByHarmonicMaxima(channel, timeToFreqToData, amplitudeToTimeAndFreq);
+	}
+	
+	public static void calculateRandomness(FDData.Channel channel) { 
+		createCriticalBands();
+		for(CriticalBand criticalBand: criticalBands) criticalBand.calculateRandomness(channel);
 	}
 	
 	static double BesselI0(double x) {
@@ -492,27 +558,39 @@ public class Filter {
 	}
 	
 	public static double[] filterAndMultiply(double testFreq, double[] samples) {
-		int filterLength = (int) Math.round((samplingRate / testFreq) * 6.0);
+		//int filterLength = (int) Math.round((samplingRate / testFreq) * 6.0);
+		int filterLength = (int) Math.round((samplingRate / testFreq) * 10.0);
 		filterLength = filterLength + filterLength % 2;
-		filter = new double[filterLength + 1];
-		LPFilter(testFreq * optimalLPRejectRatio, filterLength, alpha);
-		double[] filteredSamples = new double[samples.length + 1];
+		//filter = new double[filterLength + 1];
+		double[] lpFilter = getLPFilter(testFreq * optimalLPRejectRatio, filterLength, alpha);
+		double[] hpFilter = getHPFilter(testFreq / optimalLPRejectRatio, filterLength, alpha);
+		double[] lpFilteredSamples = new double[samples.length + 1];
+		double[] hpFilteredSamples = new double[samples.length + 1];
 		for(int index = 0; index < samples.length; index++) {
-			filteredSamples[index] = 0.0;
-			for(int filterIndex = 0; filterIndex < filter.length; filterIndex++) {
+			lpFilteredSamples[index] = 0.0;
+			for(int filterIndex = 0; filterIndex < lpFilter.length; filterIndex++) {
 				int innerIndex = index + filterIndex - filterLength / 2;
 				if(innerIndex < 0) continue;
 				if(innerIndex == samples.length) break;
-				filteredSamples[index] += samples[innerIndex] * filter[filterIndex];
+				lpFilteredSamples[index] += samples[innerIndex] * lpFilter[filterIndex];
+			}
+		}
+		for(int index = 0; index < samples.length; index++) {
+			hpFilteredSamples[index] = 0.0;
+			for(int filterIndex = 0; filterIndex < hpFilter.length; filterIndex++) {
+				int innerIndex = index + filterIndex - filterLength / 2;
+				if(innerIndex < 0) continue;
+				if(innerIndex == samples.length) break;
+				hpFilteredSamples[index] += lpFilteredSamples[innerIndex] * hpFilter[filterIndex];
 			}
 		}
 		double phase = 0.0;
 		double deltaPhase = (testFreq / SynthTools.sampleRate) * SynthTools.twoPI;
 		for(int index = 0; index < samples.length; index++) {
-			filteredSamples[index] *= Math.sin(phase) * 2.0;
+			hpFilteredSamples[index] *= Math.sin(phase) * 2.0;
 			phase += deltaPhase;
 		}
-		return filteredSamples;
+		return hpFilteredSamples;
 	}
 	
 	
