@@ -390,10 +390,14 @@ public class DFT2 {
 		int numFreqs = frequencyToNote(maxFreqHz) - frequencyToNote(minFreqHz) + 1;
 		DFTEditor.amplitudesLeft = new double[maxTime + 1][numFreqs + 1];
 		DFTEditor.amplitudesRight = new double[maxTime + 1][numFreqs + 1];
+		DFTEditor.randomnessLeft = new double[maxTime + 1][numFreqs + 1];
+		DFTEditor.randomnessRight = new double[maxTime + 1][numFreqs + 1];
 		for(int time = 0; time <= maxTime; time++) {
 			for(int freq = 0; freq <= numFreqs; freq++) {
 				DFTEditor.amplitudesLeft[time][freq] = 0.0f;
 				DFTEditor.amplitudesRight[time][freq] = 0.0f;
+				DFTEditor.randomnessLeft[time][freq] = 0.0f;
+				DFTEditor.randomnessRight[time][freq] = 0.f;
 			}	
 		}
 		DFTWithDecimate(maxCenterIndex);
@@ -415,10 +419,14 @@ public class DFT2 {
 		int numFreqs = frequencyToNote(maxFreqHz) - frequencyToNote(minFreqHz) + 1;
 		DFTEditor.amplitudesLeft = new double[maxTime + 1][numFreqs + 1];
 		DFTEditor.amplitudesRight = new double[maxTime + 1][numFreqs + 1];
+		DFTEditor.randomnessLeft = new double[maxTime + 1][numFreqs + 1];
+		DFTEditor.randomnessRight = new double[maxTime + 1][numFreqs + 1];
 		for(int time = 0; time <= maxTime; time++) {
 			for(int freq = 0; freq <= numFreqs; freq++) {
 				DFTEditor.amplitudesLeft[time][freq] = 0.0f;
 				DFTEditor.amplitudesRight[time][freq] = 0.0f;
+				DFTEditor.randomnessLeft[time][freq] = 0.0f;
+				DFTEditor.randomnessRight[time][freq] = 0.0f;
 			}	
 		}
 		DFTWithDecimate(maxCenterIndex);

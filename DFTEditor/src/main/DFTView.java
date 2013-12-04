@@ -33,7 +33,7 @@ public class DFTView extends JComponent {
 	}
 
 	public enum DataView {
-		DATA, DATA_ONLY, HARMONICS, HARMONIC_ID, DERIVATIVES, CHANNEL_DATA, CHANNEL_HARMONICS;
+		DATA, DATA_ONLY, HARMONICS, HARMONIC_ID, DERIVATIVES, CHANNEL_DATA, CHANNEL_HARMONICS, RANDOMNESS;
 	}
 
 	public static void setDataView(DataView v) {
@@ -247,7 +247,7 @@ public class DFTView extends JComponent {
 				int screenY = DFTEditor.upperOffset
 						+ ((y - DFTEditor.minViewFreq) * pixelStepY);
 				float amp = (float) DFTEditor.getAmplitude(x, y);
-				if (amp == 0.0f) continue;
+				if(dataView != dataView.RANDOMNESS) if (amp == 0.0f) continue;
 				if(dataView == DataView.CHANNEL_DATA) {
 					Color b = getColor((float)DFTEditor.amplitudesLeft[x][y], (float)DFTEditor.amplitudesRight[x][y]);
 					drawAmplitude(g, screenX, screenY, amp, b);
@@ -361,12 +361,22 @@ public class DFTView extends JComponent {
 		} else {
 			green = red * 2.0f;
 		}
-		if(DFTEditor.isMaxima(time, freq)) {
+		if(DFTEditor.isMaxima(time, freq) && (currentVal > 0)) {
 			if(dataView != DataView.DATA_ONLY) {
 				red = red / 2.0f + 0.5f;
 				green = 0.0f;
 				blue = blue / 2.0f + 0.5f;
 				return new Color(red, green, blue);
+			}
+		}
+		if(dataView == DataView.RANDOMNESS) {
+			float r = (float) DFTEditor.getRandomness(time, freq) * 0.5f;
+			if(r < 0.0f || r > 0.5f) return new Color(1.0f, 1.0f, 1.0f, 1.0f);
+			//System.out.println(r);
+			if(currentVal > 0.0f) {
+				return new Color(red * 0.5f + r, green * 0.5f + r, blue * 0.5f + r, 1.0f);
+			} else {
+				return new Color(r, r, r, 1.0f);
 			}
 		}
 		return new Color(red, green, blue);

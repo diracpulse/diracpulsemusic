@@ -35,6 +35,8 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	public static double[][] amplitudesLeft; // amplitude = amplitudes[time][freq]
 	public static double[][] amplitudesRight; // amplitude = amplitudes[time][freq]
 	public static double[][] amplitudesStereo; // amplitude = amplitudes[time][freq]
+	public static double[][] randomnessLeft; // amplitude = amplitudes[time][freq]
+	public static double[][] randomnessRight; // amplitude = amplitudes[time][freq]
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaLeft;
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaRight;
 	public static TreeMap<Integer, TreeSet<Integer>> timeToNoiseFreqsAtMaximaLeft;
@@ -109,6 +111,23 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 		double rightVal = 0.0f;
 		if(time < amplitudesLeft.length && freq < amplitudesLeft[0].length) leftVal = amplitudesLeft[time][freq];
 		if(time < amplitudesRight.length && freq < amplitudesRight[0].length) rightVal = amplitudesRight[time][freq]; 
+		if(currentChannel == Channel.LEFT) return leftVal;
+		if(currentChannel == Channel.RIGHT) return rightVal;
+		if(currentChannel == Channel.STEREO) {
+			if(leftVal > rightVal) return leftVal;
+			return rightVal;
+		}
+		System.out.println("DFTEditor.getAmplitude: unknown channel");
+		return -1.0f;
+	}
+	
+	public static double getRandomness(int time, int freq) {
+		if(randomnessLeft == null || randomnessRight == null) return 0.0f;
+		double leftVal = 0.0f;
+		double rightVal = 0.0f;
+		if(time < randomnessLeft.length && freq < randomnessLeft[0].length) leftVal = randomnessLeft[time][freq];
+		if(time < randomnessRight.length && freq < randomnessRight[0].length) rightVal = randomnessRight[time][freq];
+		//System.out.println(leftVal + " " + rightVal);
 		if(currentChannel == Channel.LEFT) return leftVal;
 		if(currentChannel == Channel.RIGHT) return rightVal;
 		if(currentChannel == Channel.STEREO) {
