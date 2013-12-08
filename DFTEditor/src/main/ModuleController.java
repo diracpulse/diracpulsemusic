@@ -1,15 +1,33 @@
 package main;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 
 import main.ModuleEditor.ModuleScreenInfo;
 
 
-public class ModuleController implements MouseListener {
+public class ModuleController implements MouseListener, MouseMotionListener, ActionListener {
 	
-	private ArrayList<ModuleScreenInfo> moduleScreenInfoArray = null;
-
+	private int mouseX = 0;
+	private int mouseY = 0;
+	
+	private ModuleEditor parent = null;
+	
+	public ModuleController(ModuleEditor parent) {
+		this.parent = parent;
+	}
+	
+	public int getMouseX() {
+		return mouseX;
+	}
+	
+	public int getMouseY() {
+		return mouseY;
+	}	
+	
 	public void mouseClicked(MouseEvent arg0) {}
 	public void mouseEntered(MouseEvent arg0) {}
 	public void mouseExited(MouseEvent arg0) {}
@@ -19,6 +37,7 @@ public class ModuleController implements MouseListener {
 		int x = e.getX();
 		int y = e.getY();
 		System.out.println("ModuleController: Mouse Clicked At: " + x + " " + y);
+		ArrayList<ModuleScreenInfo> moduleScreenInfoArray = parent.getModulesScreenInfo();
 		for(ModuleScreenInfo moduleScreenInfo: moduleScreenInfoArray) {
 			if(moduleScreenInfo.pointIsInside(x, y)) {
 				moduleScreenInfo.module.mousePressed(x, y);
@@ -27,8 +46,23 @@ public class ModuleController implements MouseListener {
 		}
 	}
 	
-	public void updateModuleScreenInfo(ArrayList<ModuleScreenInfo> moduleScreenInfoArray) {
-		this.moduleScreenInfoArray = moduleScreenInfoArray;
+	public void mouseMoved(MouseEvent e) {
+		mouseX = e.getX();
+		mouseY = e.getY();
+		if(parent.selectedOutput != null) {
+			parent.view.repaint();
+		}
 	}
+
+	@Override
+	public void mouseDragged(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+   public void actionPerformed(ActionEvent e) {
+        if ("Play".equals(e.getActionCommand())) parent.play();
+        if ("DFT".equals(e.getActionCommand())) parent.dft();
+    }
 
 }

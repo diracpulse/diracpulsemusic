@@ -153,6 +153,29 @@ public class DFT2 {
 		return maxTime;
 	}
 	
+	private static int InitSynthSignal(double[] left, double[] right) {
+		if(left.length != right.length) {
+			System.out.println("left.length != right.length"); 
+			return 0;
+		}
+		ArrayList<Double> ArrayListLeftRight = new ArrayList<Double>();
+	    for(int time = 0; time < left.length; time++) {
+	    	ArrayListLeftRight.add(left[time]);
+	    	ArrayListLeftRight.add(right[time]);
+	    }
+		int maxTime = ArrayListLeftRight.size() / 2;
+		LeftRight = new double[maxTime * 2];
+		SynthTools.WAVDataLeft = new double[maxTime];	
+		SynthTools.WAVDataRight = new double[maxTime];
+		for(int index = 0; index < maxTime; index++) {
+			LeftRight[index * 2] = ArrayListLeftRight.get(index * 2);
+			LeftRight[index * 2 + 1] = ArrayListLeftRight.get(index * 2 + 1);
+			SynthTools.WAVDataLeft[index] = LeftRight[index * 2];
+			SynthTools.WAVDataRight[index] = LeftRight[index * 2 + 1];
+		}
+		return maxTime;
+	}
+	
 	// Returns amplitude NOT log(amplitude)
 	public static double singleDFTTest(Wavelet wavelet, double[] mono) {
 		double sinVal = 0.0;
@@ -411,6 +434,34 @@ public class DFT2 {
 		//Matrix.disentangleWithMatrix();
 		double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
 		int maxCenterIndex = GenerateTestSignal();
+		int maxTime = (int) Math.floor(maxCenterIndex / samplesPerStep);
+		if(maxCenterIndex > MAXSAMPLES) {
+			System.out.println("File Too Large: Truncating");
+			maxCenterIndex = MAXSAMPLES;
+		}
+		int numFreqs = frequencyToNote(maxFreqHz) - frequencyToNote(minFreqHz) + 1;
+		DFTEditor.amplitudesLeft = new double[maxTime + 1][numFreqs + 1];
+		DFTEditor.amplitudesRight = new double[maxTime + 1][numFreqs + 1];
+		DFTEditor.randomnessLeft = new double[maxTime + 1][numFreqs + 1];
+		DFTEditor.randomnessRight = new double[maxTime + 1][numFreqs + 1];
+		for(int time = 0; time <= maxTime; time++) {
+			for(int freq = 0; freq <= numFreqs; freq++) {
+				DFTEditor.amplitudesLeft[time][freq] = 0.0f;
+				DFTEditor.amplitudesRight[time][freq] = 0.0f;
+				DFTEditor.randomnessLeft[time][freq] = 0.0f;
+				DFTEditor.randomnessRight[time][freq] = 0.0f;
+			}	
+		}
+		DFTWithDecimate(maxCenterIndex);
+		DFTEditor.maxTime = maxTime;
+		DFTEditor.maxScreenNote = frequencyToNote(maxFreqHz);
+		DFTEditor.minScreenNote = frequencyToNote(minFreqHz);
+		DFTEditor.maxScreenFreq = numFreqs;
+	}
+	
+	public static void SynthDFTMatrix(double[] left, double[] right) {
+		double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
+		int maxCenterIndex = InitSynthSignal(left, right);
 		int maxTime = (int) Math.floor(maxCenterIndex / samplesPerStep);
 		if(maxCenterIndex > MAXSAMPLES) {
 			System.out.println("File Too Large: Truncating");
