@@ -31,12 +31,13 @@ public class ModuleEditor extends JFrame {
 	private TreeMap<Integer, TreeMap<Integer, Module>> xToYToModule = null;
 	public static Random randomGenerator = new Random();
 	public HashMap<Long, Long> outputToInput = null;
-	public HashMap<Long, Long> inputToOutput = null;
 	public HashSet<Long> inputs = null;
 	public HashSet<Long> outputs = null;
 	public HashMap<Long, Connector> connectorIDToConnector = null;
 	public Long selectedOutput = null;
 	private JToolBar navigationBar = null;
+	private static double[] left = null;
+	private static double[] right = null;
 	
 	public class ModuleScreenInfo {
 		Rectangle dimensions;
@@ -64,16 +65,11 @@ public class ModuleEditor extends JFrame {
     	return navigationBar;
 	}
 	
-	public void play() {
-		double[] left = xToYToModule.get(0).get(0).getSamplesLeft(null);
-		double[] right = xToYToModule.get(0).get(0).getSamplesRight(null);
-		AudioPlayer ap = new AudioPlayer(left, right, 1.0);
-		ap.run();
-	}
-	
-	public void dft() {
-		double[] left = xToYToModule.get(0).get(0).getSamplesLeft(null);
-		double[] right = xToYToModule.get(0).get(0).getSamplesRight(null);
+	public void initLeftRight() {
+		left = xToYToModule.get(0).get(0).getSamplesLeft(null);
+		right = xToYToModule.get(0).get(0).getSamplesRight(null);
+		if(left == null) left = new double[0];
+		if(right == null) right = new double[0];
 		double[] paddedLeft;
 		double[] paddedRight;
 		if(left.length > right.length) {
@@ -111,12 +107,22 @@ public class ModuleEditor extends JFrame {
 			left[index] *= scale;
 			right[index] *= scale;
 		}
-		DFT2.SynthDFTMatrix(left, right);
 	}
 	
-	public ModuleEditor() {
+	public void play() {
+		initLeftRight();
+		AudioPlayer ap = new AudioPlayer(left, right, 1.0);
+		ap.start();
+	}
+	
+	public void dft() {
+		initLeftRight();
+		parent.dftEditorFrame.ModuleDFT(left, right);
+	}
+	
+	public ModuleEditor(MultiWindow parent) {
+		this.parent = parent;
     	outputToInput = new HashMap <Long, Long>();
-    	inputToOutput = new HashMap <Long, Long>();
     	inputs = new HashSet<Long>();
     	outputs = new HashSet<Long>();
     	connectorIDToConnector = new HashMap<Long, Connector>();
@@ -186,6 +192,9 @@ public class ModuleEditor extends JFrame {
 			if(connectorIDToConnector.get(connectorID).getConnectorType() == ConnectorType.OUTPUT) {
 				if(outputToInput.containsKey(connectorID)) {
 					outputToInput.remove(connectorID);
+					long connectedTo = connectorIDToConnector.get(connectorID).getConnection();
+					connectorIDToConnector.get(connectorID).removeConnection();
+					connectorIDToConnector.get(connectedTo).removeConnection();
 					view.repaint();
 					return;
 				}

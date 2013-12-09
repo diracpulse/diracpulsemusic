@@ -15,7 +15,6 @@ public class FastSynth {
 	
 	public static double[] synthHarmonicsLinear(FDData.Channel channel, ArrayList<Harmonic> harmonics) {
 		initSharedPCMData(channel, harmonics);
-		synthBackgroundNoise(channel);
 		for(Harmonic harmonic: harmonics) {
 			if(harmonic.getChannel() != channel) continue; 
 			synthHarmonicLinear(harmonic);

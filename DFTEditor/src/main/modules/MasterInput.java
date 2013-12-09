@@ -86,21 +86,20 @@ public class MasterInput implements Module {
 	public double[] getSamplesLeft(HashSet<Long> waitingForModuleID) {
 		int numSamples = 0;
 		double[] leftOut = new double[0];
+		ArrayList<double[]> samplesLeftArray = new ArrayList<double[]>();
 		for(Input input: inputLeft) {
-			ArrayList<double[]> samplesLeftArray = new ArrayList<double[]>();
-			if(input.getConnection() != null) {
-				samplesLeftArray.add(parent.connectorIDToConnector.get(input.getConnection()).getParent().getSamples(null));
-			}
-			if(samplesLeftArray.isEmpty()) break;
-			for(double[] samplesLeftIn: samplesLeftArray) {
-				if(samplesLeftIn.length > numSamples) numSamples = samplesLeftIn.length;
-			}
-			leftOut = new double[numSamples];
-			for(int index = 0; index < leftOut.length; index++) leftOut[index] = 0.0;
-			for(double[] samplesLeftIn: samplesLeftArray) {
-				for(int index = 0; index < samplesLeftIn.length; index++) {
-					leftOut[index] += samplesLeftIn[index];
-				}
+			if(input.getConnection() == null) continue;
+			samplesLeftArray.add(parent.connectorIDToConnector.get(input.getConnection()).getParent().getSamples(null));
+		}
+		if(samplesLeftArray.isEmpty()) return leftOut;
+		for(double[] samplesLeftIn: samplesLeftArray) {
+			if(samplesLeftIn.length > numSamples) numSamples = samplesLeftIn.length;
+		}
+		leftOut = new double[numSamples];
+		for(int index = 0; index < leftOut.length; index++) leftOut[index] = 0.0;
+		for(double[] samplesLeftIn: samplesLeftArray) {
+			for(int index = 0; index < samplesLeftIn.length; index++) {
+				leftOut[index] += samplesLeftIn[index];
 			}
 		}
 		return leftOut;
@@ -109,21 +108,20 @@ public class MasterInput implements Module {
 	public double[] getSamplesRight(HashSet<Long> waitingForModuleID) {
 		int numSamples = 0;
 		double[] rightOut = new double[0];
+		ArrayList<double[]> samplesRightArray = new ArrayList<double[]>();
 		for(Input input: inputRight) {
-			ArrayList<double[]> samplesRightArray = new ArrayList<double[]>();
-			if(input.getConnection() != null) {
-				samplesRightArray.add(parent.connectorIDToConnector.get(input.getConnection()).getParent().getSamples(null));
-			}
-			if(samplesRightArray.isEmpty()) break;
-			for(double[] samplesRightIn: samplesRightArray) {
-				if(samplesRightIn.length > numSamples) numSamples = samplesRightIn.length;
-			}
-			rightOut = new double[numSamples];
-			for(int index = 0; index < rightOut.length; index++) rightOut[index] = 0.0;
-			for(double[] samplesRightIn: samplesRightArray) {
-				for(int index = 0; index < samplesRightIn.length; index++) {
-					rightOut[index] += samplesRightIn[index];
-				}
+			if(input.getConnection() == null) continue;
+			samplesRightArray.add(parent.connectorIDToConnector.get(input.getConnection()).getParent().getSamples(null));
+		}
+		if(samplesRightArray.isEmpty()) return rightOut;
+		for(double[] samplesRightIn: samplesRightArray) {
+			if(samplesRightIn.length > numSamples) numSamples = samplesRightIn.length;
+		}
+		rightOut = new double[numSamples];
+		for(int index = 0; index < rightOut.length; index++) rightOut[index] = 0.0;
+		for(double[] samplesRightIn: samplesRightArray) {
+			for(int index = 0; index < samplesRightIn.length; index++) {
+				rightOut[index] += samplesRightIn[index];
 			}
 		}
 		return rightOut;

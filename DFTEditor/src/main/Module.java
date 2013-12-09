@@ -27,6 +27,7 @@ public interface Module {
 		abstract ConnectorType getConnectorType();
 		abstract void setConnection(Long connectionID);
 		abstract Long getConnection();
+		abstract void removeConnection();
 		abstract Module getParent();
 		
 	}
@@ -63,6 +64,10 @@ public interface Module {
 		
 		public Long getConnection() {
 			return this.connectedTo;
+		}
+		
+		public void removeConnection() {
+			this.connectedTo = null;
 		}
 		
 		public Module getParent() {
@@ -105,6 +110,10 @@ public interface Module {
 		
 		public Long getConnection() {
 			return this.connectedFrom;
+		}
+		
+		public void removeConnection() {
+			this.connectedFrom = null;
 		}
 		
 		public Module getParent() {

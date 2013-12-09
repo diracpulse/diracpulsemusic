@@ -128,57 +128,64 @@ public class Sawtooth implements Module {
 			samplesAM[index] = 1.0; // 1.0 if no AM data
 			samplesADD[index] = 0.0;
 		}
+		ArrayList<double[]> samplesFMArray = new ArrayList<double[]>();
 		for(Input input: inputFM) {
-			ArrayList<double[]> samplesFMArray = new ArrayList<double[]>();
-			if(input.getConnection() != null) {
-				moduleIDsWaiting.add(moduleID);
-				samplesFMArray.add(parent.connectorIDToConnector.get(input.getConnection()).getParent().getSamples(moduleIDsWaiting));
-				moduleIDsWaiting.remove(moduleID);
-			}
-			for(double[] samplesFMIn: samplesFMArray) {
-				for(int index = 0; index < numSamples; index++) {
-					if(index >= samplesFMIn.length) break;
-					samplesFM[index] += samplesFMIn[index]; 
-				}
+			if(input.getConnection() == null) continue;
+			moduleIDsWaiting.add(moduleID);
+			samplesFMArray.add(parent.connectorIDToConnector.get(input.getConnection()).getParent().getSamples(moduleIDsWaiting));
+			moduleIDsWaiting.remove(moduleID);
+		}
+		// no change if samplesFM.isEmpty()
+		for(double[] samplesFMIn: samplesFMArray) {
+			for(int index = 0; index < numSamples; index++) {
+				if(index >= samplesFMIn.length) break;
+				samplesFM[index] += samplesFMIn[index]; 
 			}
 		}
+		ArrayList<double[]> samplesAMArray = new ArrayList<double[]>();
 		for(Input input: inputAM) {
-			ArrayList<double[]> samplesAMArray = new ArrayList<double[]>();
-			if(input.getConnection() != null) {
-				moduleIDsWaiting.add(moduleID);
-				samplesAMArray.add(parent.connectorIDToConnector.get(input.getConnection()).getParent().getSamples(moduleIDsWaiting));
-				moduleIDsWaiting.remove(moduleID);
-			}
-			for(double[] samplesAMIn: samplesAMArray) {
-				for(int index = 0; index < numSamples; index++) {
-					// need to change if there is AM data present
-					samplesAM[index] = 0.0;
-					if(index >= samplesAMIn.length) continue;
-					samplesAM[index] += samplesAMIn[index]; 
-				}
+			if(input.getConnection() == null) continue;
+			moduleIDsWaiting.add(moduleID);
+			samplesAMArray.add(parent.connectorIDToConnector.get(input.getConnection()).getParent().getSamples(moduleIDsWaiting));
+			moduleIDsWaiting.remove(moduleID);
+		}
+		// no change if samplesAM.isEmpty()
+		for(double[] samplesAMIn: samplesAMArray) {
+			for(int index = 0; index < numSamples; index++) {
+				// need to change if there is AM data present
+				samplesAM[index] = 0.0;
+				if(index >= samplesAMIn.length) continue;
+				samplesAM[index] += samplesAMIn[index]; 
 			}
 		}
+		ArrayList<double[]> samplesADDArray = new ArrayList<double[]>();
 		for(Input input: inputADD) {
-			ArrayList<double[]> samplesADDArray = new ArrayList<double[]>();
-			if(input.getConnection() != null) {
-				moduleIDsWaiting.add(moduleID);
-				samplesADDArray.add(parent.connectorIDToConnector.get(input.getConnection()).getParent().getSamples(moduleIDsWaiting));
-				moduleIDsWaiting.remove(moduleID);
-			}
-			for(double[] samplesADDIn: samplesADDArray) {
-				for(int index = 0; index < numSamples; index++) {
-					if(index >= samplesADDIn.length) break;
-					samplesADD[index] += samplesADDIn[index]; 
-				}
+			if(input.getConnection() == null) continue;
+			moduleIDsWaiting.add(moduleID);
+			samplesADDArray.add(parent.connectorIDToConnector.get(input.getConnection()).getParent().getSamples(moduleIDsWaiting));
+			moduleIDsWaiting.remove(moduleID);
+		}
+		// no change if samplesADD.isEmpty()
+		for(double[] samplesADDIn: samplesADDArray) {
+			for(int index = 0; index < numSamples; index++) {
+				if(index >= samplesADDIn.length) break;
+				samplesADD[index] += samplesADDIn[index]; 
 			}
 		}
 		double deltaPhase = freqInHz / SynthTools.sampleRate * Math.PI * 2.0;
 		double phase = 0;
 		for(int index = 0; index < numSamples; index++) {
-			returnVal[index] = Math.sin(phase + samplesFM[index]) * samplesAM[index] * amplitude + samplesADD[index];
+			returnVal[index] = sawtoothGenerator(phase + samplesFM[index]) * samplesAM[index] * amplitude + samplesADD[index];
 			phase += deltaPhase;
 		}
 		return returnVal;
+	}
+	
+	public double sawtoothGenerator(double phase) {
+		phase -= Math.floor(phase / (Math.PI * 2.0)) * Math.PI * 2.0;
+		if(phase < Math.PI) return phase / Math.PI;
+		if(phase > Math.PI) return -1.0 + (phase - Math.PI) / Math.PI;
+		return Math.random() * 2.0 - 1.0; // phase == Math.PI
 	}
 	
 	public void mousePressed(int x, int y) {

@@ -4,8 +4,8 @@ import java.awt.event.WindowAdapter;
 public class MultiWindow extends WindowAdapter {
 
 	public DFTEditor dftEditorFrame;
-	public GraphEditor graphEditorFrame;
-	public FDEditor fdEditorFrame;
+	//public GraphEditor graphEditorFrame;
+	//public FDEditor fdEditorFrame;
 	public ModuleEditor moduleEditorFrame;
 	
 	public MultiWindow() {
@@ -15,7 +15,7 @@ public class MultiWindow extends WindowAdapter {
 		//graphEditorFrame.setLocation(100, 100);
 		//fdEditorFrame = new FDEditor();
 		//fdEditorFrame.setLocation(200, 200);
-		moduleEditorFrame = new ModuleEditor();
+		moduleEditorFrame = new ModuleEditor(this);
 		moduleEditorFrame.setLocation(100, 100);
 	}
 }
