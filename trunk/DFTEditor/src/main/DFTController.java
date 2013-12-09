@@ -39,26 +39,10 @@ public class DFTController implements MouseListener, ActionListener {
 	    selectionIndex++;
 	    if(selectionIndex == 1) {
 	    	DFTEditor.refreshView();
-	    	GraphEditor.refreshView();
 	    	return;
 	    }
-	    if(selectedTimes[1] > selectedTimes[0]) {
-	    	GraphEditor.maxViewTime = selectedTimes[1];
-	    	GraphEditor.minViewTime = selectedTimes[0];
-	    } else {
-	    	GraphEditor.maxViewTime = selectedTimes[0];
-	    	GraphEditor.minViewTime = selectedTimes[1];
-	    }
 	    int[] selectedNotes = {DFTEditor.freqToNote(selectedFreqs[0]), DFTEditor.freqToNote(selectedFreqs[1])};
-	    if(selectedNotes[1] > selectedNotes[0]) {
-	    	GraphEditor.maxViewNote = selectedNotes[1];
-	    	GraphEditor.minViewNote = selectedNotes[0];
-	    } else {
-	    	GraphEditor.maxViewNote = selectedNotes[0];
-	    	GraphEditor.minViewNote = selectedNotes[1];
-	    }
     	DFTEditor.refreshView();
-    	GraphEditor.refreshView();
 	    return;
 	}
 	

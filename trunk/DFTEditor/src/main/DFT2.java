@@ -279,6 +279,7 @@ public class DFT2 {
 	}
 	
 	static void DFTWithDecimate(int maxCenterIndex) {
+		if(maxCenterIndex == 0) return;
 		double left[] = new double[LeftRight.length / 2];
 		double right[] = new double[LeftRight.length / 2];
 		double tempLeft[] = new double[LeftRight.length / 2];
@@ -332,6 +333,7 @@ public class DFT2 {
 	}
 	
 	static void DFTWithDecimateAndMultiply(int maxCenterIndex) {
+		if(maxCenterIndex == 0) return;
 		double left[] = new double[LeftRight.length / 2];
 		double right[] = new double[LeftRight.length / 2];
 		for(int index = 0; index < LeftRight.length / 2; index++) {

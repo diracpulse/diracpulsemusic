@@ -251,6 +251,7 @@ public class SynthTools {
 		createHarmonics(channel, timeToFreqToData, amplitudeToTimeAndFreq, numTimes, numFreqs);
 		// END: Refilter Data Based on Harmonic Length
 		*/
+		createHarmonics(channel, timeToFreqToData, amplitudeToTimeAndFreq, numTimes, numFreqs);
 		Filter.calculateRandomness(channel);
 	}
 	

@@ -536,8 +536,6 @@ public class ActionHandler extends JPanel {
 			DFT.applyMasking();
 			SynthTools.createHarmonics();
 			DFTEditor.refreshView();
-			FDEditor.refreshView();
-			GraphEditor.refreshView();
 			refreshAll();
 		}
 		
