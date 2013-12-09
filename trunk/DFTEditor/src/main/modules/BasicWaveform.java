@@ -21,7 +21,7 @@ import main.TestSignals.Generator;
 import main.TestSignals.TAPair;
 import main.SynthTools;
 
-public class Sawtooth implements Module {
+public abstract class BasicWaveform implements Module {
 	
 	ModuleEditor parent = null;
 	Long moduleID = null;
@@ -30,6 +30,7 @@ public class Sawtooth implements Module {
 	double duration = 0.0;
 	int width = 200; // should be >= value calculated by init
 	int height = 200; // calculated by init
+	String name = "";
 	
 	Rectangle freqControl = null;
 	Rectangle ampControl = null;
@@ -66,7 +67,7 @@ public class Sawtooth implements Module {
 		
 	}
 	
-	public Sawtooth(ModuleEditor parent, int x, int y, double freqInHz, TAPair durationAndAmplitude) {
+	public BasicWaveform(ModuleEditor parent, int x, int y, double freqInHz, TAPair durationAndAmplitude) {
 		this.moduleID = ModuleEditor.randomGenerator.nextLong();
 		this.parent = parent;
 		this.freqInHz = freqInHz;
@@ -175,11 +176,13 @@ public class Sawtooth implements Module {
 		double deltaPhase = freqInHz / SynthTools.sampleRate * Math.PI * 2.0;
 		double phase = 0;
 		for(int index = 0; index < numSamples; index++) {
-			returnVal[index] = sawtoothGenerator(phase + samplesFM[index]) * samplesAM[index] * amplitude + samplesADD[index];
+			returnVal[index] = generator(phase + samplesFM[index]) * samplesAM[index] * amplitude + samplesADD[index];
 			phase += deltaPhase;
 		}
 		return returnVal;
 	}
+	
+	public abstract double generator(double phase);
 	
 	public double sawtoothGenerator(double phase) {
 		phase -= Math.floor(phase / (Math.PI * 2.0)) * Math.PI * 2.0;
@@ -190,19 +193,81 @@ public class Sawtooth implements Module {
 	
 	public void mousePressed(int x, int y) {
 		if(freqControl.contains(x, y)) {
-			System.out.println("Sawtooth: Freq Control");
+			double inputFreqInHz = - 1.0;
+			System.out.println(name + " Freq Control");
+			String inputValue = JOptionPane.showInputDialog("Input Frequency In Hz");
+			if(inputValue == null) return;
+			try {
+				inputFreqInHz = new Double(inputValue);
+			} catch (NumberFormatException nfe) {
+				JOptionPane.showMessageDialog((JFrame) parent, "Could not parse string");
+				return;
+			}
+			if(inputFreqInHz <= ModuleEditor.minFrequency || inputFreqInHz > ModuleEditor.maxFrequency) {
+				JOptionPane.showMessageDialog((JFrame) parent, "Input frequency out of bounds");
+				return;
+			}
+			freqInHz = inputFreqInHz;
+			parent.refreshView();
+			return;
 		}
 		if(ampControl.contains(x, y)) {
-			System.out.println("Sawtooth: Amp Control");
+			System.out.println(name + " Amp Control");
+			double inputAmplitude;
+			String inputValue = JOptionPane.showInputDialog("Input Amplitude (values <= 0.0 interpreted as dB)");
+			if(inputValue == null) return;
+			try {
+				inputAmplitude = new Double(inputValue);
+			} catch (NumberFormatException nfe) {
+				JOptionPane.showMessageDialog((JFrame) parent, "Could not parse string");
+				return;
+			}
+			if(inputAmplitude <= 0.0) {
+				inputAmplitude = Math.pow(10.0, inputAmplitude / 20.0);
+				if(inputAmplitude < ModuleEditor.minAmplitude) {
+					JOptionPane.showMessageDialog((JFrame) parent, "Minimum Amplitude is: " + Math.round(Math.log(ModuleEditor.minAmplitude)/Math.log(10.0) * 20.0) + " dB");
+					return;
+				}				
+				amplitude = inputAmplitude;
+			} else {
+				if(inputAmplitude > ModuleEditor.maxAmplitude) {
+					JOptionPane.showMessageDialog((JFrame) parent, "Maximum Amplitude is: " + ModuleEditor.maxAmplitude);
+					return;
+				}
+				if(inputAmplitude < ModuleEditor.minAmplitude) {
+					JOptionPane.showMessageDialog((JFrame) parent, "Minimum Amplitude is: " + Math.round(Math.log(ModuleEditor.minAmplitude)/Math.log(10.0) * 20.0) + " dB");
+					return;
+				}			
+				amplitude = inputAmplitude;
+			}
+			parent.refreshView();
+			return;
 		}
 		if(durationControl.contains(x, y)) {
-			System.out.println("Sawtooth: Duration Control");
+			System.out.println(name + " Duration Control");
+			double inputDuration;
+			String inputValue = JOptionPane.showInputDialog("Input duration in seconds");
+			if(inputValue == null) return;
+			try {
+				inputDuration = new Double(inputValue);
+			} catch (NumberFormatException nfe) {
+				JOptionPane.showMessageDialog((JFrame) parent, "Could not parse string");
+				return;
+			}
+			if(inputDuration <= ModuleEditor.minDuration || inputDuration > ModuleEditor.maxDuration)  {
+				JOptionPane.showMessageDialog((JFrame) parent, "Input duration out of bounds");
+				return;
+			} else {
+				duration = inputDuration;
+			}
+			parent.refreshView();
+			return;
 		}	
 		int index = 0;
 		for(Output output: outputs) {
 			if(output.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(output.getConnectorID());
-				System.out.println("Sawtooth: output: " + index);
+				System.out.println(name + " " + "output: " + index);
 			}
 			index++;
 		}
@@ -210,7 +275,7 @@ public class Sawtooth implements Module {
 		for(Input inputADDval: inputADD) {
 			if(inputADDval.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputADDval.getConnectorID());
-				System.out.println("Sawtooth: inputADD: " + index);
+				System.out.println(name + " inputADD: " + index);
 			}
 			index++;
 		}
@@ -218,7 +283,7 @@ public class Sawtooth implements Module {
 		for(Input inputAMval: inputAM) {
 			if(inputAMval.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputAMval.getConnectorID());
-				System.out.println("Sawtooth: inputAM: " + index);
+				System.out.println(name + " inputAM: " + index);
 			}
 			index++;
 		}
@@ -226,7 +291,7 @@ public class Sawtooth implements Module {
 		for(Input inputFMval: inputFM) {
 			if(inputFMval.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputFMval.getConnectorID());
-				System.out.println("Sawtooth: inputFM: " + index);
+				System.out.println(name + " inputFM: " + index);
 			}
 			index++;
 		}
@@ -254,13 +319,13 @@ public class Sawtooth implements Module {
 		if(g2 != null) g2.setFont(font);
 		currentX = x + 4;
 		currentY = y + yStep;
-		if(g2 != null) g2.drawString("SAWTOOTH", currentX, currentY);
+		if(g2 != null) g2.drawString(name, currentX, currentY);
 		if(g2 != null) g2.setColor(Color.GREEN);
 		currentY += yStep;
 		if(g2 != null) g2.drawString("Frequency: " + freqInHz, currentX, currentY);
 		if(g2 == null) freqControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		currentY += yStep;
-		if(g2 != null) g2.drawString("Amplitude: " + amplitude, currentX, currentY);
+		if(g2 != null) g2.drawString("Amp: " + Math.round(amplitude * 100000.0) / 100000.0 + " (" + Math.round(Math.log(amplitude)/Math.log(10.0) * 2000.0) / 100.0 + "dB)", currentX, currentY);
 		if(g2 == null) ampControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		currentY += yStep;
 		if(g2 != null) g2.drawString("Duration: " + duration, currentX, currentY);
