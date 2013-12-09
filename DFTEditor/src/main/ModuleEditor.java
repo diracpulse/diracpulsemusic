@@ -19,7 +19,7 @@ import main.TestSignals.TAPair;
 import main.TestSignals.TAPair.AmplitudeFormat;
 import main.TestSignals.TAPair.TimeFormat;
 import main.modules.MasterInput;
-import main.modules.Sawtooth;
+import main.modules.Sine;
 
 
 public class ModuleEditor extends JFrame {
@@ -38,6 +38,12 @@ public class ModuleEditor extends JFrame {
 	private JToolBar navigationBar = null;
 	private static double[] left = null;
 	private static double[] right = null;
+	public final static double maxAmplitude = 10.0;
+	public final static double minAmplitude = Math.pow(10.0, -4.8);
+	public final static double maxDuration = 10.0;
+	public final static double minDuration = FDData.timeStepInMillis / 1000.0;
+	public final static double minFrequency = 0.001;
+	public final static double maxFrequency = SynthTools.sampleRate / 2.0;
 	
 	public class ModuleScreenInfo {
 		Rectangle dimensions;
@@ -147,15 +153,15 @@ public class ModuleEditor extends JFrame {
 		xToYToModule.get(currentX).put(currentY, new MasterInput(this, currentX, currentY));
 		masterInputHeight = xToYToModule.get(0).get(0).getHeight();
 		currentY = masterInputHeight;
-		xToYToModule.get(currentX).put(currentY, new Sawtooth(this, currentX, currentY, 256.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 1.0, 1.0)));
+		xToYToModule.get(currentX).put(currentY, new Sine(this, currentX, currentY, 256.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 1.0, 1.0)));
 		currentY += xToYToModule.get(0).get(currentY).getHeight();
-		xToYToModule.get(currentX).put(currentY, new Sawtooth(this, currentX, currentY, 128.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 2.0, 0.5)));
+		xToYToModule.get(currentX).put(currentY, new Sine(this, currentX, currentY, 128.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 2.0, 0.5)));
 		currentX = xToYToModule.get(0).get(currentY).getWidth();
 		currentY = masterInputHeight;
 		xToYToModule.put(currentX, new TreeMap<Integer, Module>());
-		xToYToModule.get(currentX).put(currentY, new Sawtooth(this, currentX, currentY, 64.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 1.5, 0.75)));
+		xToYToModule.get(currentX).put(currentY, new Sine(this, currentX, currentY, 64.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 1.5, 0.75)));
 		currentY += xToYToModule.get(currentX).get(currentY).getHeight();
-		xToYToModule.get(currentX).put(currentY, new Sawtooth(this, currentX, currentY, 512.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 2.5, 0.25)));
+		xToYToModule.get(currentX).put(currentY, new Sine(this, currentX, currentY, 512.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 2.5, 0.25)));
 	}
 	
 	public ArrayList<ModuleScreenInfo> getModulesScreenInfo() {
@@ -212,6 +218,10 @@ public class ModuleEditor extends JFrame {
 				System.out.println("Module Editor: please select input");
 			}
 		}
+		view.repaint();
+	}
+	
+	public void refreshView() {
 		view.repaint();
 	}
 	
