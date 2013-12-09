@@ -184,13 +184,6 @@ public abstract class BasicWaveform implements Module {
 	
 	public abstract double generator(double phase);
 	
-	public double sawtoothGenerator(double phase) {
-		phase -= Math.floor(phase / (Math.PI * 2.0)) * Math.PI * 2.0;
-		if(phase < Math.PI) return phase / Math.PI;
-		if(phase > Math.PI) return -1.0 + (phase - Math.PI) / Math.PI;
-		return Math.random() * 2.0 - 1.0; // phase == Math.PI
-	}
-	
 	public void mousePressed(int x, int y) {
 		if(freqControl.contains(x, y)) {
 			double inputFreqInHz = - 1.0;
