@@ -15,9 +15,6 @@ public interface Module {
 	abstract void draw(Graphics g, int startX, int startY);
 	abstract int getWidth();
 	abstract int getHeight();
-	abstract double[] getSamples(HashSet<Long> waitingForModuleID);
-	abstract double[] getSamplesLeft(HashSet<Long> waitingForModuleID);
-	abstract double[] getSamplesRight(HashSet<Long> waitingForModuleID);
 	abstract long getModuleId();
 	
 	public interface Connector {
@@ -29,7 +26,6 @@ public interface Module {
 		abstract Long getConnection();
 		abstract void removeConnection();
 		abstract Module getParent();
-		
 	}
 	
 	public abstract class Output implements Connector {
@@ -74,7 +70,7 @@ public interface Module {
 			return parent;
 		}
 		
-		public abstract double[] outputSamples();
+		public abstract double[] getSamples(HashSet<Long> waitingForModuleIDs);
 		
 	}
 	
@@ -119,9 +115,6 @@ public interface Module {
 		public Module getParent() {
 			return parent;
 		}
-		
-		public abstract void inputSamples(double[] samples);
-		
 	}
 	
 }

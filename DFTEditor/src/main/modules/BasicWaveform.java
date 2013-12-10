@@ -28,8 +28,8 @@ public abstract class BasicWaveform implements Module {
 	double amplitude = 0.0;
 	double freqInHz = 0.0;
 	double duration = 0.0;
-	int width = 200; // should be >= value calculated by init
-	int height = 200; // calculated by init
+	int width = 150; // should be >= value calculated by init
+	int height = 150; // calculated by init
 	String name = "";
 	
 	Rectangle freqControl = null;
@@ -49,9 +49,6 @@ public abstract class BasicWaveform implements Module {
 			// TODO Auto-generated constructor stub
 		}
 		
-		public void inputSamples(double[] samples) {
-		}
-		
 	}
 	
 	private class Output extends Module.Output {
@@ -60,11 +57,11 @@ public abstract class BasicWaveform implements Module {
 			super(parent, selectArea, connectionID);
 			// TODO Auto-generated constructor stub
 		}
-		
-		public double[] outputSamples() {
-			return null;
+
+		@Override
+		public double[] getSamples(HashSet<Long> waitingForModuleID) {
+			return masterGetSamples(waitingForModuleID);
 		}
-		
 	}
 	
 	public BasicWaveform(ModuleEditor parent, int x, int y, double freqInHz, TAPair durationAndAmplitude) {
@@ -104,17 +101,17 @@ public abstract class BasicWaveform implements Module {
 		return moduleID;
 	}
 	
-	public double[] getSamplesLeft(HashSet<Long> moduleIDsWaiting) {
+	public double[] getSamplesLeft(HashSet<Long> waitingForModuleIDs) {
 		return null;
 	}
 	
-	public double[] getSamplesRight(HashSet<Long> moduleIDsWaiting) {
+	public double[] getSamplesRight(HashSet<Long> waitingForModuleIDs) {
 		return null;
 	}
 
-	public double[] getSamples(HashSet<Long> moduleIDsWaiting) {
-		if(moduleIDsWaiting == null) moduleIDsWaiting = new HashSet<Long>();
-		if(moduleIDsWaiting.contains(moduleID)) {
+	public double[] masterGetSamples(HashSet<Long> waitingForModuleIDs) {
+		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Long>();
+		if(waitingForModuleIDs.contains(moduleID)) {
 			JOptionPane.showMessageDialog((JFrame) parent, "Infinite Loop");
 			return new double[0];
 		}
@@ -132,9 +129,10 @@ public abstract class BasicWaveform implements Module {
 		ArrayList<double[]> samplesFMArray = new ArrayList<double[]>();
 		for(Input input: inputFM) {
 			if(input.getConnection() == null) continue;
-			moduleIDsWaiting.add(moduleID);
-			samplesFMArray.add(parent.connectorIDToConnector.get(input.getConnection()).getParent().getSamples(moduleIDsWaiting));
-			moduleIDsWaiting.remove(moduleID);
+			waitingForModuleIDs.add(moduleID);
+			Output output = (Output) parent.connectorIDToConnector.get(input.getConnection());
+			samplesFMArray.add(output.getSamples(waitingForModuleIDs));
+			waitingForModuleIDs.remove(moduleID);
 		}
 		// no change if samplesFM.isEmpty()
 		for(double[] samplesFMIn: samplesFMArray) {
@@ -146,9 +144,10 @@ public abstract class BasicWaveform implements Module {
 		ArrayList<double[]> samplesAMArray = new ArrayList<double[]>();
 		for(Input input: inputAM) {
 			if(input.getConnection() == null) continue;
-			moduleIDsWaiting.add(moduleID);
-			samplesAMArray.add(parent.connectorIDToConnector.get(input.getConnection()).getParent().getSamples(moduleIDsWaiting));
-			moduleIDsWaiting.remove(moduleID);
+			waitingForModuleIDs.add(moduleID);
+			Output output = (Output) parent.connectorIDToConnector.get(input.getConnection());
+			samplesAMArray.add(output.getSamples(waitingForModuleIDs));
+			waitingForModuleIDs.remove(moduleID);
 		}
 		// no change if samplesAM.isEmpty()
 		for(double[] samplesAMIn: samplesAMArray) {
@@ -162,9 +161,10 @@ public abstract class BasicWaveform implements Module {
 		ArrayList<double[]> samplesADDArray = new ArrayList<double[]>();
 		for(Input input: inputADD) {
 			if(input.getConnection() == null) continue;
-			moduleIDsWaiting.add(moduleID);
-			samplesADDArray.add(parent.connectorIDToConnector.get(input.getConnection()).getParent().getSamples(moduleIDsWaiting));
-			moduleIDsWaiting.remove(moduleID);
+			waitingForModuleIDs.add(moduleID);
+			Output output = (Output) parent.connectorIDToConnector.get(input.getConnection());
+			samplesADDArray.add(output.getSamples(waitingForModuleIDs));
+			waitingForModuleIDs.remove(moduleID);
 		}
 		// no change if samplesADD.isEmpty()
 		for(double[] samplesADDIn: samplesADDArray) {
@@ -353,7 +353,8 @@ public abstract class BasicWaveform implements Module {
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
 			if(g2 == null) outputs.add(new Output(this, currentRect, ModuleEditor.randomGenerator.nextLong()));
 		}
-		if(g2 == null) height = currentY + 6 - y;
-		if(g2 == null) width = height;
+		//if(g2 == null) height = currentY + 6 - y;
+		//if(g2 == null) width = height;
+		//System.out.println(width);
 	}
 }
