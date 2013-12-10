@@ -22,6 +22,7 @@ import main.modules.MasterInput;
 import main.modules.Sawtooth;
 import main.modules.Sine;
 import main.modules.SquareWave;
+import main.modules.StereoPan;
 import main.modules.TriangleWave;
 
 
@@ -75,8 +76,9 @@ public class ModuleEditor extends JFrame {
 	}
 	
 	public void initLeftRight() {
-		left = xToYToModule.get(0).get(0).getSamplesLeft(null);
-		right = xToYToModule.get(0).get(0).getSamplesRight(null);
+		MasterInput masterInput = (MasterInput) xToYToModule.get(0).get(0);
+		left = masterInput.getSamplesLeft();
+		right = masterInput.getSamplesRight();
 		if(left == null) left = new double[0];
 		if(right == null) right = new double[0];
 		double[] paddedLeft;
@@ -177,6 +179,12 @@ public class ModuleEditor extends JFrame {
 		xToYToModule.get(currentX).put(currentY, new Sawtooth(this, currentX, currentY, 64.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 1.5, 0.75)));
 		currentY += xToYToModule.get(currentX).get(currentY).getHeight();
 		xToYToModule.get(currentX).put(currentY, new Sawtooth(this, currentX, currentY, 512.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 2.5, 0.25)));
+		currentX += xToYToModule.get(0).get(currentY).getWidth();
+		currentY = masterInputHeight;
+		xToYToModule.put(currentX, new TreeMap<Integer, Module>());
+		xToYToModule.get(currentX).put(currentY, new StereoPan(this, currentX, currentY));
+		currentY += xToYToModule.get(currentX).get(currentY).getHeight();
+		xToYToModule.get(currentX).put(currentY, new StereoPan(this, currentX, currentY));
 		
 	}
 	

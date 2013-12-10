@@ -39,22 +39,6 @@ public class MasterInput implements Module {
 			// TODO Auto-generated constructor stub
 		}
 		
-		public void inputSamples(double[] samples) {
-		}
-		
-	}
-	
-	private class Output extends Module.Output {
-
-		public Output(Module parent, Rectangle selectArea, Long connectionID) {
-			super(parent, selectArea, connectionID);
-			// TODO Auto-generated constructor stub
-		}
-		
-		public double[] outputSamples() {
-			return null;
-		}
-		
 	}
 	
 	public MasterInput(ModuleEditor parent, int x, int y) {
@@ -83,13 +67,14 @@ public class MasterInput implements Module {
 		return moduleID;
 	}
 	
-	public double[] getSamplesLeft(HashSet<Long> waitingForModuleID) {
+	public double[] getSamplesLeft() {
 		int numSamples = 0;
 		double[] leftOut = new double[0];
 		ArrayList<double[]> samplesLeftArray = new ArrayList<double[]>();
 		for(Input input: inputLeft) {
 			if(input.getConnection() == null) continue;
-			samplesLeftArray.add(parent.connectorIDToConnector.get(input.getConnection()).getParent().getSamples(null));
+			Output output = (Output) parent.connectorIDToConnector.get(input.getConnection());
+			samplesLeftArray.add(output.getSamples(null));
 		}
 		if(samplesLeftArray.isEmpty()) return leftOut;
 		for(double[] samplesLeftIn: samplesLeftArray) {
@@ -105,13 +90,14 @@ public class MasterInput implements Module {
 		return leftOut;
 	}
 	
-	public double[] getSamplesRight(HashSet<Long> waitingForModuleID) {
+	public double[] getSamplesRight() {
 		int numSamples = 0;
 		double[] rightOut = new double[0];
 		ArrayList<double[]> samplesRightArray = new ArrayList<double[]>();
 		for(Input input: inputRight) {
 			if(input.getConnection() == null) continue;
-			samplesRightArray.add(parent.connectorIDToConnector.get(input.getConnection()).getParent().getSamples(null));
+			Output output = (Output) parent.connectorIDToConnector.get(input.getConnection());
+			samplesRightArray.add(output.getSamples(null));
 		}
 		if(samplesRightArray.isEmpty()) return rightOut;
 		for(double[] samplesRightIn: samplesRightArray) {
@@ -127,10 +113,6 @@ public class MasterInput implements Module {
 		return rightOut;
 	}
 
-	public double[] getSamples(HashSet<Long> moduleIDsWaiting) {
-		return null;
-	}
-	
 	public void mousePressed(int x, int y) {
 		int index = 0;
 		for(Input inputLeftVal: inputLeft) {
