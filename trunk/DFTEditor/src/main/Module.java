@@ -72,6 +72,8 @@ public interface Module {
 		
 		public abstract double[] getSamples(HashSet<Long> waitingForModuleIDs);
 		
+		public abstract void clearSamples();
+		
 	}
 	
 	public abstract class Input implements Connector {

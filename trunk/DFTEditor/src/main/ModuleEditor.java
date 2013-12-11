@@ -15,16 +15,10 @@ import javax.swing.JToolBar;
 
 import main.Module.Connector;
 import main.Module.ConnectorType;
-import main.TestSignals.TAPair;
-import main.TestSignals.TAPair.AmplitudeFormat;
-import main.TestSignals.TAPair.TimeFormat;
+import main.modules.BasicWaveform;
+import main.modules.Envelope;
 import main.modules.MasterInput;
-import main.modules.Sawtooth;
-import main.modules.Sine;
-import main.modules.SquareWave;
 import main.modules.StereoPan;
-import main.modules.TriangleWave;
-
 
 public class ModuleEditor extends JFrame {
 
@@ -42,9 +36,9 @@ public class ModuleEditor extends JFrame {
 	private JToolBar navigationBar = null;
 	private static double[] left = null;
 	private static double[] right = null;
-	public final static double maxAmplitude = 10.0;
-	public final static double minAmplitude = Math.pow(10.0, -4.8);
-	public final static double maxDuration = 10.0;
+	public final static double maxAmplitudeIn_dB = 20.0;
+	public final static double minAmplitudeIn_dB = -144.5; // 24 bit data
+	public final static double maxDuration = 5.0;
 	public final static double minDuration = FDData.timeStepInMillis / 1000.0;
 	public final static double minFrequency = 0.001;
 	public final static double maxFrequency = SynthTools.sampleRate / 2.0;
@@ -76,6 +70,13 @@ public class ModuleEditor extends JFrame {
 	}
 	
 	public void initLeftRight() {
+		for(Connector connector : connectorIDToConnector.values()) {
+			if(connector instanceof Module.Output) {
+				System.out.println("Output");
+				Module.Output output = (Module.Output) connector;
+				output.clearSamples();
+			}
+		}
 		MasterInput masterInput = (MasterInput) xToYToModule.get(0).get(0);
 		left = masterInput.getSamplesLeft();
 		right = masterInput.getSamplesRight();
@@ -158,28 +159,28 @@ public class ModuleEditor extends JFrame {
 		xToYToModule.get(currentX).put(currentY, new MasterInput(this, currentX, currentY));
 		masterInputHeight = xToYToModule.get(0).get(0).getHeight();
 		currentY = masterInputHeight;
-		xToYToModule.get(currentX).put(currentY, new Sine(this, currentX, currentY, 64.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 1.0, 1.0)));
+		xToYToModule.get(currentX).put(currentY, new BasicWaveform(this, currentX, currentY));
 		currentY += xToYToModule.get(0).get(currentY).getHeight();
-		xToYToModule.get(currentX).put(currentY, new Sine(this, currentX, currentY, 512.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 2.0, 0.5)));
+		xToYToModule.get(currentX).put(currentY, new BasicWaveform(this, currentX, currentY));
 		currentX = xToYToModule.get(0).get(currentY).getWidth();
 		currentY = masterInputHeight;
 		xToYToModule.put(currentX, new TreeMap<Integer, Module>());
-		xToYToModule.get(currentX).put(currentY, new SquareWave(this, currentX, currentY, 64.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 1.5, 0.75)));
+		xToYToModule.get(currentX).put(currentY, new BasicWaveform(this, currentX, currentY));
 		currentY += xToYToModule.get(currentX).get(currentY).getHeight();
-		xToYToModule.get(currentX).put(currentY, new SquareWave(this, currentX, currentY, 512.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 2.5, 0.25)));
-		currentX += xToYToModule.get(0).get(currentY).getWidth();
+		xToYToModule.get(currentX).put(currentY, new BasicWaveform(this, currentX, currentY));
+		currentX += xToYToModule.get(currentX).get(currentY).getWidth();
 		currentY = masterInputHeight;
 		xToYToModule.put(currentX, new TreeMap<Integer, Module>());
-		xToYToModule.get(currentX).put(currentY, new TriangleWave(this, currentX, currentY, 64.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 1.5, 0.75)));
+		xToYToModule.get(currentX).put(currentY, new BasicWaveform(this, currentX, currentY));
 		currentY += xToYToModule.get(currentX).get(currentY).getHeight();
-		xToYToModule.get(currentX).put(currentY, new TriangleWave(this, currentX, currentY, 512.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 2.5, 0.25)));
-		currentX += xToYToModule.get(0).get(currentY).getWidth();
+		xToYToModule.get(currentX).put(currentY, new BasicWaveform(this, currentX, currentY));
+		currentX += xToYToModule.get(currentX).get(currentY).getWidth();
 		currentY = masterInputHeight;
 		xToYToModule.put(currentX, new TreeMap<Integer, Module>());
-		xToYToModule.get(currentX).put(currentY, new Sawtooth(this, currentX, currentY, 64.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 1.5, 0.75)));
+		xToYToModule.get(currentX).put(currentY, new Envelope(this, currentX, currentY));
 		currentY += xToYToModule.get(currentX).get(currentY).getHeight();
-		xToYToModule.get(currentX).put(currentY, new Sawtooth(this, currentX, currentY, 512.0, new TAPair(TimeFormat.SECONDS, AmplitudeFormat.ABSOLUTE, 2.5, 0.25)));
-		currentX += xToYToModule.get(0).get(currentY).getWidth();
+		xToYToModule.get(currentX).put(currentY, new Envelope(this, currentX, currentY));
+		currentX += xToYToModule.get(currentX).get(currentY).getWidth();
 		currentY = masterInputHeight;
 		xToYToModule.put(currentX, new TreeMap<Integer, Module>());
 		xToYToModule.get(currentX).put(currentY, new StereoPan(this, currentX, currentY));

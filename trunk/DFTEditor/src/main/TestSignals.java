@@ -83,8 +83,8 @@ public class TestSignals {
 		
 		
 		public ADSR(ArrayList<TAPair> TAPairs, Interpolation interpolation) {
-			if(interpolation == Interpolation.LINEAR) samples = Interpolate.synthTAPairsLinear(TAPairs);
-			if(interpolation == Interpolation.LOG) samples = Interpolate.synthTAPairsLog(TAPairs);
+			//if(interpolation == Interpolation.LINEAR) samples = Interpolate.synthTAPairsLinear(TAPairs);
+			//if(interpolation == Interpolation.LOG) samples = Interpolate.synthTAPairsLog(TAPairs);
 		}
 			
 		public double[] getSamples() {
