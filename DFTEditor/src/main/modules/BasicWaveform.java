@@ -21,20 +21,27 @@ import main.TestSignals.Generator;
 import main.TestSignals.TAPair;
 import main.SynthTools;
 
-public abstract class BasicWaveform implements Module {
+public class BasicWaveform implements Module {
 	
+	public enum WaveformType {
+		SINE,
+		TRIANGLE,
+		SQUAREWAVE,
+		SAWTOOTH,
+	}
+
 	ModuleEditor parent = null;
 	Long moduleID = null;
-	double amplitude = 0.0;
-	double freqInHz = 0.0;
-	double duration = 0.0;
+	double amplitude = 1.0;
+	double freqInHz = 440.0;
+	double duration = ModuleEditor.maxDuration;
 	int width = 150; // should be >= value calculated by init
 	int height = 150; // calculated by init
-	String name = "";
+	WaveformType type = WaveformType.SINE;
 	
+	Rectangle typeControl = null;
 	Rectangle freqControl = null;
 	Rectangle ampControl = null;
-	Rectangle durationControl = null;
 	ArrayList<Output> outputs;
 	ArrayList<Input> inputADD;
 	ArrayList<Input> inputAM;
@@ -53,6 +60,8 @@ public abstract class BasicWaveform implements Module {
 	
 	private class Output extends Module.Output {
 
+		private double[] calculatedSamples = null;
+		
 		public Output(Module parent, Rectangle selectArea, Long connectionID) {
 			super(parent, selectArea, connectionID);
 			// TODO Auto-generated constructor stub
@@ -60,16 +69,20 @@ public abstract class BasicWaveform implements Module {
 
 		@Override
 		public double[] getSamples(HashSet<Long> waitingForModuleID) {
-			return masterGetSamples(waitingForModuleID);
+			if(calculatedSamples != null) return calculatedSamples;
+			calculatedSamples = masterGetSamples(waitingForModuleID);
+			return calculatedSamples;
 		}
+		
+		public void clearSamples() {
+			calculatedSamples = null;
+		}
+		
 	}
 	
-	public BasicWaveform(ModuleEditor parent, int x, int y, double freqInHz, TAPair durationAndAmplitude) {
+	public BasicWaveform(ModuleEditor parent, int x, int y) {
 		this.moduleID = ModuleEditor.randomGenerator.nextLong();
 		this.parent = parent;
-		this.freqInHz = freqInHz;
-		amplitude = durationAndAmplitude.getAbsoluteAmplitude();
-		duration = durationAndAmplitude.getTimeInSeconds();
 		outputs = new ArrayList<Output>();
 		inputADD = new ArrayList<Input>();
 		inputAM = new ArrayList<Input>();
@@ -123,14 +136,14 @@ public abstract class BasicWaveform implements Module {
 		for(int index = 0; index < numSamples; index++) {
 			returnVal[index] = 0.0;
 			samplesFM[index] = 0.0;
-			samplesAM[index] = 1.0; // 1.0 if no AM data
+			samplesAM[index] = 1.0;
 			samplesADD[index] = 0.0;
 		}
 		ArrayList<double[]> samplesFMArray = new ArrayList<double[]>();
 		for(Input input: inputFM) {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
-			Output output = (Output) parent.connectorIDToConnector.get(input.getConnection());
+			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
 			samplesFMArray.add(output.getSamples(waitingForModuleIDs));
 			waitingForModuleIDs.remove(moduleID);
 		}
@@ -145,14 +158,12 @@ public abstract class BasicWaveform implements Module {
 		for(Input input: inputAM) {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
-			Output output = (Output) parent.connectorIDToConnector.get(input.getConnection());
+			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
 			samplesAMArray.add(output.getSamples(waitingForModuleIDs));
 			waitingForModuleIDs.remove(moduleID);
 		}
-		// no change if samplesAM.isEmpty()
 		for(double[] samplesAMIn: samplesAMArray) {
 			for(int index = 0; index < numSamples; index++) {
-				// need to change if there is AM data present
 				samplesAM[index] = 0.0;
 				if(index >= samplesAMIn.length) continue;
 				samplesAM[index] += samplesAMIn[index]; 
@@ -162,7 +173,7 @@ public abstract class BasicWaveform implements Module {
 		for(Input input: inputADD) {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
-			Output output = (Output) parent.connectorIDToConnector.get(input.getConnection());
+			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
 			samplesADDArray.add(output.getSamples(waitingForModuleIDs));
 			waitingForModuleIDs.remove(moduleID);
 		}
@@ -175,92 +186,101 @@ public abstract class BasicWaveform implements Module {
 		}
 		double deltaPhase = freqInHz / SynthTools.sampleRate * Math.PI * 2.0;
 		double phase = 0;
-		for(int index = 0; index < numSamples; index++) {
-			returnVal[index] = generator(phase + samplesFM[index]) * samplesAM[index] * amplitude + samplesADD[index];
-			phase += deltaPhase;
+		switch(type) {
+			case SINE:
+				for(int index = 0; index < numSamples; index++) {
+					if(samplesAM[index] == 0.0) {
+						phase = 0.0;
+						continue;
+					}
+					double inputPhase =  phase + samplesFM[index];
+					if(inputPhase > Math.PI) phase -= 2.0 * Math.PI;
+					returnVal[index] = Math.sin(inputPhase) * samplesAM[index] * amplitude + samplesADD[index];
+					phase += deltaPhase;
+				}
+				break;
+			case SQUAREWAVE:
+				for(int index = 0; index < numSamples; index++) {
+					if(samplesAM[index] == 0.0) {
+						phase = 0.0;
+						continue;
+					}
+					returnVal[index] = squarewave(phase + samplesFM[index]) * samplesAM[index] * amplitude + samplesADD[index];
+					phase += deltaPhase;
+				}
+				break;
+			case TRIANGLE:
+				for(int index = 0; index < numSamples; index++) {
+					if(samplesAM[index] == 0.0) {
+						phase = 0.0;
+						continue;
+					}
+					returnVal[index] = triangle(phase + samplesFM[index]) * samplesAM[index] * amplitude + samplesADD[index];
+					phase += deltaPhase;
+				}
+				break;
+			case SAWTOOTH:
+				for(int index = 0; index < numSamples; index++) {
+					if(samplesAM[index] == 0.0) {
+						phase = 0.0;
+						continue;
+					}
+					returnVal[index] = sawtooth(phase + samplesFM[index]) * samplesAM[index] * amplitude + samplesADD[index];
+					phase += deltaPhase;
+				}
+				break;
 		}
 		return returnVal;
 	}
 	
-	public abstract double generator(double phase);
+	public double sawtooth(double phase) {
+		phase -= Math.floor(phase / (Math.PI * 2.0)) * Math.PI * 2.0;
+		if(phase < Math.PI) return phase / Math.PI;
+		if(phase > Math.PI) return -1.0 + (phase - Math.PI) / Math.PI;
+		return Math.random() * 2.0 - 1.0; // phase == Math.PI
+	}
+
+	public double squarewave(double phase) {
+		phase -= Math.floor(phase / (Math.PI * 2.0)) * Math.PI * 2.0;
+		if(phase < Math.PI) return 1.0;
+		if(phase > Math.PI) return -1.0;
+		return Math.random() * 2.0 - 1.0; // phase == Math.PI
+	}
 	
+	public double triangle(double phase) {
+		phase -= Math.floor(phase / (Math.PI * 2.0)) * Math.PI * 2.0;
+		if(phase < Math.PI / 2.0) return phase / (Math.PI / 2.0);
+		if(phase < Math.PI * 1.5) return 1.0 - (phase - Math.PI / 2.0) / (Math.PI / 2.0);
+		return -1.0 + (phase - Math.PI * 1.5) / (Math.PI / 2.0);
+	}
+
 	public void mousePressed(int x, int y) {
+		if(typeControl.contains(x, y)) {
+			WaveformType inputType = (WaveformType) JOptionPane.showInputDialog(null, "Choose a type", "Type Select", JOptionPane.INFORMATION_MESSAGE, null, WaveformType.values(),  WaveformType.SINE);
+			if(inputType == null) return;
+			type = inputType;
+			parent.refreshView();
+			return;
+		}
 		if(freqControl.contains(x, y)) {
-			double inputFreqInHz = - 1.0;
-			System.out.println(name + " Freq Control");
-			String inputValue = JOptionPane.showInputDialog("Input Frequency In Hz");
-			if(inputValue == null) return;
-			try {
-				inputFreqInHz = new Double(inputValue);
-			} catch (NumberFormatException nfe) {
-				JOptionPane.showMessageDialog((JFrame) parent, "Could not parse string");
-				return;
-			}
-			if(inputFreqInHz <= ModuleEditor.minFrequency || inputFreqInHz > ModuleEditor.maxFrequency) {
-				JOptionPane.showMessageDialog((JFrame) parent, "Input frequency out of bounds");
-				return;
-			}
+			Double inputFreqInHz = getInput("Input Frequency In Hz", ModuleEditor.minFrequency, ModuleEditor.maxFrequency);
+			if(inputFreqInHz == null) return;
 			freqInHz = inputFreqInHz;
 			parent.refreshView();
 			return;
 		}
 		if(ampControl.contains(x, y)) {
-			System.out.println(name + " Amp Control");
-			double inputAmplitude;
-			String inputValue = JOptionPane.showInputDialog("Input Amplitude (values <= 0.0 interpreted as dB)");
-			if(inputValue == null) return;
-			try {
-				inputAmplitude = new Double(inputValue);
-			} catch (NumberFormatException nfe) {
-				JOptionPane.showMessageDialog((JFrame) parent, "Could not parse string");
-				return;
-			}
-			if(inputAmplitude <= 0.0) {
-				inputAmplitude = Math.pow(10.0, inputAmplitude / 20.0);
-				if(inputAmplitude < ModuleEditor.minAmplitude) {
-					JOptionPane.showMessageDialog((JFrame) parent, "Minimum Amplitude is: " + Math.round(Math.log(ModuleEditor.minAmplitude)/Math.log(10.0) * 20.0) + " dB");
-					return;
-				}				
-				amplitude = inputAmplitude;
-			} else {
-				if(inputAmplitude > ModuleEditor.maxAmplitude) {
-					JOptionPane.showMessageDialog((JFrame) parent, "Maximum Amplitude is: " + ModuleEditor.maxAmplitude);
-					return;
-				}
-				if(inputAmplitude < ModuleEditor.minAmplitude) {
-					JOptionPane.showMessageDialog((JFrame) parent, "Minimum Amplitude is: " + Math.round(Math.log(ModuleEditor.minAmplitude)/Math.log(10.0) * 20.0) + " dB");
-					return;
-				}			
-				amplitude = inputAmplitude;
-			}
+			Double inputAmplitude = getInput("Input Amplitude in dB", ModuleEditor.minAmplitudeIn_dB, ModuleEditor.maxAmplitudeIn_dB);
+			if(inputAmplitude == null) return;
+			amplitude = Math.pow(10.0, inputAmplitude / 20.0);
 			parent.refreshView();
 			return;
 		}
-		if(durationControl.contains(x, y)) {
-			System.out.println(name + " Duration Control");
-			double inputDuration;
-			String inputValue = JOptionPane.showInputDialog("Input duration in seconds");
-			if(inputValue == null) return;
-			try {
-				inputDuration = new Double(inputValue);
-			} catch (NumberFormatException nfe) {
-				JOptionPane.showMessageDialog((JFrame) parent, "Could not parse string");
-				return;
-			}
-			if(inputDuration <= ModuleEditor.minDuration || inputDuration > ModuleEditor.maxDuration)  {
-				JOptionPane.showMessageDialog((JFrame) parent, "Input duration out of bounds");
-				return;
-			} else {
-				duration = inputDuration;
-			}
-			parent.refreshView();
-			return;
-		}	
 		int index = 0;
 		for(Output output: outputs) {
 			if(output.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(output.getConnectorID());
-				System.out.println(name + " " + "output: " + index);
+				System.out.println(type + " " + "output: " + index);
 			}
 			index++;
 		}
@@ -268,7 +288,7 @@ public abstract class BasicWaveform implements Module {
 		for(Input inputADDval: inputADD) {
 			if(inputADDval.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputADDval.getConnectorID());
-				System.out.println(name + " inputADD: " + index);
+				System.out.println(type + " inputADD: " + index);
 			}
 			index++;
 		}
@@ -276,7 +296,7 @@ public abstract class BasicWaveform implements Module {
 		for(Input inputAMval: inputAM) {
 			if(inputAMval.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputAMval.getConnectorID());
-				System.out.println(name + " inputAM: " + index);
+				System.out.println(type + " inputAM: " + index);
 			}
 			index++;
 		}
@@ -284,10 +304,27 @@ public abstract class BasicWaveform implements Module {
 		for(Input inputFMval: inputFM) {
 			if(inputFMval.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputFMval.getConnectorID());
-				System.out.println(name + " inputFM: " + index);
+				System.out.println(type + " inputFM: " + index);
 			}
 			index++;
 		}
+	}
+	
+	public Double getInput(String prompt, double minBound, double maxBound) {
+		Double returnVal = null;
+		String inputValue = JOptionPane.showInputDialog(prompt);
+		if(inputValue == null) return null;
+		try {
+			returnVal = new Double(inputValue);
+		} catch (NumberFormatException nfe) {
+			JOptionPane.showMessageDialog((JFrame) parent, "Could not parse string");
+			return null;
+		}
+		if(returnVal < minBound || returnVal > maxBound) {
+			JOptionPane.showMessageDialog((JFrame) parent, "Input must be between: " + minBound + " and " + maxBound);
+			return null;
+		}
+		return returnVal;
 	}
 	
 	public void init(int x, int y) {
@@ -312,7 +349,8 @@ public abstract class BasicWaveform implements Module {
 		if(g2 != null) g2.setFont(font);
 		currentX = x + 4;
 		currentY = y + yStep;
-		if(g2 != null) g2.drawString(name, currentX, currentY);
+		if(g2 != null) g2.drawString(type.toString(), currentX, currentY);
+		if(g2 == null) typeControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		if(g2 != null) g2.setColor(Color.GREEN);
 		currentY += yStep;
 		if(g2 != null) g2.drawString("Frequency: " + freqInHz, currentX, currentY);
@@ -320,10 +358,6 @@ public abstract class BasicWaveform implements Module {
 		currentY += yStep;
 		if(g2 != null) g2.drawString("Amp: " + Math.round(amplitude * 100000.0) / 100000.0 + " (" + Math.round(Math.log(amplitude)/Math.log(10.0) * 2000.0) / 100.0 + "dB)", currentX, currentY);
 		if(g2 == null) ampControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
-		currentY += yStep;
-		if(g2 != null) g2.drawString("Duration: " + duration, currentX, currentY);
-		if(g2 == null) durationControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
-		if(g2 != null) g2.setColor(Color.RED);
 		currentY += yStep;
 		if(g2 != null) g2.drawString("ADD: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {

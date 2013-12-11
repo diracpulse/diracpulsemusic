@@ -4,9 +4,40 @@ import java.util.Iterator;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import main.TestSignals.TAPair.AmplitudeFormat;
+import main.TestSignals.TAPair.TimeFormat;
 
-class Interpolate {
+
+public class Interpolate {
 		
+	public static class TAPair {
+		
+		double timeInSeconds = 0.0;
+		double absoluteAmplitude = 0.0;
+		
+		public TAPair(double time, double amplitude) {
+			timeInSeconds = time;
+			absoluteAmplitude = amplitude;
+		}
+		
+		public double getLogAmplitude() {
+			return Math.log(absoluteAmplitude)/Math.log(FDData.logBase);
+		}
+		
+		public double getAbsoluteAmplitude() {
+			return absoluteAmplitude;
+		}
+		
+		public double getTimeInSeconds() {
+			return timeInSeconds;
+		}
+		
+		public int getTimeInSamples() {
+			return (int) Math.round(timeInSeconds * SynthTools.sampleRate);
+		}
+	}		
+		
+	
 	public static TreeMap<Integer, FDData> dataInterpolate(FDData.Channel channel, TreeMap<Integer, FDData> input) {
 		TreeMap<Integer, FDData> output = new TreeMap<Integer, FDData>();
 		if(input.isEmpty()) return output;
@@ -42,7 +73,7 @@ class Interpolate {
 		return output;
 	}
 	
-	public static double[] synthTAPairsLinear(ArrayList<TestSignals.TAPair> TAPairs) {
+	public static double[] synthTAPairsLinear(ArrayList<TAPair> TAPairs) {
 		double[] returnVal;
 		if(TAPairs.isEmpty() || TAPairs == null) return null;
 		if(TAPairs.size() == 2) {
@@ -63,7 +94,7 @@ class Interpolate {
 			int upperTime = TAPairs.get(arrayIndex + 1).getTimeInSamples();
 			double lowerAmplitude = TAPairs.get(arrayIndex).getAbsoluteAmplitude();
 			double upperAmplitude = TAPairs.get(arrayIndex + 1).getAbsoluteAmplitude();
-			if(upperTime - lowerTime <= 0) return null;
+			if(upperTime - lowerTime <= 0) continue;
 			double ampSlope = (upperAmplitude - lowerAmplitude) / (upperTime - lowerTime);
 			for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
 				if(timeIndex >= returnVal.length) break;
@@ -73,7 +104,7 @@ class Interpolate {
 		return returnVal;
 	}
 	
-	public static double[] synthTAPairsLog(ArrayList<TestSignals.TAPair> TAPairs) {
+	public static double[] synthTAPairsLog(ArrayList<TAPair> TAPairs) {
 		double[] returnVal;
 		if(TAPairs.isEmpty() || TAPairs == null) return null;
 		if(TAPairs.size() == 2) {

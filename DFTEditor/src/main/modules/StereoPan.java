@@ -46,18 +46,29 @@ public class StereoPan implements Module {
 	
 	private class OutputLeft extends Module.Output {
 
+		private double[] calculatedSamples = null;
+		
 		public OutputLeft(Module parent, Rectangle selectArea, Long connectionID) {
 			super(parent, selectArea, connectionID);
 			// TODO Auto-generated constructor stub
 		}
 
 		@Override
-		public double[] getSamples(HashSet<Long> waitingForModuleID) {
-			return getSamplesLeft(waitingForModuleID);
+		public double[] getSamples(HashSet<Long> waitingForModuleIDs) {
+			if(calculatedSamples != null) return calculatedSamples;
+			calculatedSamples = getSamplesLeft(waitingForModuleIDs);
+			return calculatedSamples;
+		}
+		
+		public void clearSamples() {
+			calculatedSamples = null;
 		}
 	}
 	
 	private class OutputRight extends Module.Output {
+		
+		private double[] calculatedSamples = null;
+
 
 		public OutputRight(Module parent, Rectangle selectArea, Long connectionID) {
 			super(parent, selectArea, connectionID);
@@ -66,7 +77,13 @@ public class StereoPan implements Module {
 
 		@Override
 		public double[] getSamples(HashSet<Long> waitingForModuleIDs) {
-			return getSamplesRight(waitingForModuleIDs);
+			if(calculatedSamples != null) return calculatedSamples;
+			calculatedSamples = getSamplesRight(waitingForModuleIDs);
+			return calculatedSamples;
+		}
+		
+		public void clearSamples() {
+			calculatedSamples = null;
 		}
 	}
 	
