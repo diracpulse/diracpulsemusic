@@ -25,7 +25,7 @@ import main.SynthTools;
 public class StereoPan implements Module {
 	
 	ModuleEditor parent = null;
-	Long moduleID = null;
+	Integer moduleID = null;
 	int width = 150;
 	int height = 150; // calculated by init
 	String name = "Stereo Pan";
@@ -37,7 +37,7 @@ public class StereoPan implements Module {
 	
 	private class Input extends Module.Input {
 
-		public Input(Module parent, Rectangle selectArea, Long connectionID) {
+		public Input(Module parent, Rectangle selectArea, Integer connectionID) {
 			super(parent, selectArea, connectionID);
 			// TODO Auto-generated constructor stub
 		}
@@ -48,13 +48,13 @@ public class StereoPan implements Module {
 
 		private double[] calculatedSamples = null;
 		
-		public OutputLeft(Module parent, Rectangle selectArea, Long connectionID) {
+		public OutputLeft(Module parent, Rectangle selectArea, Integer connectionID) {
 			super(parent, selectArea, connectionID);
 			// TODO Auto-generated constructor stub
 		}
 
 		@Override
-		public double[] getSamples(HashSet<Long> waitingForModuleIDs) {
+		public double[] getSamples(HashSet<Integer> waitingForModuleIDs) {
 			if(calculatedSamples != null) return calculatedSamples;
 			calculatedSamples = getSamplesLeft(waitingForModuleIDs);
 			return calculatedSamples;
@@ -70,13 +70,13 @@ public class StereoPan implements Module {
 		private double[] calculatedSamples = null;
 
 
-		public OutputRight(Module parent, Rectangle selectArea, Long connectionID) {
+		public OutputRight(Module parent, Rectangle selectArea, Integer connectionID) {
 			super(parent, selectArea, connectionID);
 			// TODO Auto-generated constructor stub
 		}
 
 		@Override
-		public double[] getSamples(HashSet<Long> waitingForModuleIDs) {
+		public double[] getSamples(HashSet<Integer> waitingForModuleIDs) {
 			if(calculatedSamples != null) return calculatedSamples;
 			calculatedSamples = getSamplesRight(waitingForModuleIDs);
 			return calculatedSamples;
@@ -88,7 +88,7 @@ public class StereoPan implements Module {
 	}
 	
 	public StereoPan(ModuleEditor parent, int x, int y) {
-		this.moduleID = ModuleEditor.randomGenerator.nextLong();
+		this.moduleID = ModuleEditor.getNextModuleID();
 		this.parent = parent;
 		inputs = new ArrayList<Input>();
 		controls = new ArrayList<Input>();
@@ -117,11 +117,11 @@ public class StereoPan implements Module {
 		return height;
 	}
 	
-	public long getModuleId() {
+	public Integer getModuleId() {
 		return moduleID;
 	}
 	
-	public double[] getSamplesLeft(HashSet<Long> waitingForModuleIDs) {
+	public double[] getSamplesLeft(HashSet<Integer> waitingForModuleIDs) {
 		double[] inputArray = getInputSum(inputs, waitingForModuleIDs);
 		double[] controlsArray = getInputSum(controls, waitingForModuleIDs);
 		double[] returnVal = new double[inputArray.length];
@@ -143,7 +143,7 @@ public class StereoPan implements Module {
 		return returnVal;
 	}
 	
-	public double[] getSamplesRight(HashSet<Long> waitingForModuleIDs) {
+	public double[] getSamplesRight(HashSet<Integer> waitingForModuleIDs) {
 		double[] inputArray = getInputSum(inputs, waitingForModuleIDs);
 		double[] controlsArray = getInputSum(controls, waitingForModuleIDs);
 		double[] returnVal = new double[inputArray.length];
@@ -165,8 +165,8 @@ public class StereoPan implements Module {
 		return returnVal;
 	}
 	
-	public double[] getInputSum(ArrayList<Input> inputs, HashSet<Long> waitingForModuleIDs) {
-		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Long>();
+	public double[] getInputSum(ArrayList<Input> inputs, HashSet<Integer> waitingForModuleIDs) {
+		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
 			JOptionPane.showMessageDialog((JFrame) parent, "Infinite Loop");
 			return new double[0];
@@ -258,7 +258,7 @@ public class StereoPan implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) outputsLeft.add(new OutputLeft(this, currentRect, ModuleEditor.randomGenerator.nextLong()));
+			if(g2 == null) outputsLeft.add(new OutputLeft(this, currentRect, ModuleEditor.getNextConnectorID()));
 		}
 		currentY += yStep;
 		if(g2 != null) g2.setColor(Color.RED);		
@@ -266,7 +266,7 @@ public class StereoPan implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) outputsRight.add(new OutputRight(this, currentRect, ModuleEditor.randomGenerator.nextLong()));
+			if(g2 == null) outputsRight.add(new OutputRight(this, currentRect, ModuleEditor.getNextConnectorID()));
 		}
 		currentY += yStep;
 		if(g2 != null) g2.setColor(Color.GREEN);		
@@ -274,7 +274,7 @@ public class StereoPan implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) controls.add(new Input(this, currentRect, ModuleEditor.randomGenerator.nextLong()));
+			if(g2 == null) controls.add(new Input(this, currentRect, ModuleEditor.getNextConnectorID()));
 		}
 		currentY += yStep;
 		if(g2 != null) g2.setColor(Color.YELLOW);		
@@ -282,7 +282,7 @@ public class StereoPan implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputs.add(new Input(this, currentRect, ModuleEditor.randomGenerator.nextLong()));
+			if(g2 == null) inputs.add(new Input(this, currentRect, ModuleEditor.getNextConnectorID()));
 		}
 		//if(g2 == null) height = currentY + 6 - y;
 	}

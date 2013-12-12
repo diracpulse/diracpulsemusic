@@ -27,13 +27,15 @@ public class ModuleEditor extends JFrame {
 	public ModuleView view;
 	public ModuleController controller;
 	private TreeMap<Integer, TreeMap<Integer, Module>> xToYToModule = null;
-	public static Random randomGenerator = new Random();
-	public HashMap<Long, Long> outputToInput = null;
-	public HashSet<Long> inputs = null;
-	public HashSet<Long> outputs = null;
-	public HashMap<Long, Connector> connectorIDToConnector = null;
-	public Long selectedOutput = null;
+	//public static Random randomGenerator = new Random();
+	public HashMap<Integer, Integer> outputToInput = null;
+	public HashSet<Integer> inputs = null;
+	public HashSet<Integer> outputs = null;
+	public HashMap<Integer, Connector> connectorIDToConnector = null;
+	public Integer selectedOutput = null;
 	private JToolBar navigationBar = null;
+	private static int nextConnectorID = 0;
+	private static int nextModuleID = 0;
 	private static double[] left = null;
 	private static double[] right = null;
 	public final static double maxAmplitudeIn_dB = 20.0;
@@ -134,10 +136,10 @@ public class ModuleEditor extends JFrame {
 	
 	public ModuleEditor(MultiWindow parent) {
 		this.parent = parent;
-    	outputToInput = new HashMap <Long, Long>();
-    	inputs = new HashSet<Long>();
-    	outputs = new HashSet<Long>();
-    	connectorIDToConnector = new HashMap<Long, Connector>();
+    	outputToInput = new HashMap <Integer, Integer>();
+    	inputs = new HashSet<Integer>();
+    	outputs = new HashSet<Integer>();
+    	connectorIDToConnector = new HashMap<Integer, Connector>();
         initModules();
         view = new ModuleView(this);
         view.setBackground(Color.black);
@@ -218,12 +220,12 @@ public class ModuleEditor extends JFrame {
 		}
 	}
 	
-	public void handleConnectorSelect(Long connectorID) {
+	public void handleConnectorSelect(Integer connectorID) {
 		if(selectedOutput == null) {
 			if(connectorIDToConnector.get(connectorID).getConnectorType() == ConnectorType.OUTPUT) {
 				if(outputToInput.containsKey(connectorID)) {
 					outputToInput.remove(connectorID);
-					long connectedTo = connectorIDToConnector.get(connectorID).getConnection();
+					Integer connectedTo = connectorIDToConnector.get(connectorID).getConnection();
 					connectorIDToConnector.get(connectorID).removeConnection();
 					connectorIDToConnector.get(connectedTo).removeConnection();
 					view.repaint();
@@ -248,6 +250,18 @@ public class ModuleEditor extends JFrame {
 	
 	public void refreshView() {
 		view.repaint();
+	}
+	
+	public static int getNextConnectorID() {
+		int currentConnectorID = nextConnectorID;
+		nextConnectorID++;
+		return currentConnectorID;
+	}
+	
+	public static int getNextModuleID() {
+		int currentModuleID = nextModuleID;
+		nextModuleID++;
+		return currentModuleID;
 	}
 	
 }

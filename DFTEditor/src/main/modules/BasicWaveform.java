@@ -31,7 +31,7 @@ public class BasicWaveform implements Module {
 	}
 
 	ModuleEditor parent = null;
-	Long moduleID = null;
+	Integer moduleID = null;
 	double amplitude = 1.0;
 	double freqInHz = 440.0;
 	double duration = ModuleEditor.maxDuration;
@@ -51,7 +51,7 @@ public class BasicWaveform implements Module {
 	
 	private class Input extends Module.Input {
 
-		public Input(Module parent, Rectangle selectArea, Long connectionID) {
+		public Input(Module parent, Rectangle selectArea, Integer connectionID) {
 			super(parent, selectArea, connectionID);
 			// TODO Auto-generated constructor stub
 		}
@@ -62,13 +62,13 @@ public class BasicWaveform implements Module {
 
 		private double[] calculatedSamples = null;
 		
-		public Output(Module parent, Rectangle selectArea, Long connectionID) {
+		public Output(Module parent, Rectangle selectArea, Integer connectionID) {
 			super(parent, selectArea, connectionID);
 			// TODO Auto-generated constructor stub
 		}
 
 		@Override
-		public double[] getSamples(HashSet<Long> waitingForModuleID) {
+		public double[] getSamples(HashSet<Integer> waitingForModuleID) {
 			if(calculatedSamples != null) return calculatedSamples;
 			calculatedSamples = masterGetSamples(waitingForModuleID);
 			return calculatedSamples;
@@ -81,7 +81,7 @@ public class BasicWaveform implements Module {
 	}
 	
 	public BasicWaveform(ModuleEditor parent, int x, int y) {
-		this.moduleID = ModuleEditor.randomGenerator.nextLong();
+		this.moduleID = ModuleEditor.getNextModuleID();
 		this.parent = parent;
 		outputs = new ArrayList<Output>();
 		inputADD = new ArrayList<Input>();
@@ -110,20 +110,20 @@ public class BasicWaveform implements Module {
 		return height;
 	}
 	
-	public long getModuleId() {
+	public Integer getModuleId() {
 		return moduleID;
 	}
 	
-	public double[] getSamplesLeft(HashSet<Long> waitingForModuleIDs) {
+	public double[] getSamplesLeft(HashSet<Integer> waitingForModuleIDs) {
 		return null;
 	}
 	
-	public double[] getSamplesRight(HashSet<Long> waitingForModuleIDs) {
+	public double[] getSamplesRight(HashSet<Integer> waitingForModuleIDs) {
 		return null;
 	}
 
-	public double[] masterGetSamples(HashSet<Long> waitingForModuleIDs) {
-		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Long>();
+	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs) {
+		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
 			JOptionPane.showMessageDialog((JFrame) parent, "Infinite Loop");
 			return new double[0];
@@ -363,21 +363,21 @@ public class BasicWaveform implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputADD.add(new Input(this, currentRect, ModuleEditor.randomGenerator.nextLong()));
+			if(g2 == null) inputADD.add(new Input(this, currentRect, ModuleEditor.getNextConnectorID()));
 		}
 		currentY += yStep;
 		if(g2 != null) g2.drawString("AM: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputAM.add(new Input(this, currentRect, ModuleEditor.randomGenerator.nextLong()));
+			if(g2 == null) inputAM.add(new Input(this, currentRect,  ModuleEditor.getNextConnectorID()));
 		}
 		currentY += yStep;
 		if(g2 != null) g2.drawString("FM: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputFM.add(new Input(this, currentRect, ModuleEditor.randomGenerator.nextLong()));
+			if(g2 == null) inputFM.add(new Input(this, currentRect,  ModuleEditor.getNextConnectorID()));
 		}
 		if(g2 != null) g2.setColor(Color.BLUE);
 		currentY += yStep;
@@ -385,7 +385,7 @@ public class BasicWaveform implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) outputs.add(new Output(this, currentRect, ModuleEditor.randomGenerator.nextLong()));
+			if(g2 == null) outputs.add(new Output(this, currentRect,  ModuleEditor.getNextConnectorID()));
 		}
 		//if(g2 == null) height = currentY + 6 - y;
 		//if(g2 == null) width = height;
