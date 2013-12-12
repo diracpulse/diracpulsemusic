@@ -15,15 +15,15 @@ public interface Module {
 	abstract void draw(Graphics g, int startX, int startY);
 	abstract int getWidth();
 	abstract int getHeight();
-	abstract long getModuleId();
+	abstract Integer getModuleId();
 	
 	public interface Connector {
 		
 		abstract Rectangle getSelectArea();
-		abstract Long getConnectorID();
+		abstract Integer getConnectorID();
 		abstract ConnectorType getConnectorType();
-		abstract void setConnection(Long connectionID);
-		abstract Long getConnection();
+		abstract void setConnection(Integer connectionID);
+		abstract Integer getConnection();
 		abstract void removeConnection();
 		abstract Module getParent();
 	}
@@ -31,12 +31,12 @@ public interface Module {
 	public abstract class Output implements Connector {
 		
 		Rectangle selectArea = null;
-		Long connectionID = null;
+		Integer connectionID = null;
 		ConnectorType connectionType = ConnectorType.OUTPUT;
-		Long connectedTo = null;
+		Integer connectedTo = null;
 		Module parent = null;
 		
-		public Output(Module parent, Rectangle selectArea, Long connectionID) {
+		public Output(Module parent, Rectangle selectArea, Integer connectionID) {
 			this.parent = parent;
 			this.selectArea = selectArea;
 			this.connectionID = connectionID;
@@ -46,7 +46,7 @@ public interface Module {
 			return selectArea;
 		}
 		
-		public Long getConnectorID() {
+		public Integer getConnectorID() {
 			return connectionID;
 		}
 		
@@ -54,11 +54,11 @@ public interface Module {
 			return connectionType;
 		}
 		
-		public void setConnection(Long connectedTo) {
+		public void setConnection(Integer connectedTo) {
 			this.connectedTo = connectedTo;
 		}
 		
-		public Long getConnection() {
+		public Integer getConnection() {
 			return this.connectedTo;
 		}
 		
@@ -70,7 +70,7 @@ public interface Module {
 			return parent;
 		}
 		
-		public abstract double[] getSamples(HashSet<Long> waitingForModuleIDs);
+		public abstract double[] getSamples(HashSet<Integer> waitingForModuleIDs);
 		
 		public abstract void clearSamples();
 		
@@ -79,12 +79,12 @@ public interface Module {
 	public abstract class Input implements Connector {
 		
 		Rectangle selectArea = null;
-		Long connectionID = null;
+		Integer connectionID = null;
 		ConnectorType connectionType = ConnectorType.INPUT;
-		Long connectedFrom = null;
+		Integer connectedFrom = null;
 		Module parent = null;
 		
-		public Input(Module parent, Rectangle selectArea, Long connectionID) {
+		public Input(Module parent, Rectangle selectArea, Integer connectionID) {
 			this.parent = parent;
 			this.selectArea = selectArea;
 			this.connectionID = connectionID;
@@ -94,7 +94,7 @@ public interface Module {
 			return selectArea;
 		}
 		
-		public Long getConnectorID() {
+		public Integer getConnectorID() {
 			return connectionID;
 		}
 		
@@ -102,11 +102,11 @@ public interface Module {
 			return connectionType;
 		}
 		
-		public void setConnection(Long connectedFrom) {
+		public void setConnection(Integer connectedFrom) {
 			this.connectedFrom = connectedFrom;
 		}
 		
-		public Long getConnection() {
+		public Integer getConnection() {
 			return this.connectedFrom;
 		}
 		

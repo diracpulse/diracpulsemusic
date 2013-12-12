@@ -29,10 +29,10 @@ public class ModuleView extends JComponent {
 		for(ModuleScreenInfo moduleScreenInfo: moduleScreenInfoArray) {
 			moduleScreenInfo.module.draw(g, moduleScreenInfo.dimensions.x, moduleScreenInfo.dimensions.y);
 		}
-		for(long connectorID: parent.outputToInput.keySet()) {
+		for(int connectorID: parent.outputToInput.keySet()) {
 			int x0 = (int) Math.round(parent.connectorIDToConnector.get(connectorID).getSelectArea().getCenterX());
 			int y0 = (int) Math.round(parent.connectorIDToConnector.get(connectorID).getSelectArea().getCenterY());
-			long connectorID1 = parent.outputToInput.get(connectorID);
+			int connectorID1 = parent.outputToInput.get(connectorID);
 			int x1 = (int) Math.round(parent.connectorIDToConnector.get(connectorID1).getSelectArea().getCenterX());
 			int y1 = (int) Math.round(parent.connectorIDToConnector.get(connectorID1).getSelectArea().getCenterY());			
 			int red = (int) connectorID % 128;
@@ -43,7 +43,7 @@ public class ModuleView extends JComponent {
 			g2.drawLine(x0, y0, x1, y1);
 		}
 		if(parent.selectedOutput != null) {
-			long connectorID1 = parent.selectedOutput;
+			int connectorID1 = parent.selectedOutput;
 			int x1 = (int) Math.round(parent.connectorIDToConnector.get(connectorID1).getSelectArea().getCenterX());
 			int y1 = (int) Math.round(parent.connectorIDToConnector.get(connectorID1).getSelectArea().getCenterY());
 			int red = (int) connectorID1 % 128;

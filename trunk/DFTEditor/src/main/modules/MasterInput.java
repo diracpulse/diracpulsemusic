@@ -25,7 +25,7 @@ import main.SynthTools;
 public class MasterInput implements Module {
 	
 	ModuleEditor parent = null;
-	Long moduleID = null;
+	Integer moduleID = null;
 	int width = 1000;
 	int height = 200; // calculated by init
 	
@@ -34,7 +34,7 @@ public class MasterInput implements Module {
 	
 	private class Input extends Module.Input {
 
-		public Input(Module parent, Rectangle selectArea, Long connectionID) {
+		public Input(Module parent, Rectangle selectArea, Integer connectionID) {
 			super(parent, selectArea, connectionID);
 			// TODO Auto-generated constructor stub
 		}
@@ -42,7 +42,7 @@ public class MasterInput implements Module {
 	}
 	
 	public MasterInput(ModuleEditor parent, int x, int y) {
-		this.moduleID = ModuleEditor.randomGenerator.nextLong();
+		this.moduleID = ModuleEditor.getNextModuleID();
 		this.parent = parent;
 		inputLeft = new ArrayList<Input>();
 		inputRight = new ArrayList<Input>();
@@ -63,7 +63,7 @@ public class MasterInput implements Module {
 		return height;
 	}
 	
-	public long getModuleId() {
+	public Integer getModuleId() {
 		return moduleID;
 	}
 	
@@ -161,7 +161,7 @@ public class MasterInput implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputLeft.add(new Input(this, currentRect, ModuleEditor.randomGenerator.nextLong()));
+			if(g2 == null) inputLeft.add(new Input(this, currentRect, ModuleEditor.getNextConnectorID()));
 		}
 		currentY += yStep;
 		if(g2 != null) g2.setColor(Color.RED);		
@@ -169,7 +169,7 @@ public class MasterInput implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputRight.add(new Input(this, currentRect, ModuleEditor.randomGenerator.nextLong()));
+			if(g2 == null) inputRight.add(new Input(this, currentRect, ModuleEditor.getNextConnectorID()));
 		}
 		if(g2 == null) height = currentY + 6 - y;
 	}
