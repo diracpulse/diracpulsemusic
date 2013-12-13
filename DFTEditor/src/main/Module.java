@@ -30,6 +30,7 @@ public interface Module {
 	abstract int getWidth();
 	abstract int getHeight();
 	abstract Integer getModuleId();
+	abstract void setModuleId(Integer moduleID);
 	abstract void loadModuleInfo(BufferedReader in);
 	abstract void saveModuleInfo(BufferedWriter out);
 	abstract ModuleType getModuleType();
@@ -40,6 +41,7 @@ public interface Module {
 		abstract Integer getConnectorID();
 		abstract ConnectorType getConnectorType();
 		abstract void setConnection(Integer connectionID);
+		abstract void setConnectorID(Integer id);
 		abstract Integer getConnection();
 		abstract void removeConnection();
 		abstract Module getParent();
@@ -48,23 +50,26 @@ public interface Module {
 	public abstract class Output implements Connector {
 		
 		Rectangle selectArea = null;
-		Integer connectionID = null;
+		Integer connectorID = null;
 		ConnectorType connectionType = ConnectorType.OUTPUT;
 		Integer connectedTo = null;
 		Module parent = null;
 		
-		public Output(Module parent, Rectangle selectArea, Integer connectionID) {
+		public Output(Module parent, Rectangle selectArea) {
 			this.parent = parent;
 			this.selectArea = selectArea;
-			this.connectionID = connectionID;
 		}
 		
 		public Rectangle getSelectArea() {
 			return selectArea;
 		}
 		
+		public void setConnectorID(Integer id) {
+			this.connectorID = id;
+		}
+		
 		public Integer getConnectorID() {
-			return connectionID;
+			return connectorID;
 		}
 		
 		public ConnectorType getConnectorType() {
@@ -96,23 +101,26 @@ public interface Module {
 	public abstract class Input implements Connector {
 		
 		Rectangle selectArea = null;
-		Integer connectionID = null;
+		Integer connectorID = null;
 		ConnectorType connectionType = ConnectorType.INPUT;
 		Integer connectedFrom = null;
 		Module parent = null;
 		
-		public Input(Module parent, Rectangle selectArea, Integer connectionID) {
+		public Input(Module parent, Rectangle selectArea) {
 			this.parent = parent;
 			this.selectArea = selectArea;
-			this.connectionID = connectionID;
 		}
 		
 		public Rectangle getSelectArea() {
 			return selectArea;
 		}
 		
+		public void setConnectorID(Integer id) {
+			this.connectorID = id;
+		}
+		
 		public Integer getConnectorID() {
-			return connectionID;
+			return connectorID;
 		}
 		
 		public ConnectorType getConnectorType() {

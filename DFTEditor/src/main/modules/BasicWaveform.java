@@ -48,17 +48,17 @@ public class BasicWaveform implements Module {
 	Rectangle typeControl = null;
 	Rectangle freqControl = null;
 	Rectangle ampControl = null;
-	ArrayList<Output> outputs;
-	ArrayList<Input> inputADD;
-	ArrayList<Input> inputAM;
-	ArrayList<Input> inputFM;
+	ArrayList<Integer> outputs;
+	ArrayList<Integer> inputADD;
+	ArrayList<Integer> inputAM;
+	ArrayList<Integer> inputFM;
 	HashMap<Integer, Long> outputToModuleID = null;
 	HashMap<Integer, Long> inputAddToModuleID = null;
 	
 	private class Input extends Module.Input {
 
-		public Input(Module parent, Rectangle selectArea, Integer connectionID) {
-			super(parent, selectArea, connectionID);
+		public Input(Module parent, Rectangle selectArea) {
+			super(parent, selectArea);
 			// TODO Auto-generated constructor stub
 		}
 		
@@ -68,8 +68,8 @@ public class BasicWaveform implements Module {
 
 		private double[] calculatedSamples = null;
 		
-		public Output(Module parent, Rectangle selectArea, Integer connectionID) {
-			super(parent, selectArea, connectionID);
+		public Output(Module parent, Rectangle selectArea) {
+			super(parent, selectArea);
 			// TODO Auto-generated constructor stub
 		}
 
@@ -89,25 +89,12 @@ public class BasicWaveform implements Module {
 	public BasicWaveform(ModuleEditor parent, int x, int y) {
 		this.cornerX = x;
 		this.cornerY = y;
-		this.moduleID = ModuleEditor.getNextModuleID();
 		this.parent = parent;
-		outputs = new ArrayList<Output>();
-		inputADD = new ArrayList<Input>();
-		inputAM = new ArrayList<Input>();
-		inputFM = new ArrayList<Input>();
+		outputs = new ArrayList<Integer>();
+		inputADD = new ArrayList<Integer>();
+		inputAM = new ArrayList<Integer>();
+		inputFM = new ArrayList<Integer>();
 		init();
-		for(Output output: outputs) {
-			parent.addOutput(output);
-		}
-		for(Input input: inputADD) {
-			parent.addInput(input);
-		}
-		for(Input input: inputAM) {
-			parent.addInput(input);
-		}
-		for(Input input: inputFM) {
-			parent.addInput(input);
-		}
 	}
 	
 	public int getWidth() {
@@ -116,6 +103,10 @@ public class BasicWaveform implements Module {
 	
 	public int getHeight() {
 		return height;
+	}
+	
+	public void setModuleId(Integer id) {
+		this.moduleID = id;
 	}
 	
 	public Integer getModuleId() {
@@ -148,7 +139,8 @@ public class BasicWaveform implements Module {
 			samplesADD[index] = 0.0;
 		}
 		ArrayList<double[]> samplesFMArray = new ArrayList<double[]>();
-		for(Input input: inputFM) {
+		for(Integer inputID: inputFM) {
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
@@ -163,7 +155,8 @@ public class BasicWaveform implements Module {
 			}
 		}
 		ArrayList<double[]> samplesAMArray = new ArrayList<double[]>();
-		for(Input input: inputAM) {
+		for(Integer inputID: inputAM) {
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
@@ -178,7 +171,8 @@ public class BasicWaveform implements Module {
 			}
 		}
 		ArrayList<double[]> samplesADDArray = new ArrayList<double[]>();
-		for(Input input: inputADD) {
+		for(Integer inputID: inputADD) {
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
@@ -285,33 +279,37 @@ public class BasicWaveform implements Module {
 			return;
 		}
 		int index = 0;
-		for(Output output: outputs) {
+		for(Integer outputID: outputs) {
+			Output output = (Output) parent.connectorIDToConnector.get(outputID);
 			if(output.getSelectArea().contains(x, y)) {
-				parent.handleConnectorSelect(output.getConnectorID());
+				parent.handleConnectorSelect(outputID);
 				System.out.println(type + " " + "output: " + index);
 			}
 			index++;
 		}
 		index = 0;
-		for(Input inputADDval: inputADD) {
-			if(inputADDval.getSelectArea().contains(x, y)) {
-				parent.handleConnectorSelect(inputADDval.getConnectorID());
+		for(Integer inputID: inputADD) {
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			if(input.getSelectArea().contains(x, y)) {
+				parent.handleConnectorSelect(inputID);
 				System.out.println(type + " inputADD: " + index);
 			}
 			index++;
 		}
 		index = 0;
-		for(Input inputAMval: inputAM) {
-			if(inputAMval.getSelectArea().contains(x, y)) {
-				parent.handleConnectorSelect(inputAMval.getConnectorID());
+		for(Integer inputID: inputAM) {
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			if(input.getSelectArea().contains(x, y)) {
+				parent.handleConnectorSelect(inputID);
 				System.out.println(type + " inputAM: " + index);
 			}
 			index++;
 		}
 		index = 0;
-		for(Input inputFMval: inputFM) {
-			if(inputFMval.getSelectArea().contains(x, y)) {
-				parent.handleConnectorSelect(inputFMval.getConnectorID());
+		for(Integer inputID: inputFM) {
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			if(input.getSelectArea().contains(x, y)) {
+				parent.handleConnectorSelect(inputID);
 				System.out.println(type + " inputFM: " + index);
 			}
 			index++;
@@ -371,21 +369,21 @@ public class BasicWaveform implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputADD.add(new Input(this, currentRect, ModuleEditor.getNextConnectorID()));
+			if(g2 == null) inputADD.add(parent.addConnector(new Input(this, currentRect)));
 		}
 		currentY += yStep;
 		if(g2 != null) g2.drawString("AM: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputAM.add(new Input(this, currentRect,  ModuleEditor.getNextConnectorID()));
+			if(g2 == null) inputAM.add(parent.addConnector(new Input(this, currentRect)));
 		}
 		currentY += yStep;
 		if(g2 != null) g2.drawString("FM: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputFM.add(new Input(this, currentRect,  ModuleEditor.getNextConnectorID()));
+			if(g2 == null) inputFM.add(parent.addConnector(new Input(this, currentRect)));
 		}
 		if(g2 != null) g2.setColor(Color.BLUE);
 		currentY += yStep;
@@ -393,7 +391,7 @@ public class BasicWaveform implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) outputs.add(new Output(this, currentRect,  ModuleEditor.getNextConnectorID()));
+			if(g2 == null) outputs.add(parent.addConnector(new Output(this, currentRect)));
 		}
 		//if(g2 == null) height = currentY + 6 - y;
 		//if(g2 == null) width = height;
@@ -403,15 +401,7 @@ public class BasicWaveform implements Module {
 	public void loadModuleInfo(BufferedReader in) {
 		try { 
 			String currentLine = in.readLine();
-			this.type = null;
-			for(WaveformType testType: WaveformType.values()) {
-				if(currentLine == testType.toString()) {
-					this.type = testType;
-				}
-			}
-			if(this.type == null) {
-				System.out.println("BasicWaveform.loadModuleInfo: Error reading from file: Unknown Type");
-			}
+			this.type = BasicWaveform.WaveformType.valueOf(currentLine);
 			currentLine = in.readLine();
 			this.freqInHz = new Double(currentLine);
 			currentLine = in.readLine();

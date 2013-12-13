@@ -54,13 +54,13 @@ public class Envelope implements Module {
 	double minTimeInMillis = 0.0;
 	double maxTimeInMillis = ModuleEditor.maxDuration * 1000.0;
 	
-	ArrayList<Input> triggers = null;
-	ArrayList<Output> outputs = null;
+	ArrayList<Integer> triggers = null;
+	ArrayList<Integer> outputs = null;
 	
 	private class Input extends Module.Input {
 
-		public Input(Module parent, Rectangle selectArea, Integer connectionID) {
-			super(parent, selectArea, connectionID);
+		public Input(Module parent, Rectangle selectArea) {
+			super(parent, selectArea);
 			// TODO Auto-generated constructor stub
 		}
 		
@@ -70,8 +70,8 @@ public class Envelope implements Module {
 
 		private double[] calculatedSamples;
 		
-		public Output(Module parent, Rectangle selectArea, Integer connectionID) {
-			super(parent, selectArea, connectionID);
+		public Output(Module parent, Rectangle selectArea) {
+			super(parent, selectArea);
 			// TODO Auto-generated constructor stub
 		}
 
@@ -90,14 +90,10 @@ public class Envelope implements Module {
 	public Envelope(ModuleEditor parent, int x, int y) {
 		this.cornerX = x;
 		this.cornerY = y;
-		this.moduleID = ModuleEditor.getNextModuleID();
 		this.parent = parent;
-		outputs = new ArrayList<Output>();
-		triggers = new ArrayList<Input>();
+		outputs = new ArrayList<Integer>();
+		triggers = new ArrayList<Integer>();
 		init();
-		for(Output output: outputs) {
-			parent.addOutput(output);
-		}
 	}
 	
 	public int getWidth() {
@@ -106,6 +102,10 @@ public class Envelope implements Module {
 	
 	public int getHeight() {
 		return height;
+	}
+	
+	public void setModuleId(Integer id) {
+		this.moduleID = id;
 	}
 	
 	public Integer getModuleId() {
@@ -130,7 +130,8 @@ public class Envelope implements Module {
 	
 	public void mousePressed(int x, int y) {
 		int index = 0;
-		for(Output output: outputs) {
+		for(Integer outputID: outputs) {
+			Output output = (Output) parent.connectorIDToConnector.get(outputID);
 			if(output.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(output.getConnectorID());
 				System.out.println(name + " " + "outputs: " + index);
@@ -281,7 +282,7 @@ public class Envelope implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) triggers.add(new Input(this, currentRect, ModuleEditor.getNextConnectorID()));
+			if(g2 == null) triggers.add(parent.addConnector(new Input(this, currentRect)));
 		}
 		currentY += yStep;
 		if(g2 != null) g2.setColor(Color.BLUE);		
@@ -289,7 +290,7 @@ public class Envelope implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) outputs.add(new Output(this, currentRect, ModuleEditor.getNextConnectorID()));
+			if(g2 == null) outputs.add(parent.addConnector(new Output(this, currentRect)));
 		}
 		//if(g2 == null) height = currentY + 6 - y;
 		//if(g2 == null) width = height;
@@ -309,15 +310,7 @@ public class Envelope implements Module {
 				amplitudeValues[index] = amplitudeIn.doubleValue();
 			}
 			String currentLine = in.readLine();
-			this.iType = null;
-			for(InterpolationType testType: InterpolationType.values()) {
-				if(currentLine == testType.toString()) {
-					this.iType = testType;
-				}
-			}
-			if(this.iType == null) {
-				System.out.println("Envelope.loadModuleInfo: Error reading from file: Unknown Type");
-			}
+			this.iType = InterpolationType.valueOf(currentLine);
 		} catch (Exception e) {
 			System.out.println("Envelope.loadModuleInfo: Error reading from file");
 		}

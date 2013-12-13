@@ -3,6 +3,11 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.EOFException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,6 +16,7 @@ import java.util.TreeMap;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JToolBar;
 
 import main.Module.Connector;
@@ -30,15 +36,10 @@ public class ModuleEditor extends JFrame {
 	private int masterInputHeight;
 	private MasterInput masterInput = null;
 	public static final int columnWidth = 150;
-	private ArrayList<Module> modules;
-	public HashMap<Integer, Integer> outputToInput = null;
-	public HashSet<Integer> inputs = null;
-	public HashSet<Integer> outputs = null;
-	public HashMap<Integer, Connector> connectorIDToConnector = null;
+	public TreeMap<Integer, Module> moduleIDToModule = null;
+	public TreeMap<Integer, Connector> connectorIDToConnector = null;
 	public Integer selectedOutput = null;
 	private JToolBar navigationBar = null;
-	private static int nextConnectorID = 0;
-	private static int nextModuleID = 0;
 	private static double[] left = null;
 	private static double[] right = null;
 	public final static double maxAmplitudeIn_dB = 20.0;
@@ -126,12 +127,22 @@ public class ModuleEditor extends JFrame {
 		parent.dftEditorFrame.ModuleDFT(left, right);
 	}
 	
+	public void save() {
+		String filename = ModuleFileTools.PromptForFileSave(view);
+		if(filename == null) return;
+		saveToFile(filename);
+	}
+	
+	public void open() {
+		String filename = ModuleFileTools.PromptForFileOpen(view);
+		if(filename == null) return;
+		loadFromFile(filename);
+		view.repaint();
+	}
+	
 	public ModuleEditor(MultiWindow parent) {
 		this.parent = parent;
-    	outputToInput = new HashMap <Integer, Integer>();
-    	inputs = new HashSet<Integer>();
-    	outputs = new HashSet<Integer>();
-    	connectorIDToConnector = new HashMap<Integer, Connector>();
+    	connectorIDToConnector = new TreeMap<Integer, Connector>();
         initModules();
         view = new ModuleView(this);
         view.setBackground(Color.black);
@@ -145,9 +156,10 @@ public class ModuleEditor extends JFrame {
 	}
 	
 	public void initModules() {
-		modules = new ArrayList<Module>();
-		masterInput = new MasterInput(this, 0, 0);
-		modules.add(masterInput);
+		moduleIDToModule = new TreeMap<Integer, Module>();
+		connectorIDToConnector = new TreeMap<Integer, Connector>();
+		moduleIDToModule.put(0, new MasterInput(this, 0, 0));
+		masterInput = (MasterInput) moduleIDToModule.get(0);
 		masterInputHeight = masterInput.getHeight();
 		addModuleToColumn(0, Module.ModuleType.ENVELOPE);
 		addModuleToColumn(0, Module.ModuleType.ENVELOPE);
@@ -167,70 +179,79 @@ public class ModuleEditor extends JFrame {
 	public void addModuleToColumn(int col, Module.ModuleType moduleType) {
 		int currentX = col * columnWidth;
 		int currentY = masterInputHeight;
-		for(Module loopModule: modules) {
+		for(Module loopModule: moduleIDToModule.values()) {
 			if(loopModule.getX() == currentX) {
 				if(loopModule.getY() + loopModule.getWidth() > currentY) {
 					currentY = loopModule.getY() + loopModule.getHeight();
 				}
 			}
 		}
+		addModuleAbsolute(currentX, currentY, moduleType);
+	}
+	
+	public void addModuleAbsolute(int currentX, int currentY, Module.ModuleType moduleType) {
+		Module module = null;
 		switch(moduleType) {
 		case BASICWAVEFORM:
-			modules.add(new BasicWaveform(this, currentX, currentY));
+			module = new BasicWaveform(this, currentX, currentY);
+			addModule(module);
 			break;
 		case ENVELOPE:
-			modules.add(new Envelope(this, currentX, currentY));
+			module = new Envelope(this, currentX, currentY);
+			addModule(module);
 			break;
 		case MASTERINPUT:
-			//modules.add(new MasterInput(this, currentX, currentY));
+			System.out.println("ModuleEditor.addModuleType: duplicate master input");
 			break;
 		case STEREOPAN:
-			modules.add(new StereoPan(this, currentX, currentY));
+			module = new StereoPan(this, currentX, currentY);
+			addModule(module);
 			break;			
 		}
+		System.out.println("ModuleEditor.addModuleType: unknown module type");
 	}
 	
-	public void addInput(Connector connector) {
-		if(connector.getConnectorType() != Module.ConnectorType.INPUT) {
-			System.out.println("ModuleEditor: Error: addInput invalid connector type");
-		} else {
-			inputs.add(connector.getConnectorID());
-			connectorIDToConnector.put(connector.getConnectorID(), connector);
-		}
+	public Integer addModule(Module module) {
+		int nextKey = moduleIDToModule.lastKey() + 1;
+		module.setModuleId(nextKey);
+		moduleIDToModule.put(nextKey, module);
+		return nextKey;
 	}
 	
-	public void addOutput(Connector connector) {
-		if(connector.getConnectorType() != Module.ConnectorType.OUTPUT) {
-			System.out.println("ModuleEditor: Error: addInput invalid connector type");
-		} else {
-			outputs.add(connector.getConnectorID());
-			connectorIDToConnector.put(connector.getConnectorID(), connector);
-		}
+	public Integer addConnector(Connector connector) {
+		int nextKey = 0;
+		if(!connectorIDToConnector.isEmpty()) nextKey = connectorIDToConnector.lastKey() + 1;
+		connector.setConnectorID(nextKey);
+		connectorIDToConnector.put(nextKey, connector);
+		return nextKey;
 	}
-	
+
 	public void handleConnectorSelect(Integer connectorID) {
 		if(selectedOutput == null) {
 			if(connectorIDToConnector.get(connectorID).getConnectorType() == ConnectorType.OUTPUT) {
-				if(outputToInput.containsKey(connectorID)) {
-					outputToInput.remove(connectorID);
-					Integer connectedTo = connectorIDToConnector.get(connectorID).getConnection();
+				Integer connectedTo = connectorIDToConnector.get(connectorID).getConnection();
+				if(connectedTo != null) {
 					connectorIDToConnector.get(connectorID).removeConnection();
 					connectorIDToConnector.get(connectedTo).removeConnection();
 					view.repaint();
-					return;
+				} else {
+					selectedOutput = connectorID;
 				}
-				selectedOutput = connectorID;
 			} else {
-				System.out.println("Module Editor: please select output first");
+				System.out.println("ModuleEditor.handleConnectorSelect: please select output first");
 			}
 		} else {
 			if(connectorIDToConnector.get(connectorID).getConnectorType() == ConnectorType.INPUT) {
-				outputToInput.put(selectedOutput, connectorID);
+				Integer connectedFrom = connectorIDToConnector.get(connectorID).getConnection();
+				if(connectedFrom != null) {
+					System.out.println("ModuleEditor.handleConnectorSelect: input already connected");
+					return;
+				}
 				connectorIDToConnector.get(selectedOutput).setConnection(connectorID);
 				connectorIDToConnector.get(connectorID).setConnection(selectedOutput);
 				selectedOutput = null;
 			} else {
-				System.out.println("Module Editor: please select input");
+				System.out.println("ModuleEditor.handleConnectorSelect: please select input");
 			}
 		}
 		view.repaint();
@@ -239,21 +260,76 @@ public class ModuleEditor extends JFrame {
 	public void refreshView() {
 		view.repaint();
 	}
-	
-	public static int getNextConnectorID() {
-		int currentConnectorID = nextConnectorID;
-		nextConnectorID++;
-		return currentConnectorID;
-	}
-	
-	public static int getNextModuleID() {
-		int currentModuleID = nextModuleID;
-		nextModuleID++;
-		return currentModuleID;
-	}
-	
+
 	public ArrayList<Module> getModules() {
-		return modules;
+		return new ArrayList<Module>(moduleIDToModule.values());
+	}
+	
+	public void saveToFile(String filename) {
+		try {
+			BufferedWriter out = new BufferedWriter(new FileWriter(filename));
+			for(Module module: getModules()) {
+				if(module instanceof MasterInput) continue;
+				out.write(module.getModuleType().toString());
+				out.newLine();
+				out.write(module.getX() + "");
+				out.newLine();
+				out.write(module.getY() + "");
+				out.newLine();
+				module.saveModuleInfo(out);
+			}
+			out.write("END MODULES");
+			out.newLine();
+			for(Connector connector: connectorIDToConnector.values()) {
+				if(connector.getConnection() == null) continue;
+				out.write(connector.getConnectorID() + "");
+				out.newLine();
+				out.write(connector.getConnection() + "");
+				out.newLine();
+			}
+			out.close();
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, "There was a problem saving the file");
+			return;
+		}
+		JOptionPane.showMessageDialog(this, "Finished Saving File");
+		this.setTitle(filename);
+	}
+	
+	public void loadFromFile(String filename) {
+		moduleIDToModule = new TreeMap<Integer, Module>();
+		connectorIDToConnector = new TreeMap<Integer, Connector>();
+		moduleIDToModule.put(0, new MasterInput(this, 0, 0));
+		masterInput = (MasterInput) moduleIDToModule.get(0);
+		masterInputHeight = masterInput.getHeight();
+		try {
+			BufferedReader in = new BufferedReader(new FileReader(filename));
+			String currentLine = in.readLine();
+			while(currentLine != "END MODULES") {
+				Module.ModuleType type = Module.ModuleType.valueOf(currentLine);
+				int x = new Integer(in.readLine());
+				int y = new Integer(in.readLine());
+				addModuleAbsolute(x, y, type);
+				moduleIDToModule.get(moduleIDToModule.lastKey()).loadModuleInfo(in);
+				currentLine = in.readLine();
+			}
+			while(true) {
+				currentLine = in.readLine();
+				if(currentLine.isEmpty()) break;
+				int connectorID = new Integer(currentLine);
+				int connectedID = new Integer(in.readLine());
+				connectorIDToConnector.get(connectorID).setConnection(connectedID);
+				System.out.println(connectorID + " " + connectedID);
+			}
+		} catch (Exception e) {
+			if(e instanceof EOFException) {
+				JOptionPane.showMessageDialog(this, "Reached End Of File");
+				this.setTitle(filename);
+			} else {
+				JOptionPane.showMessageDialog(this, "Error Reading File");
+			}
+		}
+		JOptionPane.showMessageDialog(this, "Finished Loading File");
 	}
 	
 }
