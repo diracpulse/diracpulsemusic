@@ -15,6 +15,7 @@ import javax.swing.JToolBar;
 
 import main.Module.Connector;
 import main.Module.ConnectorType;
+import main.Module.ModuleType;
 import main.modules.BasicWaveform;
 import main.modules.Envelope;
 import main.modules.MasterInput;
@@ -26,8 +27,10 @@ public class ModuleEditor extends JFrame {
 	public MultiWindow parent;
 	public ModuleView view;
 	public ModuleController controller;
-	private TreeMap<Integer, TreeMap<Integer, Module>> xToYToModule = null;
-	//public static Random randomGenerator = new Random();
+	private int masterInputHeight;
+	private MasterInput masterInput = null;
+	public static final int columnWidth = 150;
+	private ArrayList<Module> modules;
 	public HashMap<Integer, Integer> outputToInput = null;
 	public HashSet<Integer> inputs = null;
 	public HashSet<Integer> outputs = null;
@@ -45,18 +48,6 @@ public class ModuleEditor extends JFrame {
 	public final static double minFrequency = 0.001;
 	public final static double maxFrequency = SynthTools.sampleRate / 2.0;
 	
-	public class ModuleScreenInfo {
-		Rectangle dimensions;
-		Module module;
-		public ModuleScreenInfo(Rectangle dimensions, Module module) {
-			this.dimensions = dimensions;
-			this.module = module;
-		}
-		public boolean pointIsInside(int x, int y) {
-			return dimensions.contains(x, y);
-		}
-	}
-	
 	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);
 		button.addActionListener((ActionListener) controller);
@@ -68,6 +59,8 @@ public class ModuleEditor extends JFrame {
         // Create Navigation Buttons
         addNavigationButton("Play");
         addNavigationButton("DFT");
+        addNavigationButton("Load");
+        addNavigationButton("Save");
     	return navigationBar;
 	}
 	
@@ -79,7 +72,6 @@ public class ModuleEditor extends JFrame {
 				output.clearSamples();
 			}
 		}
-		MasterInput masterInput = (MasterInput) xToYToModule.get(0).get(0);
 		left = masterInput.getSamplesLeft();
 		right = masterInput.getSamplesRight();
 		if(left == null) left = new double[0];
@@ -153,53 +145,49 @@ public class ModuleEditor extends JFrame {
 	}
 	
 	public void initModules() {
-		int currentY = 0;
-		int currentX = 0;
-		int masterInputHeight = 0;
-		xToYToModule = new TreeMap<Integer, TreeMap<Integer, Module>>();
-		xToYToModule.put(currentX, new TreeMap<Integer, Module>());
-		xToYToModule.get(currentX).put(currentY, new MasterInput(this, currentX, currentY));
-		masterInputHeight = xToYToModule.get(0).get(0).getHeight();
-		currentY = masterInputHeight;
-		xToYToModule.get(currentX).put(currentY, new BasicWaveform(this, currentX, currentY));
-		currentY += xToYToModule.get(0).get(currentY).getHeight();
-		xToYToModule.get(currentX).put(currentY, new BasicWaveform(this, currentX, currentY));
-		currentX = xToYToModule.get(0).get(currentY).getWidth();
-		currentY = masterInputHeight;
-		xToYToModule.put(currentX, new TreeMap<Integer, Module>());
-		xToYToModule.get(currentX).put(currentY, new BasicWaveform(this, currentX, currentY));
-		currentY += xToYToModule.get(currentX).get(currentY).getHeight();
-		xToYToModule.get(currentX).put(currentY, new BasicWaveform(this, currentX, currentY));
-		currentX += xToYToModule.get(currentX).get(currentY).getWidth();
-		currentY = masterInputHeight;
-		xToYToModule.put(currentX, new TreeMap<Integer, Module>());
-		xToYToModule.get(currentX).put(currentY, new BasicWaveform(this, currentX, currentY));
-		currentY += xToYToModule.get(currentX).get(currentY).getHeight();
-		xToYToModule.get(currentX).put(currentY, new BasicWaveform(this, currentX, currentY));
-		currentX += xToYToModule.get(currentX).get(currentY).getWidth();
-		currentY = masterInputHeight;
-		xToYToModule.put(currentX, new TreeMap<Integer, Module>());
-		xToYToModule.get(currentX).put(currentY, new Envelope(this, currentX, currentY));
-		currentY += xToYToModule.get(currentX).get(currentY).getHeight();
-		xToYToModule.get(currentX).put(currentY, new Envelope(this, currentX, currentY));
-		currentX += xToYToModule.get(currentX).get(currentY).getWidth();
-		currentY = masterInputHeight;
-		xToYToModule.put(currentX, new TreeMap<Integer, Module>());
-		xToYToModule.get(currentX).put(currentY, new StereoPan(this, currentX, currentY));
-		currentY += xToYToModule.get(currentX).get(currentY).getHeight();
-		xToYToModule.get(currentX).put(currentY, new StereoPan(this, currentX, currentY));
+		modules = new ArrayList<Module>();
+		masterInput = new MasterInput(this, 0, 0);
+		modules.add(masterInput);
+		masterInputHeight = masterInput.getHeight();
+		addModuleToColumn(0, Module.ModuleType.ENVELOPE);
+		addModuleToColumn(0, Module.ModuleType.ENVELOPE);
+		addModuleToColumn(1, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(1, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(1, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(1, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(2, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(2, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(2, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(2, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(3, Module.ModuleType.STEREOPAN);
+		addModuleToColumn(3, Module.ModuleType.STEREOPAN);	
 		
 	}
 	
-	public ArrayList<ModuleScreenInfo> getModulesScreenInfo() {
-		ArrayList<ModuleScreenInfo> returnVal = new ArrayList<ModuleScreenInfo>();
-		for(Integer x: xToYToModule.keySet()) {
-			for(Integer y: xToYToModule.get(x).keySet()) {
-				Module currentModule = xToYToModule.get(x).get(y);
-				returnVal.add(new ModuleScreenInfo(new Rectangle(x, y, currentModule.getWidth(), currentModule.getHeight()),xToYToModule.get(x).get(y)));
+	public void addModuleToColumn(int col, Module.ModuleType moduleType) {
+		int currentX = col * columnWidth;
+		int currentY = masterInputHeight;
+		for(Module loopModule: modules) {
+			if(loopModule.getX() == currentX) {
+				if(loopModule.getY() + loopModule.getWidth() > currentY) {
+					currentY = loopModule.getY() + loopModule.getHeight();
+				}
 			}
 		}
-		return returnVal;
+		switch(moduleType) {
+		case BASICWAVEFORM:
+			modules.add(new BasicWaveform(this, currentX, currentY));
+			break;
+		case ENVELOPE:
+			modules.add(new Envelope(this, currentX, currentY));
+			break;
+		case MASTERINPUT:
+			//modules.add(new MasterInput(this, currentX, currentY));
+			break;
+		case STEREOPAN:
+			modules.add(new StereoPan(this, currentX, currentY));
+			break;			
+		}
 	}
 	
 	public void addInput(Connector connector) {
@@ -262,6 +250,10 @@ public class ModuleEditor extends JFrame {
 		int currentModuleID = nextModuleID;
 		nextModuleID++;
 		return currentModuleID;
+	}
+	
+	public ArrayList<Module> getModules() {
+		return modules;
 	}
 	
 }

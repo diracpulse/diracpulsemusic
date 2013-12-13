@@ -8,6 +8,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Stroke;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,7 +30,8 @@ public class MasterInput implements Module {
 	Integer moduleID = null;
 	int width = 1000;
 	int height = 200; // calculated by init
-	
+	int cornerX;
+	int cornerY;
 	ArrayList<Input> inputLeft;
 	ArrayList<Input> inputRight;
 	
@@ -42,11 +45,13 @@ public class MasterInput implements Module {
 	}
 	
 	public MasterInput(ModuleEditor parent, int x, int y) {
+		this.cornerX = x;
+		this.cornerY = y;
 		this.moduleID = ModuleEditor.getNextModuleID();
 		this.parent = parent;
 		inputLeft = new ArrayList<Input>();
 		inputRight = new ArrayList<Input>();
-		init(x, y);
+		init();
 		for(Input input: inputLeft) {
 			parent.addInput(input);
 		}
@@ -132,28 +137,28 @@ public class MasterInput implements Module {
 		}
 	}
 	
-	public void init(int x, int y) {
-		draw(null, x, y);
+	public void init() {
+		draw(null);
 	}
 	
-	public void draw(Graphics g, int x, int y) {
-		int currentX = x;
-		int currentY = y;
+	public void draw(Graphics g) {
+		int currentX = cornerX;
+		int currentY = cornerY;
 		Graphics2D g2 = null;
 		if(g != null) g2 = (Graphics2D) g;
 		if(g2 != null) g2.setColor(Color.GRAY);
 		if(g2 != null) g2.setStroke(new BasicStroke(2));
-		if(g2 != null) g2.drawRect(x, y, width, height);
+		if(g2 != null) g2.drawRect(cornerX, cornerY, width, height);
 		if(g2 != null) g2.setColor(Color.DARK_GRAY);
-		if(g2 != null) g2.fillRect(x, y, width, height);
+		if(g2 != null) g2.fillRect(cornerX, cornerY, width, height);
 		int fontSize = 12;
 		int yStep = fontSize + 6;
 		int xStep = yStep;
 		if(g2 != null) g2.setColor(Color.WHITE);
 		Font font = new Font(Font.SANS_SERIF, Font.BOLD, fontSize);
 		if(g2 != null) g2.setFont(font);
-		currentX = x + 4;
-		currentY = y + yStep;
+		currentX = cornerX + 4;
+		currentY = cornerY + yStep;
 		if(g2 != null) g2.drawString("Master Input", currentX, currentY);
 		if(g2 != null) g2.setColor(Color.BLACK);
 		currentY += yStep;
@@ -171,6 +176,40 @@ public class MasterInput implements Module {
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
 			if(g2 == null) inputRight.add(new Input(this, currentRect, ModuleEditor.getNextConnectorID()));
 		}
-		if(g2 == null) height = currentY + 6 - y;
+		if(g2 == null) height = currentY + 6 - cornerY;
 	}
+
+	@Override
+	public void loadModuleInfo(BufferedReader in) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void saveModuleInfo(BufferedWriter out) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public ModuleType getModuleType() {
+		return Module.ModuleType.MASTERINPUT;
+	}
+
+	@Override
+	public int getX() {
+		return cornerX;
+	}
+
+	@Override
+	public int getY() {
+		return cornerY;
+	}
+	
+	@Override
+	public boolean pointIsInside(int x, int y) {
+		Rectangle moduleBounds = new Rectangle(this.cornerX, this.cornerY, width, height);
+		return moduleBounds.contains(x, y);
+	}
+
 }

@@ -7,6 +7,10 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Stroke;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,6 +39,8 @@ public class BasicWaveform implements Module {
 	double amplitude = 1.0;
 	double freqInHz = 440.0;
 	double duration = ModuleEditor.maxDuration;
+	int cornerX;
+	int cornerY;
 	int width = 150; // should be >= value calculated by init
 	int height = 150; // calculated by init
 	WaveformType type = WaveformType.SINE;
@@ -81,13 +87,15 @@ public class BasicWaveform implements Module {
 	}
 	
 	public BasicWaveform(ModuleEditor parent, int x, int y) {
+		this.cornerX = x;
+		this.cornerY = y;
 		this.moduleID = ModuleEditor.getNextModuleID();
 		this.parent = parent;
 		outputs = new ArrayList<Output>();
 		inputADD = new ArrayList<Input>();
 		inputAM = new ArrayList<Input>();
 		inputFM = new ArrayList<Input>();
-		init(x, y);
+		init();
 		for(Output output: outputs) {
 			parent.addOutput(output);
 		}
@@ -327,28 +335,28 @@ public class BasicWaveform implements Module {
 		return returnVal;
 	}
 	
-	public void init(int x, int y) {
-		draw(null, x, y);
+	public void init() {
+		draw(null);
 	}
 	
-	public void draw(Graphics g, int x, int y) {
-		int currentX = x;
-		int currentY = y;
+	public void draw(Graphics g) {
+		int currentX = cornerX;
+		int currentY = cornerY;
 		Graphics2D g2 = null;
 		if(g != null) g2 = (Graphics2D) g;
 		if(g2 != null) g2.setColor(Color.GRAY);
 		if(g2 != null) g2.setStroke(new BasicStroke(2));
-		if(g2 != null) g2.drawRect(x, y, width, height);
+		if(g2 != null) g2.drawRect(cornerX, cornerY, width, height);
 		if(g2 != null) g2.setColor(Color.DARK_GRAY);
-		if(g2 != null) g2.fillRect(x, y, width, height);
+		if(g2 != null) g2.fillRect(cornerX, cornerY, width, height);
 		int fontSize = 12;
 		int yStep = fontSize + 6;
 		int xStep = yStep;
 		if(g2 != null) g2.setColor(Color.WHITE);
 		Font font = new Font(Font.SANS_SERIF, Font.BOLD, fontSize);
 		if(g2 != null) g2.setFont(font);
-		currentX = x + 4;
-		currentY = y + yStep;
+		currentX = cornerX + 4;
+		currentY = cornerY + yStep;
 		if(g2 != null) g2.drawString(type.toString(), currentX, currentY);
 		if(g2 == null) typeControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		if(g2 != null) g2.setColor(Color.GREEN);
@@ -390,5 +398,63 @@ public class BasicWaveform implements Module {
 		//if(g2 == null) height = currentY + 6 - y;
 		//if(g2 == null) width = height;
 		//System.out.println(width);
+	}
+
+	public void loadModuleInfo(BufferedReader in) {
+		try { 
+			String currentLine = in.readLine();
+			this.type = null;
+			for(WaveformType testType: WaveformType.values()) {
+				if(currentLine == testType.toString()) {
+					this.type = testType;
+				}
+			}
+			if(this.type == null) {
+				System.out.println("BasicWaveform.loadModuleInfo: Error reading from file: Unknown Type");
+			}
+			currentLine = in.readLine();
+			this.freqInHz = new Double(currentLine);
+			currentLine = in.readLine();
+			this.amplitude = new Double(currentLine);
+		} catch (Exception e) {
+			System.out.println("BasicWaveform.loadModuleInfo: Error reading from file");
+		}
+		
+	}
+
+	public void saveModuleInfo(BufferedWriter out) {
+		try { 
+			out.write(this.type.toString());
+			out.newLine();
+			out.write(new Double(freqInHz).toString());
+			out.newLine();		
+			out.write(new Double(amplitude).toString());
+			out.newLine();	
+		} catch (Exception e) {
+			System.out.println("BasicWaveform.loadModuleInfo: Error reading from file");
+		}
+		
+	}
+
+	@Override
+	public ModuleType getModuleType() {
+		// TODO Auto-generated method stub
+		return Module.ModuleType.BASICWAVEFORM;
+	}
+
+	@Override
+	public int getX() {
+		return cornerX;
+	}
+
+	@Override
+	public int getY() {
+		return cornerY;
+	}
+	
+	@Override
+	public boolean pointIsInside(int x, int y) {
+		Rectangle moduleBounds = new Rectangle(this.cornerX, this.cornerY, width, height);
+		return moduleBounds.contains(x, y);
 	}
 }
