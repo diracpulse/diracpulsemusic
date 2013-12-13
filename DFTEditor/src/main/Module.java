@@ -2,6 +2,10 @@ package main;
 
 import java.awt.Graphics;
 import java.awt.Rectangle;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.util.HashSet;
 
 public interface Module {
@@ -11,11 +15,24 @@ public interface Module {
 		OUTPUT,
 	}
 	
+	public enum ModuleType {
+		BASICWAVEFORM,
+		ENVELOPE,
+		MASTERINPUT,
+		STEREOPAN;
+	}
+	
 	abstract void mousePressed(int x, int y);
-	abstract void draw(Graphics g, int startX, int startY);
+	abstract boolean pointIsInside(int x, int y);
+	abstract void draw(Graphics g);
+	abstract int getX();
+	abstract int getY();
 	abstract int getWidth();
 	abstract int getHeight();
 	abstract Integer getModuleId();
+	abstract void loadModuleInfo(BufferedReader in);
+	abstract void saveModuleInfo(BufferedWriter out);
+	abstract ModuleType getModuleType();
 	
 	public interface Connector {
 		

@@ -6,9 +6,6 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 
-import main.ModuleEditor.ModuleScreenInfo;
-
-
 public class ModuleController implements MouseListener, MouseMotionListener, ActionListener {
 	
 	private int mouseX = 0;
@@ -37,10 +34,9 @@ public class ModuleController implements MouseListener, MouseMotionListener, Act
 		int x = e.getX();
 		int y = e.getY();
 		System.out.println("ModuleController: Mouse Clicked At: " + x + " " + y);
-		ArrayList<ModuleScreenInfo> moduleScreenInfoArray = parent.getModulesScreenInfo();
-		for(ModuleScreenInfo moduleScreenInfo: moduleScreenInfoArray) {
-			if(moduleScreenInfo.pointIsInside(x, y)) {
-				moduleScreenInfo.module.mousePressed(x, y);
+		for(Module module: parent.getModules()) {
+			if(module.pointIsInside(x, y)) {
+				module.mousePressed(x, y);
 				return;
 			}
 		}

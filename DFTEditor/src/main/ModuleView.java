@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import javax.swing.JComponent;
 
 import main.Module.Connector;
-import main.ModuleEditor.ModuleScreenInfo;
 
 
 public class ModuleView extends JComponent {
@@ -25,9 +24,9 @@ public class ModuleView extends JComponent {
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		Graphics2D g2 = (Graphics2D) g;
-		ArrayList<ModuleScreenInfo> moduleScreenInfoArray = parent.getModulesScreenInfo();
-		for(ModuleScreenInfo moduleScreenInfo: moduleScreenInfoArray) {
-			moduleScreenInfo.module.draw(g, moduleScreenInfo.dimensions.x, moduleScreenInfo.dimensions.y);
+		ArrayList<Module> modules = parent.getModules();
+		for(Module module: modules) {
+			module.draw(g);
 		}
 		for(int connectorID: parent.outputToInput.keySet()) {
 			int x0 = (int) Math.round(parent.connectorIDToConnector.get(connectorID).getSelectArea().getCenterX());
