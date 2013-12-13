@@ -34,15 +34,15 @@ public class StereoPan implements Module {
 	int cornerY;
 	String name = "Stereo Pan";
 	
-	ArrayList<Input> inputs;
-	ArrayList<Input> controls;
-	ArrayList<OutputLeft> outputsLeft;
-	ArrayList<OutputRight> outputsRight;
+	ArrayList<Integer> inputs;
+	ArrayList<Integer> controls;
+	ArrayList<Integer> outputsLeft;
+	ArrayList<Integer> outputsRight;
 	
 	private class Input extends Module.Input {
 
-		public Input(Module parent, Rectangle selectArea, Integer connectionID) {
-			super(parent, selectArea, connectionID);
+		public Input(Module parent, Rectangle selectArea) {
+			super(parent, selectArea);
 			// TODO Auto-generated constructor stub
 		}
 		
@@ -52,8 +52,8 @@ public class StereoPan implements Module {
 
 		private double[] calculatedSamples = null;
 		
-		public OutputLeft(Module parent, Rectangle selectArea, Integer connectionID) {
-			super(parent, selectArea, connectionID);
+		public OutputLeft(Module parent, Rectangle selectArea) {
+			super(parent, selectArea);
 			// TODO Auto-generated constructor stub
 		}
 
@@ -74,8 +74,8 @@ public class StereoPan implements Module {
 		private double[] calculatedSamples = null;
 
 
-		public OutputRight(Module parent, Rectangle selectArea, Integer connectionID) {
-			super(parent, selectArea, connectionID);
+		public OutputRight(Module parent, Rectangle selectArea) {
+			super(parent, selectArea);
 			// TODO Auto-generated constructor stub
 		}
 
@@ -94,25 +94,12 @@ public class StereoPan implements Module {
 	public StereoPan(ModuleEditor parent, int x, int y) {
 		this.cornerX = x;
 		this.cornerY = y;
-		this.moduleID = ModuleEditor.getNextModuleID();
 		this.parent = parent;
-		inputs = new ArrayList<Input>();
-		controls = new ArrayList<Input>();
-		outputsLeft = new ArrayList<OutputLeft>();
-		outputsRight = new ArrayList<OutputRight>();
+		inputs = new ArrayList<Integer>();
+		controls = new ArrayList<Integer>();
+		outputsLeft = new ArrayList<Integer>();
+		outputsRight = new ArrayList<Integer>();
 		init();
-		for(Input input: inputs) {
-			parent.addInput(input);
-		}
-		for(Input input: controls) {
-			parent.addInput(input);
-		}
-		for(Output output: outputsLeft) {
-			parent.addOutput(output);
-		}
-		for(Output output: outputsRight) {
-			parent.addOutput(output);
-		}
 	}
 	
 	public int getWidth() {
@@ -121,6 +108,10 @@ public class StereoPan implements Module {
 	
 	public int getHeight() {
 		return height;
+	}
+	
+	public void setModuleId(Integer id) {
+		this.moduleID = id;
 	}
 	
 	public Integer getModuleId() {
@@ -171,7 +162,7 @@ public class StereoPan implements Module {
 		return returnVal;
 	}
 	
-	public double[] getInputSum(ArrayList<Input> inputs, HashSet<Integer> waitingForModuleIDs) {
+	public double[] getInputSum(ArrayList<Integer> inputs, HashSet<Integer> waitingForModuleIDs) {
 		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
 			JOptionPane.showMessageDialog((JFrame) parent, "Infinite Loop");
@@ -180,7 +171,8 @@ public class StereoPan implements Module {
 		int numSamples = 0;
 		double[] returnVal = new double[0];
 		ArrayList<double[]> inputsArray = new ArrayList<double[]>();
-		for(Input input: inputs) {
+		for(Integer inputID: inputs) {
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Output output = (Output) parent.connectorIDToConnector.get(input.getConnection());
@@ -202,7 +194,8 @@ public class StereoPan implements Module {
 	
 	public void mousePressed(int x, int y) {
 		int index = 0;
-		for(Output output: outputsLeft) {
+		for(Integer outputID: outputsLeft) {
+			Output output = (Output) parent.connectorIDToConnector.get(outputID);
 			if(output.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(output.getConnectorID());
 				System.out.println(name + " " + "outputsLeft: " + index);
@@ -210,7 +203,8 @@ public class StereoPan implements Module {
 			index++;
 		}
 		index = 0;
-		for(Output output: outputsRight) {
+		for(Integer outputID: outputsRight) {
+			Output output = (Output) parent.connectorIDToConnector.get(outputID);
 			if(output.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(output.getConnectorID());
 				System.out.println(name + " outputsRight: " + index);
@@ -218,15 +212,17 @@ public class StereoPan implements Module {
 			index++;
 		}
 		index = 0;
-		for(Input inputVal: inputs) {
-			if(inputVal.getSelectArea().contains(x, y)) {
-				parent.handleConnectorSelect(inputVal.getConnectorID());
+		for(Integer inputID: inputs) {
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			if(input.getSelectArea().contains(x, y)) {
+				parent.handleConnectorSelect(input.getConnectorID());
 				System.out.println(name + " inputs: " + index);
 			}
 			index++;
 		}
 		index = 0;
-		for(Input control: controls) {
+		for(Integer controlID: controls) {
+			Input control = (Input) parent.connectorIDToConnector.get(controlID);
 			if(control.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(control.getConnectorID());
 				System.out.println(name + " controls: " + index);
@@ -264,7 +260,7 @@ public class StereoPan implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) outputsLeft.add(new OutputLeft(this, currentRect, ModuleEditor.getNextConnectorID()));
+			if(g2 == null) outputsLeft.add(parent.addConnector(new OutputLeft(this, currentRect)));
 		}
 		currentY += yStep;
 		if(g2 != null) g2.setColor(Color.RED);		
@@ -272,7 +268,7 @@ public class StereoPan implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) outputsRight.add(new OutputRight(this, currentRect, ModuleEditor.getNextConnectorID()));
+			if(g2 == null) outputsRight.add(parent.addConnector(new OutputRight(this, currentRect)));
 		}
 		currentY += yStep;
 		if(g2 != null) g2.setColor(Color.GREEN);		
@@ -280,7 +276,7 @@ public class StereoPan implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) controls.add(new Input(this, currentRect, ModuleEditor.getNextConnectorID()));
+			if(g2 == null) controls.add(parent.addConnector(new Input(this, currentRect)));
 		}
 		currentY += yStep;
 		if(g2 != null) g2.setColor(Color.YELLOW);		
@@ -288,7 +284,7 @@ public class StereoPan implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputs.add(new Input(this, currentRect, ModuleEditor.getNextConnectorID()));
+			if(g2 == null) inputs.add(parent.addConnector(new Input(this, currentRect)));
 		}
 		//if(g2 == null) height = currentY + 6 - y;
 	}

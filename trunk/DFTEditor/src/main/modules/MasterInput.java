@@ -32,13 +32,13 @@ public class MasterInput implements Module {
 	int height = 200; // calculated by init
 	int cornerX;
 	int cornerY;
-	ArrayList<Input> inputLeft;
-	ArrayList<Input> inputRight;
+	ArrayList<Integer> inputLeft;
+	ArrayList<Integer> inputRight;
 	
 	private class Input extends Module.Input {
 
-		public Input(Module parent, Rectangle selectArea, Integer connectionID) {
-			super(parent, selectArea, connectionID);
+		public Input(Module parent, Rectangle selectArea) {
+			super(parent, selectArea);
 			// TODO Auto-generated constructor stub
 		}
 		
@@ -47,17 +47,10 @@ public class MasterInput implements Module {
 	public MasterInput(ModuleEditor parent, int x, int y) {
 		this.cornerX = x;
 		this.cornerY = y;
-		this.moduleID = ModuleEditor.getNextModuleID();
 		this.parent = parent;
-		inputLeft = new ArrayList<Input>();
-		inputRight = new ArrayList<Input>();
+		inputLeft = new ArrayList<Integer>();
+		inputRight = new ArrayList<Integer>();
 		init();
-		for(Input input: inputLeft) {
-			parent.addInput(input);
-		}
-		for(Input input: inputRight) {
-			parent.addInput(input);
-		}
 	}
 	
 	public int getWidth() {
@@ -68,6 +61,10 @@ public class MasterInput implements Module {
 		return height;
 	}
 	
+	public void setModuleId(Integer id) {
+		this.moduleID = id;
+	}
+	
 	public Integer getModuleId() {
 		return moduleID;
 	}
@@ -76,7 +73,8 @@ public class MasterInput implements Module {
 		int numSamples = 0;
 		double[] leftOut = new double[0];
 		ArrayList<double[]> samplesLeftArray = new ArrayList<double[]>();
-		for(Input input: inputLeft) {
+		for(Integer inputID: inputLeft) {
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
 			if(input.getConnection() == null) continue;
 			Output output = (Output) parent.connectorIDToConnector.get(input.getConnection());
 			samplesLeftArray.add(output.getSamples(null));
@@ -99,7 +97,8 @@ public class MasterInput implements Module {
 		int numSamples = 0;
 		double[] rightOut = new double[0];
 		ArrayList<double[]> samplesRightArray = new ArrayList<double[]>();
-		for(Input input: inputRight) {
+		for(Integer inputID: inputRight) {
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
 			if(input.getConnection() == null) continue;
 			Output output = (Output) parent.connectorIDToConnector.get(input.getConnection());
 			samplesRightArray.add(output.getSamples(null));
@@ -120,17 +119,19 @@ public class MasterInput implements Module {
 
 	public void mousePressed(int x, int y) {
 		int index = 0;
-		for(Input inputLeftVal: inputLeft) {
-			if(inputLeftVal.getSelectArea().contains(x, y)) {
-				parent.handleConnectorSelect(inputLeftVal.getConnectorID());
+		for(Integer inputID: inputLeft) {
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			if(input.getSelectArea().contains(x, y)) {
+				parent.handleConnectorSelect(input.getConnectorID());
 				System.out.println("Master Input: inputLeft: " + index);
 			}
 			index++;
 		}
 		index = 0;
-		for(Input inputRightVal: inputRight) {
-			if(inputRightVal.getSelectArea().contains(x, y)) {
-				parent.handleConnectorSelect(inputRightVal.getConnectorID());
+		for(Integer inputID: inputRight) {
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			if(input.getSelectArea().contains(x, y)) {
+				parent.handleConnectorSelect(input.getConnectorID());
 				System.out.println("Master Input: inputRight: " + index);
 			}
 			index++;
@@ -166,7 +167,7 @@ public class MasterInput implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputLeft.add(new Input(this, currentRect, ModuleEditor.getNextConnectorID()));
+			if(g2 == null) inputLeft.add(parent.addConnector(new Input(this, currentRect)));
 		}
 		currentY += yStep;
 		if(g2 != null) g2.setColor(Color.RED);		
@@ -174,7 +175,7 @@ public class MasterInput implements Module {
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputRight.add(new Input(this, currentRect, ModuleEditor.getNextConnectorID()));
+			if(g2 == null) inputRight.add(parent.addConnector(new Input(this, currentRect)));
 		}
 		if(g2 == null) height = currentY + 6 - cornerY;
 	}
