@@ -294,7 +294,7 @@ public class Envelope implements Module {
 		}
 		//if(g2 == null) height = currentY + 6 - y;
 		//if(g2 == null) width = height;
-		System.out.println("env" + currentY);
+		//System.out.println("env" + currentY);
 	}
 
 	@Override
