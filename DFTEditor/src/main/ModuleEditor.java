@@ -279,13 +279,12 @@ public class ModuleEditor extends JFrame {
 				module.saveModuleInfo(out);
 			}
 			out.write("END MODULES");
-			out.newLine();
 			for(Connector connector: connectorIDToConnector.values()) {
 				if(connector.getConnection() == null) continue;
+				out.newLine();
 				out.write(connector.getConnectorID() + "");
 				out.newLine();
 				out.write(connector.getConnection() + "");
-				out.newLine();
 			}
 			out.close();
 		} catch (Exception e) {
@@ -305,7 +304,7 @@ public class ModuleEditor extends JFrame {
 		try {
 			BufferedReader in = new BufferedReader(new FileReader(filename));
 			String currentLine = in.readLine();
-			while(currentLine != "END MODULES") {
+			while(!currentLine.contains("END MODULES")) {
 				Module.ModuleType type = Module.ModuleType.valueOf(currentLine);
 				int x = new Integer(in.readLine());
 				int y = new Integer(in.readLine());
@@ -315,20 +314,17 @@ public class ModuleEditor extends JFrame {
 			}
 			while(true) {
 				currentLine = in.readLine();
-				if(currentLine.isEmpty()) break;
+				if(currentLine == null) break;
 				int connectorID = new Integer(currentLine);
 				int connectedID = new Integer(in.readLine());
 				connectorIDToConnector.get(connectorID).setConnection(connectedID);
 				System.out.println(connectorID + " " + connectedID);
 			}
 		} catch (Exception e) {
-			if(e instanceof EOFException) {
-				JOptionPane.showMessageDialog(this, "Reached End Of File");
-				this.setTitle(filename);
-			} else {
-				JOptionPane.showMessageDialog(this, "Error Reading File");
-			}
+			JOptionPane.showMessageDialog(this, e.toString());
+			return;
 		}
+		this.setTitle(filename);
 		JOptionPane.showMessageDialog(this, "Finished Loading File");
 	}
 	
