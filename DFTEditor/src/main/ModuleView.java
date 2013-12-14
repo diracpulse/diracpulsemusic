@@ -1,18 +1,25 @@
 package main;
 
 import java.awt.BasicStroke;
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 
 import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.Scrollable;
+import javax.swing.SwingConstants;
 
 import main.Module.Connector;
 import main.Module.ConnectorType;
 
 
-public class ModuleView extends JComponent {
+public class ModuleView extends JPanel {
 	
 	private static final long serialVersionUID = -443010057744196001L;
 
@@ -59,5 +66,4 @@ public class ModuleView extends JComponent {
 			g2.drawLine(x0, y0, x1, y1);
 		}
 	}
- 
 }

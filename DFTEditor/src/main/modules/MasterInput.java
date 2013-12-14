@@ -28,8 +28,8 @@ public class MasterInput implements Module {
 	
 	ModuleEditor parent = null;
 	Integer moduleID = null;
-	int width = 1000;
-	int height = 200; // calculated by init
+	int width = ModuleEditor.scrollableWidth;
+	int height = 0; // calculated by init
 	int cornerX;
 	int cornerY;
 	ArrayList<Integer> inputLeft;
