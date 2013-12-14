@@ -124,7 +124,7 @@ public class BasicWaveform implements Module {
 	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs) {
 		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
-			JOptionPane.showMessageDialog((JFrame) parent, "Infinite Loop");
+			JOptionPane.showMessageDialog(parent.getParentFrame(), "Infinite Loop");
 			return new double[0];
 		}
 		int numSamples = (int) Math.round(duration * SynthTools.sampleRate);
@@ -323,11 +323,11 @@ public class BasicWaveform implements Module {
 		try {
 			returnVal = new Double(inputValue);
 		} catch (NumberFormatException nfe) {
-			JOptionPane.showMessageDialog((JFrame) parent, "Could not parse string");
+			JOptionPane.showMessageDialog(parent.getParentFrame(), "Could not parse string");
 			return null;
 		}
 		if(returnVal < minBound || returnVal > maxBound) {
-			JOptionPane.showMessageDialog((JFrame) parent, "Input must be between: " + minBound + " and " + maxBound);
+			JOptionPane.showMessageDialog(parent.getParentFrame(), "Input must be between: " + minBound + " and " + maxBound);
 			return null;
 		}
 		return returnVal;

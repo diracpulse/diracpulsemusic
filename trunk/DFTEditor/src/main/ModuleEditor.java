@@ -1,6 +1,7 @@
 package main;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -15,8 +16,11 @@ import java.util.Random;
 import java.util.TreeMap;
 
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 
 import main.Module.Connector;
@@ -27,7 +31,7 @@ import main.modules.Envelope;
 import main.modules.MasterInput;
 import main.modules.StereoPan;
 
-public class ModuleEditor extends JFrame {
+public class ModuleEditor extends JPanel {
 
 	private static final long serialVersionUID = -6364925274198951658L;
 	public MultiWindow parent;
@@ -36,6 +40,8 @@ public class ModuleEditor extends JFrame {
 	private int masterInputHeight;
 	private MasterInput masterInput = null;
 	public static final int columnWidth = 150;
+	public static final int scrollableWidth = columnWidth * 16;
+	public static final int scrollableHeight = columnWidth * 8;
 	public TreeMap<Integer, Module> moduleIDToModule = null;
 	public TreeMap<Integer, Connector> connectorIDToConnector = null;
 	public Integer selectedOutput = null;
@@ -141,6 +147,7 @@ public class ModuleEditor extends JFrame {
 	}
 	
 	public ModuleEditor(MultiWindow parent) {
+		super(new BorderLayout());
 		this.parent = parent;
     	connectorIDToConnector = new TreeMap<Integer, Connector>();
         initModules();
@@ -150,9 +157,11 @@ public class ModuleEditor extends JFrame {
         add(createNavigationBar(), BorderLayout.PAGE_START);
         view.addMouseListener(controller);
         view.addMouseMotionListener(controller);
-        add(view);
-        setSize(1500, 800);
-        this.setTitle("ModuleEditor: [no project selected]");
+        view.setPreferredSize(new Dimension(scrollableWidth, scrollableHeight));
+        JScrollPane scrollPane = new JScrollPane(view);
+        scrollPane.setSize(800, 600);
+        add(scrollPane, BorderLayout.CENTER);
+        //this.setTitle("ModuleEditor: [no project selected]");
 	}
 	
 	public void initModules() {
@@ -257,6 +266,10 @@ public class ModuleEditor extends JFrame {
 		view.repaint();
 	}
 	
+	public JFrame getParentFrame() {
+		return parent.sequencerFrame;
+	}
+	
 	public void refreshView() {
 		view.repaint();
 	}
@@ -292,7 +305,7 @@ public class ModuleEditor extends JFrame {
 			return;
 		}
 		JOptionPane.showMessageDialog(this, "Finished Saving File");
-		this.setTitle(filename);
+		//this.setTitle(filename);
 	}
 	
 	public void loadFromFile(String filename) {
@@ -324,7 +337,7 @@ public class ModuleEditor extends JFrame {
 			JOptionPane.showMessageDialog(this, e.toString());
 			return;
 		}
-		this.setTitle(filename);
+		//this.setTitle(filename);
 		JOptionPane.showMessageDialog(this, "Finished Loading File");
 	}
 	

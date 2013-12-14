@@ -165,7 +165,7 @@ public class StereoPan implements Module {
 	public double[] getInputSum(ArrayList<Integer> inputs, HashSet<Integer> waitingForModuleIDs) {
 		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
-			JOptionPane.showMessageDialog((JFrame) parent, "Infinite Loop");
+			JOptionPane.showMessageDialog(parent.getParentFrame(), "Infinite Loop");
 			return new double[0];
 		}
 		int numSamples = 0;
