@@ -2,6 +2,7 @@ package main;
 import java.awt.Color;
 import java.awt.event.WindowAdapter;
 import java.util.ArrayList;
+import java.util.TreeMap;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -14,8 +15,34 @@ public class MultiWindow extends WindowAdapter {
 	//public GraphEditor graphEditorFrame;
 	//public FDEditor fdEditorFrame;
 	public JFrame sequencerFrame;
-	public ArrayList<ModuleEditor> moduleEditors = null;
+	public ArrayList<ModuleEditorInfo> moduleEditorInfo;
 	public Sequencer sequencer = null;
+	
+	public class ModuleEditorInfo {
+		
+		String name;
+		Color color;
+		ModuleEditor moduleEditor;
+		
+		ModuleEditorInfo(String name, Color color, ModuleEditor moduleEditor) {
+			this.name = name;
+			this.color = color;
+			this.moduleEditor = moduleEditor;
+		}
+		
+		public String getName() {
+			return name;
+		}
+		
+		public Color getColor() {
+			return color;
+		}
+		
+		public ModuleEditor getModuleEditor() {
+			return moduleEditor;
+		}
+		
+	}
 	
 	public MultiWindow() {
 		dftEditorFrame = new DFTEditor();
@@ -27,25 +54,26 @@ public class MultiWindow extends WindowAdapter {
 		sequencerFrame = new JFrame();
 		sequencerFrame.setLocation(100, 100);
 		JTabbedPane pane = new JTabbedPane();
+		moduleEditorInfo = new ArrayList<ModuleEditorInfo>();
+		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 1", Color.GRAY, new ModuleEditor(this)));
+		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 2", Color.RED, new ModuleEditor(this)));
+		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 3", Color.GREEN, new ModuleEditor(this)));
+		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 4", Color.BLUE, new ModuleEditor(this)));
+		moduleEditorInfo.add(new ModuleEditorInfo("Percussion 1", Color.YELLOW, new ModuleEditor(this)));
+		moduleEditorInfo.add(new ModuleEditorInfo("Percussion 2", Color.CYAN, new ModuleEditor(this)));
+		moduleEditorInfo.add(new ModuleEditorInfo("Percussion 3", Color.MAGENTA, new ModuleEditor(this)));
 		pane.add("Sequencer", (JComponent) new Sequencer(this));
-		pane.add("Tonal 1 (Red)", (JComponent) new ModuleEditor(this));
-		pane.add("Tonal 2 (Orange)", (JComponent) new ModuleEditor(this));
-		pane.add("Tonal 3 (Yellow)", (JComponent) new ModuleEditor(this));
-		pane.add("Tonal 4 (Green)", (JComponent) new ModuleEditor(this));		
-		pane.add("Percussion 1 (Cyan)", (JComponent) new ModuleEditor(this));
-		pane.add("Percussion 2 (Blue)", (JComponent) new ModuleEditor(this));		
-		pane.add("Percussion 3 (Purple)", (JComponent) new ModuleEditor(this));
-		pane.setBackgroundAt(0, Color.RED);
-		pane.setBackgroundAt(1, Color.ORANGE);
-		pane.setBackgroundAt(2, Color.YELLOW);
-		pane.setBackgroundAt(3, Color.GREEN);
-		pane.setBackgroundAt(4, Color.CYAN);
-		pane.setBackgroundAt(5, Color.BLUE);
-		pane.setBackgroundAt(6, new Color(1.0f, 0.0f, 1.0f));
-		pane.setForeground(Color.BLACK);
+		int index = 1;
+		for(ModuleEditorInfo info: moduleEditorInfo) {
+			pane.add(info.getName(), (JComponent) info.getModuleEditor());
+			pane.setBackgroundAt(index, info.color);
+			pane.setForeground(Color.BLACK);
+			index++;
+		}
 		sequencerFrame.add(pane);
 		sequencerFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		sequencerFrame.pack();
 		sequencerFrame.setVisible(true);
 	}
+	
 }

@@ -215,9 +215,10 @@ public class ModuleEditor extends JPanel {
 		case STEREOPAN:
 			module = new StereoPan(this, currentX, currentY);
 			addModule(module);
-			break;			
+			break;
+		default:
+			System.out.println("ModuleEditor.addModuleType: unknown module type");
 		}
-		System.out.println("ModuleEditor.addModuleType: unknown module type");
 	}
 	
 	public Integer addModule(Module module) {
