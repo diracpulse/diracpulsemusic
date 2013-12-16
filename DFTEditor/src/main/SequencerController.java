@@ -29,7 +29,7 @@ public class SequencerController implements MouseListener, MouseMotionListener, 
 	
 	@Override
 	public void actionPerformed(ActionEvent e) {
-        if ("Play".equals(e.getActionCommand())) return; //parent.play();
+        if ("Play".equals(e.getActionCommand())) parent.play();
         if ("DFT".equals(e.getActionCommand())) return; // parent.dft();
         if ("Save".equals(e.getActionCommand())) return; //parent.save();
         if ("Load".equals(e.getActionCommand())) return; //parent.open();
@@ -65,7 +65,7 @@ public class SequencerController implements MouseListener, MouseMotionListener, 
 		if(division < currentDivision) {
 			for(int divisionIndex = division; divisionIndex <= currentDivision; divisionIndex++) {
 				for(int time = divisionIndex * Sequencer.pixelsPerDivision; time < (divisionIndex + 1) * Sequencer.pixelsPerDivision; time++) {
-					parent.freqRatiosAtTime.get(currentModuleIndex)[time] = savedFreqRatios[time];
+					parent.freqRatiosAtTimeInPixels.get(currentModuleIndex)[time] = savedFreqRatios[time];
 				}
 			}
 			currentDivision = division;
@@ -82,9 +82,9 @@ public class SequencerController implements MouseListener, MouseMotionListener, 
 			double freqRatio = Math.pow(2.0, 1.0 * note / Sequencer.noteBase);
 			for(int time = divisionIndex * Sequencer.pixelsPerDivision; time < (divisionIndex + 1) * Sequencer.pixelsPerDivision; time++) {
 				if(erase) {
-					parent.freqRatiosAtTime.get(currentModuleIndex)[time] = -1.0;
+					parent.freqRatiosAtTimeInPixels.get(currentModuleIndex)[time] = -1.0;
 				} else {
-					parent.freqRatiosAtTime.get(currentModuleIndex)[time] = freqRatio;
+					parent.freqRatiosAtTimeInPixels.get(currentModuleIndex)[time] = freqRatio;
 				}
 			}
 			dNote += deltaNote;
@@ -128,12 +128,12 @@ public class SequencerController implements MouseListener, MouseMotionListener, 
 				}
 			}
 			double freqRatio = Math.pow(2.0, 1.0 * note / Sequencer.noteBase);
-			if((float) parent.freqRatiosAtTime.get(currentModuleIndex)[time] == (float) freqRatio) {
+			if((float) parent.freqRatiosAtTimeInPixels.get(currentModuleIndex)[time] == (float) freqRatio) {
 				erase = true;
 			} else {
 				erase = false;
 			}
-			double[] freqRatios = parent.freqRatiosAtTime.get(currentModuleIndex);
+			double[] freqRatios = parent.freqRatiosAtTimeInPixels.get(currentModuleIndex);
 			savedFreqRatios = new double[freqRatios.length];
 			for(int index = 0; index < savedFreqRatios.length; index++) {
 				savedFreqRatios[index] = freqRatios[index];
@@ -142,9 +142,8 @@ public class SequencerController implements MouseListener, MouseMotionListener, 
 			startNote = note;
 			currentDivision = division;
 			currentNote = note;
-			freqRatio = Math.pow(2.0, 1.0 * note / Sequencer.noteBase);
 			for(time = division * Sequencer.pixelsPerDivision; time < (division + 1) * Sequencer.pixelsPerDivision; time++) {
-				parent.freqRatiosAtTime.get(currentModuleIndex)[time] = freqRatio;
+				parent.freqRatiosAtTimeInPixels.get(currentModuleIndex)[time] = freqRatio;
 			}
 			parent.view.repaint();
 		} else {

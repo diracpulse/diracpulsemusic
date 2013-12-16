@@ -71,7 +71,7 @@ public class ModuleEditor extends JPanel {
     	return navigationBar;
 	}
 	
-	public void initLeftRight() {
+	public void initLeftRight(double[] control) {
 		for(Connector connector : connectorIDToConnector.values()) {
 			if(connector instanceof Module.Output) {
 				System.out.println("Output");
@@ -79,8 +79,8 @@ public class ModuleEditor extends JPanel {
 				output.clearSamples();
 			}
 		}
-		left = masterInput.getSamplesLeft();
-		right = masterInput.getSamplesRight();
+		left = masterInput.getSamplesLeft(control);
+		right = masterInput.getSamplesRight(control);
 		if(left == null) left = new double[0];
 		if(right == null) right = new double[0];
 		double[] paddedLeft;
@@ -122,14 +122,22 @@ public class ModuleEditor extends JPanel {
 		}
 	}
 	
+	public ArrayList<double[]> getSamples(double[] control) {
+		initLeftRight(control);
+		ArrayList<double[]> returnVal = new ArrayList<double[]>();
+		returnVal.add(left);
+		returnVal.add(right);
+		return returnVal;
+	}
+	
 	public void play() {
-		initLeftRight();
+		initLeftRight(null);
 		AudioPlayer ap = new AudioPlayer(left, right, 1.0);
 		ap.start();
 	}
 	
 	public void dft() {
-		initLeftRight();
+		initLeftRight(null);
 		parent.dftEditorFrame.ModuleDFT(left, right);
 	}
 	

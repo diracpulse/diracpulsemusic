@@ -41,7 +41,7 @@ public class Sequencer extends JPanel {
 	public static int scrollableWidth = totalPixels + SequencerUtils.digitWidth * leftDigits;
 	public static double secondsPerPixel = secondsPerBeat / pixelsPerBeat;
 	public static int scrollableHeight = (noteBase + 3) * noteHeight;
-	public ArrayList<double[]> freqRatiosAtTime;
+	public ArrayList<double[]> freqRatiosAtTimeInPixels;
 	public ArrayList<MultiWindow.ModuleEditorInfo> moduleInfo;
 	public int currentModuleIndex = 0;
 	
@@ -76,16 +76,50 @@ public class Sequencer extends JPanel {
         scrollPane = new JScrollPane(view);
         scrollPane.setSize(800, 600);
         add(scrollPane, BorderLayout.CENTER);
-        freqRatiosAtTime = new ArrayList<double[]>();
+        freqRatiosAtTimeInPixels = new ArrayList<double[]>();
         moduleInfo = new ArrayList<MultiWindow.ModuleEditorInfo>();
         for(MultiWindow.ModuleEditorInfo info: parent.moduleEditorInfo) {
-        	freqRatiosAtTime.add(new double[maxBeats * pixelsPerBeat]);
-        	double[] freqRatioAtTime = freqRatiosAtTime.get(freqRatiosAtTime.size() - 1);
+        	freqRatiosAtTimeInPixels.add(new double[maxBeats * pixelsPerBeat]);
+        	double[] freqRatioAtTime = freqRatiosAtTimeInPixels.get(freqRatiosAtTimeInPixels.size() - 1);
         	for(int time = 0; time < freqRatioAtTime.length; time++) {
         		freqRatioAtTime[time] = -1.0;
         	}
         	moduleInfo.add(info);
         }
+    }
+    
+    public void play() {
+    	double samplesPerPixel = (secondsPerBeat / pixelsPerBeat) * SynthTools.sampleRate;
+    	int numSamples = (int) Math.round(samplesPerPixel * pixelsPerBeat * maxBeats);
+    	double[] leftSamples = new double[numSamples];
+    	double[] rightSamples = new double[numSamples];
+    	for(int sample = 0; sample < numSamples; sample++) {
+    		leftSamples[sample] = 0.0;
+    		rightSamples[sample] = 0.0;
+    	}
+    	for(int moduleIndex = 0; moduleIndex < parent.moduleEditorInfo.size(); moduleIndex++) {
+    		double[] controlSamples = new double[numSamples];
+    		double[] controlPixels = freqRatiosAtTimeInPixels.get(moduleIndex);
+	    	for(int pixel = 0; pixel < pixelsPerBeat * maxBeats - 1; pixel++) {
+	    		int startSample = (int) Math.round(pixel * samplesPerPixel);
+	    		int endSample = (int) Math.round((pixel + 1) * samplesPerPixel);
+	    		double controlVal = controlPixels[pixel];
+	    		if(controlVal > 0.0 && controlVal < 1.0) controlVal = 1.0; // percussion
+	    		for(int sample = startSample; sample < endSample; sample++) {
+	    			if(sample >= numSamples) break;
+	    			controlSamples[sample] = controlVal;
+	    		}
+	    	}
+	    	double[] leftOut = parent.moduleEditorInfo.get(moduleIndex).getModuleEditor().getSamples(controlSamples).get(0);
+	    	double[] rightOut = parent.moduleEditorInfo.get(moduleIndex).getModuleEditor().getSamples(controlSamples).get(1);
+	    	if(leftOut == null || rightOut == null) continue; 
+	    	for(int sample = 0; sample < numSamples; sample++) {
+	    		if(sample < leftOut.length) leftSamples[sample] += leftOut[sample];
+	    		if(sample < rightOut.length) rightSamples[sample] += rightOut[sample];
+	    	}
+    	}
+    	AudioPlayer ap = new AudioPlayer(leftSamples, rightSamples, 1.0);
+		ap.start();
     }
 
 }

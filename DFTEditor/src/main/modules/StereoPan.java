@@ -58,9 +58,9 @@ public class StereoPan implements Module {
 		}
 
 		@Override
-		public double[] getSamples(HashSet<Integer> waitingForModuleIDs) {
+		public double[] getSamples(HashSet<Integer> waitingForModuleIDs, double[] control) {
 			if(calculatedSamples != null) return calculatedSamples;
-			calculatedSamples = getSamplesLeft(waitingForModuleIDs);
+			calculatedSamples = getSamplesLeft(waitingForModuleIDs, control);
 			return calculatedSamples;
 		}
 		
@@ -80,9 +80,9 @@ public class StereoPan implements Module {
 		}
 
 		@Override
-		public double[] getSamples(HashSet<Integer> waitingForModuleIDs) {
+		public double[] getSamples(HashSet<Integer> waitingForModuleIDs, double[] control) {
 			if(calculatedSamples != null) return calculatedSamples;
-			calculatedSamples = getSamplesRight(waitingForModuleIDs);
+			calculatedSamples = getSamplesRight(waitingForModuleIDs, control);
 			return calculatedSamples;
 		}
 		
@@ -118,9 +118,9 @@ public class StereoPan implements Module {
 		return moduleID;
 	}
 	
-	public double[] getSamplesLeft(HashSet<Integer> waitingForModuleIDs) {
-		double[] inputArray = getInputSum(inputs, waitingForModuleIDs);
-		double[] controlsArray = getInputSum(controls, waitingForModuleIDs);
+	public double[] getSamplesLeft(HashSet<Integer> waitingForModuleIDs, double[] control) {
+		double[] inputArray = getInputSum(inputs, waitingForModuleIDs, control);
+		double[] controlsArray = getInputSum(controls, waitingForModuleIDs, control);
 		double[] returnVal = new double[inputArray.length];
 		for(int index = 0; index < inputArray.length; index++) {
 			if(index >= controlsArray.length) {
@@ -140,9 +140,9 @@ public class StereoPan implements Module {
 		return returnVal;
 	}
 	
-	public double[] getSamplesRight(HashSet<Integer> waitingForModuleIDs) {
-		double[] inputArray = getInputSum(inputs, waitingForModuleIDs);
-		double[] controlsArray = getInputSum(controls, waitingForModuleIDs);
+	public double[] getSamplesRight(HashSet<Integer> waitingForModuleIDs, double[] control) {
+		double[] inputArray = getInputSum(inputs, waitingForModuleIDs, control);
+		double[] controlsArray = getInputSum(controls, waitingForModuleIDs, control);
 		double[] returnVal = new double[inputArray.length];
 		for(int index = 0; index < inputArray.length; index++) {
 			if(index >= controlsArray.length) {
@@ -162,7 +162,7 @@ public class StereoPan implements Module {
 		return returnVal;
 	}
 	
-	public double[] getInputSum(ArrayList<Integer> inputs, HashSet<Integer> waitingForModuleIDs) {
+	public double[] getInputSum(ArrayList<Integer> inputs, HashSet<Integer> waitingForModuleIDs, double[] control) {
 		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
 			JOptionPane.showMessageDialog(parent.getParentFrame(), "Infinite Loop");
@@ -176,7 +176,7 @@ public class StereoPan implements Module {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Output output = (Output) parent.connectorIDToConnector.get(input.getConnection());
-			inputsArray.add(output.getSamples(waitingForModuleIDs));
+			inputsArray.add(output.getSamples(waitingForModuleIDs, control));
 		}
 		if(inputsArray.isEmpty()) return returnVal;
 		for(double[] inputsLeftIn: inputsArray) {
