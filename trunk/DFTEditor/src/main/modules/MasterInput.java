@@ -69,7 +69,7 @@ public class MasterInput implements Module {
 		return moduleID;
 	}
 	
-	public double[] getSamplesLeft() {
+	public double[] getSamplesLeft(double[] control) {
 		int numSamples = 0;
 		double[] leftOut = new double[0];
 		ArrayList<double[]> samplesLeftArray = new ArrayList<double[]>();
@@ -77,7 +77,7 @@ public class MasterInput implements Module {
 			Input input = (Input) parent.connectorIDToConnector.get(inputID);
 			if(input.getConnection() == null) continue;
 			Output output = (Output) parent.connectorIDToConnector.get(input.getConnection());
-			samplesLeftArray.add(output.getSamples(null));
+			samplesLeftArray.add(output.getSamples(null, control));
 		}
 		if(samplesLeftArray.isEmpty()) return leftOut;
 		for(double[] samplesLeftIn: samplesLeftArray) {
@@ -93,7 +93,7 @@ public class MasterInput implements Module {
 		return leftOut;
 	}
 	
-	public double[] getSamplesRight() {
+	public double[] getSamplesRight(double[] control) {
 		int numSamples = 0;
 		double[] rightOut = new double[0];
 		ArrayList<double[]> samplesRightArray = new ArrayList<double[]>();
@@ -101,7 +101,7 @@ public class MasterInput implements Module {
 			Input input = (Input) parent.connectorIDToConnector.get(inputID);
 			if(input.getConnection() == null) continue;
 			Output output = (Output) parent.connectorIDToConnector.get(input.getConnection());
-			samplesRightArray.add(output.getSamples(null));
+			samplesRightArray.add(output.getSamples(null, control));
 		}
 		if(samplesRightArray.isEmpty()) return rightOut;
 		for(double[] samplesRightIn: samplesRightArray) {

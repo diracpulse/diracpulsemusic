@@ -92,7 +92,7 @@ public interface Module {
 			return parent;
 		}
 		
-		public abstract double[] getSamples(HashSet<Integer> waitingForModuleIDs);
+		public abstract double[] getSamples(HashSet<Integer> waitingForModuleIDs, double[] control);
 		
 		public abstract void clearSamples();
 		

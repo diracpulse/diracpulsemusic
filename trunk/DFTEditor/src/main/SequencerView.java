@@ -68,7 +68,7 @@ public class SequencerView extends JPanel {
 	public void drawSequencerData(Graphics g) {
 		int yOffset = (Sequencer.noteHeight - SequencerUtils.digitHeight) / 2;
 		int index = 0;
-		for(double[] freqRatio: parent.freqRatiosAtTime) {
+		for(double[] freqRatio: parent.freqRatiosAtTimeInPixels) {
 			g.setColor(parent.moduleInfo.get(index).getColor());
 			for(int time = 0; time < parent.totalPixels; time++) {
 				if(freqRatio[time] >= 0.0) {
