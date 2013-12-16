@@ -55,10 +55,10 @@ public class MultiWindow extends WindowAdapter {
 		sequencerFrame.setLocation(100, 100);
 		JTabbedPane pane = new JTabbedPane();
 		moduleEditorInfo = new ArrayList<ModuleEditorInfo>();
-		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 1", Color.GRAY, new ModuleEditor(this)));
-		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 2", Color.RED, new ModuleEditor(this)));
-		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 3", Color.GREEN, new ModuleEditor(this)));
-		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 4", Color.BLUE, new ModuleEditor(this)));
+		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 1", new Color(255, 255, 255, 128), new ModuleEditor(this)));
+		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 2", new Color(255, 0, 0, 128), new ModuleEditor(this)));
+		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 3", new Color(0, 255, 0, 128), new ModuleEditor(this)));
+		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 4", new Color(0, 0, 255, 128), new ModuleEditor(this)));
 		moduleEditorInfo.add(new ModuleEditorInfo("Percussion 1", Color.YELLOW, new ModuleEditor(this)));
 		moduleEditorInfo.add(new ModuleEditorInfo("Percussion 2", Color.CYAN, new ModuleEditor(this)));
 		moduleEditorInfo.add(new ModuleEditorInfo("Percussion 3", Color.MAGENTA, new ModuleEditor(this)));
