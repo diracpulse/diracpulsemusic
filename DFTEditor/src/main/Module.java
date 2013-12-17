@@ -19,7 +19,8 @@ public interface Module {
 		BASICWAVEFORM,
 		ENVELOPE,
 		MASTERINPUT,
-		STEREOPAN;
+		STEREOPAN,
+		SELFMODULATOR;
 	}
 	
 	abstract void mousePressed(int x, int y);

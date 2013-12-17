@@ -29,6 +29,7 @@ import main.Module.ModuleType;
 import main.modules.BasicWaveform;
 import main.modules.Envelope;
 import main.modules.MasterInput;
+import main.modules.SelfModulator;
 import main.modules.StereoPan;
 
 public class ModuleEditor extends JPanel {
@@ -188,9 +189,10 @@ public class ModuleEditor extends JPanel {
 		addModuleToColumn(2, Module.ModuleType.BASICWAVEFORM);
 		addModuleToColumn(2, Module.ModuleType.BASICWAVEFORM);
 		addModuleToColumn(2, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(3, Module.ModuleType.SELFMODULATOR);
+		addModuleToColumn(3, Module.ModuleType.SELFMODULATOR);	
 		addModuleToColumn(3, Module.ModuleType.STEREOPAN);
 		addModuleToColumn(3, Module.ModuleType.STEREOPAN);	
-		
 	}
 	
 	public void addModuleToColumn(int col, Module.ModuleType moduleType) {
@@ -222,6 +224,10 @@ public class ModuleEditor extends JPanel {
 			break;
 		case STEREOPAN:
 			module = new StereoPan(this, currentX, currentY);
+			addModule(module);
+			break;
+		case SELFMODULATOR:
+			module = new SelfModulator(this, currentX, currentY);
 			addModule(module);
 			break;
 		default:
