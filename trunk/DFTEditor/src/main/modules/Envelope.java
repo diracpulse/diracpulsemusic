@@ -352,11 +352,12 @@ public class Envelope implements Module {
 		if(g2 == null) interpolationControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		if(g2 != null) g2.setColor(Color.YELLOW);
 		currentY += yStep;
-		if(g2 != null) g2.drawString("TRIG: ", currentX, currentY);
+		if(g2 != null) g2.setColor(Color.BLUE);		
+		if(g2 != null) g2.drawString("OUT: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) triggers.add(parent.addConnector(new Input(this, currentRect)));
+			if(g2 == null) outputs.add(parent.addConnector(new Output(this, currentRect)));
 		}
 		currentY += yStep;
 		if(g2 != null) g2.setColor(Color.BLUE);		

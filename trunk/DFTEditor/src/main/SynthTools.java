@@ -213,7 +213,6 @@ public class SynthTools {
 		}
 		// END: Apply A Weighting
 		*/
-		/*
 		createHarmonics(channel, timeToFreqToData, amplitudeToTimeAndFreq, numTimes, numFreqs);
 		// START: Remove Harmonic Fragments
 		ArrayList<Long> harmonicIDsToRemove = new ArrayList<Long>();
@@ -250,8 +249,6 @@ public class SynthTools {
 		Filter.applyCriticalBandFiltering(channel, timeToFreqToData, amplitudeToTimeAndFreq);
 		createHarmonics(channel, timeToFreqToData, amplitudeToTimeAndFreq, numTimes, numFreqs);
 		// END: Refilter Data Based on Harmonic Length
-		*/
-		createHarmonics(channel, timeToFreqToData, amplitudeToTimeAndFreq, numTimes, numFreqs);
 		Filter.calculateRandomness(channel);
 	}
 	
