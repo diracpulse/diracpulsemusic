@@ -38,6 +38,7 @@ public class BasicWaveform implements Module {
 	Integer moduleID = null;
 	double amplitude = 1.0;
 	double freqInHz = 440.0;
+	double minFreqInHzNoControl = 20.0;
 	double duration = ModuleEditor.maxDuration;
 	int cornerX;
 	int cornerY;
@@ -127,11 +128,24 @@ public class BasicWaveform implements Module {
 			JOptionPane.showMessageDialog(parent.getParentFrame(), "Infinite Loop");
 			return new double[0];
 		}
-		double[] innerControl = controlIn;
+		double[] innerControl = null;
 		if(controlIn == null) {
 			innerControl = new double[(int) Math.round(duration * SynthTools.sampleRate)];
 			for(int index = 0; index < innerControl.length; index++) {
 				innerControl[index] = 1.0;
+			}
+		} else {
+			if(freqInHz < minFreqInHzNoControl) {
+				innerControl = new double[(int) Math.round(duration * SynthTools.sampleRate)];
+				for(int index = 0; index < innerControl.length; index++) {
+					if(controlIn[index] < 0.0) {
+						innerControl[index] = controlIn[index];
+					} else {
+						innerControl[index] = 1.0;
+					}
+				}
+			} else {
+				innerControl = controlIn;
 			}
 		}
 		int numSamples = innerControl.length;
