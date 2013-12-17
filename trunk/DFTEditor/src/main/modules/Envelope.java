@@ -13,6 +13,7 @@ import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.TreeMap;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -133,56 +134,72 @@ public class Envelope implements Module {
 			for(int index = 0; index < returnVal.length; index++) {
 				returnVal[index] = 0.0;
 			}
-			double[] samples = new double[0];
+			TreeMap<Integer, Integer> startToEnd = new TreeMap<Integer, Integer>();
 			int controlIndex = 0;
-			while(controlIndex < control.length) {
-				if(control[controlIndex] < 0) {
+			while(true) {
+				while(control[controlIndex] < 0.0) {
 					controlIndex++;
-					continue;
+					if(controlIndex == control.length) break;
 				}
-				int sampleOffset = controlIndex;
-				double currentTimeOffset = 0.0;
-				ArrayList<Interpolate.TAPair> TAPairs = new ArrayList<Interpolate.TAPair>();
-				TAPairs.add(new Interpolate.TAPair(currentTimeOffset, 0.0));
-				for(int index = 0; index < numPoints - 2; index++) {
-					currentTimeOffset += timeValuesInMillis[index] / 1000.0;
-					TAPairs.add(new Interpolate.TAPair(currentTimeOffset, amplitudeValues[index]));
-				}
-				currentTimeOffset = TAPairs.get(TAPairs.size() - 1).getTimeInSamples() ;
-				controlIndex = (int) Math.round(currentTimeOffset * SynthTools.sampleRate) + sampleOffset;
-				if(controlIndex >= control.length) return returnVal;
-				if(timeValuesInMillis[numPoints - 2] == 0.0) {
-					// NO SUSTAIN
-					TAPairs.add(new Interpolate.TAPair(currentTimeOffset + timeValuesInMillis[numPoints - 1] / 1000.0, 0.0));
-					controlIndex = (int) Math.round(currentTimeOffset * SynthTools.sampleRate) + sampleOffset;
-					if(controlIndex >= control.length) return returnVal;
-					if(iType == InterpolationType.LINEAR) samples = Interpolate.synthTAPairsLinear(TAPairs);
-					if(iType == InterpolationType.LOGLINEAR) samples = Interpolate.synthTAPairsLog(TAPairs);
-					for(int index = 0; index < samples.length; index++) {
-						returnVal[sampleOffset + index] = samples[index];
-					}
-					continue;
-				}
-				while(control[controlIndex] > 0.0) {
+				if(controlIndex == control.length) break;
+				int start = controlIndex;
+				double freqRatio = control[controlIndex];
+				while(control[controlIndex] == freqRatio) {
 					controlIndex++;
-					if(controlIndex == control.length) return returnVal;
+					if(controlIndex == control.length) break;
 				}
-				int sustainTime = controlIndex - sampleOffset;
-				double sustainInSeconds = sustainTime / SynthTools.sampleRate;
-				currentTimeOffset += sustainInSeconds;
-				TAPairs.add(new Interpolate.TAPair(currentTimeOffset, amplitudeValues[numPoints - 1]));
-				TAPairs.add(new Interpolate.TAPair(currentTimeOffset + timeValuesInMillis[numPoints - 1] / 1000.0, 0.0));
-				if(TAPairs.get(TAPairs.size() - 1).getTimeInSamples() + sampleOffset >= controlIndex) return returnVal;
-				if(iType == InterpolationType.LINEAR) samples = Interpolate.synthTAPairsLinear(TAPairs);
-				if(iType == InterpolationType.LOGLINEAR) samples = Interpolate.synthTAPairsLog(TAPairs);
-				for(int index = 0; index < samples.length; index++) {
-					returnVal[sampleOffset + index] = samples[index];
+				if(controlIndex == control.length) {
+					startToEnd.put(start, controlIndex - 1);
+					break;
 				}
-				controlIndex = sampleOffset + samples.length;
+				startToEnd.put(start, controlIndex);
 			}
-			System.out.println("Envelope X:" +  returnVal.length);
+			if(startToEnd.isEmpty()) return returnVal;
+			for(int start: startToEnd.keySet()) {
+				double[] envelope = synthSingleEnvelope(startToEnd.get(start) - start);
+				if(envelope == null) continue;
+				for(int index = 0; index < envelope.length; index++) {
+					int returnIndex = start + index;
+					if(returnIndex == returnVal.length) return returnVal;
+					returnVal[returnIndex] += envelope[index];
+				}
+			}
 			return returnVal;
 		}
+	}
+	
+	public double[] synthSingleEnvelope(int length) {
+		double envelopeLengthWithoutDecay = length / SynthTools.sampleRate - timeValuesInMillis[numPoints - 1] / 1000.0;
+		if(envelopeLengthWithoutDecay <= 0.0) return getDefaultEnvelope(length);
+		double currentTimeOffset = 0.0;
+		ArrayList<Interpolate.TAPair> TAPairs = new ArrayList<Interpolate.TAPair>();
+		TAPairs.add(new Interpolate.TAPair(currentTimeOffset, 0.0));
+		for(int index = 0; index < numPoints - 2; index++) {
+			currentTimeOffset += timeValuesInMillis[index] / 1000.0;
+			TAPairs.add(new Interpolate.TAPair(currentTimeOffset, amplitudeValues[index]));
+		}
+		currentTimeOffset = TAPairs.get(TAPairs.size() - 1).getTimeInSeconds();
+		if(currentTimeOffset > envelopeLengthWithoutDecay) return getDefaultEnvelope(length);
+		if(timeValuesInMillis[numPoints - 2] == 0.0) {
+			// NO SUSTAIN
+			TAPairs.add(new Interpolate.TAPair(currentTimeOffset + timeValuesInMillis[numPoints - 1] / 1000.0, 0.0));
+		} else {
+			// SUSTAIN
+			TAPairs.add(new Interpolate.TAPair(envelopeLengthWithoutDecay, amplitudeValues[numPoints - 1]));
+			TAPairs.add(new Interpolate.TAPair(envelopeLengthWithoutDecay + timeValuesInMillis[numPoints - 1] / 1000.0, 0.0));
+		}
+		if(iType == InterpolationType.LINEAR) return Interpolate.synthTAPairsLinear(TAPairs);
+		if(iType == InterpolationType.LOGLINEAR) return Interpolate.synthTAPairsLog(TAPairs);
+		return null;
+	}
+	
+	public double[] getDefaultEnvelope(int length) {
+		double envelopeLength = length / SynthTools.sampleRate;
+		ArrayList<Interpolate.TAPair> TAPairs = new ArrayList<Interpolate.TAPair>();
+		TAPairs.add(new Interpolate.TAPair(0.0, 0.0));
+		TAPairs.add(new Interpolate.TAPair(envelopeLength / 2.0, amplitudeValues[0]));
+		TAPairs.add(new Interpolate.TAPair(envelopeLength, 0.0));
+		return Interpolate.synthTAPairsLinear(TAPairs);
 	}
 	
 	public void mousePressed(int x, int y) {

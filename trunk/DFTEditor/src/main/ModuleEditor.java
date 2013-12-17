@@ -74,7 +74,7 @@ public class ModuleEditor extends JPanel {
 	public void initLeftRight(double[] control) {
 		for(Connector connector : connectorIDToConnector.values()) {
 			if(connector instanceof Module.Output) {
-				System.out.println("Output");
+				//System.out.println("Output");
 				Module.Output output = (Module.Output) connector;
 				output.clearSamples();
 			}
@@ -106,7 +106,7 @@ public class ModuleEditor extends JPanel {
 			left = paddedLeft;
 		}
 		if(left.length == 0) {
-			System.out.println("ModuleEditor.dft(): no signal");
+			//System.out.println("ModuleEditor.dft(): no signal");
 			return;
 		}
 		double maxAmplitude = 0.0;
