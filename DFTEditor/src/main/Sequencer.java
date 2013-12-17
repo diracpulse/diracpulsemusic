@@ -44,6 +44,8 @@ public class Sequencer extends JPanel {
 	public ArrayList<double[]> freqRatiosAtTimeInPixels;
 	public ArrayList<MultiWindow.ModuleEditorInfo> moduleInfo;
 	public int currentModuleIndex = 0;
+	double[] leftSamples = null;
+	double[] rightSamples = null;
 	
 	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);
@@ -88,11 +90,12 @@ public class Sequencer extends JPanel {
         }
     }
     
-    public void play() {
+    
+    public void initLeftRight() {
     	double samplesPerPixel = (secondsPerBeat / pixelsPerBeat) * SynthTools.sampleRate;
     	int numSamples = (int) Math.round(samplesPerPixel * pixelsPerBeat * maxBeats);
-    	double[] leftSamples = new double[numSamples];
-    	double[] rightSamples = new double[numSamples];
+    	leftSamples = new double[numSamples];
+    	rightSamples = new double[numSamples];
     	for(int sample = 0; sample < numSamples; sample++) {
     		leftSamples[sample] = 0.0;
     		rightSamples[sample] = 0.0;
@@ -118,8 +121,17 @@ public class Sequencer extends JPanel {
 	    		if(sample < rightOut.length) rightSamples[sample] += rightOut[sample];
 	    	}
     	}
+    }
+    
+    public void play() {
+    	initLeftRight();
     	AudioPlayer ap = new AudioPlayer(leftSamples, rightSamples, 1.0);
 		ap.start();
     }
-
+    
+	public void dft() {
+		initLeftRight();
+		parent.dftEditorFrame.ModuleDFT(leftSamples, rightSamples);
+	}
+    
 }

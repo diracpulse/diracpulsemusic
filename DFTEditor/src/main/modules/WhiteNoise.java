@@ -6,26 +6,20 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.Stroke;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.DataInputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-import main.FDData;
 import main.Module;
 import main.ModuleEditor;
-import main.TestSignals.Generator;
-import main.TestSignals.TAPair;
 import main.SynthTools;
+import main.Module.ModuleType;
 
-public class SelfModulator implements Module {
+public class WhiteNoise implements Module {
 
 	ModuleEditor parent = null;
 	Integer moduleID = null;
@@ -35,13 +29,9 @@ public class SelfModulator implements Module {
 	int width = 150; // should be >= value calculated by init
 	int height = 150; // calculated by init
 	
-	ArrayList<Integer> inputs;
 	ArrayList<Integer> outputs;
-	ArrayList<Integer> inputADD;
 	ArrayList<Integer> inputAM;
-	HashMap<Integer, Long> outputToModuleID = null;
-	HashMap<Integer, Long> inputAddToModuleID = null;
-	
+
 	private class Input extends Module.Input {
 
 		public Input(Module parent, Rectangle selectArea) {
@@ -73,13 +63,11 @@ public class SelfModulator implements Module {
 		
 	}
 
-	public SelfModulator(ModuleEditor parent, int x, int y) {
+	public WhiteNoise(ModuleEditor parent, int x, int y) {
 		this.cornerX = x;
 		this.cornerY = y;
 		this.parent = parent;
 		outputs = new ArrayList<Integer>();
-		inputs = new ArrayList<Integer>();
-		inputADD = new ArrayList<Integer>();
 		inputAM = new ArrayList<Integer>();
 		init();
 	}
@@ -115,37 +103,22 @@ public class SelfModulator implements Module {
 			JOptionPane.showMessageDialog(parent.getParentFrame(), "Infinite Loop");
 			return new double[0];
 		}
-		ArrayList<double[]> inputArray = new ArrayList<double[]>();
-		for(Integer inputID: inputs) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
-			if(input.getConnection() == null) continue;
-			waitingForModuleIDs.add(moduleID);
-			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
-			inputArray.add(output.getSamples(waitingForModuleIDs, controlIn));
-			waitingForModuleIDs.remove(moduleID);
-		}
-		double[] inputSamples = new double[(int) Math.round(duration * SynthTools.sampleRate)];
-		if(controlIn != null) inputSamples = new double[controlIn.length];
-		for(double[] inputIn: inputArray) {
-			for(int index = 0; index < inputSamples.length - 1; index++) {
-				if(index >= inputIn.length) break;
-				inputSamples[index] += inputIn[index]; 
+		double[] control = new double[(int) Math.round(duration * SynthTools.sampleRate)];
+		if(controlIn != null) {
+			control = controlIn;
+		} else {
+			for(int index = 0; index < control.length; index++) {
+				control[index] = 1.0;
 			}
 		}
-		// Perform self modulation first
-		for(int index = 0; index < inputSamples.length - 1; index++) {
-			double phase = (inputSamples[index] + inputSamples[index + 1]) * 2.0 * Math.PI;
-			if(phase > Math.PI) phase -= 2.0 * Math.PI;
-			inputSamples[index] = Math.sin(phase);
+		double[] samplesAM = new double[control.length];
+		for(int index = 0; index < samplesAM.length; index++) {
+			if(control[index] > 0.0) {
+				samplesAM[index] = 1.0;
+			} else {
+				samplesAM[index] = 0.0;
+			}
 		}
-		// Start AM and ADD operations
-		double[] samplesAM = new double[inputSamples.length];
-		double[] samplesADD = new double[inputSamples.length];
-		for(int index = 0; index < inputSamples.length; index++) {
-			samplesAM[index] = 1.0;
-			samplesADD[index] = 0.0;
-		}
-		// Sum AM Inputs
 		ArrayList<double[]> samplesAMArray = new ArrayList<double[]>();
 		for(Integer inputID: inputAM) {
 			Input input = (Input) parent.connectorIDToConnector.get(inputID);
@@ -159,35 +132,17 @@ public class SelfModulator implements Module {
 			for(int index = 0; index < samplesAM.length; index++) samplesAM[index] = 0.0;
 		}
 		for(double[] samplesAMIn: samplesAMArray) {
-			for(int index = 0; index < inputSamples.length; index++) {
+			for(int index = 0; index < samplesAM.length; index++) {
 				if(index >= samplesAMIn.length) continue;
 				samplesAM[index] += samplesAMIn[index]; 
 			}
 		}
-		// Sum add inputs
-		ArrayList<double[]> samplesADDArray = new ArrayList<double[]>();
-		for(Integer inputID: inputADD) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
-			if(input.getConnection() == null) continue;
-			waitingForModuleIDs.add(moduleID);
-			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
-			samplesADDArray.add(output.getSamples(waitingForModuleIDs, controlIn));
-			waitingForModuleIDs.remove(moduleID);
+		for(int index = 0; index < samplesAM.length; index++) {
+			samplesAM[index] *= (Math.random() - 0.5) * 2.0;
 		}
-		// no change if samplesADD.isEmpty()
-		for(double[] samplesADDIn: samplesADDArray) {
-			for(int index = 0; index < inputSamples.length; index++) {
-				if(index >= samplesADDIn.length) break;
-				samplesADD[index] += samplesADDIn[index]; 
-			}
-		}
-		for(int index = 0; index < inputSamples.length; index++) {
-			inputSamples[index] = inputSamples[index] * samplesAM[index] + samplesADD[index];
-		}
-		return inputSamples;
+		return samplesAM;
 	}
 	
-
 	public void mousePressed(int x, int y) {
 		int index = 0;
 		for(Integer outputID: outputs) {
@@ -195,24 +150,6 @@ public class SelfModulator implements Module {
 			if(output.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(outputID);
 				System.out.println("Self Modulator " + "output: " + index);
-			}
-			index++;
-		}
-		index = 0;
-		for(Integer inputID: inputs) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
-			if(input.getSelectArea().contains(x, y)) {
-				parent.handleConnectorSelect(inputID);
-				System.out.println("Self Modulator" + " input: " + index);
-			}
-			index++;
-		}
-		index = 0;
-		for(Integer inputID: inputADD) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
-			if(input.getSelectArea().contains(x, y)) {
-				parent.handleConnectorSelect(inputID);
-				System.out.println("SelfModulator inputADD: " + index);
 			}
 			index++;
 		}
@@ -225,23 +162,6 @@ public class SelfModulator implements Module {
 			}
 			index++;
 		}
-	}
-	
-	public Double getInput(String prompt, double minBound, double maxBound) {
-		Double returnVal = null;
-		String inputValue = JOptionPane.showInputDialog(prompt);
-		if(inputValue == null) return null;
-		try {
-			returnVal = new Double(inputValue);
-		} catch (NumberFormatException nfe) {
-			JOptionPane.showMessageDialog(parent.getParentFrame(), "Could not parse string");
-			return null;
-		}
-		if(returnVal < minBound || returnVal > maxBound) {
-			JOptionPane.showMessageDialog(parent.getParentFrame(), "Input must be between: " + minBound + " and " + maxBound);
-			return null;
-		}
-		return returnVal;
 	}
 	
 	public void init() {
@@ -266,14 +186,14 @@ public class SelfModulator implements Module {
 		if(g2 != null) g2.setFont(font);
 		currentX = cornerX + 4;
 		currentY = cornerY + yStep;
-		if(g2 != null) g2.drawString("Self Modulator", currentX, currentY);
+		if(g2 != null) g2.drawString("WhiteNoise", currentX, currentY);
 		if(g2 != null) g2.setColor(Color.GREEN);
 		currentY += yStep;
-		if(g2 != null) g2.drawString("ADD: ", currentX, currentY);
+		if(g2 != null) g2.drawString("AM: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputADD.add(parent.addConnector(new Input(this, currentRect)));
+			if(g2 == null) inputAM.add(parent.addConnector(new Input(this, currentRect)));
 		}
 		currentY += yStep;
 		if(g2 != null) g2.drawString("AM: ", currentX, currentY);
@@ -283,21 +203,7 @@ public class SelfModulator implements Module {
 			if(g2 == null) inputAM.add(parent.addConnector(new Input(this, currentRect)));
 		}
 		currentY += yStep;
-		if(g2 != null) g2.drawString("IN: ", currentX, currentY);
-		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
-			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
-			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputs.add(parent.addConnector(new Input(this, currentRect)));
-		}
-		currentY += yStep;
-		if(g2 != null) g2.drawString("IN: ", currentX, currentY);
-		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
-			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
-			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputs.add(parent.addConnector(new Input(this, currentRect)));
-		}
 		if(g2 != null) g2.setColor(Color.BLUE);
-		currentY += yStep;
 		if(g2 != null) g2.drawString("OUT: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
@@ -332,7 +238,7 @@ public class SelfModulator implements Module {
 	@Override
 	public ModuleType getModuleType() {
 		// TODO Auto-generated method stub
-		return Module.ModuleType.SELFMODULATOR;
+		return Module.ModuleType.WHITENOISE;
 	}
 
 	@Override

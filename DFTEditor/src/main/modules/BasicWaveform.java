@@ -53,8 +53,6 @@ public class BasicWaveform implements Module {
 	ArrayList<Integer> inputADD;
 	ArrayList<Integer> inputAM;
 	ArrayList<Integer> inputFM;
-	HashMap<Integer, Long> outputToModuleID = null;
-	HashMap<Integer, Long> inputAddToModuleID = null;
 	
 	private class Input extends Module.Input {
 
@@ -184,9 +182,11 @@ public class BasicWaveform implements Module {
 			samplesAMArray.add(output.getSamples(waitingForModuleIDs, controlIn));
 			waitingForModuleIDs.remove(moduleID);
 		}
+		if(!samplesAMArray.isEmpty()) {
+			for(int index = 0; index < numSamples; index++) samplesAM[index] = 0.0;
+		}
 		for(double[] samplesAMIn: samplesAMArray) {
 			for(int index = 0; index < numSamples; index++) {
-				samplesAM[index] = 0.0;
 				if(index >= samplesAMIn.length) continue;
 				samplesAM[index] += samplesAMIn[index]; 
 			}
