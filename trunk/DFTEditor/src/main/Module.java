@@ -20,7 +20,9 @@ public interface Module {
 		ENVELOPE,
 		MASTERINPUT,
 		STEREOPAN,
-		SELFMODULATOR;
+		SELFMODULATOR,
+		FIRFILTER,
+		WHITENOISE;
 	}
 	
 	abstract void mousePressed(int x, int y);

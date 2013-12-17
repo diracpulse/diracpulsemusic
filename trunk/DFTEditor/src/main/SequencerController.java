@@ -30,7 +30,7 @@ public class SequencerController implements MouseListener, MouseMotionListener, 
 	@Override
 	public void actionPerformed(ActionEvent e) {
         if ("Play".equals(e.getActionCommand())) parent.play();
-        if ("DFT".equals(e.getActionCommand())) return; // parent.dft();
+        if ("DFT".equals(e.getActionCommand())) parent.dft();
         if ("Save".equals(e.getActionCommand())) return; //parent.save();
         if ("Load".equals(e.getActionCommand())) return; //parent.open();
         if ("Get Module".equals(e.getActionCommand())) {

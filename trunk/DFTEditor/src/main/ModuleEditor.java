@@ -28,9 +28,11 @@ import main.Module.ConnectorType;
 import main.Module.ModuleType;
 import main.modules.BasicWaveform;
 import main.modules.Envelope;
+import main.modules.FIRFilter;
 import main.modules.MasterInput;
 import main.modules.SelfModulator;
 import main.modules.StereoPan;
+import main.modules.WhiteNoise;
 
 public class ModuleEditor extends JPanel {
 
@@ -190,9 +192,21 @@ public class ModuleEditor extends JPanel {
 		addModuleToColumn(2, Module.ModuleType.BASICWAVEFORM);
 		addModuleToColumn(2, Module.ModuleType.BASICWAVEFORM);
 		addModuleToColumn(3, Module.ModuleType.SELFMODULATOR);
-		addModuleToColumn(3, Module.ModuleType.SELFMODULATOR);	
-		addModuleToColumn(3, Module.ModuleType.STEREOPAN);
-		addModuleToColumn(3, Module.ModuleType.STEREOPAN);	
+		addModuleToColumn(3, Module.ModuleType.SELFMODULATOR);
+		addModuleToColumn(3, Module.ModuleType.SELFMODULATOR);
+		addModuleToColumn(3, Module.ModuleType.SELFMODULATOR);
+		addModuleToColumn(4, Module.ModuleType.WHITENOISE);
+		addModuleToColumn(4, Module.ModuleType.WHITENOISE);
+		addModuleToColumn(4, Module.ModuleType.WHITENOISE);
+		addModuleToColumn(4, Module.ModuleType.WHITENOISE);	
+		addModuleToColumn(5, Module.ModuleType.FIRFILTER);
+		addModuleToColumn(5, Module.ModuleType.FIRFILTER);
+		addModuleToColumn(5, Module.ModuleType.FIRFILTER);
+		addModuleToColumn(5, Module.ModuleType.FIRFILTER);		
+		addModuleToColumn(6, Module.ModuleType.STEREOPAN);
+		addModuleToColumn(6, Module.ModuleType.STEREOPAN);	
+		addModuleToColumn(6, Module.ModuleType.STEREOPAN);
+		addModuleToColumn(6, Module.ModuleType.STEREOPAN);	
 	}
 	
 	public void addModuleToColumn(int col, Module.ModuleType moduleType) {
@@ -228,6 +242,14 @@ public class ModuleEditor extends JPanel {
 			break;
 		case SELFMODULATOR:
 			module = new SelfModulator(this, currentX, currentY);
+			addModule(module);
+			break;
+		case FIRFILTER:
+			module = new FIRFilter(this, currentX, currentY);
+			addModule(module);
+			break;
+		case WHITENOISE:
+			module = new WhiteNoise(this, currentX, currentY);
 			addModule(module);
 			break;
 		default:

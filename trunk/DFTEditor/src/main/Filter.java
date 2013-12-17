@@ -342,7 +342,7 @@ public class Filter {
 		CreateFilter(w0, w1, order, alpha);
 	}
 	
-	static double[] getLPFilter(double freq, int order, double alpha) {
+	public static double[] getLPFilter(double freq, int order, double alpha) {
 		filter = new double[order + 1];
 		LPFilter(freq, order, alpha);
 		double[] returnVal = new double[filter.length];
@@ -367,7 +367,7 @@ public class Filter {
 		CreateFilter(w0, w1, order, alpha);
 	}
 	
-	static double[] getHPFilter(double freq, int order, double alpha) {
+	public static double[] getHPFilter(double freq, int order, double alpha) {
 		filter = new double[order + 1];
 		HPFilter(freq, order, alpha);
 		double[] returnVal = new double[filter.length];
@@ -384,7 +384,7 @@ public class Filter {
 		CreateFilter(w0, w1, order, alpha);
 	}
 	
-	static double[] getBPFilter(double freq, int order, double alpha) {
+	public static double[] getBPFilter(double freq, int order, double alpha) {
 		filter = new double[order + 1];
 		BPFilter(freq, order, alpha);
 		double[] returnVal = new double[filter.length];
