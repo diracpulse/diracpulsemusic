@@ -119,7 +119,7 @@ public class FIRFilter implements Module {
 	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] controlIn) {
 		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
-			JOptionPane.showMessageDialog(parent.getParentFrame(), "Infinite Loop");
+			//JOptionPane.showMessageDialog(parent.getParentFrame(), "Loop in FIRFilter");
 			return new double[0];
 		}
 		TreeMap<Double, double[]> freqRatioToFilter = new TreeMap<Double, double[]>();

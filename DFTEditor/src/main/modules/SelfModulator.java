@@ -112,7 +112,7 @@ public class SelfModulator implements Module {
 	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] controlIn) {
 		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
-			JOptionPane.showMessageDialog(parent.getParentFrame(), "Infinite Loop");
+			JOptionPane.showMessageDialog(parent.getParentFrame(), "Loop in Self Modulator");
 			return new double[0];
 		}
 		ArrayList<double[]> inputArray = new ArrayList<double[]>();

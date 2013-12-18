@@ -120,10 +120,12 @@ public class SineBank implements Module {
 	}
 
 	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] controlIn) {
+		boolean nativeOutput = false;
 		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
-			JOptionPane.showMessageDialog(parent.getParentFrame(), "Infinite Loop");
-			return new double[0];
+			//JOptionPane.showMessageDialog(parent.getParentFrame(), "Infinite Loop");
+			//return new double[0];
+			nativeOutput = true;
 		}
 		double[] innerControl = null;
 		if(controlIn == null) {
@@ -147,6 +149,7 @@ public class SineBank implements Module {
 		}
 		ArrayList<double[]> samplesFMArray = new ArrayList<double[]>();
 		for(Integer inputID: inputFM) {
+			if(nativeOutput) break;
 			Input input = (Input) parent.connectorIDToConnector.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
@@ -162,6 +165,7 @@ public class SineBank implements Module {
 		}
 		ArrayList<double[]> samplesAMArray = new ArrayList<double[]>();
 		for(Integer inputID: inputAM) {
+			if(nativeOutput) break;
 			Input input = (Input) parent.connectorIDToConnector.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
@@ -180,6 +184,7 @@ public class SineBank implements Module {
 		}
 		ArrayList<double[]> samplesADDArray = new ArrayList<double[]>();
 		for(Integer inputID: inputADD) {
+			if(nativeOutput) break;
 			Input input = (Input) parent.connectorIDToConnector.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
@@ -195,15 +200,20 @@ public class SineBank implements Module {
 			}
 		}
 		double phase = 0;
+		int startIndex = 0;
+		if(nativeOutput) {
+			returnVal[0] = 0.0;
+			startIndex = 1;
+		}
 		for(double freq = minFreqInHz; freq <= maxFreqInHz; freq *= 2.0) {
 			if(freq >= SynthTools.sampleRate / 2.0) continue;
 			double deltaPhase = freq / SynthTools.sampleRate * Math.PI * 2.0;
-			for(int index = 0; index < numSamples; index++) {
+			for(int index = startIndex; index < numSamples; index++) {
 				if(samplesAM[index] == 0.0 || innerControl[index] < 0.0) {
 					phase = 0.0;
 					continue;
 				}
-				double inputPhase =  phase + samplesFM[index];
+				double inputPhase =  (phase + samplesFM[index]) * Math.PI;
 				if(inputPhase > Math.PI) phase -= 2.0 * Math.PI;
 				returnVal[index] += Math.sin(inputPhase) * samplesAM[index] * amplitude + samplesADD[index];
 				phase += deltaPhase * innerControl[index];

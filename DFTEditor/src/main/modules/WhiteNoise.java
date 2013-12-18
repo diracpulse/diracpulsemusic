@@ -98,10 +98,12 @@ public class WhiteNoise implements Module {
 	}
 
 	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] controlIn) {
+		boolean nativeOutput = false;
 		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
-			JOptionPane.showMessageDialog(parent.getParentFrame(), "Infinite Loop");
-			return new double[0];
+			//JOptionPane.showMessageDialog(parent.getParentFrame(), "Loop");
+			//return new double[0];
+			nativeOutput = true;
 		}
 		double[] control = new double[(int) Math.round(duration * SynthTools.sampleRate)];
 		if(controlIn != null) {
@@ -121,6 +123,7 @@ public class WhiteNoise implements Module {
 		}
 		ArrayList<double[]> samplesAMArray = new ArrayList<double[]>();
 		for(Integer inputID: inputAM) {
+			if(nativeOutput) break;
 			Input input = (Input) parent.connectorIDToConnector.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
@@ -137,7 +140,12 @@ public class WhiteNoise implements Module {
 				samplesAM[index] += samplesAMIn[index]; 
 			}
 		}
-		for(int index = 0; index < samplesAM.length; index++) {
+		int indexStart = 0;
+		if(nativeOutput) {
+			samplesAM[0] = 0.0;
+			indexStart = 1;
+		}
+		for(int index = indexStart; index < samplesAM.length; index++) {
 			samplesAM[index] *= (Math.random() - 0.5) * 2.0;
 		}
 		return samplesAM;
