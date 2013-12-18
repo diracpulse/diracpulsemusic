@@ -43,6 +43,8 @@ public class Envelope implements Module {
 	int numPoints = 3;
 	int minPoints = 2;
 	int maxPoints = 6;
+	double defaultTimeInMillis = 20.0;
+	double defaultAmplitude = 1.0;
 	String name = "Envelope";
 
 	ArrayList<Rectangle> timesControl;
@@ -327,7 +329,7 @@ public class Envelope implements Module {
 			}
 			if(g2 == null) {
 				timesControl.add(new Rectangle(currentX, currentY - fontSize, width, fontSize));
-				timeValuesInMillis[index] = 20;
+				timeValuesInMillis[index] = defaultTimeInMillis;
 			}
 			currentY += yStep;
 		}
@@ -343,7 +345,7 @@ public class Envelope implements Module {
 			}
 			if(g2 == null) {
 				amplitudesControl.add(new Rectangle(currentX, currentY - fontSize, width, fontSize));
-				amplitudeValues[index] = 1.0;
+				amplitudeValues[index] = defaultAmplitude;
 			}
 			currentY += yStep;
 		}
@@ -407,7 +409,7 @@ public class Envelope implements Module {
 			out.write(iType.toString());
 			out.newLine();
 		} catch (Exception e) {
-			System.out.println("Envelope.loadModuleInfo: Error reading from file");
+			System.out.println("Envelope.saveModuleInfo: Error saving to file");
 		}
 	}
 
