@@ -25,13 +25,14 @@ public class FIRFilter implements Module {
 	public enum FilterType {
 		LOWPASS,
 		HIGHPASS,
-		BANDPASS;
+		BANDPASS,
+		ALLPASS;
 	}
 	
 	ModuleEditor parent = null;
 	Integer moduleID = null;
 	double amplitude = 1.0;
-	double freqInHz = 440.0;
+	double freqInHz = ModuleEditor.defaultOctave;
 	double bins = 2.0;
 	double minFreqInHzNoControl = 20.0;
 	final double minBins = 1.0;
@@ -178,6 +179,10 @@ public class FIRFilter implements Module {
 		for(int index = 0; index < innerControl.length; index++) {
 			returnVal[index] = 0.0;
 			if(innerControl[index] <= 0.0) continue;
+			if(type == FilterType.ALLPASS) {
+				returnVal[index] = inputSamples[index];
+				continue;
+			}
 			double[] filter = freqRatioToFilter.get(innerControl[index]);
 			for(int filterIndex = 0; filterIndex < filter.length; filterIndex++) {
 				int innerIndex = index + filterIndex - filter.length / 2;
@@ -323,7 +328,7 @@ public class FIRFilter implements Module {
 			currentLine = in.readLine();
 			this.bins = new Double(currentLine);
 		} catch (Exception e) {
-			System.out.println("BasicWaveform.loadModuleInfo: Error reading from file");
+			System.out.println("FIRFilter.loadModuleInfo: Error reading from file");
 		}
 		
 	}
@@ -339,7 +344,7 @@ public class FIRFilter implements Module {
 			out.write(new Double(bins).toString());
 			out.newLine();	
 		} catch (Exception e) {
-			System.out.println("FIRFilter.loadModuleInfo: Error reading from file");
+			System.out.println("FIRFilter.saveModuleInfo: Error saving to file");
 		}
 		
 	}

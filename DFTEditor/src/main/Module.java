@@ -22,7 +22,8 @@ public interface Module {
 		STEREOPAN,
 		SELFMODULATOR,
 		FIRFILTER,
-		WHITENOISE;
+		WHITENOISE,
+		SINEBANK;
 	}
 	
 	abstract void mousePressed(int x, int y);

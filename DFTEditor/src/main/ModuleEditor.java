@@ -31,6 +31,7 @@ import main.modules.Envelope;
 import main.modules.FIRFilter;
 import main.modules.MasterInput;
 import main.modules.SelfModulator;
+import main.modules.SineBank;
 import main.modules.StereoPan;
 import main.modules.WhiteNoise;
 
@@ -57,6 +58,9 @@ public class ModuleEditor extends JPanel {
 	public final static double minDuration = FDData.timeStepInMillis / 1000.0;
 	public final static double minFrequency = 0.001;
 	public final static double maxFrequency = SynthTools.sampleRate / 2.0;
+	public final static double minOctave = 32.0;
+	public final static double maxOctave = 8192.0;
+	public final static double defaultOctave = 256.0;
 	
 	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);
@@ -181,32 +185,42 @@ public class ModuleEditor extends JPanel {
 		moduleIDToModule.put(0, new MasterInput(this, 0, 0));
 		masterInput = (MasterInput) moduleIDToModule.get(0);
 		masterInputHeight = masterInput.getHeight();
-		addModuleToColumn(0, Module.ModuleType.ENVELOPE);
-		addModuleToColumn(0, Module.ModuleType.ENVELOPE);
-		addModuleToColumn(1, Module.ModuleType.BASICWAVEFORM);
-		addModuleToColumn(1, Module.ModuleType.BASICWAVEFORM);
-		addModuleToColumn(1, Module.ModuleType.BASICWAVEFORM);
-		addModuleToColumn(1, Module.ModuleType.BASICWAVEFORM);
-		addModuleToColumn(2, Module.ModuleType.BASICWAVEFORM);
-		addModuleToColumn(2, Module.ModuleType.BASICWAVEFORM);
-		addModuleToColumn(2, Module.ModuleType.BASICWAVEFORM);
-		addModuleToColumn(2, Module.ModuleType.BASICWAVEFORM);
-		addModuleToColumn(3, Module.ModuleType.SELFMODULATOR);
-		addModuleToColumn(3, Module.ModuleType.SELFMODULATOR);
-		addModuleToColumn(3, Module.ModuleType.SELFMODULATOR);
-		addModuleToColumn(3, Module.ModuleType.SELFMODULATOR);
-		addModuleToColumn(4, Module.ModuleType.WHITENOISE);
-		addModuleToColumn(4, Module.ModuleType.WHITENOISE);
-		addModuleToColumn(4, Module.ModuleType.WHITENOISE);
-		addModuleToColumn(4, Module.ModuleType.WHITENOISE);	
-		addModuleToColumn(5, Module.ModuleType.FIRFILTER);
-		addModuleToColumn(5, Module.ModuleType.FIRFILTER);
-		addModuleToColumn(5, Module.ModuleType.FIRFILTER);
-		addModuleToColumn(5, Module.ModuleType.FIRFILTER);		
-		addModuleToColumn(6, Module.ModuleType.STEREOPAN);
-		addModuleToColumn(6, Module.ModuleType.STEREOPAN);	
-		addModuleToColumn(6, Module.ModuleType.STEREOPAN);
-		addModuleToColumn(6, Module.ModuleType.STEREOPAN);	
+		int col = 0;
+		addModuleToColumn(col, Module.ModuleType.SINEBANK);
+		addModuleToColumn(col, Module.ModuleType.SINEBANK);
+		col++;
+		addModuleToColumn(col, Module.ModuleType.ENVELOPE);
+		addModuleToColumn(col, Module.ModuleType.ENVELOPE);
+		col++;
+		addModuleToColumn(col, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(col, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(col, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(col, Module.ModuleType.BASICWAVEFORM);
+		col++;
+		addModuleToColumn(col, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(col, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(col, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(col, Module.ModuleType.BASICWAVEFORM);
+		col++;
+		addModuleToColumn(col, Module.ModuleType.SELFMODULATOR);
+		addModuleToColumn(col, Module.ModuleType.SELFMODULATOR);
+		addModuleToColumn(col, Module.ModuleType.SELFMODULATOR);
+		addModuleToColumn(col, Module.ModuleType.SELFMODULATOR);
+		col++;
+		addModuleToColumn(col, Module.ModuleType.WHITENOISE);
+		addModuleToColumn(col, Module.ModuleType.WHITENOISE);
+		addModuleToColumn(col, Module.ModuleType.WHITENOISE);
+		addModuleToColumn(col, Module.ModuleType.WHITENOISE);
+		col++;
+		addModuleToColumn(col, Module.ModuleType.FIRFILTER);
+		addModuleToColumn(col, Module.ModuleType.FIRFILTER);
+		addModuleToColumn(col, Module.ModuleType.FIRFILTER);
+		addModuleToColumn(col, Module.ModuleType.FIRFILTER);
+		col++;
+		addModuleToColumn(col, Module.ModuleType.STEREOPAN);
+		addModuleToColumn(col, Module.ModuleType.STEREOPAN);	
+		addModuleToColumn(col, Module.ModuleType.STEREOPAN);
+		addModuleToColumn(col, Module.ModuleType.STEREOPAN);	
 	}
 	
 	public void addModuleToColumn(int col, Module.ModuleType moduleType) {
@@ -250,6 +264,10 @@ public class ModuleEditor extends JPanel {
 			break;
 		case WHITENOISE:
 			module = new WhiteNoise(this, currentX, currentY);
+			addModule(module);
+			break;
+		case SINEBANK:
+			module = new SineBank(this, currentX, currentY);
 			addModule(module);
 			break;
 		default:
