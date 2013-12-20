@@ -214,7 +214,7 @@ public class SineBank implements Module {
 					continue;
 				}
 				double inputPhase =  (phase + samplesFM[index]) * Math.PI;
-				if(inputPhase > Math.PI) phase -= 2.0 * Math.PI;
+				if(inputPhase > Math.PI) inputPhase -= 2.0 * Math.PI;
 				returnVal[index] += Math.sin(inputPhase) * samplesAM[index] * amplitude + samplesADD[index];
 				phase += deltaPhase * innerControl[index];
 			}
@@ -411,7 +411,7 @@ public class SineBank implements Module {
 	@Override
 	public ModuleType getModuleType() {
 		// TODO Auto-generated method stub
-		return Module.ModuleType.BASICWAVEFORM;
+		return Module.ModuleType.SINEBANK;
 	}
 
 	@Override
