@@ -226,9 +226,8 @@ public class BasicWaveform implements Module {
 						phase = 0.0;
 						continue;
 					}
-					double inputPhase =  (phase + samplesFM[index]) * Math.PI * 2.0;
-					if(inputPhase > Math.PI) inputPhase -= 2.0 * Math.PI;
-					returnVal[index] = Math.sin(inputPhase) * samplesAM[index] * amplitude + samplesADD[index];
+					if(phase > Math.PI) phase -= 2.0 * Math.PI;
+					returnVal[index] = Math.sin(phase + Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
 					phase += deltaPhase * innerControl[index];
 				}
 				break;
@@ -238,7 +237,7 @@ public class BasicWaveform implements Module {
 						phase = 0.0;
 						continue;
 					}
-					double inputPhase =  (phase + samplesFM[index]) * Math.PI * 2.0;
+					double inputPhase =  (phase + Math.sin(samplesFM[index])) * Math.PI * 2.0;
 					returnVal[index] = squarewave(inputPhase) * samplesAM[index] * amplitude + samplesADD[index];
 					phase += deltaPhase * innerControl[index];
 				}
@@ -249,7 +248,7 @@ public class BasicWaveform implements Module {
 						phase = 0.0;
 						continue;
 					}
-					double inputPhase =  (phase + samplesFM[index]) * Math.PI * 2.0;
+					double inputPhase =  (phase + Math.sin(samplesFM[index])) * Math.PI * 2.0;
 					returnVal[index] = triangle(inputPhase) * samplesAM[index] * amplitude + samplesADD[index];
 					phase += deltaPhase * innerControl[index];
 				}
@@ -260,7 +259,7 @@ public class BasicWaveform implements Module {
 						phase = 0.0;
 						continue;
 					}
-					double inputPhase =  (phase + samplesFM[index]) * Math.PI * 2.0;
+					double inputPhase =  (phase + Math.sin(samplesFM[index])) * Math.PI * 2.0;
 					returnVal[index] = sawtooth(inputPhase) * samplesAM[index] * amplitude + samplesADD[index];
 					phase += deltaPhase * innerControl[index];
 				}

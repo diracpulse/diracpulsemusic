@@ -23,10 +23,16 @@ import main.Module;
 import main.ModuleEditor;
 import main.TestSignals.Generator;
 import main.TestSignals.TAPair;
+import main.modules.BasicWaveform.WaveformType;
 import main.SynthTools;
 
 public class SelfModulator implements Module {
 
+	public enum ModulationType {
+		BELL,
+		TEST;
+	}
+	
 	ModuleEditor parent = null;
 	Integer moduleID = null;
 	double duration = ModuleEditor.maxDuration;
@@ -34,7 +40,9 @@ public class SelfModulator implements Module {
 	int cornerY;
 	int width = 150; // should be >= value calculated by init
 	int height = 150; // calculated by init
+	ModulationType type = ModulationType.BELL;
 	
+	Rectangle typeControl;
 	ArrayList<Integer> inputs;
 	ArrayList<Integer> outputs;
 	ArrayList<Integer> inputADD;
@@ -133,10 +141,21 @@ public class SelfModulator implements Module {
 			}
 		}
 		// Perform self modulation first
-		for(int index = 0; index < inputSamples.length - 1; index++) {
-			double phase = (inputSamples[index] + inputSamples[index + 1]) * 2.0 * Math.PI;
-			if(phase > Math.PI) phase -= 2.0 * Math.PI;
-			inputSamples[index] = Math.sin(phase);
+		switch(type) {
+			case BELL:
+				for(int index = 0; index < inputSamples.length - 1; index++) {
+					double phase = (inputSamples[index] + inputSamples[index + 1]) * 2.0 * Math.PI;
+					if(phase > Math.PI) phase -= 2.0 * Math.PI;
+					inputSamples[index] = Math.sin(phase);
+				}
+				break;
+			case TEST:
+				for(int index = 0; index < inputSamples.length - 1; index++) {
+					double phase = (inputSamples[index] + Math.sin(inputSamples[index + 1])) * 2.0 * Math.PI;
+					if(phase > Math.PI) phase -= 2.0 * Math.PI;
+					inputSamples[index] = Math.sin(phase);
+				}
+				break;				
 		}
 		// Start AM and ADD operations
 		double[] samplesAM = new double[inputSamples.length];
@@ -189,6 +208,13 @@ public class SelfModulator implements Module {
 	
 
 	public void mousePressed(int x, int y) {
+		if(typeControl.contains(x, y)) {
+			ModulationType inputType = (ModulationType) JOptionPane.showInputDialog(null, "Choose a type", "Type Select", JOptionPane.INFORMATION_MESSAGE, null, ModulationType.values(),  ModulationType.BELL);
+			if(inputType == null) return;
+			type = inputType;
+			parent.refreshView();
+			return;
+		}
 		int index = 0;
 		for(Integer outputID: outputs) {
 			Output output = (Output) parent.connectorIDToConnector.get(outputID);
@@ -266,7 +292,8 @@ public class SelfModulator implements Module {
 		if(g2 != null) g2.setFont(font);
 		currentX = cornerX + 4;
 		currentY = cornerY + yStep;
-		if(g2 != null) g2.drawString("Self Modulator", currentX, currentY);
+		if(g2 != null) g2.drawString(type.toString(), currentX, currentY);
+		if(g2 == null) typeControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		if(g2 != null) g2.setColor(Color.GREEN);
 		currentY += yStep;
 		if(g2 != null) g2.drawString("ADD: ", currentX, currentY);
