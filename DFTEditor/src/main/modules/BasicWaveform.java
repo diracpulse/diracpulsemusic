@@ -227,8 +227,8 @@ public class BasicWaveform implements Module {
 						continue;
 					}
 					if(phase > Math.PI) phase -= 2.0 * Math.PI;
-					returnVal[index] = Math.sin(phase + Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
-					phase += deltaPhase * innerControl[index];
+					returnVal[index] = Math.sin(phase) * samplesAM[index] * amplitude + samplesADD[index];
+					phase += (deltaPhase * Math.pow(2.0, samplesFM[index])) * innerControl[index];
 				}
 				break;
 			case SQUAREWAVE:
@@ -237,9 +237,8 @@ public class BasicWaveform implements Module {
 						phase = 0.0;
 						continue;
 					}
-					double inputPhase =  (phase + Math.sin(samplesFM[index])) * Math.PI * 2.0;
-					returnVal[index] = squarewave(inputPhase) * samplesAM[index] * amplitude + samplesADD[index];
-					phase += deltaPhase * innerControl[index];
+					returnVal[index] = squarewave(phase) * samplesAM[index] * amplitude + samplesADD[index];
+					phase += (deltaPhase * Math.pow(2.0, samplesFM[index])) * innerControl[index];
 				}
 				break;
 			case TRIANGLE:
@@ -248,9 +247,8 @@ public class BasicWaveform implements Module {
 						phase = 0.0;
 						continue;
 					}
-					double inputPhase =  (phase + Math.sin(samplesFM[index])) * Math.PI * 2.0;
-					returnVal[index] = triangle(inputPhase) * samplesAM[index] * amplitude + samplesADD[index];
-					phase += deltaPhase * innerControl[index];
+					returnVal[index] = triangle(phase) * samplesAM[index] * amplitude + samplesADD[index];
+					phase += (deltaPhase * Math.pow(2.0, samplesFM[index])) * innerControl[index];
 				}
 				break;
 			case SAWTOOTH:
@@ -259,9 +257,8 @@ public class BasicWaveform implements Module {
 						phase = 0.0;
 						continue;
 					}
-					double inputPhase =  (phase + Math.sin(samplesFM[index])) * Math.PI * 2.0;
-					returnVal[index] = sawtooth(inputPhase) * samplesAM[index] * amplitude + samplesADD[index];
-					phase += deltaPhase * innerControl[index];
+					returnVal[index] = sawtooth(phase) * samplesAM[index] * amplitude + samplesADD[index];
+					phase += (deltaPhase * Math.pow(2.0, samplesFM[index])) * innerControl[index];
 				}
 				break;
 		}
