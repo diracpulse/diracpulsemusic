@@ -40,19 +40,22 @@ public class BasicWaveform implements Module {
 	double freqInHz = ModuleEditor.defaultOctave;
 	double minFreqInHzNoControl = ModuleEditor.minOctave;
 	double duration = ModuleEditor.maxDuration;
+	double fmMod = 1.0;
 	int cornerX;
 	int cornerY;
 	int width = 150; // should be >= value calculated by init
-	int height = 150; // calculated by init
+	int height = 200; // calculated by init
 	WaveformType type = WaveformType.SINE;
-	
 	Rectangle typeControl = null;
 	Rectangle freqControl = null;
 	Rectangle ampControl = null;
+	Rectangle fmModControl = null;
 	ArrayList<Integer> outputs;
 	ArrayList<Integer> inputADD;
 	ArrayList<Integer> inputAM;
+	ArrayList<Integer> inputVCO;
 	ArrayList<Integer> inputFM;
+	ArrayList<Integer> inputFMMod;
 	
 	private class Input extends Module.Input {
 
@@ -92,7 +95,9 @@ public class BasicWaveform implements Module {
 		outputs = new ArrayList<Integer>();
 		inputADD = new ArrayList<Integer>();
 		inputAM = new ArrayList<Integer>();
+		inputVCO = new ArrayList<Integer>();
 		inputFM = new ArrayList<Integer>();
+		inputFMMod = new ArrayList<Integer>();
 		init();
 	}
 	
@@ -150,14 +155,35 @@ public class BasicWaveform implements Module {
 		}
 		int numSamples = innerControl.length;
 		double[] returnVal = new double[numSamples];
+		double[] samplesFMMod = new double[numSamples];
 		double[] samplesFM = new double[numSamples];
+		double[] samplesVCO = new double[numSamples];
 		double[] samplesAM = new double[numSamples];
 		double[] samplesADD = new double[numSamples];
 		for(int index = 0; index < numSamples; index++) {
 			returnVal[index] = 0.0;
+			samplesFMMod[index] = 1.0;
 			samplesFM[index] = 0.0;
+			samplesVCO[index] = 0.0;
 			samplesAM[index] = 1.0;
 			samplesADD[index] = 0.0;
+		}
+		ArrayList<double[]> samplesVCOArray = new ArrayList<double[]>();
+		for(Integer inputID: inputVCO) {
+			if(nativeOutput) break;
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			if(input.getConnection() == null) continue;
+			waitingForModuleIDs.add(moduleID);
+			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
+			samplesVCOArray.add(output.getSamples(waitingForModuleIDs, controlIn));
+			waitingForModuleIDs.remove(moduleID);
+		}
+		// no change if samplesVCO.isEmpty()
+		for(double[] samplesVCOIn: samplesVCOArray) {
+			for(int index = 0; index < numSamples; index++) {
+				if(index >= samplesVCOIn.length) break;
+				samplesVCO[index] += samplesVCOIn[index]; 
+			}
 		}
 		ArrayList<double[]> samplesFMArray = new ArrayList<double[]>();
 		for(Integer inputID: inputFM) {
@@ -174,6 +200,25 @@ public class BasicWaveform implements Module {
 			for(int index = 0; index < numSamples; index++) {
 				if(index >= samplesFMIn.length) break;
 				samplesFM[index] += samplesFMIn[index]; 
+			}
+		}
+		ArrayList<double[]> samplesFMModArray = new ArrayList<double[]>();
+		for(Integer inputID: inputFMMod) {
+			if(nativeOutput) break;
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			if(input.getConnection() == null) continue;
+			waitingForModuleIDs.add(moduleID);
+			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
+			samplesFMModArray.add(output.getSamples(waitingForModuleIDs, controlIn));
+			waitingForModuleIDs.remove(moduleID);
+		}
+		if(!samplesFMModArray.isEmpty()) {
+			for(int index = 0; index < numSamples; index++) samplesFMMod[index] = 0.0;
+		}
+		for(double[] samplesFMModIn: samplesFMModArray) {
+			for(int index = 0; index < numSamples; index++) {
+				if(index >= samplesFMModIn.length) break;
+				samplesFMMod[index] += samplesFMModIn[index]; 
 			}
 		}
 		ArrayList<double[]> samplesAMArray = new ArrayList<double[]>();
@@ -227,8 +272,8 @@ public class BasicWaveform implements Module {
 						continue;
 					}
 					if(phase > Math.PI) phase -= 2.0 * Math.PI;
-					returnVal[index] = Math.sin(phase) * samplesAM[index] * amplitude + samplesADD[index];
-					phase += (deltaPhase * Math.pow(2.0, samplesFM[index])) * innerControl[index];
+					returnVal[index] = Math.sin(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
+					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * innerControl[index];
 				}
 				break;
 			case SQUAREWAVE:
@@ -237,8 +282,8 @@ public class BasicWaveform implements Module {
 						phase = 0.0;
 						continue;
 					}
-					returnVal[index] = squarewave(phase) * samplesAM[index] * amplitude + samplesADD[index];
-					phase += (deltaPhase * Math.pow(2.0, samplesFM[index])) * innerControl[index];
+					returnVal[index] = Math.sin(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
+					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * innerControl[index];
 				}
 				break;
 			case TRIANGLE:
@@ -247,8 +292,8 @@ public class BasicWaveform implements Module {
 						phase = 0.0;
 						continue;
 					}
-					returnVal[index] = triangle(phase) * samplesAM[index] * amplitude + samplesADD[index];
-					phase += (deltaPhase * Math.pow(2.0, samplesFM[index])) * innerControl[index];
+					returnVal[index] = Math.sin(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
+					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * innerControl[index];
 				}
 				break;
 			case SAWTOOTH:
@@ -257,8 +302,8 @@ public class BasicWaveform implements Module {
 						phase = 0.0;
 						continue;
 					}
-					returnVal[index] = sawtooth(phase) * samplesAM[index] * amplitude + samplesADD[index];
-					phase += (deltaPhase * Math.pow(2.0, samplesFM[index])) * innerControl[index];
+					returnVal[index] = Math.sin(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
+					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * innerControl[index];
 				}
 				break;
 		}
@@ -308,6 +353,14 @@ public class BasicWaveform implements Module {
 			parent.refreshView();
 			return;
 		}
+		if(fmModControl.contains(x, y)) {
+			Double inputAmplitude = getInput("Input Amplitude in dB", ModuleEditor.minAmplitudeIn_dB, ModuleEditor.maxAmplitudeIn_dB);
+			if(inputAmplitude == null) return;
+			fmMod = Math.pow(10.0, inputAmplitude / 20.0);
+			parent.refreshView();
+			return;
+		}
+
 		int index = 0;
 		for(Integer outputID: outputs) {
 			Output output = (Output) parent.connectorIDToConnector.get(outputID);
@@ -336,11 +389,29 @@ public class BasicWaveform implements Module {
 			index++;
 		}
 		index = 0;
+		for(Integer inputID: inputVCO) {
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			if(input.getSelectArea().contains(x, y)) {
+				parent.handleConnectorSelect(inputID);
+				System.out.println(type + " inputVCO: " + index);
+			}
+			index++;
+		}
+		index = 0;
 		for(Integer inputID: inputFM) {
 			Input input = (Input) parent.connectorIDToConnector.get(inputID);
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
 				System.out.println(type + " inputFM: " + index);
+			}
+			index++;
+		}
+		index = 0;
+		for(Integer inputID: inputFMMod) {
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			if(input.getSelectArea().contains(x, y)) {
+				parent.handleConnectorSelect(inputID);
+				System.out.println(type + " inputFMMod: " + index);
 			}
 			index++;
 		}
@@ -395,6 +466,9 @@ public class BasicWaveform implements Module {
 		if(g2 != null) g2.drawString("Amp: " + Math.round(amplitude * 100000.0) / 100000.0 + " (" + Math.round(Math.log(amplitude)/Math.log(10.0) * 2000.0) / 100.0 + "dB)", currentX, currentY);
 		if(g2 == null) ampControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		currentY += yStep;
+		if(g2 != null) g2.drawString("FMMod: " + Math.round(fmMod * 100000.0) / 100000.0 + " (" + Math.round(Math.log(fmMod)/Math.log(10.0) * 2000.0) / 100.0 + "dB)", currentX, currentY);
+		if(g2 == null) fmModControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
+		currentY += yStep;
 		if(g2 != null) g2.drawString("ADD: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
@@ -409,11 +483,25 @@ public class BasicWaveform implements Module {
 			if(g2 == null) inputAM.add(parent.addConnector(new Input(this, currentRect)));
 		}
 		currentY += yStep;
+		if(g2 != null) g2.drawString("VCO: ", currentX, currentY);
+		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
+			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
+			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
+			if(g2 == null) inputVCO.add(parent.addConnector(new Input(this, currentRect)));
+		}
+		currentY += yStep;
 		if(g2 != null) g2.drawString("FM: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
 			if(g2 == null) inputFM.add(parent.addConnector(new Input(this, currentRect)));
+		}
+		currentY += yStep;
+		if(g2 != null) g2.drawString("FMMod: ", currentX, currentY);
+		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
+			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
+			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
+			if(g2 == null) inputFMMod.add(parent.addConnector(new Input(this, currentRect)));
 		}
 		if(g2 != null) g2.setColor(Color.BLUE);
 		currentY += yStep;
@@ -436,6 +524,8 @@ public class BasicWaveform implements Module {
 			this.freqInHz = new Double(currentLine);
 			currentLine = in.readLine();
 			this.amplitude = new Double(currentLine);
+			currentLine = in.readLine();
+			this.fmMod = new Double(currentLine);
 		} catch (Exception e) {
 			System.out.println("BasicWaveform.loadModuleInfo: Error reading from file");
 		}
@@ -449,6 +539,8 @@ public class BasicWaveform implements Module {
 			out.write(new Double(freqInHz).toString());
 			out.newLine();		
 			out.write(new Double(amplitude).toString());
+			out.newLine();
+			out.write(new Double(fmMod).toString());
 			out.newLine();	
 		} catch (Exception e) {
 			System.out.println("BasicWaveform.saveModuleInfo: Error saving to file");
