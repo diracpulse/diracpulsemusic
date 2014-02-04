@@ -45,14 +45,14 @@ public class ModuleEditor extends JPanel {
 	private MasterInput masterInput = null;
 	public static final int columnWidth = 150;
 	public static final int scrollableWidth = columnWidth * 16;
-	public static final int scrollableHeight = columnWidth * 8;
+	public static final int scrollableHeight = columnWidth * 16;
 	public TreeMap<Integer, Module> moduleIDToModule = null;
 	public TreeMap<Integer, Connector> connectorIDToConnector = null;
 	public Integer selectedOutput = null;
 	private JToolBar navigationBar = null;
 	private static double[] left = null;
 	private static double[] right = null;
-	public final static double maxAmplitudeIn_dB = 20.0;
+	public final static double maxAmplitudeIn_dB = 60.0;
 	public final static double minAmplitudeIn_dB = -144.5; // 24 bit data
 	public final static double maxDuration = 5.0;
 	public final static double minDuration = FDData.timeStepInMillis / 1000.0;
@@ -191,6 +191,11 @@ public class ModuleEditor extends JPanel {
 		col++;
 		addModuleToColumn(col, Module.ModuleType.ENVELOPE);
 		addModuleToColumn(col, Module.ModuleType.ENVELOPE);
+		col++;
+		addModuleToColumn(col, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(col, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(col, Module.ModuleType.BASICWAVEFORM);
+		addModuleToColumn(col, Module.ModuleType.BASICWAVEFORM);
 		col++;
 		addModuleToColumn(col, Module.ModuleType.BASICWAVEFORM);
 		addModuleToColumn(col, Module.ModuleType.BASICWAVEFORM);

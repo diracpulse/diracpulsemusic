@@ -29,7 +29,7 @@ import main.SynthTools;
 public class SelfModulator implements Module {
 
 	public enum ModulationType {
-		BELL,
+		SELFMODULATION,
 		TEST;
 	}
 	
@@ -40,7 +40,7 @@ public class SelfModulator implements Module {
 	int cornerY;
 	int width = 150; // should be >= value calculated by init
 	int height = 150; // calculated by init
-	ModulationType type = ModulationType.BELL;
+	ModulationType type = ModulationType.SELFMODULATION;
 	
 	Rectangle typeControl;
 	ArrayList<Integer> inputs;
@@ -142,7 +142,7 @@ public class SelfModulator implements Module {
 		}
 		// Perform self modulation first
 		switch(type) {
-			case BELL:
+			case SELFMODULATION:
 				for(int index = 0; index < inputSamples.length - 1; index++) {
 					double phase = (inputSamples[index] + inputSamples[index + 1]) * 2.0 * Math.PI;
 					if(phase > Math.PI) phase -= 2.0 * Math.PI;
@@ -209,7 +209,7 @@ public class SelfModulator implements Module {
 
 	public void mousePressed(int x, int y) {
 		if(typeControl.contains(x, y)) {
-			ModulationType inputType = (ModulationType) JOptionPane.showInputDialog(null, "Choose a type", "Type Select", JOptionPane.INFORMATION_MESSAGE, null, ModulationType.values(),  ModulationType.BELL);
+			ModulationType inputType = (ModulationType) JOptionPane.showInputDialog(null, "Choose a type", "Type Select", JOptionPane.INFORMATION_MESSAGE, null, ModulationType.values(),  ModulationType.SELFMODULATION);
 			if(inputType == null) return;
 			type = inputType;
 			parent.refreshView();

@@ -27,7 +27,7 @@ public class Sequencer extends JPanel {
 	private JToolBar navigationBar = null;
 	public static int noteBase = 53;
 	public static double minFreq = 256.0;
-	public static int noteHeight = 13;
+	public static int noteHeight = 11;
 	public static int numPercussion = 3;
 	public static double bpm = 120;
 	public static int maxBeats = 20;
