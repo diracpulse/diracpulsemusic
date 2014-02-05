@@ -36,19 +36,23 @@ public class SelfModulator implements Module {
 	ModuleEditor parent = null;
 	Integer moduleID = null;
 	double duration = ModuleEditor.maxDuration;
+	double fmMod = 1.0;
 	int cornerX;
 	int cornerY;
 	int width = 150; // should be >= value calculated by init
 	int height = 150; // calculated by init
 	ModulationType type = ModulationType.SELFMODULATION;
 	
-	Rectangle typeControl;
+	
+	Rectangle typeControl = null;
+	Rectangle fmModControl = null;
 	ArrayList<Integer> inputs;
 	ArrayList<Integer> outputs;
 	ArrayList<Integer> inputADD;
 	ArrayList<Integer> inputAM;
-	HashMap<Integer, Long> outputToModuleID = null;
-	HashMap<Integer, Long> inputAddToModuleID = null;
+	ArrayList<Integer> inputFMMod;
+	//HashMap<Integer, Long> outputToModuleID = null;
+	//HashMap<Integer, Long> inputAddToModuleID = null;
 	
 	private class Input extends Module.Input {
 
@@ -89,6 +93,7 @@ public class SelfModulator implements Module {
 		inputs = new ArrayList<Integer>();
 		inputADD = new ArrayList<Integer>();
 		inputAM = new ArrayList<Integer>();
+		inputFMMod = new ArrayList<Integer>();
 		init();
 	}
 	
@@ -140,21 +145,38 @@ public class SelfModulator implements Module {
 				inputSamples[index] += inputIn[index]; 
 			}
 		}
+		double[] samplesFMMod = new double[inputSamples.length];
+		for(int index = 0; index < inputSamples.length; index++) {
+			samplesFMMod[index] = 1.0;
+		}
+		ArrayList<double[]> samplesFMModArray = new ArrayList<double[]>();
+		for(Integer inputID: inputFMMod) {
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			if(input.getConnection() == null) continue;
+			waitingForModuleIDs.add(moduleID);
+			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
+			samplesFMModArray.add(output.getSamples(waitingForModuleIDs, controlIn));
+			waitingForModuleIDs.remove(moduleID);
+		}
+		if(!samplesFMModArray.isEmpty()) {
+			for(int index = 0; index < inputSamples.length; index++) samplesFMMod[index] = 0.0;
+		}
+		for(double[] samplesFMModIn: samplesFMModArray) {
+			for(int index = 0; index < inputSamples.length; index++) {
+				if(index >= samplesFMModIn.length) break;
+				samplesFMMod[index] += samplesFMModIn[index]; 
+			}
+		}
 		// Perform self modulation first
 		switch(type) {
 			case SELFMODULATION:
-				for(int index = 0; index < inputSamples.length - 1; index++) {
-					double phase = (inputSamples[index] + inputSamples[index + 1]) * 2.0 * Math.PI;
+				for(int index = 0; index < inputSamples.length; index++) {
+					double phase = inputSamples[index] * fmMod * samplesFMMod[index];
 					if(phase > Math.PI) phase -= 2.0 * Math.PI;
 					inputSamples[index] = Math.sin(phase);
 				}
 				break;
 			case TEST:
-				for(int index = 0; index < inputSamples.length - 1; index++) {
-					double phase = (inputSamples[index] + Math.sin(inputSamples[index + 1])) * 2.0 * Math.PI;
-					if(phase > Math.PI) phase -= 2.0 * Math.PI;
-					inputSamples[index] = Math.sin(phase);
-				}
 				break;				
 		}
 		// Start AM and ADD operations
@@ -163,6 +185,7 @@ public class SelfModulator implements Module {
 		for(int index = 0; index < inputSamples.length; index++) {
 			samplesAM[index] = 1.0;
 			samplesADD[index] = 0.0;
+			samplesFMMod[index] = 1.0;
 		}
 		// Sum AM Inputs
 		ArrayList<double[]> samplesAMArray = new ArrayList<double[]>();
@@ -215,6 +238,13 @@ public class SelfModulator implements Module {
 			parent.refreshView();
 			return;
 		}
+		if(fmModControl.contains(x, y)) {
+			Double inputAmplitude = getInput("Input Amplitude in dB", ModuleEditor.minAmplitudeIn_dB, ModuleEditor.maxAmplitudeIn_dB);
+			if(inputAmplitude == null) return;
+			fmMod = Math.pow(10.0, inputAmplitude / 20.0);
+			parent.refreshView();
+			return;
+		}
 		int index = 0;
 		for(Integer outputID: outputs) {
 			Output output = (Output) parent.connectorIDToConnector.get(outputID);
@@ -248,6 +278,15 @@ public class SelfModulator implements Module {
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
 				System.out.println("SelfModulator inputAM: " + index);
+			}
+			index++;
+		}
+		index = 0;
+		for(Integer inputID: inputFMMod) {
+			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			if(input.getSelectArea().contains(x, y)) {
+				parent.handleConnectorSelect(inputID);
+				System.out.println(type + " inputFMMod: " + index);
 			}
 			index++;
 		}
@@ -296,6 +335,9 @@ public class SelfModulator implements Module {
 		if(g2 == null) typeControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		if(g2 != null) g2.setColor(Color.GREEN);
 		currentY += yStep;
+		if(g2 != null) g2.drawString("FMMod: " + Math.round(fmMod * 100000.0) / 100000.0 + " (" + Math.round(Math.log(fmMod)/Math.log(10.0) * 2000.0) / 100.0 + "dB)", currentX, currentY);
+		if(g2 == null) fmModControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
+		currentY += yStep;
 		if(g2 != null) g2.drawString("ADD: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
@@ -310,11 +352,11 @@ public class SelfModulator implements Module {
 			if(g2 == null) inputAM.add(parent.addConnector(new Input(this, currentRect)));
 		}
 		currentY += yStep;
-		if(g2 != null) g2.drawString("IN: ", currentX, currentY);
+		if(g2 != null) g2.drawString("FMMod: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputs.add(parent.addConnector(new Input(this, currentRect)));
+			if(g2 == null) inputFMMod.add(parent.addConnector(new Input(this, currentRect)));
 		}
 		currentY += yStep;
 		if(g2 != null) g2.drawString("IN: ", currentX, currentY);
@@ -341,7 +383,11 @@ public class SelfModulator implements Module {
 	}
 
 	public void loadModuleInfo(BufferedReader in) {
-		try { 
+		try {
+			String currentLine = in.readLine();
+			this.type = SelfModulator.ModulationType.valueOf(currentLine);
+			currentLine = in.readLine();
+			this.fmMod = new Double(currentLine);
 		} catch (Exception e) {
 			System.out.println("SelfModulator.loadModuleInfo: Error reading from file");
 		}
@@ -349,7 +395,11 @@ public class SelfModulator implements Module {
 	}
 
 	public void saveModuleInfo(BufferedWriter out) {
-		try { 
+		try {
+			out.write(this.type.toString());
+			out.newLine();
+			out.write(new Double(fmMod).toString());
+			out.newLine();
 		} catch (Exception e) {
 			System.out.println("SelfModulator.loadModuleInfo: Error reading from file");
 		}
