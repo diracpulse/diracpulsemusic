@@ -282,7 +282,7 @@ public class BasicWaveform implements Module {
 						phase = 0.0;
 						continue;
 					}
-					returnVal[index] = Math.sin(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
+					returnVal[index] = squarewave(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
 					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * innerControl[index];
 				}
 				break;
@@ -292,7 +292,7 @@ public class BasicWaveform implements Module {
 						phase = 0.0;
 						continue;
 					}
-					returnVal[index] = Math.sin(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
+					returnVal[index] = triangle(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
 					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * innerControl[index];
 				}
 				break;
@@ -302,7 +302,7 @@ public class BasicWaveform implements Module {
 						phase = 0.0;
 						continue;
 					}
-					returnVal[index] = Math.sin(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
+					returnVal[index] = sawtooth(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
 					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * innerControl[index];
 				}
 				break;

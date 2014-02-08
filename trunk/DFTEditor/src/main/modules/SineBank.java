@@ -213,7 +213,7 @@ public class SineBank implements Module {
 					phase = 0.0;
 					continue;
 				}
-				double inputPhase =  (phase + Math.sin(samplesFM[index])) * Math.PI;
+				double inputPhase =  (phase + Math.sin(samplesFM[index]));
 				if(inputPhase > Math.PI) inputPhase -= 2.0 * Math.PI;
 				returnVal[index] += Math.sin(inputPhase) * samplesAM[index] * amplitude + samplesADD[index];
 				phase += deltaPhase * innerControl[index];
