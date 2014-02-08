@@ -18,6 +18,7 @@ import main.Filter;
 import main.Module;
 import main.ModuleEditor;
 import main.SynthTools;
+import main.DFT2.Wavelet;
 import main.Module.ModuleType;
 
 public class FIRFilter implements Module {
@@ -26,18 +27,26 @@ public class FIRFilter implements Module {
 		LOWPASS,
 		HIGHPASS,
 		BANDPASS,
+		HARMONIC,
 		ALLPASS;
+	}
+	
+	public static class FilterWithGain {
+		
+		public double[] filter;
+		public double gain;
 	}
 	
 	ModuleEditor parent = null;
 	Integer moduleID = null;
 	double amplitude = 1.0;
+	double dBPerOctave = 6.0;
 	double freqInHz = ModuleEditor.defaultOctave;
-	double bins = 2.0;
-	double minFreqInHzNoControl = 20.0;
+	double bins = 4.0;
+	double minFreqInHzNoControl = ModuleEditor.minOctave;
 	final double minBins = 1.0;
 	final double maxBins = 100.0;
-	double alpha = 5.0;
+	double alpha = 1.0;
 	double duration = ModuleEditor.maxDuration;
 	int cornerX;
 	int cornerY;
@@ -49,6 +58,7 @@ public class FIRFilter implements Module {
 	Rectangle freqControl = null;
 	Rectangle ampControl = null;
 	Rectangle binsControl = null;	
+	Rectangle rolloffControl = null;	
 	ArrayList<Integer> outputs;
 	ArrayList<Integer> inputs;
 	
@@ -122,7 +132,7 @@ public class FIRFilter implements Module {
 			//JOptionPane.showMessageDialog(parent.getParentFrame(), "Loop in FIRFilter");
 			return new double[0];
 		}
-		TreeMap<Double, double[]> freqRatioToFilter = new TreeMap<Double, double[]>();
+		TreeMap<Double, FilterWithGain> freqRatioToFilter = new TreeMap<Double, FilterWithGain>();
 		double[] innerControl = null;
 		if(controlIn == null) {
 			innerControl = new double[(int) Math.round(duration * SynthTools.sampleRate)];
@@ -171,9 +181,7 @@ public class FIRFilter implements Module {
 			double filterFreq = freqRatio * freqInHz;
 			int filterLength = (int) Math.round((SynthTools.sampleRate / filterFreq) * bins);
 			filterLength += filterLength % 2;
-			if(type == FilterType.BANDPASS) freqRatioToFilter.put(freqRatio, Filter.getBPFilter(filterFreq, filterLength, alpha));
-			if(type == FilterType.HIGHPASS) freqRatioToFilter.put(freqRatio, Filter.getHPFilter(filterFreq, filterLength, alpha));
-			if(type == FilterType.LOWPASS) freqRatioToFilter.put(freqRatio, Filter.getLPFilter(filterFreq, filterLength, alpha));
+			freqRatioToFilter.put(freqRatio, createFilter(freqInHz, bins));
 		}
 		double[] returnVal = new double[innerControl.length];
 		for(int index = 0; index < innerControl.length; index++) {
@@ -183,14 +191,14 @@ public class FIRFilter implements Module {
 				returnVal[index] = inputSamples[index];
 				continue;
 			}
-			double[] filter = freqRatioToFilter.get(innerControl[index]);
-			for(int filterIndex = 0; filterIndex < filter.length; filterIndex++) {
-				int innerIndex = index + filterIndex - filter.length / 2;
+			FilterWithGain fwg = freqRatioToFilter.get(innerControl[index]);
+			for(int filterIndex = 0; filterIndex < fwg.filter.length; filterIndex++) {
+				int innerIndex = index + filterIndex - fwg.filter.length / 2;
 				if(innerIndex < 0) continue;
 				if(innerIndex == returnVal.length) break;
-				returnVal[index] += inputSamples[innerIndex] * filter[filterIndex];
+				returnVal[index] += inputSamples[innerIndex] * fwg.filter[filterIndex];
 			}
-			returnVal[index] *= amplitude;
+			returnVal[index] *= amplitude / fwg.gain;
 		}
 		return returnVal;
 	}
@@ -221,6 +229,13 @@ public class FIRFilter implements Module {
 			Double binsInput = getInput("Input Length In Bins", minBins, maxBins);
 			if(binsInput == null) return;
 			bins = binsInput;
+			parent.refreshView();
+			return;
+		}
+		if(rolloffControl.contains(x, y)) {
+			Double inputAmplitude = getInput("Input Rolloff Per Octave In dB", ModuleEditor.minAmplitudeIn_dB, ModuleEditor.maxAmplitudeIn_dB);
+			if(inputAmplitude == null) return;
+			dBPerOctave = Math.pow(10.0, inputAmplitude / 20.0);
 			parent.refreshView();
 			return;
 		}
@@ -257,6 +272,67 @@ public class FIRFilter implements Module {
 		if(returnVal < minBound || returnVal > maxBound) {
 			JOptionPane.showMessageDialog(parent.getParentFrame(), "Input must be between: " + minBound + " and " + maxBound);
 			return null;
+		}
+		return returnVal;
+	}
+	
+	public FilterWithGain createFilter(double freqInHz, double bins) {
+	   	FilterWithGain returnVal = new FilterWithGain();
+		double alpha = 5.0;
+		double samplesPerCycle = SynthTools.sampleRate / freqInHz;
+		returnVal.gain = 0.0;
+		int filterLength = (int) Math.round(bins * samplesPerCycle);
+		filterLength += filterLength % 2;
+		returnVal.filter = new double[filterLength];
+		Filter.CreateWindow(returnVal.filter, filterLength, alpha);
+		double[] sinSum = new double[filterLength];
+		for(int index = 0; index < filterLength; index++) {
+			sinSum[index] = 0.0;
+		}
+		if(type == FilterType.BANDPASS) {
+			returnVal.filter = Filter.getBPFilter(freqInHz, filterLength, alpha);
+			returnVal.gain = 1.0;
+			return returnVal;
+		}
+		if(type == FilterType.HIGHPASS){
+			returnVal.filter = Filter.getHPFilter(freqInHz, filterLength, alpha);
+			returnVal.gain = 1.0;
+			return returnVal;
+		}		
+		if(type == FilterType.LOWPASS) {
+			returnVal.filter = Filter.getLPFilter(freqInHz, filterLength, alpha);
+			returnVal.gain = 1.0;
+			return returnVal;
+		}
+		if(type == FilterType.HARMONIC) {
+			double maxFreq = SynthTools.sampleRate / 2.0;
+			double freqStep = bins * SynthTools.sampleRate / filterLength;
+			double innerFreqInHz = freqInHz;
+			double deltaPhase = innerFreqInHz / SynthTools.sampleRate * Math.PI * 2.0;
+			double phase = 0.0;
+			for(int index = 0; index < filterLength; index++) {
+				if(phase > Math.PI) phase -= 2.0 * Math.PI;
+				sinSum[index] += Math.sin(phase);
+				phase += deltaPhase;
+			}
+			for(innerFreqInHz = freqInHz + freqStep; innerFreqInHz < maxFreq; innerFreqInHz += freqStep) {
+				double octave = Math.log(innerFreqInHz / freqInHz) / Math.log(2.0);
+				double rolloff = Math.pow(10.0, -1.0 * dBPerOctave / 20.0 * octave);
+				deltaPhase = innerFreqInHz / SynthTools.sampleRate * Math.PI * 2.0;
+				phase = 0.0;
+				for(int index = 0; index < filterLength; index++) {
+					if(phase > Math.PI) phase -= 2.0 * Math.PI;
+					sinSum[index] += Math.sin(phase) * rolloff;
+					phase += deltaPhase;
+				}
+			}
+			for(int index = 0; index < filterLength; index++) {
+				returnVal.filter[index] *= sinSum[index];
+			}	
+			for(int index = 0; index < filterLength; index++) {
+				returnVal.gain += Math.abs(returnVal.filter[index]);
+			}
+			return returnVal;
 		}
 		return returnVal;
 	}
@@ -298,6 +374,11 @@ public class FIRFilter implements Module {
 		if(g2 != null) g2.drawString("Bins: " + bins, currentX, currentY);
 		if(g2 == null) binsControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		currentY += yStep;
+		if(g2 != null && type != FilterType.HARMONIC) g2.setColor(Color.GRAY);
+		if(g2 != null) g2.drawString("dB/Oct: " + Math.round(dBPerOctave * 100000.0) / 100000.0 + " (" + Math.round(Math.log(dBPerOctave)/Math.log(10.0) * 2000.0) / 100.0 + "dB)", currentX, currentY);
+		if(g2 == null) rolloffControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
+		currentY += yStep;
+		if(g2 != null) g2.setColor(Color.GREEN);
 		if(g2 != null) g2.drawString("IN: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);

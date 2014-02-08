@@ -309,7 +309,7 @@ public class Filter {
 		for(CriticalBand criticalBand: criticalBands) criticalBand.calculateRandomness(channel);
 	}
 	
-	static double BesselI0(double x) {
+	public static double BesselI0(double x) {
 	   double denominator;
 	   double numerator;
 	   double z;
@@ -394,7 +394,7 @@ public class Filter {
 		return returnVal;
 	}
 
-	static void CreateFilter(double w0, double w1, int order, double alpha) {
+	public static void CreateFilter(double w0, double w1, int order, double alpha) {
 		//filter = new double[order];
 		int m = order / 2;
 		int n;
@@ -451,7 +451,7 @@ public class Filter {
 		return;
 	}
 	
-	static void CreateWindow(double[] window, int size, double alpha) {
+	public static void CreateWindow(double[] window, int size, double alpha) {
 		   double sumvalue = 0.0;
 		   int i;
 		   
