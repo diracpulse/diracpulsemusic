@@ -29,6 +29,7 @@ import main.Module.ModuleType;
 import main.modules.BasicWaveform;
 import main.modules.Envelope;
 import main.modules.FIRFilter;
+import main.modules.KarplusStrong;
 import main.modules.MasterInput;
 import main.modules.SelfModulator;
 import main.modules.SineBank;
@@ -222,6 +223,11 @@ public class ModuleEditor extends JPanel {
 		addModuleToColumn(col, Module.ModuleType.FIRFILTER);
 		addModuleToColumn(col, Module.ModuleType.FIRFILTER);
 		col++;
+		addModuleToColumn(col, Module.ModuleType.KARPLUSSTRONG);
+		addModuleToColumn(col, Module.ModuleType.KARPLUSSTRONG);
+		addModuleToColumn(col, Module.ModuleType.KARPLUSSTRONG);
+		addModuleToColumn(col, Module.ModuleType.KARPLUSSTRONG);
+		col++;
 		addModuleToColumn(col, Module.ModuleType.STEREOPAN);
 		addModuleToColumn(col, Module.ModuleType.STEREOPAN);	
 		addModuleToColumn(col, Module.ModuleType.STEREOPAN);
@@ -273,6 +279,10 @@ public class ModuleEditor extends JPanel {
 			break;
 		case SINEBANK:
 			module = new SineBank(this, currentX, currentY);
+			addModule(module);
+			break;
+		case KARPLUSSTRONG:
+			module = new KarplusStrong(this, currentX, currentY);
 			addModule(module);
 			break;
 		default:
