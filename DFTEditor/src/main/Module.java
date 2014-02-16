@@ -23,7 +23,8 @@ public interface Module {
 		SELFMODULATOR,
 		FIRFILTER,
 		WHITENOISE,
-		SINEBANK;
+		SINEBANK,
+		KARPLUSSTRONG;
 	}
 	
 	abstract void mousePressed(int x, int y);

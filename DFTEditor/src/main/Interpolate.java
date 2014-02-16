@@ -75,15 +75,8 @@ public class Interpolate {
 	
 	public static double[] synthTAPairsLinear(ArrayList<TAPair> TAPairs) {
 		double[] returnVal;
-		if(TAPairs.isEmpty() || TAPairs == null) return null;
-		if(TAPairs.size() == 2) {
-			returnVal = new double[TAPairs.get(0).getTimeInSamples() + 1];
-			for(int index = 0; index < returnVal.length - 1; index++) {
-				returnVal[index] = 0.0;
-			}
-			returnVal[returnVal.length - 1] = TAPairs.get(0).getAbsoluteAmplitude();
-			return returnVal;
-		}
+		if(TAPairs == null) return null;
+		if(TAPairs.size() < 2) return null;
 		returnVal = new double[TAPairs.get(TAPairs.size() - 1).getTimeInSamples() + 1];
 		for(int index = 0; index < returnVal.length - 1; index++) {
 			returnVal[index] = 0.0;
@@ -106,15 +99,8 @@ public class Interpolate {
 	
 	public static double[] synthTAPairsLog(ArrayList<TAPair> TAPairs) {
 		double[] returnVal;
-		if(TAPairs.isEmpty() || TAPairs == null) return null;
-		if(TAPairs.size() == 2) {
-			returnVal = new double[TAPairs.get(0).getTimeInSamples() + 1];
-			for(int index = 0; index < returnVal.length - 1; index++) {
-				returnVal[index] = 0.0;
-			}
-			returnVal[returnVal.length - 1] = TAPairs.get(0).getAbsoluteAmplitude();
-			return returnVal;
-		}
+		if(TAPairs == null) return null;
+		if(TAPairs.size() < 2) return null;
 		returnVal = new double[TAPairs.get(TAPairs.size() - 1).getTimeInSamples() + 1];
 		for(int index = 0; index < returnVal.length - 1; index++) {
 			returnVal[index] = 0.0;
@@ -134,6 +120,30 @@ public class Interpolate {
 		}
 		for(int index = 0; index < returnVal.length; index++) {
 			returnVal[index] = Math.pow(FDData.logBase, returnVal[index]);
+		}
+		return returnVal;
+	}
+	
+	public static double[] synthTAPairsCubicSpline(ArrayList<TAPair> TAPairs) {
+		double[] returnVal;
+		if(TAPairs == null) return null;
+		if(TAPairs.size() < 2) return null;
+		returnVal = new double[TAPairs.get(TAPairs.size() - 1).getTimeInSamples() + 1];
+		for(int index = 0; index < returnVal.length - 1; index++) {
+			returnVal[index] = 0.0;
+		}
+		double[] times = new double[TAPairs.size()];
+		double[] amps = new double[TAPairs.size()];
+		for(int index = 0; index < TAPairs.size(); index++) {
+			amps[index] = TAPairs.get(index).absoluteAmplitude;
+			times[index] = TAPairs.get(index).getTimeInSamples();
+		}
+		CubicSpline timeToAmp = new CubicSpline(times, amps);
+		int lowerTime = 0;
+		int upperTime = (int) times[times.length - 1];
+		for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
+			if(timeIndex >= returnVal.length) break;
+			returnVal[timeIndex] = timeToAmp.interpolate(timeIndex);
 		}
 		return returnVal;
 	}

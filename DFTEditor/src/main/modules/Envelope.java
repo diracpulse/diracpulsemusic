@@ -31,6 +31,7 @@ public class Envelope implements Module {
 	
 	private enum InterpolationType {
 		LINEAR,
+		CUBICSPLINE,
 		LOGLINEAR,
 	}
 	
@@ -129,6 +130,7 @@ public class Envelope implements Module {
 			TAPairs.add(new Interpolate.TAPair(currentTime, 0.0));
 			if(iType == InterpolationType.LINEAR) samples = Interpolate.synthTAPairsLinear(TAPairs);
 			if(iType == InterpolationType.LOGLINEAR) samples = Interpolate.synthTAPairsLog(TAPairs);
+			if(iType == InterpolationType.CUBICSPLINE) samples = Interpolate.synthTAPairsCubicSpline(TAPairs);
 			System.out.println("Envelope " + samples.length);
 			return samples;
 		} else {
@@ -192,6 +194,7 @@ public class Envelope implements Module {
 		}
 		if(iType == InterpolationType.LINEAR) return Interpolate.synthTAPairsLinear(TAPairs);
 		if(iType == InterpolationType.LOGLINEAR) return Interpolate.synthTAPairsLog(TAPairs);
+		if(iType == InterpolationType.CUBICSPLINE) return Interpolate.synthTAPairsCubicSpline(TAPairs);
 		return null;
 	}
 	
