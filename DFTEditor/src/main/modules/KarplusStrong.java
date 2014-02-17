@@ -14,6 +14,7 @@ import java.util.HashSet;
 
 import javax.swing.JOptionPane;
 
+import main.Filter;
 import main.Module;
 import main.ModuleEditor;
 import main.SynthTools;
@@ -33,14 +34,15 @@ public class KarplusStrong implements Module {
 	double duration = ModuleEditor.maxDuration;
 	int cornerX;
 	int cornerY;
+	int oversampling = 4;
 	int width = 150; // should be >= value calculated by init
 	int height = 150; // calculated by init
-	int p = 100;
+	double freq = 256.0;
 	double a = 0.5;
 	double b = 0.5;
 	AlgorithmType type = AlgorithmType.STRING;
 	Rectangle typeControl = null;
-	Rectangle pControl = null;
+	Rectangle freqControl = null;
 	Rectangle aControl = null;
 	Rectangle bControl = null;
 	ArrayList<Integer> outputs;
@@ -114,9 +116,13 @@ public class KarplusStrong implements Module {
 		if(waitingForModuleIDs.contains(moduleID)) {
 			System.out.println("Karplus-Strong has no inputs");
 		}
-		double[] control = new double[(int) Math.round(duration * SynthTools.sampleRate)];
+		int numSamples = (int) Math.round(duration * SynthTools.sampleRate);
+		numSamples *= oversampling;
+		double[] control = new double[numSamples];
 		if(controlIn != null) {
-			control = controlIn;
+			for(int index = 0; index < control.length; index++) {
+				control[index] = controlIn[index / 4];
+			}
 		} else {
 			for(int index = 0; index < control.length; index++) {
 				control[index] = 1.0;
@@ -126,31 +132,103 @@ public class KarplusStrong implements Module {
 		for(int index = 0; index < samples.length; index++) {
 			samples[index] = 0.0;
 		}
-		boolean stop = false;
+		boolean restart = false;
 		int controlIndex = 0;
-		while(controlIndex < control.length) {
-			if(control[controlIndex] < 0.0) {
-				controlIndex++;
-				continue;
-			}
-			stop = false;
-			int endInitial = controlIndex + p + 1;
-			while(controlIndex < endInitial) {
-				if(control[controlIndex] < 0.0) {
-					stop = true;
-					break;
-				}
-				samples[controlIndex] = Math.random() - 0.5;
-				controlIndex++;
-			}
-			if(stop) continue;
+		if(type == AlgorithmType.STRING) {
 			while(controlIndex < control.length) {
-				if(control[controlIndex] < 0.0) break;
-				samples[controlIndex] += 0.5 * (samples[controlIndex - p] + samples[controlIndex - p - 1]);
-				controlIndex++;
+				if(control[controlIndex] < 0.0) {
+					controlIndex++;
+					continue;
+				}
+				double currentControl = control[controlIndex];
+				int p = (int) Math.round(SynthTools.sampleRate * oversampling / (freq * control[controlIndex] - 0.5));
+				restart = false;
+				int endInitial = controlIndex + p + 1;
+				while(controlIndex < endInitial) {
+					if(control[controlIndex] < 0.0) {
+						restart = true;
+						break;
+					}
+					samples[controlIndex] = Math.random() - 0.5;
+					controlIndex++;
+				}
+				if(restart) continue;
+				while(controlIndex < control.length) {
+					if(control[controlIndex] != currentControl) break;
+					p = (int) Math.round(SynthTools.sampleRate * oversampling / (freq * control[controlIndex] - 0.5));
+					samples[controlIndex] += 0.5 * (samples[controlIndex - p] + samples[controlIndex - p - 1]);
+					controlIndex++;
+				}
 			}
 		}
-		return samples;
+		if(type == AlgorithmType.A) {
+			while(controlIndex < control.length) {
+				if(control[controlIndex] < 0.0) {
+					controlIndex++;
+					continue;
+				}
+				double currentControl = control[controlIndex];
+				int p = (int) Math.round(SynthTools.sampleRate * oversampling / (freq * control[controlIndex] - 0.5));
+				restart = false;
+				int endInitial = controlIndex + p + 1;
+				while(controlIndex < endInitial) {
+					if(control[controlIndex] < 0.0) {
+						restart = true;
+						break;
+					}
+					samples[controlIndex] = Math.random() - 0.5;
+					controlIndex++;
+				}
+				if(restart) continue;
+				while(controlIndex < control.length) {
+					if(control[controlIndex] != currentControl) break;
+					p = (int) Math.round(SynthTools.sampleRate * oversampling / (freq * control[controlIndex] - 0.5));
+					if(Math.random() < a) {
+						samples[controlIndex] += samples[controlIndex - p];
+					} else {
+						samples[controlIndex] += 0.5 * (samples[controlIndex - p] + samples[controlIndex - p - 1]);
+					}
+					controlIndex++;
+				}
+			}
+		}
+		if(type == AlgorithmType.B) {
+			while(controlIndex < control.length) {
+				if(control[controlIndex] < 0.0) {
+					controlIndex++;
+					continue;
+				}
+				double currentControl = control[controlIndex];
+				int p = (int) Math.round(SynthTools.sampleRate * oversampling / (freq * control[controlIndex] - 0.5));
+				restart = false;
+				int endInitial = controlIndex + p + 1;
+				while(controlIndex < endInitial) {
+					if(control[controlIndex] < 0.0) {
+						restart = true;
+						break;
+					}
+					samples[controlIndex] = Math.random() - 0.5;
+					controlIndex++;
+				}
+				if(restart) continue;
+				while(controlIndex < control.length) {
+					if(control[controlIndex] != currentControl) break;
+					p = (int) Math.round(SynthTools.sampleRate * oversampling / (freq * control[controlIndex] - 0.5));
+					if(Math.random() < b) {
+						samples[controlIndex] += 0.5 * (samples[controlIndex - p] + samples[controlIndex - p - 1]);
+					} else {
+						samples[controlIndex] -= 0.5 * (samples[controlIndex - p] + samples[controlIndex - p - 1]);
+					}
+					controlIndex++;
+				}
+			}
+		}
+		samples = Filter.applyFilter(SynthTools.sampleRate / (oversampling * 2), 2.0, samples, Filter.FilterType.LOWPASS);
+		double[] returnVal = new double[samples.length / oversampling];
+		for(int index = 0; index < returnVal.length; index++) {
+			returnVal[index] = samples[index * 4];
+		}
+		return returnVal;
 	}
 	
 	public void mousePressed(int x, int y) {
@@ -161,10 +239,10 @@ public class KarplusStrong implements Module {
 			parent.refreshView();
 			return;
 		}
-		if(pControl.contains(x, y)) {
-			Double pInput = getInput("Input delay in samples", 0, ModuleEditor.maxDuration * SynthTools.sampleRate);
-			if(pInput == null) return;
-			p = (int) Math.round(pInput);
+		if(freqControl.contains(x, y)) {
+			Double freqInput = getInput("Input freq", ModuleEditor.minFrequency, ModuleEditor.maxFrequency);
+			if(freqInput == null) return;
+			freq = (int) Math.round(freqInput);
 			parent.refreshView();
 			return;
 		}
@@ -215,6 +293,13 @@ public class KarplusStrong implements Module {
 		draw(null);
 	}
 	
+	// since p must be integer exact frequency may be slightly different
+	private double getError(double freq) {
+		double p = (int) Math.round(SynthTools.sampleRate * oversampling / freq - 0.5);
+		double actualFreq = SynthTools.sampleRate * oversampling / (p + 0.5);
+		return Math.round((1.0 - actualFreq / freq) * 1000.0) / 10.0;
+	}
+	
 	public void draw(Graphics g) {
 		int currentX = cornerX;
 		int currentY = cornerY;
@@ -240,9 +325,8 @@ public class KarplusStrong implements Module {
 		if(g2 == null) typeControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		if(g2 != null) g2.setColor(Color.GREEN);
 		currentY += yStep;
-		currentY += yStep;
-		if(g2 != null) g2.drawString("p: " + p, currentX, currentY);
-		if(g2 == null) pControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
+		if(g2 != null) g2.drawString("freq: " + freq + " (err=" + getError(freq) + "%)", currentX, currentY);
+		if(g2 == null) freqControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		currentY += yStep;
 		if(g2 != null) g2.drawString("a: " + a, currentX, currentY);
 		if(g2 == null) aControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
