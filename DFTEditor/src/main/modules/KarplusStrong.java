@@ -117,6 +117,7 @@ public class KarplusStrong implements Module {
 			System.out.println("Karplus-Strong has no inputs");
 		}
 		int numSamples = (int) Math.round(duration * SynthTools.sampleRate);
+		if(controlIn != null) numSamples = controlIn.length;
 		numSamples *= oversampling;
 		double[] control = new double[numSamples];
 		if(controlIn != null) {
@@ -136,7 +137,7 @@ public class KarplusStrong implements Module {
 		int controlIndex = 0;
 		if(type == AlgorithmType.STRING) {
 			while(controlIndex < control.length) {
-				if(control[controlIndex] < 0.0) {
+				if(control[controlIndex] <= 0.0) {
 					controlIndex++;
 					continue;
 				}
@@ -145,12 +146,13 @@ public class KarplusStrong implements Module {
 				restart = false;
 				int endInitial = controlIndex + p + 1;
 				while(controlIndex < endInitial) {
-					if(control[controlIndex] < 0.0) {
+					if(control[controlIndex] <= 0.0) {
 						restart = true;
 						break;
 					}
 					samples[controlIndex] = Math.random() - 0.5;
 					controlIndex++;
+					if(controlIndex >= samples.length) break;
 				}
 				if(restart) continue;
 				while(controlIndex < control.length) {
@@ -163,7 +165,7 @@ public class KarplusStrong implements Module {
 		}
 		if(type == AlgorithmType.A) {
 			while(controlIndex < control.length) {
-				if(control[controlIndex] < 0.0) {
+				if(control[controlIndex] <= 0.0) {
 					controlIndex++;
 					continue;
 				}
@@ -172,12 +174,13 @@ public class KarplusStrong implements Module {
 				restart = false;
 				int endInitial = controlIndex + p + 1;
 				while(controlIndex < endInitial) {
-					if(control[controlIndex] < 0.0) {
+					if(control[controlIndex] <= 0.0) {
 						restart = true;
 						break;
 					}
 					samples[controlIndex] = Math.random() - 0.5;
 					controlIndex++;
+					if(controlIndex >= samples.length) break;
 				}
 				if(restart) continue;
 				while(controlIndex < control.length) {
@@ -194,7 +197,7 @@ public class KarplusStrong implements Module {
 		}
 		if(type == AlgorithmType.B) {
 			while(controlIndex < control.length) {
-				if(control[controlIndex] < 0.0) {
+				if(control[controlIndex] <= 0.0) {
 					controlIndex++;
 					continue;
 				}
@@ -203,12 +206,13 @@ public class KarplusStrong implements Module {
 				restart = false;
 				int endInitial = controlIndex + p + 1;
 				while(controlIndex < endInitial) {
-					if(control[controlIndex] < 0.0) {
+					if(control[controlIndex] <= 0.0) {
 						restart = true;
 						break;
 					}
 					samples[controlIndex] = Math.random() - 0.5;
 					controlIndex++;
+					if(controlIndex >= samples.length) break;
 				}
 				if(restart) continue;
 				while(controlIndex < control.length) {
@@ -352,6 +356,14 @@ public class KarplusStrong implements Module {
 
 	public void loadModuleInfo(BufferedReader in) {
 		try { 
+			String currentLine = in.readLine();
+			this.type = AlgorithmType.valueOf(currentLine);
+			currentLine = in.readLine();
+			this.freq = new Double(currentLine);
+			currentLine = in.readLine();
+			this.a = new Double(currentLine);
+			currentLine = in.readLine();
+			this.b = new Double(currentLine);
 		} catch (Exception e) {
 			System.out.println("KarplusStrong.loadModuleInfo: Error reading from file");
 		}
@@ -360,8 +372,16 @@ public class KarplusStrong implements Module {
 
 	public void saveModuleInfo(BufferedWriter out) {
 		try { 
+			out.write(this.type.toString());
+			out.newLine();
+			out.write(new Double(freq).toString());
+			out.newLine();		
+			out.write(new Double(a).toString());
+			out.newLine();
+			out.write(new Double(b).toString());
+			out.newLine();	
 		} catch (Exception e) {
-			System.out.println("KarplusStrong.loadModuleInfo: Error reading from file");
+			System.out.println("BasicWaveform.saveModuleInfo: Error saving to file");
 		}
 		
 	}
