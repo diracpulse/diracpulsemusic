@@ -14,14 +14,25 @@ public class Interpolate {
 		
 		double timeInSeconds = 0.0;
 		double absoluteAmplitude = 0.0;
+		double minValue = 0.0;
 		
 		public TAPair(double time, double amplitude) {
 			timeInSeconds = time;
 			absoluteAmplitude = amplitude;
 		}
 		
+		public TAPair(double time, double amplitude, double bits) {
+			timeInSeconds = time;
+			absoluteAmplitude = amplitude;
+			minValue = 1.0 / bits;
+		}
+		
+		public double getMinValue() {
+			return minValue;
+		}
+
 		public double getLogAmplitude() {
-			return Math.log(absoluteAmplitude)/Math.log(FDData.logBase);
+			return Math.log(absoluteAmplitude + minValue)/Math.log(FDData.logBase);
 		}
 		
 		public double getAbsoluteAmplitude() {
@@ -96,7 +107,7 @@ public class Interpolate {
 		}
 		return returnVal;
 	}
-	
+
 	public static double[] synthTAPairsLog(ArrayList<TAPair> TAPairs) {
 		double[] returnVal;
 		if(TAPairs == null) return null;
@@ -111,15 +122,17 @@ public class Interpolate {
 			int upperTime = TAPairs.get(arrayIndex + 1).getTimeInSamples();
 			double lowerAmplitude = TAPairs.get(arrayIndex).getLogAmplitude();
 			double upperAmplitude = TAPairs.get(arrayIndex + 1).getLogAmplitude();
+			double lowerMinValue = TAPairs.get(arrayIndex).getMinValue();
+			double upperMinValue = TAPairs.get(arrayIndex + 1).getMinValue();
 			if(upperTime - lowerTime <= 0) return null;
 			double ampSlope = (upperAmplitude - lowerAmplitude) / (upperTime - lowerTime);
+			double minValueSlope = (upperMinValue - lowerMinValue) / (upperTime - lowerTime);
 			for(int timeIndex = lowerTime; timeIndex < upperTime; timeIndex++) {
 				if(timeIndex >= returnVal.length) break;
-				returnVal[timeIndex] += lowerAmplitude + (timeIndex - lowerTime) * ampSlope;
+				double exponent = lowerAmplitude + (timeIndex - lowerTime) * ampSlope;
+				double minValue = lowerMinValue + (timeIndex - lowerTime) * minValueSlope;
+				returnVal[timeIndex] += Math.pow(FDData.logBase, exponent) - minValue;
 			}	
-		}
-		for(int index = 0; index < returnVal.length; index++) {
-			returnVal[index] = Math.pow(FDData.logBase, returnVal[index]);
 		}
 		return returnVal;
 	}

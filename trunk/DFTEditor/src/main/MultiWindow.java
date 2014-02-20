@@ -76,4 +76,13 @@ public class MultiWindow extends WindowAdapter {
 		sequencerFrame.setVisible(true);
 	}
 	
+	public void newWindow(JPanel pane) {
+		JFrame envelopeFrame = new JFrame();
+		envelopeFrame.setLocation(100, 100);
+		envelopeFrame.add(pane);
+		envelopeFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		envelopeFrame.pack();
+		envelopeFrame.setVisible(true);
+	}
+	
 }
