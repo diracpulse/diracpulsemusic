@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -37,21 +38,24 @@ public class Envelope implements Module {
 	
 	private double millisPerPixel = 1.0;
 	private double maxSeconds = ModuleEditor.maxDuration;
-	private TreeMap<Double, EnvelopePoint> secondsToEnvelopePoint = null;
+	private ArrayList<EnvelopePoint> envelopePoints = null;
 	private double startSustain = -1.0;
 	
-	public class EnvelopePoint {
+	public static class EnvelopePoint {
 		
+		public double seconds = 0.0;
 		public double amplitude = 1.0;
 		public InterpolationType type = InterpolationType.LINEAR;
 		public double bits = 8;
 		
-		EnvelopePoint(double amplitude, InterpolationType type) {
+		EnvelopePoint(double seconds, double amplitude, InterpolationType type) {
+			this.seconds = seconds;
 			this.amplitude = amplitude;
 			this.type = type;
 		}
 		
-		EnvelopePoint(double amplitude, InterpolationType type, double bits) {
+		EnvelopePoint(double seconds, double amplitude, InterpolationType type, double bits) {
+			this.seconds = seconds;
 			this.amplitude = amplitude;
 			this.type = type;
 			this.bits = bits;
@@ -104,13 +108,13 @@ public class Envelope implements Module {
 		this.cornerY = y;
 		this.parent = parent;
 		outputs = new ArrayList<Integer>();
-		secondsToEnvelopePoint = new TreeMap<Double, EnvelopePoint>();
-		secondsToEnvelopePoint.put(0.00, new EnvelopePoint(0.0, InterpolationType.LOGLINEAR, 2));
-		secondsToEnvelopePoint.put(0.10, new EnvelopePoint(1.0, InterpolationType.LOGLINEAR, 2));
-		secondsToEnvelopePoint.put(0.2, new EnvelopePoint(0.5, InterpolationType.LOGLINEAR, 4));
+		envelopePoints = new ArrayList<EnvelopePoint>();
+		envelopePoints.add(new EnvelopePoint(0.0, 0.0, InterpolationType.LOGLINEAR, 2));
+		envelopePoints.add(new EnvelopePoint(0.1, 1.0, InterpolationType.LOGLINEAR, 2));
+		envelopePoints.add(new EnvelopePoint(0.2, 0.5, InterpolationType.LOGLINEAR, 4));
 		startSustain = 0.2;
-		secondsToEnvelopePoint.put(0.5, new EnvelopePoint(0.4, InterpolationType.LOGLINEAR, 6));
-		secondsToEnvelopePoint.put(0.6, new EnvelopePoint(0.0, InterpolationType.LOGLINEAR, 8));
+		envelopePoints.add(new EnvelopePoint(0.5, 0.4, InterpolationType.LOGLINEAR, 6));
+		envelopePoints.add(new EnvelopePoint(0.6, 0.0, InterpolationType.LOGLINEAR, 8));
 		init();
 	}
 	
@@ -130,8 +134,82 @@ public class Envelope implements Module {
 		return moduleID;
 	}
 	
+	public TreeMap<Double, EnvelopePoint> getSecondsToEnvelopePoint() {
+		TreeMap<Double, EnvelopePoint> returnVal = new TreeMap<Double, EnvelopePoint>();
+		for(EnvelopePoint point: envelopePoints) {
+			returnVal.put(point.seconds, point);
+		}
+		return returnVal;
+	}
+	
+	public TreeSet<Double> getEnvelopeTimes() {
+		TreeSet<Double> returnVal = new TreeSet<Double>();
+		for(EnvelopePoint point: envelopePoints) {
+			returnVal.add(point.seconds);
+		}
+		return returnVal;
+	}
+	
+	public EnvelopePoint getEnvelopePoint(double time) {
+		TreeMap<Double, EnvelopePoint> secondsToEnvelopePoint = getSecondsToEnvelopePoint();
+		return secondsToEnvelopePoint.get(time);
+	}
+	
+	public boolean replaceEnvelopePoint(EnvelopePoint oldPoint, EnvelopePoint newPoint) {
+		TreeMap<Double, EnvelopePoint> secondsToEnvelopePoint = getSecondsToEnvelopePoint();
+		secondsToEnvelopePoint.remove(oldPoint.seconds);
+		envelopePoints = new ArrayList<EnvelopePoint>();
+		envelopePoints.add(newPoint);
+		envelopePoints.addAll(secondsToEnvelopePoint.values());
+		return true;
+	}
+
 	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] control) {
+		if(control == null) {
+			return synthSingleEnvelope((int) Math.round(ModuleEditor.maxDuration * SynthTools.sampleRate));
+		} else {
+			double[] returnVal = new double[control.length];
+			for(int index = 0; index < returnVal.length; index++) {
+				returnVal[index] = 0.0;
+			}
+			TreeMap<Integer, Integer> startToEnd = new TreeMap<Integer, Integer>();
+			int controlIndex = 0;
+			while(true) {
+				while(control[controlIndex] < 0.0) {
+					controlIndex++;
+					if(controlIndex == control.length) break;
+				}
+				if(controlIndex == control.length) break;
+				int start = controlIndex;
+				double freqRatio = control[controlIndex];
+				while(control[controlIndex] == freqRatio) {
+					controlIndex++;
+					if(controlIndex == control.length) break;
+				}
+				if(controlIndex == control.length) {
+					startToEnd.put(start, controlIndex - 1);
+					break;
+				}
+				startToEnd.put(start, controlIndex);
+			}
+			if(startToEnd.isEmpty()) return returnVal;
+			for(int start: startToEnd.keySet()) {
+				double[] envelope = synthSingleEnvelope(startToEnd.get(start) - start);
+				if(envelope == null) continue;
+				for(int index = 0; index < envelope.length; index++) {
+					int returnIndex = start + index;
+					if(returnIndex == returnVal.length) return returnVal;
+					returnVal[returnIndex] += envelope[index];
+				}
+			}
+			return returnVal;
+		}
+	}
+	
+	public double[] synthSingleEnvelope(int length) {
+		TreeMap<Double, EnvelopePoint> secondsToEnvelopePoint = getSecondsToEnvelopePoint();
 		int numSamples = (int) Math.round(secondsToEnvelopePoint.lastKey() * SynthTools.sampleRate) + 1;
+		if(numSamples > length) return getDefaultEnvelope(length);
 		double[] returnVal = new double[numSamples];
 		TreeMap<InterpolationType, double[]> interpolationToSamples = new TreeMap<InterpolationType, double[]>();		
 		ArrayList<TAPair> TAPairs = new ArrayList<TAPair>();
@@ -155,7 +233,7 @@ public class Envelope implements Module {
 		}
 		return returnVal;
 	}
-
+	
 	public double[] getDefaultEnvelope(int length) {
 		double envelopeLength = length / SynthTools.sampleRate;
 		ArrayList<Interpolate.TAPair> TAPairs = new ArrayList<Interpolate.TAPair>();
@@ -221,7 +299,7 @@ public class Envelope implements Module {
 
 	@Override
 	public void loadModuleInfo(BufferedReader in) {
-		secondsToEnvelopePoint = new TreeMap<Double, EnvelopePoint>();
+		envelopePoints = new ArrayList<EnvelopePoint>();
 		try {
 			String currentLine = in.readLine();
 			int numPoints = new Integer(currentLine);
@@ -232,7 +310,7 @@ public class Envelope implements Module {
 				double amplitude = new Double(currentLine);
 				currentLine = in.readLine();
 				InterpolationType type = InterpolationType.valueOf(currentLine);
-				secondsToEnvelopePoint.put(seconds, new EnvelopePoint(amplitude, type));
+				envelopePoints.add(new EnvelopePoint(seconds, amplitude, type));
 			}
 		} catch (Exception e) {
 			System.out.println("Envelope.loadModuleInfo: Error reading from file");
@@ -243,11 +321,10 @@ public class Envelope implements Module {
 	@Override
 	public void saveModuleInfo(BufferedWriter out) {
 		try {
-			out.write(new Integer(secondsToEnvelopePoint.size()).toString());
+			out.write(new Integer(envelopePoints.size()).toString());
 			out.newLine();
-			for(double seconds: secondsToEnvelopePoint.keySet()) {
-				EnvelopePoint point = secondsToEnvelopePoint.get(seconds);
-				out.write(new Double(seconds).toString());
+			for(EnvelopePoint point: envelopePoints) {
+				out.write(new Double(point.seconds).toString());
 				out.newLine();
 				out.write(new Double(point.amplitude).toString());
 				out.newLine();
