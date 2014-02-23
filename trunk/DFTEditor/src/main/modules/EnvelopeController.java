@@ -1,5 +1,6 @@
 package main.modules;
 
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -11,11 +12,13 @@ import javax.swing.JOptionPane;
 
 import main.MultiWindow;
 import main.Sequencer;
+import main.modules.Envelope.EnvelopePoint;
 
 
 public class EnvelopeController implements MouseListener, MouseMotionListener, ActionListener {
 
 	EnvelopeEditor parent;
+	EnvelopePoint oldPoint = null;
 
 	public EnvelopeController(EnvelopeEditor parent) {
 		this.parent = parent;
@@ -29,44 +32,49 @@ public class EnvelopeController implements MouseListener, MouseMotionListener, A
 
 	@Override
 	public void mouseDragged(MouseEvent arg0) {
-		// TODO Auto-generated method stub
-		
+		if(oldPoint == null) return;
+		int x = arg0.getX();
+		int y = arg0.getY();
+		EnvelopePoint newPoint = new EnvelopePoint(parent.xToTime(x), parent.yToAmplitude(y), oldPoint.type);
+		parent.envelope.replaceEnvelopePoint(oldPoint, newPoint);
+		oldPoint = newPoint;
+		parent.view.repaint();
 	}
 
 	@Override
 	public void mouseMoved(MouseEvent arg0) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void mouseClicked(MouseEvent arg0) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void mouseEntered(MouseEvent arg0) {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void mouseExited(MouseEvent arg0) {
-		// TODO Auto-generated method stub
-		
+		oldPoint = null;
 	}
 
 	@Override
 	public void mousePressed(MouseEvent arg0) {
-		// TODO Auto-generated method stub
-		
+		int x = arg0.getX();
+		int y = arg0.getY();
+		for(Rectangle rect: parent.getControlAreas()) {
+			if(rect.contains(x, y)) {
+				oldPoint = parent.getEnvelopePoint(x, y);
+				return;
+			}
+		}
+		oldPoint = null;
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent arg0) {
-		// TODO Auto-generated method stub
-		
+		oldPoint = null;
 	}
 
 }
