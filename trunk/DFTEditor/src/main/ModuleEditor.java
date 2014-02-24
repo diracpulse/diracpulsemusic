@@ -53,8 +53,10 @@ public class ModuleEditor extends JPanel {
 	private JToolBar navigationBar = null;
 	private static double[] left = null;
 	private static double[] right = null;
-	public final static double maxAmplitudeIn_dB = 60.0;
+	public final static double maxAmplitudeIn_dB = 0.0;
 	public final static double minAmplitudeIn_dB = -144.5; // 24 bit data
+	public final static double maxFMModIn_dB = 60.0;
+	public final static double minFMModIn_dB = -60.0; // 24 bit data
 	public final static double maxDuration = 5.0;
 	public final static double minDuration = FDData.timeStepInMillis / 1000.0;
 	public final static double minFrequency = 0.001;

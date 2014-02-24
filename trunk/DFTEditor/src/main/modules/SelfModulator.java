@@ -239,7 +239,7 @@ public class SelfModulator implements Module {
 			return;
 		}
 		if(fmModControl.contains(x, y)) {
-			Double inputAmplitude = getInput("Input Amplitude in dB", ModuleEditor.minAmplitudeIn_dB, ModuleEditor.maxAmplitudeIn_dB);
+			Double inputAmplitude = getInput("Input FMMod in dB", ModuleEditor.minFMModIn_dB, ModuleEditor.maxFMModIn_dB);
 			if(inputAmplitude == null) return;
 			fmMod = Math.pow(10.0, inputAmplitude / 20.0);
 			parent.refreshView();

@@ -254,7 +254,7 @@ public class Envelope implements Module {
 			}
 			index++;
 		}
-		EnvelopeEditor editor = new EnvelopeEditor(this);
+		new EnvelopeEditor(this);
 	}
 
 	public void init() {
