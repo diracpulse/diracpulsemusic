@@ -21,6 +21,7 @@ import javax.swing.JOptionPane;
 import main.FDData;
 import main.Module;
 import main.ModuleEditor;
+import main.MultiWindow;
 import main.TestSignals.Generator;
 import main.TestSignals.TAPair;
 import main.SynthTools;
@@ -34,28 +35,28 @@ public class BasicWaveform implements Module {
 		SAWTOOTH,
 	}
 
-	ModuleEditor parent = null;
-	Integer moduleID = null;
-	double amplitude = 1.0;
-	double freqInHz = ModuleEditor.defaultOctave;
-	double minFreqInHzNoControl = ModuleEditor.minOctave;
-	double duration = ModuleEditor.maxDuration;
-	double fmMod = 1.0;
-	int cornerX;
-	int cornerY;
-	int width = 150; // should be >= value calculated by init
-	int height = 200; // calculated by init
-	WaveformType type = WaveformType.SINE;
-	Rectangle typeControl = null;
-	Rectangle freqControl = null;
-	Rectangle ampControl = null;
-	Rectangle fmModControl = null;
-	ArrayList<Integer> outputs;
-	ArrayList<Integer> inputADD;
-	ArrayList<Integer> inputAM;
-	ArrayList<Integer> inputVCO;
-	ArrayList<Integer> inputFM;
-	ArrayList<Integer> inputFMMod;
+	private ModuleEditor parent = null;
+	private Integer moduleID = null;
+	private double amplitude = 1.0;
+	private double freqInHz = ModuleEditor.defaultOctave;
+	private double minFreqInHzNoControl = ModuleEditor.minOctave;
+	private double duration = ModuleEditor.maxDuration;
+	private double fmMod = 1.0;
+	private int cornerX;
+	private int cornerY;
+	private int width = 150; // should be >= value calculated by init
+	private int height = 200; // calculated by init
+	private WaveformType type = WaveformType.SINE;
+	private Rectangle typeControl = null;
+	private Rectangle freqControl = null;
+	private Rectangle ampControl = null;
+	private Rectangle fmModControl = null;
+	private ArrayList<Integer> outputs;
+	private ArrayList<Integer> inputADD;
+	private ArrayList<Integer> inputAM;
+	private ArrayList<Integer> inputVCO;
+	private ArrayList<Integer> inputFM;
+	private ArrayList<Integer> inputFMMod;
 	
 	private class Input extends Module.Input {
 
@@ -115,6 +116,41 @@ public class BasicWaveform implements Module {
 	
 	public Integer getModuleId() {
 		return moduleID;
+	}
+	
+	public double getAmplitude() {
+		return amplitude;
+	}
+	
+	// Returns true if amplitude set to new value
+	public boolean setAmplitude(double amplitude) {
+		double amplitudeIn_dB = Math.log(amplitude) / Math.log(10.0) * 20.0;
+		if(amplitudeIn_dB < ModuleEditor.minAmplitudeIn_dB || amplitudeIn_dB > ModuleEditor.maxAmplitudeIn_dB) return false;
+		this.amplitude = amplitude;
+		return true;
+	}
+	
+	public double getFreqInHz() {
+		return freqInHz;
+	}
+	
+	// Returns true if freqInHz set to new value
+	public boolean setFreqInHz(double freqInHz) {
+		if(freqInHz < ModuleEditor.minFrequency || freqInHz > ModuleEditor.maxFrequency) return false;
+		this.freqInHz = freqInHz;
+		return true;
+	}
+	
+	public double getFMMod() {
+		return fmMod;
+	}
+	
+	// Returns true if fmMod set to new value
+	public boolean setFMMod(double fmMod) {
+		double fmModIn_dB = Math.log(fmMod) / Math.log(10.0) * 20.0;
+		if(fmModIn_dB < ModuleEditor.minFMModIn_dB || fmModIn_dB > ModuleEditor.maxFMModIn_dB) return false;
+		this.fmMod = fmMod;
+		return true;
 	}
 	
 	public double[] getSamplesLeft(HashSet<Integer> waitingForModuleIDs) {
@@ -354,7 +390,7 @@ public class BasicWaveform implements Module {
 			return;
 		}
 		if(fmModControl.contains(x, y)) {
-			Double inputAmplitude = getInput("Input Amplitude in dB", ModuleEditor.minAmplitudeIn_dB, ModuleEditor.maxAmplitudeIn_dB);
+			Double inputAmplitude = getInput("Input FMMod in dB", ModuleEditor.minFMModIn_dB, ModuleEditor.maxFMModIn_dB);
 			if(inputAmplitude == null) return;
 			fmMod = Math.pow(10.0, inputAmplitude / 20.0);
 			parent.refreshView();
@@ -367,6 +403,7 @@ public class BasicWaveform implements Module {
 			if(output.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(outputID);
 				System.out.println(type + " " + "output: " + index);
+				return;
 			}
 			index++;
 		}
@@ -376,6 +413,7 @@ public class BasicWaveform implements Module {
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
 				System.out.println(type + " inputADD: " + index);
+				return;
 			}
 			index++;
 		}
@@ -385,6 +423,7 @@ public class BasicWaveform implements Module {
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
 				System.out.println(type + " inputAM: " + index);
+				return;
 			}
 			index++;
 		}
@@ -394,6 +433,7 @@ public class BasicWaveform implements Module {
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
 				System.out.println(type + " inputVCO: " + index);
+				return;
 			}
 			index++;
 		}
@@ -403,6 +443,7 @@ public class BasicWaveform implements Module {
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
 				System.out.println(type + " inputFM: " + index);
+				return;
 			}
 			index++;
 		}
@@ -412,9 +453,11 @@ public class BasicWaveform implements Module {
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
 				System.out.println(type + " inputFMMod: " + index);
+				return;
 			}
 			index++;
 		}
+		new BasicWaveformEditor(this);
 	}
 	
 	public Double getInput(String prompt, double minBound, double maxBound) {
@@ -568,5 +611,9 @@ public class BasicWaveform implements Module {
 	public boolean pointIsInside(int x, int y) {
 		Rectangle moduleBounds = new Rectangle(this.cornerX, this.cornerY, width, height);
 		return moduleBounds.contains(x, y);
+	}
+	
+	public MultiWindow getMultiWindow() {
+		return parent.parent;
 	}
 }
