@@ -25,6 +25,7 @@ public class BasicWaveformEditor extends JPanel {
 	BasicWaveform basicWaveform;
 	BasicWaveformView view;
 	BasicWaveformController controller;
+	ModuleEditor moduleEditor;
 	
 	Rectangle freqControl = null;
 	Rectangle ampControl = null;
