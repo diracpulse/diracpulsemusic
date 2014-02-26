@@ -15,6 +15,9 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.TreeMap;
 
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.SourceDataLine;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -64,6 +67,9 @@ public class ModuleEditor extends JPanel {
 	public final static double minOctave = 32.0;
 	public final static double maxOctave = 8192.0;
 	public final static double defaultOctave = 256.0;
+	public final static int continuousBufferLength = 44100 / 2;
+	private AudioPlayer ap = null;
+	private static boolean playingContinuous = false;
 	
 	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);
@@ -74,7 +80,9 @@ public class ModuleEditor extends JPanel {
 	public JToolBar createNavigationBar() {
 		navigationBar = new JToolBar("Navigation Bar");
         // Create Navigation Buttons
-        addNavigationButton("Play");
+        addNavigationButton("Play Once");
+        addNavigationButton("Play Continuous");
+        addNavigationButton("Stop");
         addNavigationButton("DFT");
         addNavigationButton("Load");
         addNavigationButton("Save");
@@ -132,18 +140,40 @@ public class ModuleEditor extends JPanel {
 		}
 	}
 	
-	public ArrayList<double[]> getSamples(double[] control) {
-		initLeftRight(control);
+	public void play() {
+		initLeftRight(null);
+		ap.PlayBuffer(left, right, 1.0);
+	}
+	
+	public void playContinuous() {
+		playingContinuous = true;
+	}
+	
+	public void stop() {
+		playingContinuous = false;
+	}
+	
+	public ArrayList<double[]> getSamples(double[] controlIn) {
 		ArrayList<double[]> returnVal = new ArrayList<double[]>();
+		initLeftRight(controlIn);
+		returnVal = new ArrayList<double[]>();
 		returnVal.add(left);
 		returnVal.add(right);
 		return returnVal;
 	}
 	
-	public void play() {
-		initLeftRight(null);
-		AudioPlayer ap = new AudioPlayer(left, right, 1.0);
-		ap.start();
+	public ArrayList<double[]> getSamplesContinuous() {
+		if(!playingContinuous) return null;
+		//System.out.println("GSC");
+		ArrayList<double[]> returnVal = new ArrayList<double[]>();
+		double[] controlIn = new double[continuousBufferLength];
+		for(int index = 0; index < controlIn.length; index++) controlIn[index] = 1.0;
+		initLeftRight(controlIn);
+		returnVal = new ArrayList<double[]>();
+		returnVal.add(left);
+		returnVal.add(right);
+		System.out.println(returnVal.size());
+		return returnVal;
 	}
 	
 	public void dft() {
@@ -179,6 +209,8 @@ public class ModuleEditor extends JPanel {
         JScrollPane scrollPane = new JScrollPane(view);
         scrollPane.setSize(800, 600);
         add(scrollPane, BorderLayout.CENTER);
+        ap = new AudioPlayer(null, null, 1.0, this);
+        ap.start();
         //this.setTitle("ModuleEditor: [no project selected]");
 	}
 	

@@ -178,6 +178,7 @@ public class BasicWaveform implements Module {
 		} else {
 			if(freqInHz < minFreqInHzNoControl) {
 				innerControl = new double[(int) Math.round(duration * SynthTools.sampleRate)];
+				if(innerControl.length > controlIn.length) innerControl = new double[controlIn.length];
 				for(int index = 0; index < innerControl.length; index++) {
 					if(controlIn[index] < 0.0) {
 						innerControl[index] = controlIn[index];
@@ -615,5 +616,9 @@ public class BasicWaveform implements Module {
 	
 	public MultiWindow getMultiWindow() {
 		return parent.parent;
+	}
+	
+	public ModuleEditor getModuleEditor() {
+		return parent;
 	}
 }

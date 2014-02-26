@@ -57,7 +57,9 @@ public class ModuleController implements MouseListener, MouseMotionListener, Act
 	}
 	
    public void actionPerformed(ActionEvent e) {
-        if ("Play".equals(e.getActionCommand())) parent.play();
+        if ("Play Once".equals(e.getActionCommand())) parent.play();
+        if ("Play Continuous".equals(e.getActionCommand())) parent.playContinuous();
+        if ("Stop".equals(e.getActionCommand())) parent.playContinuous();
         if ("DFT".equals(e.getActionCommand())) parent.dft();
         if ("Save".equals(e.getActionCommand())) parent.save();
         if ("Load".equals(e.getActionCommand())) parent.open();
