@@ -62,6 +62,7 @@ public class BasicWaveformController implements MouseListener, MouseMotionListen
 
 	@Override
 	public void mouseReleased(MouseEvent arg0) {
+		parent.basicWaveform.getModuleEditor().refreshData();
 	}
 
 }

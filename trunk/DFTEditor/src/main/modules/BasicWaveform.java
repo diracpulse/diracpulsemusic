@@ -373,28 +373,28 @@ public class BasicWaveform implements Module {
 			WaveformType inputType = (WaveformType) JOptionPane.showInputDialog(null, "Choose a type", "Type Select", JOptionPane.INFORMATION_MESSAGE, null, WaveformType.values(),  WaveformType.SINE);
 			if(inputType == null) return;
 			type = inputType;
-			parent.refreshView();
+			parent.refreshData();
 			return;
 		}
 		if(freqControl.contains(x, y)) {
 			Double inputFreqInHz = getInput("Input Frequency In Hz", ModuleEditor.minFrequency, ModuleEditor.maxFrequency);
 			if(inputFreqInHz == null) return;
 			freqInHz = inputFreqInHz;
-			parent.refreshView();
+			parent.refreshData();
 			return;
 		}
 		if(ampControl.contains(x, y)) {
 			Double inputAmplitude = getInput("Input Amplitude in dB", ModuleEditor.minAmplitudeIn_dB, ModuleEditor.maxAmplitudeIn_dB);
 			if(inputAmplitude == null) return;
 			amplitude = Math.pow(10.0, inputAmplitude / 20.0);
-			parent.refreshView();
+			parent.refreshData();
 			return;
 		}
 		if(fmModControl.contains(x, y)) {
 			Double inputAmplitude = getInput("Input FMMod in dB", ModuleEditor.minFMModIn_dB, ModuleEditor.maxFMModIn_dB);
 			if(inputAmplitude == null) return;
 			fmMod = Math.pow(10.0, inputAmplitude / 20.0);
-			parent.refreshView();
+			parent.refreshData();
 			return;
 		}
 

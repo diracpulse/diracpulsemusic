@@ -17,6 +17,8 @@ import java.util.TreeMap;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.DataLine;
+import javax.sound.sampled.LineEvent;
+import javax.sound.sampled.LineListener;
 import javax.sound.sampled.SourceDataLine;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -60,7 +62,7 @@ public class ModuleEditor extends JPanel {
 	public final static double minAmplitudeIn_dB = -144.5; // 24 bit data
 	public final static double maxFMModIn_dB = 60.0;
 	public final static double minFMModIn_dB = -60.0; // 24 bit data
-	public final static double maxDuration = 5.0;
+	public final static double maxDuration = 1.0;
 	public final static double minDuration = FDData.timeStepInMillis / 1000.0;
 	public final static double minFrequency = 0.001;
 	public final static double maxFrequency = SynthTools.sampleRate / 2.0;
@@ -69,7 +71,7 @@ public class ModuleEditor extends JPanel {
 	public final static double defaultOctave = 256.0;
 	public final static int continuousBufferLength = 44100 / 2;
 	private AudioPlayer ap = null;
-	private static boolean playingContinuous = false;
+	private static boolean playContinuous = false;
 	
 	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);
@@ -141,16 +143,23 @@ public class ModuleEditor extends JPanel {
 	}
 	
 	public void play() {
+		ap.stopPlaying();
 		initLeftRight(null);
-		ap.PlayBuffer(left, right, 1.0);
+		ap = new AudioPlayer(left, right, 1.0, false);
+		ap.start();
+	}
+
+	public void stop() {
+		playContinuous = false;
+		ap.stopPlaying();
 	}
 	
 	public void playContinuous() {
-		playingContinuous = true;
-	}
-	
-	public void stop() {
-		playingContinuous = false;
+		playContinuous = true;
+		ap.stopPlaying();
+		initLeftRight(null);
+		ap = new AudioPlayer(left, right, 1.0, true);
+		ap.start();
 	}
 	
 	public ArrayList<double[]> getSamples(double[] controlIn) {
@@ -162,18 +171,15 @@ public class ModuleEditor extends JPanel {
 		return returnVal;
 	}
 	
-	public ArrayList<double[]> getSamplesContinuous() {
-		if(!playingContinuous) return null;
-		//System.out.println("GSC");
-		ArrayList<double[]> returnVal = new ArrayList<double[]>();
-		double[] controlIn = new double[continuousBufferLength];
-		for(int index = 0; index < controlIn.length; index++) controlIn[index] = 1.0;
-		initLeftRight(controlIn);
-		returnVal = new ArrayList<double[]>();
-		returnVal.add(left);
-		returnVal.add(right);
-		System.out.println(returnVal.size());
-		return returnVal;
+	public void refreshData() {
+		refreshView();
+		if(playContinuous) {
+			playContinuous();
+			return;
+		} else {
+			play();
+			return;
+		}
 	}
 	
 	public void dft() {
@@ -209,8 +215,7 @@ public class ModuleEditor extends JPanel {
         JScrollPane scrollPane = new JScrollPane(view);
         scrollPane.setSize(800, 600);
         add(scrollPane, BorderLayout.CENTER);
-        ap = new AudioPlayer(null, null, 1.0, this);
-        ap.start();
+        ap = new AudioPlayer(null, null, 1.0, false);
         //this.setTitle("ModuleEditor: [no project selected]");
 	}
 	
@@ -346,9 +351,10 @@ public class ModuleEditor extends JPanel {
 				if(connectedTo != null) {
 					connectorIDToConnector.get(connectorID).removeConnection();
 					connectorIDToConnector.get(connectedTo).removeConnection();
-					view.repaint();
+					refreshView();
 				} else {
 					selectedOutput = connectorID;
+					return;
 				}
 			} else {
 				System.out.println("ModuleEditor.handleConnectorSelect: please select output first");
@@ -365,9 +371,10 @@ public class ModuleEditor extends JPanel {
 				selectedOutput = null;
 			} else {
 				System.out.println("ModuleEditor.handleConnectorSelect: please select input");
+				return;
 			}
 		}
-		view.repaint();
+		refreshData();
 	}
 	
 	public JFrame getParentFrame() {
@@ -444,5 +451,5 @@ public class ModuleEditor extends JPanel {
 		//this.setTitle(filename);
 		JOptionPane.showMessageDialog(this, "Finished Loading File");
 	}
-	
+
 }

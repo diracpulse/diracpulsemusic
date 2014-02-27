@@ -18,7 +18,7 @@ import javax.swing.Timer;
 
 import main.PlayDataInWindow.SynthType;
 
-public class AudioPlayer extends Thread implements LineListener, ActionListener {
+public class AudioPlayer extends Thread {
 
 	SourceDataLine line;
 	
@@ -29,23 +29,21 @@ public class AudioPlayer extends Thread implements LineListener, ActionListener 
 	final boolean bigEndian = false;
 	final double fullScale = Short.MAX_VALUE - 1;
 	private boolean stereo;
-	private double[] mono;
-	private double[] left;
-	private double[] right;
+	public double[] mono;
+	public double[] left;
+	public double[] right;
 	private double masterVolume = 1.0;
-	Timer timer = null;
-	boolean refresh = false;
-	int playCounter = 0;
-	
-	private ModuleEditor moduleEditor = null;
+	volatile boolean playContinuous = false;
+	AudioFormat format = null;
+	byte[] audioByteData = null;
+	private volatile Thread thisThread = null;
+	private int frameSize = 1024;
 
 	AudioPlayer (double[] mono, double masterVolume) {
 		this.stereo = false;
 		this.mono = mono;
 		this.masterVolume = masterVolume;
-		//timer = new Timer(100, this);
-        //timer.setInitialDelay(0);
-        //timer.start();
+		this.thisThread = this;
 	}
 	
 	AudioPlayer (double[] left, double[] right, double masterVolume) {
@@ -53,32 +51,34 @@ public class AudioPlayer extends Thread implements LineListener, ActionListener 
 		this.left = left;
 		this.right = right;
 		this.masterVolume = masterVolume;
-		//timer = new Timer(100, this);
-        //timer.setInitialDelay(0);
-        //timer.start();
+		this.thisThread = this;
 	}
 	
-	AudioPlayer (double[] left, double[] right, double masterVolume, ModuleEditor editor) {
+	AudioPlayer (double[] left, double[] right, double masterVolume, boolean playContinuous) {
 		this.stereo = true;
 		this.left = left;
 		this.right = right;
 		this.masterVolume = masterVolume;
-		this.moduleEditor = editor;
-		timer = new Timer(100, this);
-        timer.setInitialDelay(0);
-        timer.start();
+		this.playContinuous = playContinuous;
+		this.thisThread = this;
 	}
 	
+	public void stopPlaying() {
+		thisThread = null;
+	}
+
 	public void run() {
 
-		AudioFormat format = new AudioFormat(sampleRate, bitsPerSample, channels, signed, bigEndian);
+		Thread runningThread = Thread.currentThread();
+		
+		format = new AudioFormat(sampleRate, bitsPerSample, channels, signed, bigEndian);
 		
 		DataLine.Info info = new DataLine.Info(SourceDataLine.class, format); 
 		
 		if (AudioSystem.isLineSupported(info)) {
     		try {
         		line = (SourceDataLine) AudioSystem.getLine(info);
-        		line.addLineListener(this);
+        		//line.addLineListener(moduleEditor);
         		line.open(format);
  			} catch (LineUnavailableException ex) {
 				System.out.println("Cannot open speaker port");
@@ -88,11 +88,37 @@ public class AudioPlayer extends Thread implements LineListener, ActionListener 
 			System.out.println("Speaker port unsupported");
 			System.exit(1);
 		}
-		line.start();
 		if(!stereo) {
-			PlayBuffer(mono, masterVolume);
+			getAudioBytes(mono, masterVolume);
 		} else {
-			PlayBuffer(left, right, masterVolume);
+			getAudioBytes(left, right, masterVolume);
+		}
+		int position = 0;
+		line.start();
+		//System.out.println(line.available());
+		while(runningThread == thisThread) {
+			while(position < audioByteData.length) {
+				int bytesLeftToWrite = audioByteData.length - position;
+				int bytesToWrite = line.available();
+				if(bytesToWrite > frameSize) bytesToWrite = frameSize;
+				if(bytesToWrite == 0) continue;
+				if(bytesLeftToWrite > bytesToWrite) {
+					line.write(audioByteData, position, bytesToWrite);
+					position += bytesToWrite;
+					//System.out.println("Available");
+				} else {
+					line.write(audioByteData, position, bytesLeftToWrite);
+					position = audioByteData.length;
+					//System.out.println("Finished");
+				}
+			}
+			line.drain();
+			position = 0;
+			if(!playContinuous) {
+				line.stop();
+				line.close();
+				thisThread = null;
+			}
 		}
 	}
 
@@ -104,7 +130,7 @@ public class AudioPlayer extends Thread implements LineListener, ActionListener 
 		line.write(stereo, 0, stereo.length);
 	}
 	
-	public void PlayBuffer(double[] mono, double masterVolume) {
+	public void getAudioBytes(double[] mono, double masterVolume) {
 		if(mono == null) return;
 		final int numberOfSamples = mono.length;
 		double[] left = new double[numberOfSamples];
@@ -114,17 +140,16 @@ public class AudioPlayer extends Thread implements LineListener, ActionListener 
 			left[index] = mono[index];
 			right[index] = mono[index];
 		}
-		PlayBuffer(left, right, masterVolume);
+		getAudioBytes(left, right, masterVolume);
 	}
-	
-	/* NOTE: this version of PlayBuffer scales maxAmplitude to 1.0 */
-	public void PlayBuffer(double[] left, double[] right, double masterVolume) {
+
+	public void getAudioBytes(double[] left, double[] right, double masterVolume) {
 		if(left == null || right == null) return;
 		int numberOfSamples = right.length;
 		if (left.length < right.length) numberOfSamples = left.length;
 		//System.out.println("AudioPlayer.PlayBuffer: left samples = " + left.length + " | right samples = " + right.length);
 		int numBytesToWrite = numberOfSamples * 4;
-		byte[] audioByteData = new byte[numBytesToWrite];
+		audioByteData = new byte[numBytesToWrite];
 		double maxAmplitude = 0.0;
 		double leftAmplitude;
 		double rightAmplitude;
@@ -151,45 +176,6 @@ public class AudioPlayer extends Thread implements LineListener, ActionListener 
 			audioByteData[sampleIndex + 2] = (byte) (rightSample & 0xFF);
 			audioByteData[sampleIndex + 3] = (byte) (rightSample >> 8);			
 		}
-		int offset = 0;
-		line.start();
-		line.write(audioByteData, offset, numBytesToWrite);
-		line.addLineListener(this);
-		line.drain();
-		line.stop();
-	}
-
-	public void SoundOff() {
-		
-		line.drain();
-		line.stop();
-		line.close();
-		line = null;
-		
-		return;
-	}
-
-	public void actionPerformed(ActionEvent arg0) {
-		playCounter++;
-		if(moduleEditor != null) {
-			if(playCounter % 3 == 0) {
-				ArrayList<double[]> channels = moduleEditor.getSamplesContinuous();
-				if(channels == null) return;
-				PlayBuffer(channels.get(0), channels.get(1), 1.0);
-				refresh = false;
-			}
-		}
-	}
-
-	@Override
-	public void update(LineEvent arg0) {
-		//System.out.println(arg0.getType());
-		if(arg0.getType() == LineEvent.Type.STOP) {
-			//System.out.println("STOP");
-			if(moduleEditor != null) {
-			}
-		}
-		
 	}
 
 }
