@@ -235,14 +235,14 @@ public class SelfModulator implements Module {
 			ModulationType inputType = (ModulationType) JOptionPane.showInputDialog(null, "Choose a type", "Type Select", JOptionPane.INFORMATION_MESSAGE, null, ModulationType.values(),  ModulationType.SELFMODULATION);
 			if(inputType == null) return;
 			type = inputType;
-			parent.refreshView();
+			parent.refreshData();
 			return;
 		}
 		if(fmModControl.contains(x, y)) {
 			Double inputAmplitude = getInput("Input FMMod in dB", ModuleEditor.minFMModIn_dB, ModuleEditor.maxFMModIn_dB);
 			if(inputAmplitude == null) return;
 			fmMod = Math.pow(10.0, inputAmplitude / 20.0);
-			parent.refreshView();
+			parent.refreshData();
 			return;
 		}
 		int index = 0;

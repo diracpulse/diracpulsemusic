@@ -229,7 +229,7 @@ public class SineBank implements Module {
 				Double inputAmplitude = getInput("Input Amplitude in dB", ModuleEditor.minAmplitudeIn_dB, ModuleEditor.maxAmplitudeIn_dB);
 				if(inputAmplitude == null) return;
 				amplitudes[index] = Math.pow(10.0, inputAmplitude / 20.0);
-				parent.refreshView();
+				parent.refreshData();
 				return;
 			}
 			index++;

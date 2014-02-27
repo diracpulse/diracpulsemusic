@@ -240,28 +240,28 @@ public class KarplusStrong implements Module {
 			AlgorithmType inputType = (AlgorithmType) JOptionPane.showInputDialog(null, "Choose a type", "Type Select", JOptionPane.INFORMATION_MESSAGE, null, AlgorithmType.values(),  AlgorithmType.STRING);
 			if(inputType == null) return;
 			type = inputType;
-			parent.refreshView();
+			parent.refreshData();
 			return;
 		}
 		if(freqControl.contains(x, y)) {
 			Double freqInput = getInput("Input freq", ModuleEditor.minFrequency, ModuleEditor.maxFrequency);
 			if(freqInput == null) return;
 			freq = (int) Math.round(freqInput);
-			parent.refreshView();
+			parent.refreshData();
 			return;
 		}
 		if(aControl.contains(x, y)) {
 			Double aInput = getInput("Input a probability between 0.0 and 1.0", 0.0, 1.0);
 			if(aInput == null) return;
 			a = aInput;
-			parent.refreshView();
+			parent.refreshData();
 			return;
 		}
 		if(bControl.contains(x, y)) {
 			Double bInput = getInput("Input a probability between 0.0 and 1.0", 0.0, 1.0);
 			if(bInput == null) return;
 			b = bInput;
-			parent.refreshView();
+			parent.refreshData();
 			return;
 		}
 		int index = 0;

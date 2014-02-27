@@ -208,35 +208,35 @@ public class FIRFilter implements Module {
 			FilterType inputType = (FilterType) JOptionPane.showInputDialog(null, "Choose a type", "Type Select", JOptionPane.INFORMATION_MESSAGE, null, FilterType.values(),  FilterType.LOWPASS);
 			if(inputType == null) return;
 			type = inputType;
-			parent.refreshView();
+			parent.refreshData();
 			return;
 		}
 		if(freqControl.contains(x, y)) {
 			Double inputFreqInHz = getInput("Input Frequency In Hz", ModuleEditor.minFrequency, ModuleEditor.maxFrequency);
 			if(inputFreqInHz == null) return;
 			freqInHz = inputFreqInHz;
-			parent.refreshView();
+			parent.refreshData();
 			return;
 		}
 		if(ampControl.contains(x, y)) {
 			Double inputAmplitude = getInput("Input Amplitude In dB", ModuleEditor.minAmplitudeIn_dB, ModuleEditor.maxAmplitudeIn_dB);
 			if(inputAmplitude == null) return;
 			amplitude = Math.pow(10.0, inputAmplitude / 20.0);
-			parent.refreshView();
+			parent.refreshData();
 			return;
 		}
 		if(binsControl.contains(x, y)) {
 			Double binsInput = getInput("Input Length In Bins", minBins, maxBins);
 			if(binsInput == null) return;
 			bins = binsInput;
-			parent.refreshView();
+			parent.refreshData();
 			return;
 		}
 		if(rolloffControl.contains(x, y)) {
 			Double inputAmplitude = getInput("Input Rolloff Per Octave In dB", ModuleEditor.minAmplitudeIn_dB, ModuleEditor.maxAmplitudeIn_dB);
 			if(inputAmplitude == null) return;
 			dBPerOctave = Math.pow(10.0, inputAmplitude / 20.0);
-			parent.refreshView();
+			parent.refreshData();
 			return;
 		}
 		int index = 0;

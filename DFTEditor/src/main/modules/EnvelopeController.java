@@ -75,6 +75,7 @@ public class EnvelopeController implements MouseListener, MouseMotionListener, A
 	@Override
 	public void mouseReleased(MouseEvent arg0) {
 		oldPoint = null;
+		parent.envelope.parent.refreshData();
 	}
 
 }
