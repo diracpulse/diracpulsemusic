@@ -20,66 +20,30 @@ import main.PlayDataInWindow.SynthType;
 
 public class AudioPlayer extends Thread {
 
-	SourceDataLine line;
+	private static volatile SourceDataLine line = null;
 	
-	final float sampleRate = 44100f;
-	final int bitsPerSample = 16; 
-	final int channels = 2;
-	final boolean signed = true;
-	final boolean bigEndian = false;
-	final double fullScale = Short.MAX_VALUE - 1;
-	private boolean stereo;
-	public double[] mono;
-	public double[] left;
-	public double[] right;
-	private double masterVolume = 1.0;
-	volatile boolean playContinuous = false;
-	AudioFormat format = null;
-	byte[] audioByteData = null;
-	private volatile Thread thisThread = null;
-	private int frameSize = 1024;
-
-	AudioPlayer (double[] mono, double masterVolume) {
-		this.stereo = false;
-		this.mono = mono;
-		this.masterVolume = masterVolume;
-		this.thisThread = this;
-	}
+	final static float sampleRate = 44100f;
+	final static int bitsPerSample = 16; 
+	final static int channels = 2;
+	final static boolean signed = true;
+	final static boolean bigEndian = false;
+	final static double fullScale = Short.MAX_VALUE - 1;
+	final static int frameSize = 1024;
+	private static volatile boolean playContinuous = false;
+	private static volatile byte[] audioByteData = null;
+	private static volatile AudioPlayer currentThread = null;
 	
-	AudioPlayer (double[] left, double[] right, double masterVolume) {
-		this.stereo = true;
-		this.left = left;
-		this.right = right;
-		this.masterVolume = masterVolume;
-		this.thisThread = this;
-	}
-	
-	AudioPlayer (double[] left, double[] right, double masterVolume, boolean playContinuous) {
-		this.stereo = true;
-		this.left = left;
-		this.right = right;
-		this.masterVolume = masterVolume;
-		this.playContinuous = playContinuous;
-		this.thisThread = this;
-	}
-	
-	public void stopPlaying() {
-		thisThread = null;
-	}
-
-	public void run() {
-
-		Thread runningThread = Thread.currentThread();
+	private static void getLine() {
 		
-		format = new AudioFormat(sampleRate, bitsPerSample, channels, signed, bigEndian);
+		AudioFormat format = new AudioFormat(sampleRate, bitsPerSample, channels, signed, bigEndian);
 		
 		DataLine.Info info = new DataLine.Info(SourceDataLine.class, format); 
 		
 		if (AudioSystem.isLineSupported(info)) {
     		try {
         		line = (SourceDataLine) AudioSystem.getLine(info);
-        		//line.addLineListener(moduleEditor);
         		line.open(format);
+        		line.start();
  			} catch (LineUnavailableException ex) {
 				System.out.println("Cannot open speaker port");
 				System.exit(1);
@@ -88,20 +52,21 @@ public class AudioPlayer extends Thread {
 			System.out.println("Speaker port unsupported");
 			System.exit(1);
 		}
-		if(!stereo) {
-			getAudioBytes(mono, masterVolume);
-		} else {
-			getAudioBytes(left, right, masterVolume);
-		}
+	}
+	
+	public static void stopPlaying() {
+		currentThread = null;
+	}
+
+	public void run() {
 		int position = 0;
-		line.start();
-		//System.out.println(line.available());
-		while(runningThread == thisThread) {
+		while(true) {
+			position = 0;
 			while(position < audioByteData.length) {
 				int bytesLeftToWrite = audioByteData.length - position;
 				int bytesToWrite = line.available();
-				if(bytesToWrite > frameSize) bytesToWrite = frameSize;
-				if(bytesToWrite == 0) continue;
+				//if(bytesToWrite > frameSize) bytesToWrite = frameSize;
+				if(bytesToWrite <= 0) continue;
 				if(bytesLeftToWrite > bytesToWrite) {
 					line.write(audioByteData, position, bytesToWrite);
 					position += bytesToWrite;
@@ -111,26 +76,62 @@ public class AudioPlayer extends Thread {
 					position = audioByteData.length;
 					//System.out.println("Finished");
 				}
+				if(this != currentThread) {
+					//System.out.println("changed");
+					return;
+				}
+				if(interrupted()) {
+					line.drain();
+					//System.out.println("interrupted");
+					return;
+				}
 			}
 			line.drain();
 			position = 0;
 			if(!playContinuous) {
-				line.stop();
-				line.close();
-				thisThread = null;
+				return;
 			}
 		}
 	}
+	
+	public static void playAudio(double[] mono) {
+		if(line == null) getLine();
+		getAudioBytes(mono, 1.0);
+		playContinuous = false;
+		currentThread = new AudioPlayer();
+		currentThread.start();
+		//System.out.println(Thread.getAllStackTraces().keySet().size());
+	}
+	
+	public static void playAudio(double[] left, double[] right) {
+		if(line == null) getLine();
+		getAudioBytes(left, right, 1.0);
+		playContinuous = false;
+		currentThread = new AudioPlayer();
+		currentThread.start();
+		//System.out.println(Thread.getAllStackTraces().keySet().size());
+	}
+	
+	public static void playAudioLoop(double[] mono) {
+		if(line == null) getLine();
+		getAudioBytes(mono, 1.0);
+		playContinuous = true;
+		currentThread = new AudioPlayer();
+		currentThread.start();
+		//System.out.println(Thread.getAllStackTraces().keySet().size());
+	}
 
-	public double getSampleRate() {
-		return (double) sampleRate;
-	}
 	
-	public void PlayBuffer(byte[] stereo) {
-		line.write(stereo, 0, stereo.length);
+	public static void playAudioLoop(double[] left, double[] right) {
+		if(line == null) getLine();
+		getAudioBytes(left, right, 1.0);
+		playContinuous = true;
+		currentThread = new AudioPlayer();
+		currentThread.start();
+		//System.out.println(Thread.getAllStackTraces().keySet().size());
 	}
-	
-	public void getAudioBytes(double[] mono, double masterVolume) {
+
+	private static void getAudioBytes(double[] mono, double masterVolume) {
 		if(mono == null) return;
 		final int numberOfSamples = mono.length;
 		double[] left = new double[numberOfSamples];
@@ -143,7 +144,7 @@ public class AudioPlayer extends Thread {
 		getAudioBytes(left, right, masterVolume);
 	}
 
-	public void getAudioBytes(double[] left, double[] right, double masterVolume) {
+	private static void getAudioBytes(double[] left, double[] right, double masterVolume) {
 		if(left == null || right == null) return;
 		int numberOfSamples = right.length;
 		if (left.length < right.length) numberOfSamples = left.length;

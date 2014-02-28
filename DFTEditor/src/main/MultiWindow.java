@@ -17,7 +17,6 @@ public class MultiWindow extends WindowAdapter {
 	public JFrame sequencerFrame;
 	public ArrayList<ModuleEditorInfo> moduleEditorInfo;
 	public Sequencer sequencer = null;
-	public AudioPlayer ap;
 	
 	public class ModuleEditorInfo {
 		
@@ -46,7 +45,6 @@ public class MultiWindow extends WindowAdapter {
 	}
 	
 	public MultiWindow() {
-		ap = new AudioPlayer(null, null, 1.0, false);
 		dftEditorFrame = new DFTEditor();
 		dftEditorFrame.setLocation(0, 0);
 		//graphEditorFrame = new GraphEditor();

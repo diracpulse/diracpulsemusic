@@ -31,6 +31,11 @@ public class BasicWaveformEditor extends JPanel {
 	Rectangle ampControl = null;
 	Rectangle fmModControl = null;
 	
+	public enum AdjustmentType {
+		COARSE,
+		FINE;
+	}
+	
     public BasicWaveformEditor(BasicWaveform basicWaveform) {
 		super(new BorderLayout());
 		this.basicWaveform = basicWaveform;
@@ -90,17 +95,17 @@ public class BasicWaveformEditor extends JPanel {
     	if(freqControl.contains(x, y)) {
     		basicWaveform.setFreqInHz(xToFreqInHz(x));
     		view.repaint();
-    		basicWaveform.getMultiWindow().sequencerFrame.repaint();
+    		//basicWaveform.getMultiWindow().sequencerFrame.repaint();
     	}
        	if(ampControl.contains(x, y)) {
     		basicWaveform.setAmplitude(xToAmplitude(x));
     		view.repaint();
-    		basicWaveform.getMultiWindow().sequencerFrame.repaint();
+    		//basicWaveform.getMultiWindow().sequencerFrame.repaint();
     	}
        	if(fmModControl.contains(x, y)) {
     		basicWaveform.setFMMod(xToFMMod(x));
     		view.repaint();
-    		basicWaveform.getMultiWindow().sequencerFrame.repaint();
+    		//basicWaveform.getMultiWindow().sequencerFrame.repaint();
     	}
     }
     

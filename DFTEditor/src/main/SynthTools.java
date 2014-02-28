@@ -86,28 +86,26 @@ public class SynthTools {
 	}
 	
 	static void playPCMData() {
-		AudioPlayer ap = null;
 		if(DFTEditor.currentChannel == DFTEditor.Channel.STEREO) {
 			if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.LEFT_RIGHT) {
-				ap = new AudioPlayer(PCMDataLeft, PCMDataRight, 1.0);
+				AudioPlayer.playAudio(PCMDataLeft, PCMDataRight);
 			}
 			if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.WAV_RIGHT) {
-				ap = new AudioPlayer(WAVDataLeft, PCMDataRight, 1.0);
+				AudioPlayer.playAudio(WAVDataLeft, PCMDataRight);
 			}
 			if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.LEFT_WAV) {
-				ap = new AudioPlayer(PCMDataLeft, WAVDataRight, 1.0);
+				AudioPlayer.playAudio(PCMDataLeft, WAVDataRight);
 			}
 			if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.WAV) {
-				ap = new AudioPlayer(WAVDataLeft, WAVDataRight, 1.0);
+				AudioPlayer.playAudio(WAVDataLeft, WAVDataRight);
 			}
 		}
 		if(DFTEditor.currentChannel == DFTEditor.Channel.LEFT) {
-			ap = new AudioPlayer(PCMDataLeft, 1.0);
+			AudioPlayer.playAudio(PCMDataLeft);
 		}
 		if(DFTEditor.currentChannel == DFTEditor.Channel.RIGHT) {
-			ap = new AudioPlayer(PCMDataRight, 1.0);
+			AudioPlayer.playAudio(PCMDataRight);
 		}
-		ap.start();
 	}
 	
 	static void createHarmonics() {
