@@ -124,9 +124,10 @@ public class Sequencer extends JPanel {
     }
     
     public void play() {
+    	parent.ap.stopPlaying();
     	initLeftRight();
-    	AudioPlayer ap = new AudioPlayer(leftSamples, rightSamples, 1.0);
-		ap.start();
+    	parent.ap = new AudioPlayer(leftSamples, rightSamples, 1.0);
+		parent.ap.start();
     }
     
 	public void dft() {

@@ -70,8 +70,7 @@ public class ModuleEditor extends JPanel {
 	public final static double maxOctave = 8192.0;
 	public final static double defaultOctave = 256.0;
 	public final static int continuousBufferLength = 44100 / 2;
-	private AudioPlayer ap = null;
-	private static boolean playContinuous = false;
+	private boolean playContinuous = false;
 	
 	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);
@@ -143,23 +142,24 @@ public class ModuleEditor extends JPanel {
 	}
 	
 	public void play() {
-		ap.stopPlaying();
+		playContinuous = false;
+		parent.ap.stopPlaying();
 		initLeftRight(null);
-		ap = new AudioPlayer(left, right, 1.0, false);
-		ap.start();
+		parent.ap = new AudioPlayer(left, right, 1.0, false);
+		parent.ap.start();
 	}
 
 	public void stop() {
 		playContinuous = false;
-		ap.stopPlaying();
+		parent.ap.stopPlaying();
 	}
 	
 	public void playContinuous() {
 		playContinuous = true;
-		ap.stopPlaying();
+		parent.ap.stopPlaying();
 		initLeftRight(null);
-		ap = new AudioPlayer(left, right, 1.0, true);
-		ap.start();
+		parent.ap = new AudioPlayer(left, right, 1.0, true);
+		parent.ap.start();
 	}
 	
 	public ArrayList<double[]> getSamples(double[] controlIn) {
@@ -215,7 +215,6 @@ public class ModuleEditor extends JPanel {
         JScrollPane scrollPane = new JScrollPane(view);
         scrollPane.setSize(800, 600);
         add(scrollPane, BorderLayout.CENTER);
-        ap = new AudioPlayer(null, null, 1.0, false);
         //this.setTitle("ModuleEditor: [no project selected]");
 	}
 	
