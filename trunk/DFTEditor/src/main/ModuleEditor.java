@@ -143,23 +143,19 @@ public class ModuleEditor extends JPanel {
 	
 	public void play() {
 		playContinuous = false;
-		parent.ap.stopPlaying();
 		initLeftRight(null);
-		parent.ap = new AudioPlayer(left, right, 1.0, false);
-		parent.ap.start();
+		AudioPlayer.playAudio(left, right);
 	}
 
 	public void stop() {
 		playContinuous = false;
-		parent.ap.stopPlaying();
+		AudioPlayer.stopPlaying();
 	}
 	
 	public void playContinuous() {
 		playContinuous = true;
-		parent.ap.stopPlaying();
 		initLeftRight(null);
-		parent.ap = new AudioPlayer(left, right, 1.0, true);
-		parent.ap.start();
+		AudioPlayer.playAudioLoop(left, right);
 	}
 	
 	public ArrayList<double[]> getSamples(double[] controlIn) {
@@ -228,6 +224,8 @@ public class ModuleEditor extends JPanel {
 		addModuleToColumn(col, Module.ModuleType.SINEBANK);
 		addModuleToColumn(col, Module.ModuleType.SINEBANK);
 		col++;
+		addModuleToColumn(col, Module.ModuleType.ENVELOPE);
+		addModuleToColumn(col, Module.ModuleType.ENVELOPE);
 		addModuleToColumn(col, Module.ModuleType.ENVELOPE);
 		addModuleToColumn(col, Module.ModuleType.ENVELOPE);
 		col++;

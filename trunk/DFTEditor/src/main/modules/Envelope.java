@@ -66,7 +66,7 @@ public class Envelope implements Module {
 	ModuleEditor parent = null;
 	Integer moduleID = null;
 	int width = 150;
-	int height = 300; // calculated by init
+	int height = 150; // calculated by init
 	int cornerX;
 	int cornerY;
 	int numPoints = 3;
