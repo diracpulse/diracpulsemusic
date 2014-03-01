@@ -6,459 +6,319 @@ import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.TreeMap;
-
 
 public class DFT {
 	
-private static int MAXDFTWINDOW = 44100;
-private static int MAXWAVELETS = 62 * 12;
-private static double LeftRight[] = null;
-private static int stereo = 2;
-private static int headerLengthInBytes = 56; // changed from 44 to accomodate newer .wav files
-private static int sampleLengthInBytes = 4;
-private static int stepIndex = 0;
-private static int maxDFTLength = 0;
-private static int debug = 0;
-public static boolean applyMasking = true;
-public static double maskingFactor = Float.NEGATIVE_INFINITY;
-public boolean hasData = false;
-
-// Wavelet Variables
-private static final double onePI = 3.1415926535897932384626433832795;
-private static final double twoPI = 6.283185307179586476925286766559;
-private static double samplingRate = 44100.0;
-public static double maxBinStep = 1.0;
-private static double maxWindowLength = 44100 / 5;
-private static double alpha = 5.0;
-public static double midFreq = 0.0;
-public static double bassFreq = 640.0;
-
-// Calculated Variables
-private static double maxCyclesPerWindow = 0.0;
-private static int numWavelets = 0;
-
-// Special Variables
-private static double roundingFactor = 1000.0;
-
-// Function helpers
-private static double KaiserWindow[] = new double[MAXDFTWINDOW];
-private static double initialTaper = 1.0; // used by InitWavelets
-
-private static class WaveletInfo {
-	double radianFreq;
-	double gain;
-	int length;
-	int note;
-	double sinArray[];//[MAXDFTWINDOW];
-	double cosArray[];//[MAXDFTWINDOW];
-} 
-
-private static ArrayList<WaveletInfo> WaveletInfoArrayList = new ArrayList<WaveletInfo>();
-
-private static int LoadSamplesFromFile(String fileName) {
-	double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
-	DataInputStream in = null;
-    try {
-    	in = new DataInputStream(new
-                BufferedInputStream(new FileInputStream(new String(fileName))));
-	} catch (FileNotFoundException nf) {
-		System.out.println("DFTEditor: " + fileName + ".[suffix] not found");
-		return 0;
-	}
-	ArrayList<Double> ArrayListLeftRight = new ArrayList<Double>();
-	try {
-		in.skip(headerLengthInBytes);
-		System.out.println(in.available());
-		while(true) {
-			int sample = in.readShort();
-			sample = (short) (((sample & 0xFF00) >> 8) | ((sample & 0x00FF) << 8));
-			ArrayListLeftRight.add((double) sample);
-		}
-	} catch (IOException e) {
-		if(e instanceof EOFException) {
-			System.out.println("DFT.LoadSamplesFromFile finished reading");
-		} else {
-			System.out.println("DFT.LoadSamplesFromFile error reading");
-		}
-	}
-    try {
-    	in.close();
-	} catch (IOException nf) {
-		System.out.println("DFTEditor: " + fileName + ".[suffix] not found");
-		return 0;
-	}	
-	int maxTime = ArrayListLeftRight.size() / 2;
-	LeftRight = new double[maxTime * 2];
-	SynthTools.WAVDataLeft = new double[maxTime];	
-	SynthTools.WAVDataRight = new double[maxTime];
-	for(int index = 0; index < maxTime; index++) {
-		LeftRight[index * 2] = ArrayListLeftRight.get(index * 2);
-		LeftRight[index * 2 + 1] = ArrayListLeftRight.get(index * 2 + 1);
-		SynthTools.WAVDataLeft[index] = LeftRight[index * 2];
-		SynthTools.WAVDataRight[index] = LeftRight[index * 2 + 1];
-	}
-	int maxNote = WaveletInfoArrayList.get(0).note;
-	int minNote = WaveletInfoArrayList.get(WaveletInfoArrayList.size() - 1).note;
-	if(minNote > maxNote) {
-		System.out.println("DFT.LoadSamplesFromFile error minNote > maxNote");
-	}
-	int numNotes = maxNote - minNote;
-	int numTimes = (int) Math.round(LeftRight.length / samplesPerStep / 2);
-	DFTEditor.amplitudesLeft = new double[numTimes + 1][numNotes + 1];
-	DFTEditor.amplitudesRight = new double[numTimes + 1][numNotes + 1];
-	for(int time = 0; time <= numTimes; time++) {
-		for(int freq = 0; freq <= numNotes; freq++) {
-			DFTEditor.amplitudesLeft[time][freq] = -1.0f;
-			DFTEditor.amplitudesRight[time][freq] = -1.0f;
-		}	
-	}
-	DFTEditor.maxTime = numTimes;
-	DFTEditor.maxScreenNote = maxNote;
-	DFTEditor.minScreenNote = minNote;
-	DFTEditor.maxScreenFreq = numNotes;
-	return maxTime;
-}
-
-private static void SingleDFT(int waveletIndex, int centerIndex) {
-	//if(debug) System.out.print("SingleDFT\n");
-	if(waveletIndex == 0) return;
-	int maxIndex = WaveletInfoArrayList.get(waveletIndex).length;
-	int startIndex = -maxIndex / 2;
-	double leftVal = 0.0;
-	double rightVal = 0.0;
-	double sinValLeft = 0.0;
-	double cosValLeft = 0.0;
-	double sinValRight = 0.0;
-	double cosValRight = 0.0;
-	for(int index = 0; index < maxIndex; index++) {
-		int readIndexLeft = (startIndex + centerIndex + index) * 2;
-		int readIndexRight = (startIndex + centerIndex + index) * 2 + 1;
-		if(readIndexLeft < 0) continue;
-		if(readIndexRight >= LeftRight.length) break;
-		leftVal = (double) LeftRight[readIndexLeft];
-		rightVal = (double) LeftRight[readIndexRight];
-		sinValLeft += WaveletInfoArrayList.get(waveletIndex).sinArray[index] * leftVal;
-		cosValLeft += WaveletInfoArrayList.get(waveletIndex).cosArray[index] * leftVal;
-		sinValRight += WaveletInfoArrayList.get(waveletIndex).sinArray[index] * rightVal;
-		cosValRight += WaveletInfoArrayList.get(waveletIndex).cosArray[index] * rightVal;
-	}
-	outputRoundedData(DFTEditor.amplitudesLeft, sinValLeft, cosValLeft, waveletIndex, centerIndex);
-	outputRoundedData(DFTEditor.amplitudesRight, sinValRight, cosValRight, waveletIndex, centerIndex);
-}
-
-private static void outputRoundedData(double[][] matrix, double sinVal, double cosVal, int waveletIndex, int centerIndex) {
-	double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
-	int currentTime = 	(int) Math.round(centerIndex / samplesPerStep);
-	int currentFreq = WaveletInfoArrayList.get(0).note - WaveletInfoArrayList.get(waveletIndex).note;
-	double logAmp = 0.0;
-	//double roundedLogAmp = 0.0;
-	double ampVal = sinVal * sinVal;
-	ampVal += cosVal * cosVal;
-	ampVal = Math.sqrt(ampVal) / WaveletInfoArrayList.get(waveletIndex).gain;
-	ampVal *= 2.0; // integral of sin, cos over time approaches 0.5
-	if(ampVal > 2.0) {
-		logAmp = Math.log(ampVal) / Math.log(2.0);
-	} else {
-		logAmp = 0.0;
-	}
-	/*
-	double length = WaveletInfoArrayList.get(waveletIndex).length / samplesPerStep;
-	int startTime = (int) Math.round(currentTime - length / 2.0);
-	int endTime = (int) Math.round(currentTime + length / 2.0);
-	if(startTime < 0) return;
-	if(endTime >= matrix.length) endTime = matrix.length - 1;
-	if(matrix[startTime][currentFreq] != -1.0f) return;
-	for(int time = startTime; time <= endTime; time++) {
-		matrix[time][currentFreq] = (double) logAmp;
-	}
-	*/
-	matrix[currentTime][currentFreq] = (double) logAmp;
-}
-
-private static double noteToFrequency(int note) {
-	return Math.pow(2.0, note / (double) FDData.noteBase);
-}
-
-private static int frequencyToNote(double frequency) {
-	return (int) Math.round(Math.log(frequency) / Math.log(2.0) * (double) FDData.noteBase);
-}
-
-public static void InitWavelets() {
-	numWavelets = 0;
-	maxCyclesPerWindow = 0;
-	initialTaper = 1.0;
-	WaveletInfoArrayList = new ArrayList<WaveletInfo>();
-	int index = 0;
-	// UNRESOLVED ISSUE: bin step = 2.0 and maxFreqHz = 20000.0, causes noise at 20000.0
-	// does not occur at frequency above, or two below
-	double maxFreqHz = 19160.0;
-	double minFreqHz = 20.0;
-	//if(debug) System.out.print("InitWavelets\n");
-	maxDFTLength = 0;
-	maxCyclesPerWindow = maxBinStep / (Math.pow(2.0, 1.0 / (double) FDData.noteBase) - 1.0);
-	if(bassFreq < midFreq) {
-		index = InitWaveletsHelper(maxFreqHz, midFreq, index, 1.0);
-		index = InitWaveletsHelper(midFreq, bassFreq, index, Math.sqrt(2.0));
-	} else {
-		index = InitWaveletsHelper(maxFreqHz, bassFreq, index, 1.0);
-	}
-	index = InitWaveletsHelper(bassFreq, minFreqHz, index, 2.0);
-	//index = InitWaveletsHelper(centerFreq, 20.0, index, 2.0);
-    numWavelets = index;
-    // MATRIX OUTPUT
-    int minNote = frequencyToNote(maxFreqHz) - 1; // #HACK skip first wavelet
-    int maxNote = frequencyToNote(minFreqHz) + 1; // stops before last note
-    //System.out.print("%d\n", numWavelets, maxDFTLength);
-    CalculateWavelets();
-}
-
-// Creates Wavelets starting at upperNote and ending at (lowerNote - 1)
-// Returns index for NEXT wavelet
-private static int InitWaveletsHelper(double upperFreqHz, double stopFreqHz, int index, double taperPerOctave) {
-	int note = 0;
-	int upperNote = frequencyToNote(upperFreqHz);
-	int stopNote = frequencyToNote(stopFreqHz);
-    double startLogFreq = Math.log(noteToFrequency(upperNote)) / Math.log(2.0);
-    double taperValue = initialTaper;
-    for(note = upperNote; note > stopNote; note--) {
-    	WaveletInfoArrayList.add(new WaveletInfo());
-    	double freqInHz = noteToFrequency(note);
-    	double samplesPerCycle = samplingRate / freqInHz;
-    	double radianFreq = twoPI / samplesPerCycle;
-    	double currentLogFreq =  Math.log(freqInHz) / Math.log(2.0);
-    	taperValue = initialTaper * Math.pow(taperPerOctave, startLogFreq - currentLogFreq);
-    	double cyclesPerWindow = maxCyclesPerWindow / taperValue;
-    	int windowLength = (int) Math.round(cyclesPerWindow * samplesPerCycle);
-    	//IMPORTANT: the next 3 lines set cycles per window to an integer (doesn't improve anything)
-    	//samplesPerCycle = round(windowLength / cyclesPerWindow);
-    	//windowLength = cyclesPerWindow * samplesPerCycle;
-    	//radianFreq = twoPI / samplesPerCycle;
-    	WaveletInfoArrayList.get(index).radianFreq = radianFreq;
-    	WaveletInfoArrayList.get(index).length = windowLength;
-    	WaveletInfoArrayList.get(index).note = note;
-    	index++;
-    }
-    initialTaper = taperValue;
-    //System.out.print("taperValue: %f ", taperValue);
-    return index;
-}
-
-private static int InitWaveletsHelperConstant(double upperFreqHz, double stopFreqHz, int index) {
-	int note = frequencyToNote(upperFreqHz);
-	double freqInHz = noteToFrequency(note);
-	double samplesPerCycle = samplingRate / freqInHz;
-	int windowLength = (int) Math.round(maxCyclesPerWindow * samplesPerCycle);
-	int stopNote = frequencyToNote(stopFreqHz);
-	double cycles =  maxCyclesPerWindow;
-    while(true) {
-    	samplesPerCycle = windowLength / cycles;
-    	double radianFreq = twoPI / samplesPerCycle;
-    	note = frequencyToNote(samplingRate / samplesPerCycle);
-    	if(note < stopNote) break;
-    	WaveletInfoArrayList.add(new WaveletInfo());
-    	WaveletInfoArrayList.get(index).radianFreq = radianFreq;
-    	WaveletInfoArrayList.get(index).length = windowLength;
-    	WaveletInfoArrayList.get(index).note = note;
-    	cycles -= maxBinStep;
-    	index++;
-    }
-    //System.out.print("taperValue: %f ", taperValue);
-    return index;
-}
-
-private static void printWaveletInfo(WaveletInfo wavelet) {
-	double radFreq = wavelet.radianFreq;
-	//System.out.print("radFreq: " + radFreq + " ");
-	double freqInHz = samplingRate / twoPI * radFreq;
-	double length = wavelet.length;
-	double samplesPerCycle = samplingRate / freqInHz;
-	double bins = length / samplesPerCycle;
-	System.out.print(" | HZ: " + (double) freqInHz);
-	System.out.print(" | BINS: " + (double) bins);
-	//System.out.print("gain: " + wavelet.gain + " ");
-	System.out.print(" | LENGTH: " + (double) wavelet.length); // pass as int
-	//System.out.print("*sin[]: %x ", wavelet.sinArray);
-	//System.out.print("*cos[]: %x ", wavelet.cosArray);
-	System.out.print("\n");
-}
-
-private static void CalculateWavelets() {
-	for(int waveletIndex = 0; waveletIndex < numWavelets; waveletIndex++) {
-		double gain = 0.0;
-		int length = WaveletInfoArrayList.get(waveletIndex).length;
-		double radianFreq = WaveletInfoArrayList.get(waveletIndex).radianFreq;
-		//System.out.print("malloc %d %d %d\n", waveletIndex, numWavelets, length);
-		WaveletInfoArrayList.get(waveletIndex).sinArray = new double[length];
-		WaveletInfoArrayList.get(waveletIndex).cosArray = new double[length];
-		Filter.CreateWindow(KaiserWindow, length, alpha);
-		for(int index = 0; index < length; index++) {
-			double dIndex = (double) index;
-			gain += KaiserWindow[index];
-			WaveletInfoArrayList.get(waveletIndex).sinArray[index] = (double) (Math.sin(dIndex * radianFreq) * KaiserWindow[index]);
-			WaveletInfoArrayList.get(waveletIndex).cosArray[index] = (double) (Math.cos(dIndex * radianFreq) * KaiserWindow[index]);
-		}
-		WaveletInfoArrayList.get(waveletIndex).gain = gain;
-		//printWaveletInfo(WaveletInfoArrayList.get(waveletIndex), waveletIndex);
-	}
-}
-
-static void fillMatrix() {
-	int numTimes = DFTEditor.amplitudesLeft.length;
-	int numFreqs = DFTEditor.amplitudesLeft[0].length;
-	for(int time = 0; time < numTimes; time++) {
-		for(int freq = 1; freq < numFreqs - 1; freq++) {
-			if(DFTEditor.amplitudesLeft[time][freq] != -1.0f) continue;
-			int startFreq = freq - 1;
-			int endFreq = freq;
-			for(endFreq = freq; endFreq < numFreqs; endFreq++) {
-				if(DFTEditor.amplitudesLeft[time][endFreq] != -1.0f) break;
-			}
-			if(endFreq == numFreqs) continue;
-			double startAmp = DFTEditor.amplitudesLeft[time][startFreq];
-			double endAmp = DFTEditor.amplitudesLeft[time][endFreq];
-			double slope = (startAmp - endAmp) / (startFreq - endFreq);
-			if(slope == 0.0f) {
-				if(Math.random() < 0.5) {
-					slope = -0.00001f;
-				} else {
-					slope = 0.00001f;
-				}
-			}
-			for(int innerFreq = startFreq + 1; innerFreq < endFreq; innerFreq++) {
-				double ampValue = (double) (startAmp + (innerFreq - startFreq) * slope);
-				DFTEditor.amplitudesLeft[time][innerFreq] = ampValue;
-			}
-		}
-	}
-	numTimes = DFTEditor.amplitudesRight.length;
-	numFreqs = DFTEditor.amplitudesRight[0].length;
-	for(int time = 0; time < numTimes; time++) {
-		for(int freq = 1; freq < numFreqs - 1; freq++) {
-			if(DFTEditor.amplitudesRight[time][freq] != -1.0f) continue;
-			int startFreq = freq - 1;
-			int endFreq = freq;
-			for(endFreq = freq; endFreq < numFreqs; endFreq++) {
-				if(DFTEditor.amplitudesRight[time][endFreq] != -1.0f) break;
-			}
-			if(endFreq == numFreqs) continue;
-			double startAmp = DFTEditor.amplitudesRight[time][startFreq];
-			double endAmp = DFTEditor.amplitudesRight[time][endFreq];
-			double slope = (startAmp - endAmp) / (startFreq - endFreq);
-			if(slope == 0.0f) {
-				if(Math.random() < 0.5) {
-					slope = -0.00001f;
-				} else {
-					slope = 0.00001f;
-				}
-			}
-			for(int innerFreq = startFreq + 1; innerFreq < endFreq; innerFreq++) {
-				double ampValue = (double) (startAmp + (innerFreq - startFreq) * slope);
-				DFTEditor.amplitudesRight[time][innerFreq] = ampValue;
-			}
-		}
-	}
-}
-
-public static void applyMasking() {
-	if(DFTEditor.amplitudesLeft == null) return;
-	if(DFTEditor.amplitudesRight == null) return;
-	int bins = FDData.noteBase / 3;
-	int numTimes = DFTEditor.amplitudesLeft.length;
-	int numFreqs = DFTEditor.amplitudesLeft[0].length;
-	for(int time = 0; time < numTimes; time++) {
-		for(int freq = 0; freq < numFreqs; freq++) {
-			double amplitude = DFTEditor.amplitudesLeft[time][freq];
-			for(int innerFreq = freq - bins; innerFreq <= freq + bins; innerFreq++) {
-				double maskingVal = (double) amplitude + Math.abs((freq - innerFreq) / (double) bins) * (double) maskingFactor - 1.0f;
-				if(maskingVal < 0) continue;
-				if(innerFreq < 0 || innerFreq >= numFreqs || innerFreq == freq) continue;
-				if(DFTEditor.amplitudesLeft[time][innerFreq] < maskingVal) DFTEditor.amplitudesLeft[time][innerFreq] = 0.0f;
-			}
-		}
-	}
-	numTimes = DFTEditor.amplitudesRight.length;
-	numFreqs = DFTEditor.amplitudesRight[0].length;
-	for(int time = 0; time < numTimes; time++) {
-		for(int freq = 0; freq < numFreqs; freq++) {
-			double amplitude = DFTEditor.amplitudesRight[time][freq];
-			for(int innerFreq = freq - bins; innerFreq <= freq + bins; innerFreq++) {
-				double maskingVal = (double) amplitude + Math.abs((freq - innerFreq) / (double) bins) * (double) maskingFactor - 1.0f;
-				if(maskingVal < 0) continue;
-				if(innerFreq < 0 || innerFreq >= numFreqs || innerFreq == freq) continue;
-				if(DFTEditor.amplitudesRight[time][innerFreq] < maskingVal) DFTEditor.amplitudesRight[time][innerFreq] = 0.0f;
-			}
-		}
-	}
-}
-
-static void filterMatrix() {
-	int numTimes = DFTEditor.amplitudesLeft.length;
-	int numFreqs = DFTEditor.amplitudesLeft[0].length;
-	for(int freq = 0; freq < numFreqs; freq++) {
-		double freqInHz = Math.pow(2.0, DFTEditor.freqToNote(freq) / (double) FDData.noteBase);
-		if(freqInHz < midFreq) continue;
-		double logAdjust = Math.log(freqInHz / midFreq) / Math.log(2.0) / 2.0;
-		for(int time = 0; time < numTimes; time++) {
-			DFTEditor.amplitudesLeft[time][freq] += logAdjust;
-			if(DFTEditor.amplitudesLeft[time][freq] < 0.0) DFTEditor.amplitudesLeft[time][freq] = 0.0f;
-		}
-	}
-	numTimes = DFTEditor.amplitudesRight.length;
-	numFreqs = DFTEditor.amplitudesRight[0].length;
-	for(int freq = 0; freq < numFreqs; freq++) {
-		double freqInHz = Math.pow(2.0, DFTEditor.freqToNote(freq) / (double) FDData.noteBase);
-		if(freqInHz < midFreq) continue;
-		double logAdjust = Math.log(freqInHz / midFreq) / Math.log(2.0) / 2.0;
-		for(int time = 0; time < numTimes; time++) {
-			DFTEditor.amplitudesRight[time][freq] += logAdjust;
-			if(DFTEditor.amplitudesRight[time][freq] < 0.0) DFTEditor.amplitudesRight[time][freq] = 0.0f;
-		}
-	}	
-}
-
-public static void printDFTParameters() {
-	InitWavelets();
-	int index = 0;
-	int numWavelets = WaveletInfoArrayList.size();
-	for(WaveletInfo waveletInfo: WaveletInfoArrayList) {
-		if(index % FDData.noteBase == 0) {
-			System.out.print(index);
-			printWaveletInfo(waveletInfo);
-		}
-		index++;
-	}
-	System.out.print(numWavelets);
-	printWaveletInfo(WaveletInfoArrayList.get(numWavelets - 1));
-	System.out.println("maxBinStep: " + maxBinStep);
-	System.out.println("midFreq: " + midFreq);
-	System.out.println("bassFreq: " + bassFreq);
-	System.out.println("noteBase: " + FDData.noteBase);
-	System.out.println("timeStepInMillis: " + FDData.timeStepInMillis);
-}
-
-static void FileDFTMatrix(String fileName) {
-	maskingFactor = Float.NEGATIVE_INFINITY;
-	double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
-	InitWavelets();
-	int maxCenterIndex = LoadSamplesFromFile(fileName);
-	int maxTime = (int) Math.floor(maxCenterIndex / samplesPerStep);
-	for(int centerIndex = 0; centerIndex < maxCenterIndex; centerIndex += samplesPerStep) {
-		int waveletIndex = 0;
-		for(waveletIndex = 0; waveletIndex < numWavelets; waveletIndex++) {
-			SingleDFT(waveletIndex, (int) Math.round(centerIndex));
-		}
-		int currentTime = (int) Math.round(centerIndex / samplesPerStep);
-		if(currentTime % 100 == 0) {
-			System.out.println("FileDFTMatrix: " + (centerIndex / samplesPerStep) + " of " + (maxCenterIndex / samplesPerStep));
-		}
-	}
-	//fillMatrix();
-	//filterMatrix();
+	private static int MAXSAMPLES = 44100 * 10;
+	private static double LeftRight[] = null;
+	private static int headerLengthInBytes = 56; // changed from 44 to accomodate newer .wav files
+	public static boolean applyMasking = true;
+	public static double maskingFactor = Float.NEGATIVE_INFINITY;
+	public boolean hasData = false;
 	
-}
+	// Wavelet Variables
+	private static final double twoPI = 6.283185307179586476925286766559;
+	private static double samplingRate = SynthTools.sampleRate;
+	public static double maxBinStep = 1.0;
+	public static final double maxFreqHz = samplingRate / 2.0;
+	public static final double minFreqHz = samplingRate / 2048.0;
+	private static double maxWindowLength = 44100 / 5;
+	private static double alpha = 1.0;
+	public static double midFreq = 0.0;
+	public static double bassFreq = 640.0;
+	
+	// Calculated Variables
+	private static int numWavelets = 0;
+
+	public static class Wavelet {
+		double radianFreq;
+		double freqInHz;
+		double gain;
+		int length;
+		double sinArray[];
+		double cosArray[];
+	} 
+	
+	public static void printDFTParameters() {
+		int freq = 0;
+		for(double freqInHz = minFreqHz; freqInHz <= maxFreqHz; freqInHz *= Math.pow(2.0, 1.0 / (double) FDData.noteBase)) {
+			if(freq % FDData.noteBase == 0) {
+				System.out.print(freq);
+				//printWaveletInfo(waveletInfo);
+			}
+			//index++;
+		}
+		System.out.print(numWavelets);
+		//printWaveletInfo(WaveletInfoArrayList.get(numWavelets - 1));
+		System.out.println("maxBinStep: " + maxBinStep);
+		System.out.println("midFreq: " + midFreq);
+		System.out.println("bassFreq: " + bassFreq);
+		System.out.println("noteBase: " + FDData.noteBase);
+		System.out.println("timeStepInMillis: " + FDData.timeStepInMillis);
+	}
+	
+	// returns max time of file
+	private static int LoadSamplesFromFile(String fileName) {
+		DataInputStream in = null;
+	    try {
+	    	in = new DataInputStream(new
+	                BufferedInputStream(new FileInputStream(new String(fileName))));
+		} catch (FileNotFoundException nf) {
+			System.out.println("DFTEditor: " + fileName + ".[suffix] not found");
+			return 0;
+		}
+		ArrayList<Double> ArrayListLeftRight = new ArrayList<Double>();
+		try {
+			in.skip(headerLengthInBytes);
+			System.out.println(in.available());
+			while(true) {
+				int sample = in.readShort();
+				sample = (short) (((sample & 0xFF00) >> 8) | ((sample & 0x00FF) << 8));
+				ArrayListLeftRight.add((double)sample); // + (Math.random() - 0.5) * 1.0 / 256.0);
+			}
+		} catch (IOException e) {
+			if(e instanceof EOFException) {
+				System.out.println("DFT.LoadSamplesFromFile finished reading");
+			} else {
+				System.out.println("DFT.LoadSamplesFromFile error reading");
+			}
+		}
+	    try {
+	    	in.close();
+		} catch (IOException nf) {
+			System.out.println("DFTEditor: " + fileName + ".[suffix] not found");
+			return 0;
+		}
+	    // Test white noise
+	    /*
+	    ArrayListLeftRight = new ArrayList<Double>();
+	    for(int time = 0; time < 44100 * 2; time++) {
+	    	ArrayListLeftRight.add((Math.pow(Math.random(), 1.0 / 1.0) - 0.5) * 65534.0);
+	    	ArrayListLeftRight.add((Math.pow(Math.random(), 1.0 / 1.0) - 0.5) * 65534.0);
+	    }
+	    */
+		int maxTime = ArrayListLeftRight.size() / 2;
+		LeftRight = new double[maxTime * 2];
+		SynthTools.WAVDataLeft = new double[maxTime];	
+		SynthTools.WAVDataRight = new double[maxTime];
+		for(int index = 0; index < maxTime; index++) {
+			LeftRight[index * 2] = ArrayListLeftRight.get(index * 2);
+			LeftRight[index * 2 + 1] = ArrayListLeftRight.get(index * 2 + 1);
+			SynthTools.WAVDataLeft[index] = LeftRight[index * 2];
+			SynthTools.WAVDataRight[index] = LeftRight[index * 2 + 1];
+		}
+		return maxTime;
+	}
+
+	private static int InitSynthSignal(double[] left, double[] right) {
+		if(left.length != right.length) {
+			System.out.println("left.length != right.length"); 
+			return 0;
+		}
+		ArrayList<Double> ArrayListLeftRight = new ArrayList<Double>();
+	    for(int time = 0; time < left.length; time++) {
+	    	ArrayListLeftRight.add(left[time]);
+	    	ArrayListLeftRight.add(right[time]);
+	    }
+		int maxTime = ArrayListLeftRight.size() / 2;
+		LeftRight = new double[maxTime * 2];
+		SynthTools.WAVDataLeft = new double[maxTime];	
+		SynthTools.WAVDataRight = new double[maxTime];
+		for(int index = 0; index < maxTime; index++) {
+			LeftRight[index * 2] = ArrayListLeftRight.get(index * 2);
+			LeftRight[index * 2 + 1] = ArrayListLeftRight.get(index * 2 + 1);
+			SynthTools.WAVDataLeft[index] = LeftRight[index * 2];
+			SynthTools.WAVDataRight[index] = LeftRight[index * 2 + 1];
+		}
+		return maxTime;
+	}
+	
+	// Returns amplitude NOT log(amplitude)
+	public static double singleDFTTest(Wavelet wavelet, double[] mono) {
+		double sinVal = 0.0;
+		double cosVal = 0.0;
+		for(int index = 0; index < wavelet.length; index++) {
+			double val = mono[index];
+			sinVal += wavelet.sinArray[index] * val;
+			cosVal += wavelet.cosArray[index] * val;
+		}
+		double ampVal = sinVal * sinVal;
+		ampVal += cosVal * cosVal;
+		ampVal = Math.sqrt(ampVal) / wavelet.gain;
+		ampVal *= 2.0; // integral of sin, cos over time approaches 0.5
+		return ampVal;
+	}
+
+	private static void SingleDFT(Wavelet wavelet, int centerIndex, int note, double[] left, double[] right, double samplesPerStep, double gain) {
+		int maxIndex = wavelet.length;
+		int startIndex = -maxIndex / 2;
+		double leftVal = 0.0;
+		double rightVal = 0.0;
+		double sinValLeft = 0.0;
+		double cosValLeft = 0.0;
+		double sinValRight = 0.0;
+		double cosValRight = 0.0;
+		for(int index = 0; index < maxIndex; index++) {
+			int readIndex = (startIndex + centerIndex + index);
+			if(readIndex < 0) continue;
+			if(readIndex >= left.length) break;
+			leftVal = left[readIndex];
+			rightVal = right[readIndex];
+			sinValLeft += wavelet.sinArray[index] * leftVal;
+			cosValLeft += wavelet.cosArray[index] * leftVal;
+			sinValRight += wavelet.sinArray[index] * rightVal;
+			cosValRight += wavelet.cosArray[index] * rightVal;
+		}
+		outputRoundedData(DFTEditor.amplitudesLeft, sinValLeft, cosValLeft, wavelet, note, centerIndex, samplesPerStep, gain);
+		outputRoundedData(DFTEditor.amplitudesRight, sinValRight, cosValRight, wavelet, note, centerIndex, samplesPerStep, gain);
+	}
+	
+	private static void outputRoundedData(double[][] matrix, double sinVal, double cosVal, Wavelet wavelet, int note, int centerIndex, double samplesPerStep, double gain) {
+		int currentTime = (int) Math.round(centerIndex / samplesPerStep);
+		int currentFreq = frequencyToNote(maxFreqHz) - note;
+		double logAmp = 0.0;
+		//double roundedLogAmp = 0.0;
+		double ampVal = sinVal * sinVal;
+		ampVal += cosVal * cosVal;
+		ampVal = Math.sqrt(ampVal) / wavelet.gain;
+		ampVal *= 2.0 * gain; // integral of sin, cos over time approaches 0.5
+		if(ampVal > 2.0) {
+			logAmp = Math.log(ampVal) / Math.log(2.0);
+		} else {
+			logAmp = 0.0;
+		}
+		matrix[currentTime][currentFreq] = logAmp;
+	}
+	
+	public static double noteToFrequency(int note) {
+		return Math.pow(2.0, note / (double) FDData.noteBase);
+	}
+	
+	public static int frequencyToNote(double frequency) {
+		return (int) Math.round(Math.log(frequency) / Math.log(2.0) * (double) FDData.noteBase);
+	}
+	
+	public static Wavelet createWavelet(double freqInHz, double bins) {
+		Wavelet wavelet = new Wavelet();
+		wavelet.freqInHz = freqInHz;
+	   	double samplesPerCycle = samplingRate / freqInHz;
+		wavelet.radianFreq = twoPI / samplesPerCycle;
+		wavelet.gain = 0.0;
+		wavelet.length = (int) Math.round(bins * samplesPerCycle);
+		if(wavelet.length > maxWindowLength) wavelet.length = (int) Math.round(maxWindowLength);
+		wavelet.sinArray = new double[wavelet.length];
+		wavelet.cosArray = new double[wavelet.length];
+		double KaiserWindow[] = new double[wavelet.length];
+		Filter.CreateWindow(KaiserWindow, wavelet.length, alpha);
+		for(int index = 0; index < wavelet.length; index++) {
+			wavelet.gain += KaiserWindow[index];
+			wavelet.sinArray[index] = Math.sin(index * wavelet.radianFreq) * KaiserWindow[index];
+			wavelet.cosArray[index] = Math.cos(index * wavelet.radianFreq) * KaiserWindow[index];
+		}
+		return wavelet;
+	}
+	
+	static void DFTWithDecimate(int maxCenterIndex) {
+		if(maxCenterIndex == 0) return;
+		double left[] = new double[LeftRight.length / 2];
+		double right[] = new double[LeftRight.length / 2];
+		double tempLeft[] = new double[LeftRight.length / 2];
+		double tempRight[] = new double[LeftRight.length / 2];
+		for(int index = 0; index < LeftRight.length / 2; index++) {
+			left[index] = (double) LeftRight[index * 2];
+			right[index] = (double) LeftRight[index * 2 + 1];
+		}
+		tempLeft = Filter.applyFilter(samplingRate / 16.0, 100.0, left, Filter.FilterType.HIGHPASS);
+		tempRight = Filter.applyFilter(samplingRate / 16.0, 100.0, right, Filter.FilterType.HIGHPASS);
+		double noteRatio = Math.pow(2.0, -1.0 / (double) FDData.noteBase);
+		double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
+		double bins = maxBinStep / (Math.pow(2.0, 1.0 / (double) FDData.noteBase) - 1.0);
+		// 22050 -> 5512.5
+		double upperClipRatio = 1.0;
+		double gain = 1.0;
+		int note = frequencyToNote(maxFreqHz * upperClipRatio);
+		for(double freqInHz = maxFreqHz * upperClipRatio; Math.round(freqInHz * 10000.0) / 10000.0 > samplingRate / 8.0 * upperClipRatio; freqInHz *= noteRatio) {
+			Wavelet currentWavelet = createWavelet(freqInHz, bins);
+			for(double centerIndex = 0; centerIndex < maxCenterIndex; centerIndex += samplesPerStep) {
+				if(note == frequencyToNote(minFreqHz)) return;
+				SingleDFT(currentWavelet, (int) Math.round(centerIndex), note, tempLeft, tempRight, samplesPerStep, gain);
+			}
+			note--;
+		}
+		while(true) {
+			for(double freqInHz = samplingRate / 8.0  * upperClipRatio; Math.round(freqInHz * 10000.0) / 10000.0 > samplingRate / 16.0  * upperClipRatio; freqInHz *= noteRatio) {
+				if(note < frequencyToNote(samplingRate / 8.0)) {
+					double innerNoteBase = FDData.noteBase * Math.sqrt(noteToFrequency(note) / (samplingRate / 8.0));
+					bins = maxBinStep / (Math.pow(2.0, 1.0 / (double) innerNoteBase) - 1.0);
+					//System.out.println(noteToFrequency(note) + " " + innerNoteBase);
+				}
+				Wavelet currentWavelet = createWavelet(freqInHz, bins);
+				for(double centerIndex = 0; centerIndex < maxCenterIndex; centerIndex += samplesPerStep) {
+					if(note == frequencyToNote(minFreqHz)) return;
+					SingleDFT(currentWavelet, (int) Math.round(centerIndex), note, tempLeft, tempRight, samplesPerStep, gain);
+				}
+				note--;
+			}
+			left = Filter.decimate(left);
+			right = Filter.decimate(right);
+			tempLeft = Filter.applyFilter(samplingRate / 8.0, 2.0, left, Filter.FilterType.LOWPASS);
+			tempRight = Filter.applyFilter(samplingRate / 8.0, 2.0, right, Filter.FilterType.LOWPASS);
+			tempLeft = Filter.applyFilter(samplingRate / 16.0, 2.0, tempLeft, Filter.FilterType.HIGHPASS);
+			tempRight = Filter.applyFilter(samplingRate / 16.0, 2.0, tempRight, Filter.FilterType.HIGHPASS);
+			maxCenterIndex /= 2;
+			samplesPerStep /= 2;
+			System.out.println("decimate");
+		}
+	}
+	
+
+	static void FileDFTMatrix(String fileName) {
+		double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
+		int maxCenterIndex = LoadSamplesFromFile(fileName);
+		int maxTime = (int) Math.floor(maxCenterIndex / samplesPerStep);
+		if(maxCenterIndex > MAXSAMPLES) {
+			System.out.println("File Too Large: Truncating");
+			maxCenterIndex = MAXSAMPLES;
+		}
+		int numFreqs = frequencyToNote(maxFreqHz) - frequencyToNote(minFreqHz) + 1;
+		DFTEditor.amplitudesLeft = new double[maxTime + 1][numFreqs + 1];
+		DFTEditor.amplitudesRight = new double[maxTime + 1][numFreqs + 1];
+		for(int time = 0; time <= maxTime; time++) {
+			for(int freq = 0; freq <= numFreqs; freq++) {
+				DFTEditor.amplitudesLeft[time][freq] = 0.0f;
+				DFTEditor.amplitudesRight[time][freq] = 0.0f;
+			}	
+		}
+		DFTWithDecimate(maxCenterIndex);
+		DFTEditor.maxTime = maxTime;
+		DFTEditor.maxScreenNote = frequencyToNote(maxFreqHz);
+		DFTEditor.minScreenNote = frequencyToNote(minFreqHz);
+		DFTEditor.maxScreenFreq = numFreqs;
+	}
+
+	public static void SynthDFTMatrix(double[] left, double[] right) {
+		double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
+		int maxCenterIndex = InitSynthSignal(left, right);
+		int maxTime = (int) Math.floor(maxCenterIndex / samplesPerStep);
+		if(maxCenterIndex > MAXSAMPLES) {
+			System.out.println("File Too Large: Truncating");
+			maxCenterIndex = MAXSAMPLES;
+		}
+		int numFreqs = frequencyToNote(maxFreqHz) - frequencyToNote(minFreqHz) + 1;
+		DFTEditor.amplitudesLeft = new double[maxTime + 1][numFreqs + 1];
+		DFTEditor.amplitudesRight = new double[maxTime + 1][numFreqs + 1];
+		for(int time = 0; time <= maxTime; time++) {
+			for(int freq = 0; freq <= numFreqs; freq++) {
+				DFTEditor.amplitudesLeft[time][freq] = 0.0f;
+				DFTEditor.amplitudesRight[time][freq] = 0.0f;
+			}	
+		}
+		DFTWithDecimate(maxCenterIndex);
+		DFTEditor.maxTime = maxTime;
+		DFTEditor.maxScreenNote = frequencyToNote(maxFreqHz);
+		DFTEditor.minScreenNote = frequencyToNote(minFreqHz);
+		DFTEditor.maxScreenFreq = numFreqs;
+	}
+	
 }

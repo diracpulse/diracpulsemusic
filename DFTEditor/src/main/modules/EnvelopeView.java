@@ -7,13 +7,12 @@ import java.util.HashSet;
 
 import javax.swing.JPanel;
 
-import main.Sequencer;
-import main.SequencerUtils;
 import main.SynthTools;
 
 
 public class EnvelopeView extends JPanel {
 
+	private static final long serialVersionUID = -3242131901933358666L;
 	private EnvelopeEditor parent;
 	
 	EnvelopeView(EnvelopeEditor parent) {

@@ -6,12 +6,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.util.ArrayList;
 
-import javax.swing.JOptionPane;
-
-import main.MultiWindow;
-import main.Sequencer;
 import main.modules.Envelope.EnvelopePoint;
 
 

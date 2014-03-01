@@ -9,15 +9,10 @@ import java.awt.Rectangle;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-
-import javax.swing.JOptionPane;
-
 import main.Module;
 import main.ModuleEditor;
 import main.SynthTools;
-import main.Module.ModuleType;
 
 public class WhiteNoise implements Module {
 
@@ -188,7 +183,6 @@ public class WhiteNoise implements Module {
 		if(g2 != null) g2.fillRect(cornerX, cornerY, width, height);
 		int fontSize = 12;
 		int yStep = fontSize + 6;
-		int xStep = yStep;
 		if(g2 != null) g2.setColor(Color.WHITE);
 		Font font = new Font(Font.SANS_SERIF, Font.BOLD, fontSize);
 		if(g2 != null) g2.setFont(font);

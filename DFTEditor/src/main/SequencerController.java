@@ -6,10 +6,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 
-import javax.swing.JList;
 import javax.swing.JOptionPane;
-
-import main.Interpolate.TAPair;
 
 public class SequencerController implements MouseListener, MouseMotionListener, ActionListener {
 
@@ -36,7 +33,7 @@ public class SequencerController implements MouseListener, MouseMotionListener, 
         if ("Get Module".equals(e.getActionCommand())) {
         	ArrayList<String> names = new ArrayList<String>();
         	int index = 0;
-        	int endIndex = parent.moduleInfo.size() - parent.numPercussion;
+        	int endIndex = parent.moduleInfo.size() - Sequencer.numPercussion;
         	for(MultiWindow.ModuleEditorInfo info: parent.moduleInfo) {
         		names.add(info.getName());
         		index++;

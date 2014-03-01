@@ -12,8 +12,8 @@ public class FDData {
 	public static final int maxTime = 10 * 60 * (1000 / timeStepInMillis);
 	public static final double minLogAmplitude = -1.0 * (bitDepth + 1);
 	public static final double maxLogAmplitude = 24.0f;
-	public static final double minFrequencyInHz = DFT2.minFreqHz;
-	public static final double maxFrequencyInHz = DFT2.maxFreqHz;
+	public static final double minFrequencyInHz = DFT.minFreqHz;
+	public static final double maxFrequencyInHz = DFT.maxFreqHz;
 	
 	public enum DataType {
 		FUNDAMENTAL, HARMONIC, FORMANT, PERCUSSIVE, GRAIN

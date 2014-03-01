@@ -2,12 +2,12 @@ package main;
 
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 
 import javax.swing.JPanel;
 
 public class SequencerView extends JPanel {
 
+	private static final long serialVersionUID = 6342694782715867005L;
 	private Sequencer parent;
 	
 	SequencerView(Sequencer parent) {
@@ -70,7 +70,7 @@ public class SequencerView extends JPanel {
 		int index = 0;
 		for(double[] freqRatio: parent.freqRatiosAtTimeInPixels) {
 			g.setColor(parent.moduleInfo.get(index).getColor());
-			for(int time = 0; time < parent.totalPixels; time++) {
+			for(int time = 0; time < Sequencer.totalPixels; time++) {
 				if(freqRatio[time] >= 0.0) {
 					int note = (int) Math.round(Math.log(freqRatio[time]) / Math.log(2.0) * Sequencer.noteBase);
 					int y0 = (Sequencer.noteBase - note - 1) * Sequencer.noteHeight;

@@ -1,22 +1,10 @@
 package main;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
-import javax.sound.sampled.Line;
-import javax.sound.sampled.LineEvent;
-import javax.sound.sampled.LineListener;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.Timer;
-
-import main.PlayDataInWindow.SynthType;
 
 public class AudioPlayer extends Thread {
 
@@ -62,6 +50,7 @@ public class AudioPlayer extends Thread {
 		int position = 0;
 		while(true) {
 			position = 0;
+			if(audioByteData == null) continue;
 			while(position < audioByteData.length) {
 				int bytesLeftToWrite = audioByteData.length - position;
 				int bytesToWrite = line.available();

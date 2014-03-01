@@ -41,7 +41,6 @@ public class DFTController implements MouseListener, ActionListener {
 	    	DFTEditor.refreshView();
 	    	return;
 	    }
-	    int[] selectedNotes = {DFTEditor.freqToNote(selectedFreqs[0]), DFTEditor.freqToNote(selectedFreqs[1])};
     	DFTEditor.refreshView();
 	    return;
 	}

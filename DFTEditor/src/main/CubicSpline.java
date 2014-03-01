@@ -1,9 +1,5 @@
 package main;
 
-import java.lang.*;
-import java.util.*;
-import java.io.*;
-
 class CubicSpline {
 	
 	double[] x;
