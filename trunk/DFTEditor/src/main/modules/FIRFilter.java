@@ -18,8 +18,6 @@ import main.Filter;
 import main.Module;
 import main.ModuleEditor;
 import main.SynthTools;
-import main.DFT2.Wavelet;
-import main.Module.ModuleType;
 
 public class FIRFilter implements Module {
 	
@@ -353,7 +351,6 @@ public class FIRFilter implements Module {
 		if(g2 != null) g2.fillRect(cornerX, cornerY, width, height);
 		int fontSize = 12;
 		int yStep = fontSize + 6;
-		int xStep = yStep;
 		if(g2 != null) g2.setColor(Color.WHITE);
 		Font font = new Font(Font.SANS_SERIF, Font.BOLD, fontSize);
 		if(g2 != null) g2.setFont(font);

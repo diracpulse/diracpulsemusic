@@ -1,22 +1,15 @@
 package main.modules;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.util.HashSet;
-
 import javax.swing.JPanel;
-
-import main.Sequencer;
-import main.SequencerUtils;
-import main.SynthTools;
-
 
 public class BasicWaveformView extends JPanel {
 
+	private static final long serialVersionUID = -3597657941937913124L;
 	private BasicWaveformEditor parent;
 	
 	BasicWaveformView(BasicWaveformEditor parent) {

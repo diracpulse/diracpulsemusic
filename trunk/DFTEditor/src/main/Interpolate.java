@@ -1,12 +1,7 @@
 package main;
+
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.TreeMap;
-import java.util.TreeSet;
-
-import main.TestSignals.TAPair.AmplitudeFormat;
-import main.TestSignals.TAPair.TimeFormat;
-
 
 public class Interpolate {
 		

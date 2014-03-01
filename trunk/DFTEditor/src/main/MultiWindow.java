@@ -1,9 +1,8 @@
 package main;
+
 import java.awt.Color;
 import java.awt.event.WindowAdapter;
 import java.util.ArrayList;
-import java.util.TreeMap;
-
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;

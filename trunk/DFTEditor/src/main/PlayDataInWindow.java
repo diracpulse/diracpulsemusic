@@ -12,7 +12,6 @@ public class PlayDataInWindow implements ActionListener {
 	public enum SynthType {
 		Linear,
 		LinearCubicSpline,
-		LinearNoise;
 	}
 
 	int currentOffsetInMillis;
@@ -31,7 +30,6 @@ public class PlayDataInWindow implements ActionListener {
 		timer = new Timer(refreshRateInMillis, this);
 		if(synthType == SynthType.Linear) parent.createPCMDataLinear();
 		if(synthType == SynthType.LinearCubicSpline) parent.createPCMDataLinearCubicSpline();
-		if(synthType == SynthType.LinearNoise) parent.createPCMDataLinearNoise();		
 		JOptionPane.showMessageDialog((JFrame) parent, "Ready To Play");
         timer.setInitialDelay(0);
         timer.start();

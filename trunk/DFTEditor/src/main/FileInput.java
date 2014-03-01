@@ -30,7 +30,6 @@ public class FileInput {
 		DFTEditor.minScreenNote = DFTEditor.freqsPerOctave * 100;
 		DFTEditor.maxScreenNote = 0;
 		DFTEditor.maxTime = 0;
-		float amp;
 	    try {
 	    	in = new DataInputStream(new
 	                BufferedInputStream(new FileInputStream(new String(fileName))));

@@ -7,25 +7,18 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.Stroke;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-
-import main.FDData;
 import main.Interpolate;
 import main.Interpolate.TAPair;
 import main.Module;
 import main.ModuleEditor;
 import main.MultiWindow;
-import main.modules.BasicWaveform.WaveformType;
 import main.SynthTools;
 
 public class Envelope implements Module {
@@ -35,11 +28,8 @@ public class Envelope implements Module {
 		CUBICSPLINE,
 		LOGLINEAR,
 	}
-	
-	private double millisPerPixel = 1.0;
-	private double maxSeconds = ModuleEditor.maxDuration;
+
 	private ArrayList<EnvelopePoint> envelopePoints = null;
-	private double startSustain = -1.0;
 	
 	public static class EnvelopePoint {
 		
@@ -73,6 +63,7 @@ public class Envelope implements Module {
 
 	ArrayList<Integer> outputs = null;
 	
+	@SuppressWarnings("unused")
 	private class Input extends Module.Input {
 
 		public Input(Module parent, Rectangle selectArea) {
@@ -112,7 +103,6 @@ public class Envelope implements Module {
 		envelopePoints.add(new EnvelopePoint(0.0, 0.0, InterpolationType.LOGLINEAR, 2));
 		envelopePoints.add(new EnvelopePoint(0.1, 1.0, InterpolationType.LOGLINEAR, 2));
 		envelopePoints.add(new EnvelopePoint(0.2, 0.5, InterpolationType.LOGLINEAR, 4));
-		startSustain = 0.2;
 		envelopePoints.add(new EnvelopePoint(0.5, 0.4, InterpolationType.LOGLINEAR, 6));
 		envelopePoints.add(new EnvelopePoint(0.6, 0.0, InterpolationType.LOGLINEAR, 8));
 		init();
@@ -273,7 +263,6 @@ public class Envelope implements Module {
 		if(g2 != null) g2.fillRect(cornerX, cornerY, width, height);
 		int fontSize = 12;
 		int yStep = fontSize + 6;
-		int xStep = yStep;
 		if(g2 != null) g2.setColor(Color.WHITE);
 		Font font = new Font(Font.SANS_SERIF, Font.BOLD, fontSize);
 		if(g2 != null) g2.setFont(font);

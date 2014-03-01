@@ -35,8 +35,6 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	public static double[][] amplitudesLeft; // amplitude = amplitudes[time][freq]
 	public static double[][] amplitudesRight; // amplitude = amplitudes[time][freq]
 	public static double[][] amplitudesStereo; // amplitude = amplitudes[time][freq]
-	public static double[][] randomnessLeft; // amplitude = amplitudes[time][freq]
-	public static double[][] randomnessRight; // amplitude = amplitudes[time][freq]
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaLeft;
 	public static TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaximaRight;
 	public static TreeMap<Integer, TreeSet<Integer>> timeToNoiseFreqsAtMaximaLeft;
@@ -62,8 +60,8 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	public static float minAmplitude = 0.0f;
 	// the maximum summed value at any given time
 	public static float maxAmplitudeSum;
-	public static double minFreqHz = DFT2.minFreqHz;
-	public static double maxFreqHz = DFT2.maxFreqHz;
+	public static double minFreqHz = DFT.minFreqHz;
+	public static double maxFreqHz = DFT.maxFreqHz;
 	public static int freqsPerOctave = FDData.noteBase;
 	public static int minScreenNote;
 	public static int maxScreenNote;
@@ -121,23 +119,6 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 		return -1.0f;
 	}
 	
-	public static double getRandomness(int time, int freq) {
-		if(randomnessLeft == null || randomnessRight == null) return 0.0f;
-		double leftVal = 0.0f;
-		double rightVal = 0.0f;
-		if(time < randomnessLeft.length && freq < randomnessLeft[0].length) leftVal = randomnessLeft[time][freq];
-		if(time < randomnessRight.length && freq < randomnessRight[0].length) rightVal = randomnessRight[time][freq];
-		//System.out.println(leftVal + " " + rightVal);
-		if(currentChannel == Channel.LEFT) return leftVal;
-		if(currentChannel == Channel.RIGHT) return rightVal;
-		if(currentChannel == Channel.STEREO) {
-			if(leftVal > rightVal) return leftVal;
-			return rightVal;
-		}
-		System.out.println("DFTEditor.getAmplitude: unknown channel");
-		return -1.0f;
-	}
-	
 	public static boolean isMaxima(FDData.Channel channel, int time, int freq) {
 		TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima = null;
 		if(channel == FDData.Channel.LEFT) timeToFreqsAtMaxima = timeToFreqsAtMaximaLeft;
@@ -175,18 +156,7 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	public static int freqToNote(int freq) {
 		return maxScreenNote - freq;
 	}
-/*
-	public static Set<Integer> timesWithMaxima() {
-		TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima = getMaximas();
-		return timeToFreqsAtMaxima.keySet();
-	}
 	
-	public static TreeSet<Integer> maximasAtTime(int time) {
-		TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima = getMaximas();
-		if(!timeToFreqsAtMaxima.containsKey(time)) return new TreeSet<Integer>();
-		return timeToFreqsAtMaxima.get(time);
-	}
-*/
 	public static int getTimeAxisWidthInMillis() {
 		return view.getTimeAxisWidthInMillis();
 	}
@@ -221,11 +191,7 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	public void createPCMDataLinearCubicSpline() {
 		SynthTools.createPCMDataLinearCubicSpline();
 	}
-	
-	public void createPCMDataLinearNoise() {
-		SynthTools.createPCMDataLinearNoise();
-	}
-	
+
 	public void playPCMData() {
 		SynthTools.playPCMData();
 	}
@@ -288,42 +254,20 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 	public void FileDFT(boolean prompt) {
 		newFileData();
         if(prompt || dftFileName == null) dftFileName = FileTools.PromptForFileOpenWAV(view);
-        DFT2.FileDFTMatrix(dftFileName);
+        DFT.FileDFTMatrix(dftFileName);
     	SynthTools.refresh = true;
     	SynthTools.createHarmonics();
     	ActionHandler.refreshAll();
-        //parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonic);
-        //parent.fdEditorFrame.addHarmonicsToFDEditor(harmonicIDToHarmonic);
-        //parent.graphEditorFrame.setTitle("GraphEditor: " + dftFileName);
-        //parent.fdEditorFrame.setTitle("FDEditor: " + dftFileName);
         this.setTitle("DFTEditor: " + dftFileName);
         refreshAllViews();
 	}
-	
-	public void TestDFT() {
-		newFileData();
-        DFT2.TestDFTMatrix();
-    	SynthTools.refresh = true;
-    	SynthTools.createHarmonics();
-    	ActionHandler.refreshAll();
-        //parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonic);
-        //parent.fdEditorFrame.addHarmonicsToFDEditor(harmonicIDToHarmonic);
-        //parent.graphEditorFrame.setTitle("GraphEditor: " + dftFileName);
-        //parent.fdEditorFrame.setTitle("FDEditor: " + dftFileName);
-        this.setTitle("DFTEditor: " + dftFileName);
-        refreshAllViews();
-	}
-	
+
 	public void ModuleDFT(double[] left, double[] right) {
 		newFileData();
-        DFT2.SynthDFTMatrix(left, right);
+        DFT.SynthDFTMatrix(left, right);
     	SynthTools.refresh = true;
     	SynthTools.createHarmonics();
     	ActionHandler.refreshAll();
-        //parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonic);
-        //parent.fdEditorFrame.addHarmonicsToFDEditor(harmonicIDToHarmonic);
-        //parent.graphEditorFrame.setTitle("GraphEditor: " + dftFileName);
-        //parent.fdEditorFrame.setTitle("FDEditor: " + dftFileName);
         this.setTitle("DFTEditor: [Modules Output]");
         refreshAllViews();
 	}
@@ -369,19 +313,6 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 		//GraphEditor.view.refresh();
 	}
 	
-	
-	public void exportAllFiles() {
-        FileOutput.harmonicsExportAll(this);
-        JOptionPane.showMessageDialog(this, "Finished exporting all files");
-	}
-	
-	public void saveHarmonicsToFile(ArrayList<Harmonic> harmonics) {
-		String fileName = dftFileName;
-		String fileNameTrimmed = fileName.substring(0, fileName.length() - 4); // ".wav"
-        FileOutput.OutputHarmonicsToFile(fileNameTrimmed + ".allData", harmonics);
-        JOptionPane.showMessageDialog(this, "Finished saving: " + fileNameTrimmed + ".allData");
-	}
-	
 	static void sliceAtTime(int time) {
 		int numFreqs = DFTEditor.amplitudesLeft[0].length;
 		for(int freq = 0; freq < numFreqs; freq++) {
@@ -406,12 +337,6 @@ public class DFTEditor extends JFrame implements AbstractEditor {
         setSize(1500, 800);
         randomIDGenerator = new Random();
         this.setTitle("DFTEditor: [no file]");
-        //openFileInDFTEditor();
-        //FileDFT(true);
-        //parent.graphEditorFrame.addHarmonicsToGraphEditor(harmonicIDToHarmonicMono);
-        //parent.graphEditorFrame.view.repaint();
-        //view.repaint();
-        //DFTUtils.testGetConsonantOvertonesBase31();
         newFileData();
     }
     
@@ -421,12 +346,6 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 		parent.dftEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		parent.dftEditorFrame.pack();
 		parent.dftEditorFrame.setVisible(true);
-		//parent.graphEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		//parent.graphEditorFrame.pack();
-		//parent.graphEditorFrame.setVisible(true);
-		//parent.fdEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		//parent.fdEditorFrame.pack();
-		//parent.fdEditorFrame.setVisible(true);
 	}
 
 	public static void main(String[] args) {

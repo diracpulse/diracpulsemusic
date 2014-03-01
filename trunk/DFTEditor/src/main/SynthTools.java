@@ -17,10 +17,6 @@ public class SynthTools {
 	public static boolean flatHarmonics = false;
 	static double maxDeltaFreq = 1;
 	static double binRangeFactor = 1.0;
-	private static CubicSpline barkRatioToMaskingLevel = null;
-	private static double[] noteToBarkRatio = null;
-	private static CubicSpline freqInHzToAWeighting = null; // Actually ISO-226
-	private static double[] noteToAWeighting = null; // Actually ISO-226
 	
 	static int freqToBinRange(int freq) {
 		return 1;
@@ -67,24 +63,7 @@ public class SynthTools {
 		PCMDataLeft = FastSynth.synthHarmonicsLinearCubicSpline(FDData.Channel.LEFT, synthHarmonics);
 		PCMDataRight = FastSynth.synthHarmonicsLinearCubicSpline(FDData.Channel.RIGHT, synthHarmonics);
 	}
-	
-	static void createPCMDataLinearNoise() {
-		if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.WAV) return;
-		if(DFTEditor.harmonicIDToHarmonic == null) return;
-		ArrayList<Harmonic> synthHarmonics = new ArrayList<Harmonic>();
-		for(Harmonic harmonic: DFTEditor.harmonicIDToHarmonic.values()) {
-			if(!harmonic.isSynthesized()) continue;
-			if(harmonic.getStartTime() > DFTEditor.getMaxViewTime()) continue;
-			if(harmonic.getEndTime() < DFTEditor.minViewTime) continue;
-			synthHarmonics.add(new Harmonic(harmonic.getHarmonicID()));
-			for(FDData data: harmonic.getTrimmedHarmonic(DFTEditor.minViewTime, DFTEditor.getMaxViewTime(), 1.0)) {
-				synthHarmonics.get(synthHarmonics.size() - 1).addData(data);
-			}
-		}
-		PCMDataLeft = FastSynth.synthHarmonicsLinearNoise(FDData.Channel.LEFT, synthHarmonics);
-		PCMDataRight = FastSynth.synthHarmonicsLinearNoise(FDData.Channel.RIGHT, synthHarmonics);
-	}
-	
+
 	static void playPCMData() {
 		if(DFTEditor.currentChannel == DFTEditor.Channel.STEREO) {
 			if(DFTEditor.currentChannelMixer == DFTEditor.ChannelMixer.LEFT_RIGHT) {
@@ -212,42 +191,6 @@ public class SynthTools {
 		// END: Apply A Weighting
 		*/
 		createHarmonics(channel, timeToFreqToData, amplitudeToTimeAndFreq, numTimes, numFreqs);
-		// START: Remove Harmonic Fragments
-		ArrayList<Long> harmonicIDsToRemove = new ArrayList<Long>();
-		for(Long harmonicID: DFTEditor.harmonicIDToHarmonic.keySet()) {
-			Harmonic harmonic = DFTEditor.harmonicIDToHarmonic.get(harmonicID);
-			if(harmonic.getChannel() != channel) continue;
-			int length = harmonic.getLengthNoTaper();
-			if(length < 4) {
-				harmonicIDsToRemove.add(harmonicID);
-				continue;
-			}
-			double lengthInSeconds = length * (FDData.timeStepInMillis / 1000.0);
-			double cycleLengthInSeconds = 1.0 / DFT2.noteToFrequency(harmonic.getMaxNote());
-			if(lengthInSeconds / cycleLengthInSeconds < 4.0) harmonicIDsToRemove.add(harmonicID);
-		}
-		for(Long harmonicID: harmonicIDsToRemove) {
-			for(FDData data: DFTEditor.harmonicIDToHarmonic.get(harmonicID).getAllDataRaw()) {
-				if(channel == FDData.Channel.LEFT) DFTEditor.timeToFreqsAtMaximaLeft.get(data.getTime()).remove(DFTEditor.noteToFreq(data.getNote()));
-				if(channel == FDData.Channel.RIGHT) DFTEditor.timeToFreqsAtMaximaRight.get(data.getTime()).remove(DFTEditor.noteToFreq(data.getNote()));
-			}
-			DFTEditor.harmonicIDToHarmonic.remove(harmonicID);
-		}
-		// END: Remove Harmonic Fragments
-		// START: Refilter Data Based on Harmonic Length
-		for(time = 0; time < numTimes; time++) timeToFreqToData.put(time, new TreeMap<Integer, FDData>());
-		for(Long harmonicID: DFTEditor.harmonicIDToHarmonic.keySet()) {
-			if(DFTEditor.harmonicIDToHarmonic.get(harmonicID).getChannel() == channel) {
-				for(FDData data: DFTEditor.harmonicIDToHarmonic.get(harmonicID).getAllDataRaw()) {
-					timeToFreqToData.get(data.getTime()).put(DFTEditor.noteToFreq(data.getNote()), data);
-					amplitudeToTimeAndFreq.put(data.getLogAmplitude(), new IntPair(data.getTime(), DFTEditor.noteToFreq(data.getNote())));
-				}
-			}
-		}
-		Filter.applyCriticalBandFiltering(channel, timeToFreqToData, amplitudeToTimeAndFreq);
-		createHarmonics(channel, timeToFreqToData, amplitudeToTimeAndFreq, numTimes, numFreqs);
-		// END: Refilter Data Based on Harmonic Length
-		Filter.calculateRandomness(channel);
 	}
 	
 	static void createHarmonics(FDData.Channel channel, TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData,
@@ -282,7 +225,6 @@ public class SynthTools {
 			while(continues <= maxTimeJump) {
 				time += 1;
 				if(time == numTimes) break;
-				boolean continueHarmonic = false;
 				for(int freqDifference = 1; freqDifference <= maxFreqJump; freqDifference++) {
 					FDData data0 = null;
 					FDData dataPlus1 = null;
@@ -340,7 +282,6 @@ public class SynthTools {
 				time--;
 				if(time < 0) break;
 				if(time == numTimes) break;
-				boolean continueHarmonic = false;
 				for(int freqDifference = 1; freqDifference <= maxFreqJump; freqDifference++) {
 					FDData data0 = null;
 					FDData dataPlus1 = null;
@@ -422,152 +363,4 @@ public class SynthTools {
 		return output;
 	}
 	
-	static class XYPair {
-		
-		public double x;
-		public double y;
-		
-		XYPair(double x, double y) {
-			this.x = x;
-			this.y = y;
-		}
-		
-	}
-	
-	static TreeMap<Integer, TreeMap<Integer, FDData>> applyFreqMasking(FDData.Channel channel, TreeMap<Integer, TreeMap<Integer, FDData>> timeToFreqToData) {
-		TreeMap<Integer, TreeSet<Integer>> timeToFreqsAtMaxima = null;
-		if(channel == FDData.Channel.LEFT) timeToFreqsAtMaxima = DFTEditor.timeToFreqsAtMaximaLeft;
-		if(channel == FDData.Channel.RIGHT) timeToFreqsAtMaxima = DFTEditor.timeToFreqsAtMaximaRight;
-		double[][] amplitudes = null;
-		if(channel == FDData.Channel.LEFT) amplitudes = DFTEditor.amplitudesLeft;
-		if(channel == FDData.Channel.RIGHT) amplitudes = DFTEditor.amplitudesRight;
-		int numTimes = amplitudes.length;
-		for(int time = 0; time < numTimes; time++) {
-			TreeSet<Integer> outputFreqsAtMaxima = new TreeSet<Integer>();
-			TreeMap<Integer, FDData> outputFreqToData = new TreeMap<Integer, FDData>();
-			TreeSet<Integer> freqsAtMaxima = timeToFreqsAtMaxima.get(time);
-			TreeMap<Integer, FDData> freqToData = timeToFreqToData.get(time);
-			for(Integer freq: freqToData.keySet()) outputFreqToData.put(freq, freqToData.get(freq));
-			for(Integer freq: freqsAtMaxima) outputFreqsAtMaxima.add(freq);
-			for(Integer freq: freqsAtMaxima) {
-				if(!outputFreqsAtMaxima.contains(freq)) continue;
-				for(Integer innerFreq: freqsAtMaxima) {
-					if(freq == innerFreq) continue;
-					if(!outputFreqsAtMaxima.contains(innerFreq)) continue;
-					if(isMaskedByData1(freqToData.get(freq), freqToData.get(innerFreq))) {
-						outputFreqsAtMaxima.remove(innerFreq);
-						outputFreqToData.remove(innerFreq);
-						//System.out.print("m");
-					}
-				}
-			}
-			timeToFreqsAtMaxima.remove(time);
-			timeToFreqsAtMaxima.put(time, outputFreqsAtMaxima);
-			timeToFreqToData.remove(time);
-			timeToFreqToData.put(time, outputFreqToData);
-		}
-		return timeToFreqToData;
-	}
-	
-	static boolean isAudible(FDData data, double zeroDb) {
-		if(noteToAWeighting == null) {
-			ArrayList<XYPair> weighting = new ArrayList<XYPair>();
-			weighting.add(new XYPair(FDData.minFrequencyInHz,-31.6));
-			weighting.add(new XYPair(20,-31.6));
-			weighting.add(new XYPair(25,-27.2));
-			weighting.add(new XYPair(31.5,-23.0));
-			weighting.add(new XYPair(40,-19.1));
-			weighting.add(new XYPair(50,-15.9));
-			weighting.add(new XYPair(63,-13.0));
-			weighting.add(new XYPair(80,-10.3));
-			weighting.add(new XYPair(100,-8.1));
-			weighting.add(new XYPair(125,-6.2));
-			weighting.add(new XYPair(160,-4.5));
-			weighting.add(new XYPair(200,-3.1));
-			weighting.add(new XYPair(250,-2.0));
-			weighting.add(new XYPair(315,-1.1));
-			weighting.add(new XYPair(400,-0.4));
-			weighting.add(new XYPair(500,0.0));
-			weighting.add(new XYPair(630,0.3));
-			weighting.add(new XYPair(800,0.5));
-			weighting.add(new XYPair(1000,0.0));
-			weighting.add(new XYPair(1250,-2.7));
-			weighting.add(new XYPair(1600,-4.1));
-			weighting.add(new XYPair(2000,-1.0));
-			weighting.add(new XYPair(2500,1.7));
-			weighting.add(new XYPair(3150,2.5));
-			weighting.add(new XYPair(4000,1.2));
-			weighting.add(new XYPair(5000,-2.1));
-			weighting.add(new XYPair(6300,-7.1));
-			weighting.add(new XYPair(8000,-11.2));
-			weighting.add(new XYPair(10000,-10.7));
-			weighting.add(new XYPair(12500,-3.1));
-			weighting.add(new XYPair(FDData.maxFrequencyInHz, -31.6));
-			double[] x = new double[weighting.size()];
-			double[] y = new double[weighting.size()];
-			int index = 0;
-			for(XYPair xyPair: weighting) {
-				x[index] = Math.log(xyPair.x) / Math.log(2.0);
-				y[index] = xyPair.y / 10.0 * Math.log(10.0) / Math.log(2.0) / 2.0;
-				System.out.println("Weighting:" + x[index] + " : " + y[index]);
-				index++;
-			}
-			freqInHzToAWeighting = new CubicSpline(x, y);
-			noteToAWeighting = new double[DFTEditor.maxScreenNote + 1];
-			for(int note = 0; note < noteToAWeighting.length; note++) {
-				noteToAWeighting[note] = freqInHzToAWeighting.interpolate(Math.log(DFT2.noteToFrequency(note)) / Math.log(2.0));
-			}
-		}
-		double logMinAudibleAmplitude = noteToAWeighting[data.getNote()];
-		if(data.getLogAmplitude() + logMinAudibleAmplitude < zeroDb) return true;
-		return false;
-	}
-	
-	static boolean isMaskedByData1(FDData data1, FDData data2) {
-		if(data1 == null || data2 == null) return false;
-		if(data2.getLogAmplitude() > data1.getLogAmplitude()) return false;
-		if(noteToBarkRatio == null) {
-			noteToBarkRatio = new double[DFTEditor.maxScreenNote + 1];
-			for(int note = 0; note < noteToBarkRatio.length; note++) {
-				noteToBarkRatio[note] = 13.0 * Math.atan(0.00076 * DFT2.noteToFrequency(note)) + 3.5 * Math.atan((DFT2.noteToFrequency(note) / 7500.0) * (DFT2.noteToFrequency(note) / 7500.0));
-			}
-		}
-		double bark1 = noteToBarkRatio[data1.getNote()];
-		double bark2 = noteToBarkRatio[data2.getNote()];
-		double barkRatio = bark2 / bark1;
-		if(barkRatio < 87.0/104.0 || barkRatio > 109.0/78.0) return false;
-		if(barkRatioToMaskingLevel == null) {
-			ArrayList<XYPair> masking = new ArrayList<XYPair>();
-			masking.add(new XYPair(87.0/104.0, Math.pow(10.0, -5.0 / 2)));
-			masking.add(new XYPair(45.0/52.0, Math.pow(10.0, -4.0 / 2)));
-			masking.add(new XYPair(93.0/104.0, Math.pow(10.0, -3.0 / 2)));
-			masking.add(new XYPair(11.0/12.0, Math.pow(10.0, -2.0 / 2)));
-			masking.add(new XYPair(49.0/52.0, Math.pow(10.0, -1.0 / 2)));
-			masking.add(new XYPair(23.0/24.0, Math.pow(10.0, -0.5 / 2)));
-			masking.add(new XYPair(101.0/104.0, Math.pow(10.0, -0.25 / 2)));
-			masking.add(new XYPair(1.0/1.0, Math.pow(10.0, -0.0)));
-			masking.add(new XYPair(107.0/104.0, Math.pow(10.0, -0.25 / 2)));
-			masking.add(new XYPair(109.0/104.0, Math.pow(10.0, -0.5 / 2)));
-			masking.add(new XYPair(14.0/13.0, Math.pow(10.0, -1.0 / 2)));
-			masking.add(new XYPair(119.0/104.0, Math.pow(10.0, -2.0 / 2)));
-			masking.add(new XYPair(95.0/78.0, Math.pow(10.0, -3.0 / 2)));
-			masking.add(new XYPair(17.0/13.0, Math.pow(10.0, -4.0 / 2)));
-			masking.add(new XYPair(109.0/78.0, Math.pow(10.0, -5.0 / 2)));
-			double[] x = new double[masking.size()];
-			double[] y = new double[masking.size()];
-			int index = 0;
-			for(XYPair xyPair: masking) {
-				x[index] = xyPair.x;
-				y[index] = Math.log(xyPair.y) / Math.log(2.0);
-				System.out.println("Masking:" + x[index] + " : " + y[index]);
-				index++;
-			}
-			barkRatioToMaskingLevel = new CubicSpline(x, y);
-		}
-		double maskingLevel = barkRatioToMaskingLevel.interpolate(barkRatio);
-		if(data2.getLogAmplitude() - data1.getLogAmplitude() > maskingLevel) return false;
-		return true;
-	}
-	
-
 }

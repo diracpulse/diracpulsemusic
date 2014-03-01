@@ -3,7 +3,6 @@ package main;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.TreeMap;
 
 public class DFTView extends JComponent {
 
@@ -33,7 +32,7 @@ public class DFTView extends JComponent {
 	}
 
 	public enum DataView {
-		DATA, DATA_ONLY, HARMONICS, HARMONIC_ID, DERIVATIVES, CHANNEL_DATA, CHANNEL_HARMONICS, RANDOMNESS;
+		DATA, DATA_ONLY, HARMONICS, HARMONIC_ID, DERIVATIVES, CHANNEL_DATA, CHANNEL_HARMONICS;
 	}
 
 	public static void setDataView(DataView v) {
@@ -247,7 +246,7 @@ public class DFTView extends JComponent {
 				int screenY = DFTEditor.upperOffset
 						+ ((y - DFTEditor.minViewFreq) * pixelStepY);
 				float amp = (float) DFTEditor.getAmplitude(x, y);
-				if(dataView != dataView.RANDOMNESS) if (amp == 0.0f) continue;
+				if (amp == 0.0f) continue;
 				if(dataView == DataView.CHANNEL_DATA) {
 					Color b = getColor((float)DFTEditor.amplitudesLeft[x][y], (float)DFTEditor.amplitudesRight[x][y]);
 					drawAmplitude(g, screenX, screenY, amp, b);
@@ -367,16 +366,6 @@ public class DFTView extends JComponent {
 				green = 0.0f;
 				blue = blue / 2.0f + 0.5f;
 				return new Color(red, green, blue);
-			}
-		}
-		if(dataView == DataView.RANDOMNESS) {
-			float r = (float) DFTEditor.getRandomness(time, freq) * 0.5f;
-			if(r < 0.0f || r > 0.5f) return new Color(1.0f, 1.0f, 1.0f, 1.0f);
-			//System.out.println(r);
-			if(currentVal > 0.0f) {
-				return new Color(red * 0.5f + r, green * 0.5f + r, blue * 0.5f + r, 1.0f);
-			} else {
-				return new Color(r, r, r, 1.0f);
 			}
 		}
 		return new Color(red, green, blue);
