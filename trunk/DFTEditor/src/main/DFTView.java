@@ -1,6 +1,7 @@
 package main;
 
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
@@ -32,7 +33,7 @@ public class DFTView extends JComponent {
 	}
 
 	public enum DataView {
-		DATA, DATA_ONLY, HARMONICS, HARMONIC_ID, DERIVATIVES, CHANNEL_DATA, CHANNEL_HARMONICS;
+		SPECTRUM, DATA, DATA_ONLY, HARMONICS, HARMONIC_ID, DERIVATIVES, CHANNEL_DATA, CHANNEL_HARMONICS;
 	}
 
 	public static void setDataView(DataView v) {
@@ -133,9 +134,12 @@ public class DFTView extends JComponent {
 	}
 
 	public void drawFileData(Graphics g, boolean scaleLines) {
-		// clear old data
 		g.setColor(new Color(0.0f, 0.0f, 0.0f));
 		g.fillRect(DFTEditor.leftOffset, DFTEditor.upperOffset, getWidth(), getHeight());
+		if ((dataView == DataView.SPECTRUM)) {
+			drawSpectrum(g);
+			return;
+		}
 		drawLeftFreqs(g);
 		drawUpperTimes(g);
 		if ((dataView == DataView.HARMONICS || dataView == DataView.HARMONIC_ID || dataView == DataView.CHANNEL_HARMONICS)) {
@@ -144,6 +148,10 @@ public class DFTView extends JComponent {
 		}
 		if ((dataView == DataView.DERIVATIVES)) {
 			drawFileDataAsDerivatives(g);
+			return;
+		}
+		if ((dataView == DataView.SPECTRUM)) {
+			drawSpectrum(g);
 			return;
 		}
 		drawFileDataAsPixelsOrDigits(g);
@@ -436,6 +444,37 @@ public class DFTView extends JComponent {
 		super.paintComponent(g);
 		g.drawImage(bi, 0, 0, null);
 		return;
+	}
+	
+	protected Color timeToColor(int time, int maxTime) {
+		float currentVal = (float) time / (float) maxTime;
+		if (currentVal < 0.0f)
+			currentVal = 0.0f;
+		if (currentVal > 1.0f)
+			currentVal = 1.0f;
+		float red = currentVal;
+		float green = 0.0f;
+		float blue = 1.0f - currentVal;
+		if (red >= 0.5f) {
+			green = (1.0f - red) * 2.0f;
+		} else {
+			green = red * 2.0f;
+		}
+		return new Color(red, green, blue);
+	}
+	
+	protected void drawSpectrum(Graphics g) {
+		int maxTime = DFTEditor.getMaxViewTime();
+		int maxFreq = DFTEditor.maxScreenFreq;
+		for(int time = 0; time < maxTime; time++) {
+			g.setColor(timeToColor(time, maxTime));
+			for(int freq = 0; freq < maxFreq; freq++) {
+				int x = maxFreq - freq - 1;
+				double amplitudeRatio = (DFTEditor.maxAmplitude - DFTEditor.getAmplitude(time, freq)) / (DFTEditor.maxAmplitude - DFTEditor.minAmplitude);
+				int y = (int) Math.round(amplitudeRatio * getHeight());
+				g.drawRect(x, y, 0, 0);
+			}
+		}
 	}
 
 }

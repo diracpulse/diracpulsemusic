@@ -15,7 +15,6 @@ import javax.swing.JOptionPane;
 
 import main.Module;
 import main.ModuleEditor;
-import main.SynthTools;
 
 public class SelfModulator implements Module {
 
@@ -26,7 +25,6 @@ public class SelfModulator implements Module {
 	
 	ModuleEditor parent = null;
 	Integer moduleID = null;
-	double duration = ModuleEditor.maxDuration;
 	double fmMod = 1.0;
 	int cornerX;
 	int cornerY;
@@ -113,7 +111,7 @@ public class SelfModulator implements Module {
 		return null;
 	}
 
-	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] controlIn) {
+	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] control) {
 		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
 			JOptionPane.showMessageDialog(parent.getParentFrame(), "Loop in Self Modulator");
@@ -125,11 +123,10 @@ public class SelfModulator implements Module {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
-			inputArray.add(output.getSamples(waitingForModuleIDs, controlIn));
+			inputArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
-		double[] inputSamples = new double[(int) Math.round(duration * SynthTools.sampleRate)];
-		if(controlIn != null) inputSamples = new double[controlIn.length];
+		double[] inputSamples = new double[control.length];
 		for(double[] inputIn: inputArray) {
 			for(int index = 0; index < inputSamples.length - 1; index++) {
 				if(index >= inputIn.length) break;
@@ -146,7 +143,7 @@ public class SelfModulator implements Module {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
-			samplesFMModArray.add(output.getSamples(waitingForModuleIDs, controlIn));
+			samplesFMModArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
 		if(!samplesFMModArray.isEmpty()) {
@@ -185,7 +182,7 @@ public class SelfModulator implements Module {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
-			samplesAMArray.add(output.getSamples(waitingForModuleIDs, controlIn));
+			samplesAMArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
 		if(!samplesAMArray.isEmpty()) {
@@ -204,7 +201,7 @@ public class SelfModulator implements Module {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
-			samplesADDArray.add(output.getSamples(waitingForModuleIDs, controlIn));
+			samplesADDArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
 		// no change if samplesADD.isEmpty()

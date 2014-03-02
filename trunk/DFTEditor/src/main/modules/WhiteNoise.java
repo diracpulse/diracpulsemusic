@@ -18,7 +18,6 @@ public class WhiteNoise implements Module {
 
 	ModuleEditor parent = null;
 	Integer moduleID = null;
-	double duration = ModuleEditor.maxDuration;
 	int cornerX;
 	int cornerY;
 	int width = 150; // should be >= value calculated by init
@@ -92,21 +91,13 @@ public class WhiteNoise implements Module {
 		return null;
 	}
 
-	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] controlIn) {
+	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] control) {
 		boolean nativeOutput = false;
 		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
 			//JOptionPane.showMessageDialog(parent.getParentFrame(), "Loop");
 			//return new double[0];
 			nativeOutput = true;
-		}
-		double[] control = new double[(int) Math.round(duration * SynthTools.sampleRate)];
-		if(controlIn != null) {
-			control = controlIn;
-		} else {
-			for(int index = 0; index < control.length; index++) {
-				control[index] = 1.0;
-			}
 		}
 		double[] samplesAM = new double[control.length];
 		for(int index = 0; index < samplesAM.length; index++) {
@@ -123,7 +114,7 @@ public class WhiteNoise implements Module {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
-			samplesAMArray.add(output.getSamples(waitingForModuleIDs, controlIn));
+			samplesAMArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
 		if(!samplesAMArray.isEmpty()) {

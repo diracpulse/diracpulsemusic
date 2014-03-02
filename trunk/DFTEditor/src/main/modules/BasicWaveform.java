@@ -31,8 +31,6 @@ public class BasicWaveform implements Module {
 	private Integer moduleID = null;
 	private double amplitude = 1.0;
 	private double freqInHz = ModuleEditor.defaultOctave;
-	private double minFreqInHzNoControl = ModuleEditor.minOctave;
-	private double duration = ModuleEditor.maxDuration;
 	private double fmMod = 1.0;
 	private int cornerX;
 	private int cornerY;
@@ -153,7 +151,7 @@ public class BasicWaveform implements Module {
 		return null;
 	}
 
-	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] controlIn) {
+	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] control) {
 		boolean nativeOutput = false;
 		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
@@ -161,28 +159,7 @@ public class BasicWaveform implements Module {
 			//return new double[0];
 			nativeOutput = true;
 		}
-		double[] innerControl = null;
-		if(controlIn == null) {
-			innerControl = new double[(int) Math.round(duration * SynthTools.sampleRate)];
-			for(int index = 0; index < innerControl.length; index++) {
-				innerControl[index] = 1.0;
-			}
-		} else {
-			if(freqInHz < minFreqInHzNoControl) {
-				innerControl = new double[(int) Math.round(duration * SynthTools.sampleRate)];
-				if(innerControl.length > controlIn.length) innerControl = new double[controlIn.length];
-				for(int index = 0; index < innerControl.length; index++) {
-					if(controlIn[index] < 0.0) {
-						innerControl[index] = controlIn[index];
-					} else {
-						innerControl[index] = 1.0;
-					}
-				}
-			} else {
-				innerControl = controlIn;
-			}
-		}
-		int numSamples = innerControl.length;
+		int numSamples = control.length;
 		double[] returnVal = new double[numSamples];
 		double[] samplesFMMod = new double[numSamples];
 		double[] samplesFM = new double[numSamples];
@@ -204,7 +181,7 @@ public class BasicWaveform implements Module {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
-			samplesVCOArray.add(output.getSamples(waitingForModuleIDs, controlIn));
+			samplesVCOArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
 		// no change if samplesVCO.isEmpty()
@@ -221,7 +198,7 @@ public class BasicWaveform implements Module {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
-			samplesFMArray.add(output.getSamples(waitingForModuleIDs, controlIn));
+			samplesFMArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
 		// no change if samplesFM.isEmpty()
@@ -238,7 +215,7 @@ public class BasicWaveform implements Module {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
-			samplesFMModArray.add(output.getSamples(waitingForModuleIDs, controlIn));
+			samplesFMModArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
 		if(!samplesFMModArray.isEmpty()) {
@@ -257,7 +234,7 @@ public class BasicWaveform implements Module {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
-			samplesAMArray.add(output.getSamples(waitingForModuleIDs, controlIn));
+			samplesAMArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
 		if(!samplesAMArray.isEmpty()) {
@@ -276,7 +253,7 @@ public class BasicWaveform implements Module {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
-			samplesADDArray.add(output.getSamples(waitingForModuleIDs, controlIn));
+			samplesADDArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
 		// no change if samplesADD.isEmpty()
@@ -296,43 +273,43 @@ public class BasicWaveform implements Module {
 		switch(type) {
 			case SINE:
 				for(int index = startIndex; index < numSamples; index++) {
-					if(samplesAM[index] == 0.0 || innerControl[index] < 0.0) {
+					if(samplesAM[index] == 0.0 || control[index] < 0.0) {
 						phase = 0.0;
 						continue;
 					}
 					if(phase > Math.PI) phase -= 2.0 * Math.PI;
 					returnVal[index] = Math.sin(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
-					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * innerControl[index];
+					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * control[index];
 				}
 				break;
 			case SQUAREWAVE:
 				for(int index = startIndex; index < numSamples; index++) {
-					if(samplesAM[index] == 0.0 || innerControl[index] < 0.0) {
+					if(samplesAM[index] == 0.0 || control[index] < 0.0) {
 						phase = 0.0;
 						continue;
 					}
 					returnVal[index] = squarewave(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
-					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * innerControl[index];
+					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * control[index];
 				}
 				break;
 			case TRIANGLE:
 				for(int index = startIndex; index < numSamples; index++) {
-					if(samplesAM[index] == 0.0 || innerControl[index] < 0.0) {
+					if(samplesAM[index] == 0.0 || control[index] < 0.0) {
 						phase = 0.0;
 						continue;
 					}
 					returnVal[index] = triangle(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
-					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * innerControl[index];
+					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * control[index];
 				}
 				break;
 			case SAWTOOTH:
 				for(int index = startIndex; index < numSamples; index++) {
-					if(samplesAM[index] == 0.0 || innerControl[index] < 0.0) {
+					if(samplesAM[index] == 0.0 || control[index] < 0.0) {
 						phase = 0.0;
 						continue;
 					}
 					returnVal[index] = sawtooth(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
-					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * innerControl[index];
+					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * control[index];
 				}
 				break;
 		}

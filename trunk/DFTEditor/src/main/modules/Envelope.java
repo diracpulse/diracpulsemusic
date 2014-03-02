@@ -60,6 +60,7 @@ public class Envelope implements Module {
 	int cornerX;
 	int cornerY;
 	int numPoints = 3;
+	public static final double maxEnvelopeDuration = 5.0;
 
 	ArrayList<Integer> outputs = null;
 	
@@ -155,45 +156,41 @@ public class Envelope implements Module {
 	}
 
 	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] control) {
-		if(control == null) {
-			return synthSingleEnvelope((int) Math.round(ModuleEditor.maxDuration * SynthTools.sampleRate));
-		} else {
-			double[] returnVal = new double[control.length];
-			for(int index = 0; index < returnVal.length; index++) {
-				returnVal[index] = 0.0;
-			}
-			TreeMap<Integer, Integer> startToEnd = new TreeMap<Integer, Integer>();
-			int controlIndex = 0;
-			while(true) {
-				while(control[controlIndex] < 0.0) {
-					controlIndex++;
-					if(controlIndex == control.length) break;
-				}
-				if(controlIndex == control.length) break;
-				int start = controlIndex;
-				double freqRatio = control[controlIndex];
-				while(control[controlIndex] == freqRatio) {
-					controlIndex++;
-					if(controlIndex == control.length) break;
-				}
-				if(controlIndex == control.length) {
-					startToEnd.put(start, controlIndex - 1);
-					break;
-				}
-				startToEnd.put(start, controlIndex);
-			}
-			if(startToEnd.isEmpty()) return returnVal;
-			for(int start: startToEnd.keySet()) {
-				double[] envelope = synthSingleEnvelope(startToEnd.get(start) - start);
-				if(envelope == null) continue;
-				for(int index = 0; index < envelope.length; index++) {
-					int returnIndex = start + index;
-					if(returnIndex == returnVal.length) return returnVal;
-					returnVal[returnIndex] += envelope[index];
-				}
-			}
-			return returnVal;
+		double[] returnVal = new double[control.length];
+		for(int index = 0; index < returnVal.length; index++) {
+			returnVal[index] = 0.0;
 		}
+		TreeMap<Integer, Integer> startToEnd = new TreeMap<Integer, Integer>();
+		int controlIndex = 0;
+		while(true) {
+			while(control[controlIndex] < 0.0) {
+				controlIndex++;
+				if(controlIndex == control.length) break;
+			}
+			if(controlIndex == control.length) break;
+			int start = controlIndex;
+			double freqRatio = control[controlIndex];
+			while(control[controlIndex] == freqRatio) {
+				controlIndex++;
+				if(controlIndex == control.length) break;
+			}
+			if(controlIndex == control.length) {
+				startToEnd.put(start, controlIndex - 1);
+				break;
+			}
+			startToEnd.put(start, controlIndex);
+		}
+		if(startToEnd.isEmpty()) return returnVal;
+		for(int start: startToEnd.keySet()) {
+			double[] envelope = synthSingleEnvelope(startToEnd.get(start) - start);
+			if(envelope == null) continue;
+			for(int index = 0; index < envelope.length; index++) {
+				int returnIndex = start + index;
+				if(returnIndex == returnVal.length) return returnVal;
+				returnVal[returnIndex] += envelope[index];
+			}
+		}
+		return returnVal;
 	}
 	
 	public double[] synthSingleEnvelope(int length) {
