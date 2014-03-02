@@ -45,7 +45,7 @@ public class FIRFilter implements Module {
 	final double minBins = 1.0;
 	final double maxBins = 100.0;
 	double alpha = 1.0;
-	double duration = ModuleEditor.maxDuration;
+
 	int cornerX;
 	int cornerY;
 	int width = 150; // should be >= value calculated by init
@@ -124,34 +124,14 @@ public class FIRFilter implements Module {
 		return null;
 	}
 
-	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] controlIn) {
+	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] control) {
 		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
 			//JOptionPane.showMessageDialog(parent.getParentFrame(), "Loop in FIRFilter");
 			return new double[0];
 		}
 		TreeMap<Double, FilterWithGain> freqRatioToFilter = new TreeMap<Double, FilterWithGain>();
-		double[] innerControl = null;
-		if(controlIn == null) {
-			innerControl = new double[(int) Math.round(duration * SynthTools.sampleRate)];
-			for(int index = 0; index < innerControl.length; index++) {
-				innerControl[index] = 1.0;
-			}
-		} else {
-			if(freqInHz < minFreqInHzNoControl) {
-				innerControl = new double[(int) Math.round(duration * SynthTools.sampleRate)];
-				for(int index = 0; index < innerControl.length; index++) {
-					if(controlIn[index] < 0.0) {
-						innerControl[index] = controlIn[index];
-					} else {
-						innerControl[index] = 1.0;
-					}
-				}
-			} else {
-				innerControl = controlIn;
-			}
-		}
-		double[] inputSamples = new double[innerControl.length];
+		double[] inputSamples = new double[control.length];
 		for(int index = 0; index < inputSamples.length; index++) inputSamples[index] = 0.0;
 		ArrayList<double[]> inputArray = new ArrayList<double[]>();
 		for(Integer inputID: inputs) {
@@ -159,7 +139,7 @@ public class FIRFilter implements Module {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
-			inputArray.add(output.getSamples(waitingForModuleIDs, controlIn));
+			inputArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
 		for(double[] samplesIn: inputArray) {
@@ -169,8 +149,8 @@ public class FIRFilter implements Module {
 			}
 		}
 		freqRatioToFilter.put(1.0, null);
-		for(int index = 0; index < innerControl.length; index++) {
-			double freqRatio = innerControl[index];
+		for(int index = 0; index < control.length; index++) {
+			double freqRatio = control[index];
 			if(!freqRatioToFilter.containsKey(freqRatio) && freqRatio > 0.0) {
 				freqRatioToFilter.put(freqRatio, null);
 			}
@@ -181,15 +161,15 @@ public class FIRFilter implements Module {
 			filterLength += filterLength % 2;
 			freqRatioToFilter.put(freqRatio, createFilter(freqInHz, bins));
 		}
-		double[] returnVal = new double[innerControl.length];
-		for(int index = 0; index < innerControl.length; index++) {
+		double[] returnVal = new double[control.length];
+		for(int index = 0; index < control.length; index++) {
 			returnVal[index] = 0.0;
-			if(innerControl[index] <= 0.0) continue;
+			if(control[index] <= 0.0) continue;
 			if(type == FilterType.ALLPASS) {
 				returnVal[index] = inputSamples[index];
 				continue;
 			}
-			FilterWithGain fwg = freqRatioToFilter.get(innerControl[index]);
+			FilterWithGain fwg = freqRatioToFilter.get(control[index]);
 			for(int filterIndex = 0; filterIndex < fwg.filter.length; filterIndex++) {
 				int innerIndex = index + filterIndex - fwg.filter.length / 2;
 				if(innerIndex < 0) continue;

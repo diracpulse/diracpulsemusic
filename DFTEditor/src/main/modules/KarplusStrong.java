@@ -28,7 +28,6 @@ public class KarplusStrong implements Module {
 	
 	ModuleEditor parent = null;
 	Integer moduleID = null;
-	double duration = ModuleEditor.maxDuration;
 	int cornerX;
 	int cornerY;
 	int oversampling = 4;
@@ -114,18 +113,10 @@ public class KarplusStrong implements Module {
 		if(waitingForModuleIDs.contains(moduleID)) {
 			System.out.println("Karplus-Strong has no inputs");
 		}
-		int numSamples = (int) Math.round(duration * SynthTools.sampleRate);
-		if(controlIn != null) numSamples = controlIn.length;
-		numSamples *= oversampling;
+		int numSamples = controlIn.length * oversampling;
 		double[] control = new double[numSamples];
-		if(controlIn != null) {
-			for(int index = 0; index < control.length; index++) {
-				control[index] = controlIn[index / 4];
-			}
-		} else {
-			for(int index = 0; index < control.length; index++) {
-				control[index] = 1.0;
-			}
+		for(int index = 0; index < control.length; index++) {
+			control[index] = controlIn[index / oversampling];
 		}
 		double[] samples = new double[control.length];
 		for(int index = 0; index < samples.length; index++) {

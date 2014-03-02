@@ -50,7 +50,7 @@ public class ModuleEditor extends JPanel {
 	public final static double minAmplitudeIn_dB = -144.5; // 24 bit data
 	public final static double maxFMModIn_dB = 60.0;
 	public final static double minFMModIn_dB = -60.0; // 24 bit data
-	public final static double maxDuration = 1.0;
+	public final static double defaultDuration = 2.0;
 	public final static double minDuration = FDData.timeStepInMillis / 1000.0;
 	public final static double minFrequency = 0.001;
 	public final static double maxFrequency = SynthTools.sampleRate / 2.0;
@@ -79,6 +79,12 @@ public class ModuleEditor extends JPanel {
 	}
 	
 	public void initLeftRight(double[] control) {
+		if(control == null) {
+			control = new double[(int) Math.round(defaultDuration * SynthTools.sampleRate)];
+			for(int index = 0; index < control.length; index++) {
+				control[index] = 1.0;
+			}
+		}
 		for(Connector connector : connectorIDToConnector.values()) {
 			if(connector instanceof Module.Output) {
 				//System.out.println("Output");

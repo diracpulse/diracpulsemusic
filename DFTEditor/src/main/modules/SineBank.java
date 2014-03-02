@@ -28,7 +28,6 @@ public class SineBank implements Module {
 	double[] frequencies = null;
 	double[] amplitudes = null;
 	double minFreqInHzNoControl = ModuleEditor.minOctave;
-	double duration = ModuleEditor.maxDuration;
 	int cornerX;
 	int cornerY;
 	int width = 150; // should be >= value calculated by init
@@ -117,7 +116,7 @@ public class SineBank implements Module {
 		return null;
 	}
 
-	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] controlIn) {
+	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] control) {
 		boolean nativeOutput = false;
 		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
@@ -125,16 +124,7 @@ public class SineBank implements Module {
 			//return new double[0];
 			nativeOutput = true;
 		}
-		double[] innerControl = null;
-		if(controlIn == null) {
-			innerControl = new double[(int) Math.round(duration * SynthTools.sampleRate)];
-			for(int index = 0; index < innerControl.length; index++) {
-				innerControl[index] = 1.0;
-			}
-		} else {
-				innerControl = controlIn;
-		}
-		int numSamples = innerControl.length;
+		int numSamples = control.length;
 		double[] returnVal = new double[numSamples];
 		double[] samplesFM = new double[numSamples];
 		double[] samplesAM = new double[numSamples];
@@ -152,7 +142,7 @@ public class SineBank implements Module {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
-			samplesFMArray.add(output.getSamples(waitingForModuleIDs, controlIn));
+			samplesFMArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
 		for(double[] samplesFMIn: samplesFMArray) {
@@ -168,7 +158,7 @@ public class SineBank implements Module {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
-			samplesAMArray.add(output.getSamples(waitingForModuleIDs, controlIn));
+			samplesAMArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
 		if(!samplesAMArray.isEmpty()) {
@@ -187,7 +177,7 @@ public class SineBank implements Module {
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
-			samplesADDArray.add(output.getSamples(waitingForModuleIDs, controlIn));
+			samplesADDArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
 		// no change if samplesADD.isEmpty()
@@ -207,14 +197,14 @@ public class SineBank implements Module {
 			if(freq >= SynthTools.sampleRate / 2.0) continue;
 			double deltaPhase = freq / SynthTools.sampleRate * Math.PI * 2.0;
 			for(int index = startIndex; index < numSamples; index++) {
-				if(samplesAM[index] == 0.0 || innerControl[index] < 0.0) {
+				if(samplesAM[index] == 0.0 || control[index] < 0.0) {
 					phase = 0.0;
 					continue;
 				}
 				double inputPhase =  (phase + Math.sin(samplesFM[index]));
 				if(inputPhase > Math.PI) inputPhase -= 2.0 * Math.PI;
 				returnVal[index] += Math.sin(inputPhase) * samplesAM[index] * amplitude + samplesADD[index];
-				phase += deltaPhase * innerControl[index];
+				phase += deltaPhase * control[index];
 			}
 		}
 		return returnVal;

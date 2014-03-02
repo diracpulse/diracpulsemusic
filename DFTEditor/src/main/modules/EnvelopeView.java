@@ -22,7 +22,11 @@ public class EnvelopeView extends JPanel {
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		g.setColor(Color.GRAY);
-		double[] samples = parent.envelope.masterGetSamples(new HashSet<Integer>(), null);
+		double[] control = new double[(int) Math.round(Envelope.maxEnvelopeDuration * SynthTools.sampleRate)];
+		for(int index = 0; index < control.length; index++) {
+			control[index] = 1.0;
+		}
+		double[] samples = parent.envelope.masterGetSamples(new HashSet<Integer>(), control);
 		double step = parent.getMillisPerPixel() / 1000.0 * SynthTools.sampleRate;
 		for(double index = 0; index < samples.length; index += step) {
 			int intIndex = (int) Math.round(index);

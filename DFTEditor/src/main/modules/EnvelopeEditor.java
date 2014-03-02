@@ -26,7 +26,7 @@ public class EnvelopeEditor extends JPanel {
         controller = new EnvelopeController(this);
         view.addMouseListener(controller);
         view.addMouseMotionListener(controller);
-        view.setPreferredSize(new Dimension(800, 600));
+        view.setPreferredSize(new Dimension((int) Math.round(Envelope.maxEnvelopeDuration * 1000.0 / getMillisPerPixel()), 600));
         JScrollPane scrollPane = new JScrollPane(view);
         scrollPane.setSize(800, 600);
         add(scrollPane, BorderLayout.CENTER);
