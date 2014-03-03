@@ -9,7 +9,7 @@ public class Filter {
 	public enum FilterType {
 		LOWPASS,
 		HIGHPASS,
-		BANDPASS
+		BANDPASS;
 	}
 	
 	public static class CriticalBand {
@@ -246,4 +246,35 @@ public class Filter {
 			
 		}
 		
+		private static boolean finished = true;
+		private static double b0 = 0.0;
+		private static double b1 = 0.0;
+		private static double b2 = 0.0;
+		private static double a0 = 0.0;
+		private static double a1 = 0.0;
+		private static int IIRIndex = 0;
+		
+		public static double[] applyIIRFilterOrder1(double[] input, double freq, FilterType type) {
+			double gamma = Math.tan((Math.PI * freq) / SynthTools.sampleRate);
+			double D = gamma * gamma + Math.sqrt(2.0) * gamma + 1.0;
+			b0 = (gamma * gamma) / D;
+			b1 = 2.0 * (gamma * gamma) / D;
+			b2 = b0;
+			a0 = 2.0 * (gamma * gamma - 1.0) / D;
+			a1 = (gamma * gamma - Math.sqrt(2.0) * gamma + 1.0) / D;
+			System.out.println(b0 + " " + b1 + " " + b2 + " " + a0 + " " + a1);
+			double[] y = new double[input.length];
+			for(int index = 0; index < input.length; index++) {
+				y[index] = 0.0;
+			}
+			//y[0] = b0 * input[0];
+			//y[1] = b0 * input[1] + b1 * input[0] + a0 * y[0];
+			for(int n = 2; n < input.length; n++) {
+				y[n] = b0 * input[n] + b1 * input[n - 1] + b2 * input[n - 2] - a0 * y[n - 1] - a1 * y[n - 2];
+				//y[n] = 1.1429 * y[n - 1] - 0.4712 * y[n - 2] + 0.067 * input[n] + 0.135 * input[n -1] + 0.067 * input[n - 2];
+				
+			}
+			return y;
+		}
+
 }

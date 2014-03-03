@@ -22,7 +22,8 @@ public interface Module {
 		FIRFILTER,
 		WHITENOISE,
 		SINEBANK,
-		KARPLUSSTRONG;
+		KARPLUSSTRONG, 
+		IIRFILTER;
 	}
 	
 	abstract void mousePressed(int x, int y);

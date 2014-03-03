@@ -22,6 +22,7 @@ import main.Module.ConnectorType;
 import main.modules.BasicWaveform;
 import main.modules.Envelope;
 import main.modules.FIRFilter;
+import main.modules.IIRFilter;
 import main.modules.KarplusStrong;
 import main.modules.MasterInput;
 import main.modules.SelfModulator;
@@ -248,10 +249,10 @@ public class ModuleEditor extends JPanel {
 		addModuleToColumn(col, Module.ModuleType.WHITENOISE);
 		addModuleToColumn(col, Module.ModuleType.WHITENOISE);
 		col++;
-		addModuleToColumn(col, Module.ModuleType.FIRFILTER);
-		addModuleToColumn(col, Module.ModuleType.FIRFILTER);
-		addModuleToColumn(col, Module.ModuleType.FIRFILTER);
-		addModuleToColumn(col, Module.ModuleType.FIRFILTER);
+		addModuleToColumn(col, Module.ModuleType.IIRFILTER);
+		addModuleToColumn(col, Module.ModuleType.IIRFILTER);
+		addModuleToColumn(col, Module.ModuleType.IIRFILTER);
+		addModuleToColumn(col, Module.ModuleType.IIRFILTER);
 		col++;
 		addModuleToColumn(col, Module.ModuleType.KARPLUSSTRONG);
 		addModuleToColumn(col, Module.ModuleType.KARPLUSSTRONG);
@@ -301,6 +302,10 @@ public class ModuleEditor extends JPanel {
 			break;
 		case FIRFILTER:
 			module = new FIRFilter(this, currentX, currentY);
+			addModule(module);
+			break;
+		case IIRFILTER:
+			module = new IIRFilter(this, currentX, currentY);
 			addModule(module);
 			break;
 		case WHITENOISE:
