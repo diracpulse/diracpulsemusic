@@ -24,7 +24,7 @@ public class DFT {
 	public static final double maxFreqHz = samplingRate / 2.0;
 	public static final double minFreqHz = samplingRate / 2048.0;
 	private static double maxWindowLength = 44100 / 5;
-	private static double alpha = 1.0;
+	private static double alpha = 5.0;
 	public static double midFreq = 0.0;
 	public static double bassFreq = 640.0;
 	
@@ -229,8 +229,8 @@ public class DFT {
 			left[index] = (double) LeftRight[index * 2];
 			right[index] = (double) LeftRight[index * 2 + 1];
 		}
-		tempLeft = Filter.applyFilter(samplingRate / 16.0, 100.0, left, Filter.FilterType.HIGHPASS);
-		tempRight = Filter.applyFilter(samplingRate / 16.0, 100.0, right, Filter.FilterType.HIGHPASS);
+		tempLeft = Filter.applyFilter(samplingRate / 16.0, 100.0, left, Filter.Type.HIGHPASS);
+		tempRight = Filter.applyFilter(samplingRate / 16.0, 100.0, right, Filter.Type.HIGHPASS);
 		double noteRatio = Math.pow(2.0, -1.0 / (double) FDData.noteBase);
 		double samplesPerStep = SynthTools.sampleRate / (1000.0 / FDData.timeStepInMillis);
 		double bins = maxBinStep / (Math.pow(2.0, 1.0 / (double) FDData.noteBase) - 1.0);
@@ -262,10 +262,10 @@ public class DFT {
 			}
 			left = Filter.decimate(left);
 			right = Filter.decimate(right);
-			tempLeft = Filter.applyFilter(samplingRate / 8.0, 2.0, left, Filter.FilterType.LOWPASS);
-			tempRight = Filter.applyFilter(samplingRate / 8.0, 2.0, right, Filter.FilterType.LOWPASS);
-			tempLeft = Filter.applyFilter(samplingRate / 16.0, 2.0, tempLeft, Filter.FilterType.HIGHPASS);
-			tempRight = Filter.applyFilter(samplingRate / 16.0, 2.0, tempRight, Filter.FilterType.HIGHPASS);
+			tempLeft = Filter.applyFilter(samplingRate / 8.0, 2.0, left, Filter.Type.LOWPASS);
+			tempRight = Filter.applyFilter(samplingRate / 8.0, 2.0, right, Filter.Type.LOWPASS);
+			tempLeft = Filter.applyFilter(samplingRate / 16.0, 2.0, tempLeft, Filter.Type.HIGHPASS);
+			tempRight = Filter.applyFilter(samplingRate / 16.0, 2.0, tempRight, Filter.Type.HIGHPASS);
 			maxCenterIndex /= 2;
 			samplesPerStep /= 2;
 			System.out.println("decimate");
