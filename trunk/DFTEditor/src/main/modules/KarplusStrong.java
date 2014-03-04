@@ -216,7 +216,7 @@ public class KarplusStrong implements Module {
 				}
 			}
 		}
-		samples = Filter.applyFilter(SynthTools.sampleRate / (oversampling * 2), 2.0, samples, Filter.FilterType.LOWPASS);
+		samples = Filter.applyFilter(SynthTools.sampleRate / (oversampling * 2), 2.0, samples, Filter.Type.LOWPASS);
 		double[] returnVal = new double[samples.length / oversampling];
 		for(int index = 0; index < returnVal.length; index++) {
 			returnVal[index] = samples[index * 4];

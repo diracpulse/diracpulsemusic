@@ -29,15 +29,17 @@ public class IIRFilter implements Module {
 	int cornerY;
 	int width = 150; // should be >= value calculated by init
 	int height = 150; // calculated by init
-	Filter.FilterType type = Filter.FilterType.LOWPASS;
+	Filter.Type type = Filter.Type.LOWPASS;
 	int filterOrder = 1;
 	int minOrder = 1;
-	int maxOrder = 4;
+	int maxOrder = 24;
+	double filterQ = 0.5;
 	
 	Rectangle typeControl = null;
 	Rectangle freqControl = null;
 	Rectangle ampControl = null;
-	Rectangle orderControl = null;		
+	Rectangle orderControl = null;
+	Rectangle qControl = null;
 	ArrayList<Integer> outputs;
 	ArrayList<Integer> inputs;
 	
@@ -168,12 +170,15 @@ public class IIRFilter implements Module {
 	}
 	
 	private double[] getFilteredSamples(double[] input, double freqInHz) {
-		return Filter.applyIIRFilterOrder1(input, freqInHz, Filter.FilterType.LOWPASS);
+		if(type == Filter.Type.LOWPASS) return Filter.butterworthLowpass(input, freqInHz, filterOrder);
+		if(type == Filter.Type.HIGHPASS) return Filter.butterworthHighpass(input, freqInHz, filterOrder);
+		if(type == Filter.Type.BANDPASS) return Filter.butterworthBandpass(input, freqInHz, filterQ, filterOrder);
+		return null;
 	}
 	
 	public void mousePressed(int x, int y) {
 		if(typeControl.contains(x, y)) {
-			Filter.FilterType inputType = (Filter.FilterType) JOptionPane.showInputDialog(null, "Choose a type", "Type Select", JOptionPane.INFORMATION_MESSAGE, null, Filter.FilterType.values(),  Filter.FilterType.LOWPASS);
+			Filter.Type inputType = (Filter.Type) JOptionPane.showInputDialog(null, "Choose a type", "Type Select", JOptionPane.INFORMATION_MESSAGE, null, Filter.Type.values(),  Filter.Type.LOWPASS);
 			if(inputType == null) return;
 			type = inputType;
 			parent.refreshData();
@@ -190,6 +195,13 @@ public class IIRFilter implements Module {
 			Double inputAmplitude = getInput("Input Amplitude In dB", ModuleEditor.minAmplitudeIn_dB, ModuleEditor.maxAmplitudeIn_dB);
 			if(inputAmplitude == null) return;
 			amplitude = Math.pow(10.0, inputAmplitude / 20.0);
+			parent.refreshData();
+			return;
+		}
+		if(qControl.contains(x, y)) {
+			Double inputQ = getInput("Input Q", Double.MIN_VALUE, Double.MAX_VALUE);
+			if(inputQ == null) return;
+			filterQ = inputQ;
 			parent.refreshData();
 			return;
 		}
@@ -287,6 +299,9 @@ public class IIRFilter implements Module {
 		if(g2 != null) g2.drawString("Amp: " + Math.round(amplitude * 100000.0) / 100000.0 + " (" + Math.round(Math.log(amplitude)/Math.log(10.0) * 2000.0) / 100.0 + "dB)", currentX, currentY);
 		if(g2 == null) ampControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		currentY += yStep;
+		if(g2 != null) g2.drawString("Q: " + filterQ, currentX, currentY);
+		if(g2 == null) qControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
+		currentY += yStep;
 		if(g2 != null) g2.drawString("Order: " + filterOrder, currentX, currentY);
 		if(g2 == null) orderControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		currentY += yStep;
@@ -313,7 +328,7 @@ public class IIRFilter implements Module {
 	public void loadModuleInfo(BufferedReader in) {
 		try { 
 			String currentLine = in.readLine();
-			this.type = Filter.FilterType.valueOf(currentLine);
+			this.type = Filter.Type.valueOf(currentLine);
 			currentLine = in.readLine();
 			this.freqInHz = new Double(currentLine);
 			currentLine = in.readLine();

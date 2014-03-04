@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import main.Module;
 import main.ModuleEditor;
-import main.SynthTools;
 
 public class WhiteNoise implements Module {
 

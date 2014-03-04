@@ -6,7 +6,15 @@ import java.util.TreeMap;
 
 public class Filter {
 	
-	public enum FilterType {
+	public static final int minOrder = 1;
+	public static final int maxOrder = 24; // for 24 bit data
+	
+	public enum Implementation {
+		BUTTERWORTH,
+		CHEBYSHEV_II;
+	}
+	
+	public enum Type {
 		LOWPASS,
 		HIGHPASS,
 		BANDPASS;
@@ -202,13 +210,13 @@ public class Filter {
 			return output;
 		}
 		
-		public static double[] applyFilter(double minus3dBFreq, double filterBins, double[] samples, FilterType type) {
+		public static double[] applyFilter(double minus3dBFreq, double filterBins, double[] samples, Type type) {
 			int filterLength = (int) Math.round((samplingRate / minus3dBFreq) * filterBins);
 			filterLength += filterLength % 1;
 			filter = new double[filterLength + 1];
-			if(type == FilterType.HIGHPASS) HPFilter(minus3dBFreq, filterLength, alpha);
-			if(type == FilterType.LOWPASS) LPFilter(minus3dBFreq, filterLength, alpha);
-			if(type == FilterType.BANDPASS) BPFilter(minus3dBFreq, filterLength, alpha);
+			if(type == Type.HIGHPASS) HPFilter(minus3dBFreq, filterLength, alpha);
+			if(type == Type.LOWPASS) LPFilter(minus3dBFreq, filterLength, alpha);
+			if(type == Type.BANDPASS) BPFilter(minus3dBFreq, filterLength, alpha);
 			double[] filteredSamples = new double[samples.length + 1];
 			for(int index = 0; index < samples.length; index++) {
 				filteredSamples[index] = 0.0;
@@ -246,15 +254,73 @@ public class Filter {
 			
 		}
 		
-		private static boolean finished = true;
 		private static double b0 = 0.0;
 		private static double b1 = 0.0;
 		private static double b2 = 0.0;
 		private static double a0 = 0.0;
 		private static double a1 = 0.0;
-		private static int IIRIndex = 0;
 		
-		public static double[] applyIIRFilterOrder1(double[] input, double freq, FilterType type) {
+		public static double[] butterworthLowpass(double input[], double freq, int order) {
+			if(order < minOrder || order > maxOrder) return null;
+			if(order == 1) return butterworthLowpass1(input, freq);
+			double[] returnVal = butterworthLowpass2(input, freq);
+			order -= 2;
+			while (order > 1) {
+				returnVal = butterworthLowpass2(returnVal, freq);
+				order -= 2;
+			}
+			if(order == 1) return butterworthLowpass1(returnVal, freq);
+			return returnVal;
+		}
+		
+		public static double[] butterworthHighpass(double input[], double freq, int order) {
+			if(order < minOrder || order > maxOrder) return null;
+			if(order == 1) return butterworthHighpass1(input, freq);
+			double[] returnVal = butterworthHighpass2(input, freq);
+			order -= 2;
+			while (order > 1) {
+				returnVal = butterworthHighpass2(returnVal, freq);
+				order -= 2;
+			}
+			if(order == 1) return butterworthHighpass1(returnVal, freq);
+			return returnVal;
+		}
+		
+		public static double[] butterworthBandpass(double input[], double freq, double q, int order) {
+			if(order < minOrder || order > maxOrder) return null;
+			if(order % 2 == 1) {
+				order = order + order % 1;
+				System.out.println("Filter.ButterworthBandpass: order must be even");
+			}
+			double bandwidth = SynthTools.sampleRate;
+			if(q > 0.0) bandwidth = freq / q;
+			double[] returnVal = butterworthBandpass2(input, freq, bandwidth);
+			order -= 2;
+			while (order > 0) {
+				returnVal = butterworthBandpass2(returnVal, freq, bandwidth);
+				order -= 2;
+			}
+			return returnVal;
+		}
+
+		private static double[] butterworthLowpass1(double[] input, double freq) {
+			double gamma = Math.tan((Math.PI * freq) / SynthTools.sampleRate);
+			b0 = gamma / (gamma + 1);
+			b1 = b0;
+			a0 = (gamma - 1) / (gamma + 1); 
+			double[] y = new double[input.length];
+			for(int index = 0; index < input.length; index++) {
+				y[index] = 0.0;
+			}
+			y[0] = b0 * input[0];
+			for(int n = 2; n < input.length; n++) {
+				y[n] = b0 * input[n] + b1 * input[n - 1] - a0 * y[n - 1];
+				
+			}
+			return y;
+		}
+		
+		private static double[] butterworthLowpass2(double[] input, double freq) {
 			double gamma = Math.tan((Math.PI * freq) / SynthTools.sampleRate);
 			double D = gamma * gamma + Math.sqrt(2.0) * gamma + 1.0;
 			b0 = (gamma * gamma) / D;
@@ -267,11 +333,71 @@ public class Filter {
 			for(int index = 0; index < input.length; index++) {
 				y[index] = 0.0;
 			}
-			//y[0] = b0 * input[0];
-			//y[1] = b0 * input[1] + b1 * input[0] + a0 * y[0];
+			y[0] = b0 * input[0];
+			y[1] = b0 * input[1] + b1 * input[0] + a0 * y[0];
 			for(int n = 2; n < input.length; n++) {
 				y[n] = b0 * input[n] + b1 * input[n - 1] + b2 * input[n - 2] - a0 * y[n - 1] - a1 * y[n - 2];
-				//y[n] = 1.1429 * y[n - 1] - 0.4712 * y[n - 2] + 0.067 * input[n] + 0.135 * input[n -1] + 0.067 * input[n - 2];
+				
+			}
+			return y;
+		}
+		
+		private static double[] butterworthHighpass1(double[] input, double freq) {
+			double gamma = Math.tan((Math.PI * freq) / SynthTools.sampleRate);
+			b0 = 1.0 / (gamma + 1);
+			b1 = -1.0 / (gamma + 1);
+			a0 = (gamma - 1) / (gamma + 1); 
+			double[] y = new double[input.length];
+			for(int index = 0; index < input.length; index++) {
+				y[index] = 0.0;
+			}
+			y[0] = b0 * input[0];
+			for(int n = 2; n < input.length; n++) {
+				y[n] = b0 * input[n] + b1 * input[n - 1] - a0 * y[n - 1];
+				
+			}
+			return y;
+		}
+		
+		private static double[] butterworthHighpass2(double[] input, double freq) {
+			double gamma = Math.tan((Math.PI * freq) / SynthTools.sampleRate);
+			double D = gamma * gamma + Math.sqrt(2.0) * gamma + 1.0;
+			b0 = 1.0 / D;
+			b1 = -2.0 / D;
+			b2 = 1.0 / D;
+			a0 = 2.0 * (gamma * gamma - 1.0) / D;
+			a1 = (gamma * gamma - Math.sqrt(2.0) * gamma + 1.0) / D;
+			//System.out.println(b0 + " " + b1 + " " + b2 + " " + a0 + " " + a1);
+			double[] y = new double[input.length];
+			for(int index = 0; index < input.length; index++) {
+				y[index] = 0.0;
+			}
+			y[0] = b0 * input[0];
+			y[1] = b0 * input[1] + b1 * input[0] + a0 * y[0];
+			for(int n = 2; n < input.length; n++) {
+				y[n] = b0 * input[n] + b1 * input[n - 1] + b2 * input[n - 2] - a0 * y[n - 1] - a1 * y[n - 2];
+				
+			}
+			return y;
+		}
+		
+		private static double[] butterworthBandpass2(double[] input, double freq, double bandwidth) {
+			double gamma = Math.tan((Math.PI * freq) / SynthTools.sampleRate);
+			double D = (1.0 + gamma * gamma) * freq + gamma * bandwidth;
+			b0 = bandwidth * gamma / D;
+			b1 = 0.0;
+			b2 = -b0;
+			a0 = (2.0 * freq * (gamma * gamma - 1.0)) / D;
+			a1 = ((1.0 + gamma * gamma) * freq - gamma * bandwidth) / D;
+			//System.out.println(b0 + " " + b1 + " " + b2 + " " + a0 + " " + a1);
+			double[] y = new double[input.length];
+			for(int index = 0; index < input.length; index++) {
+				y[index] = 0.0;
+			}
+			y[0] = b0 * input[0];
+			y[1] = b0 * input[1] + b1 * input[0] + a0 * y[0];
+			for(int n = 2; n < input.length; n++) {
+				y[n] = b0 * input[n] + b2 * input[n - 2] - a0 * y[n - 1] - a1 * y[n - 2];
 				
 			}
 			return y;
