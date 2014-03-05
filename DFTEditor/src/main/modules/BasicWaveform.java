@@ -36,6 +36,7 @@ public class BasicWaveform implements Module {
 	private int cornerY;
 	private int width = 150; // should be >= value calculated by init
 	private int height = 200; // calculated by init
+	private int id;
 	private WaveformType type = WaveformType.SINE;
 	private Rectangle typeControl = null;
 	private Rectangle freqControl = null;
@@ -79,10 +80,11 @@ public class BasicWaveform implements Module {
 		
 	}
 	
-	public BasicWaveform(ModuleEditor parent, int x, int y) {
+	public BasicWaveform(ModuleEditor parent, int x, int y, int id) {
 		this.cornerX = x;
 		this.cornerY = y;
 		this.parent = parent;
+		this.id = id;
 		outputs = new ArrayList<Integer>();
 		inputADD = new ArrayList<Integer>();
 		inputAM = new ArrayList<Integer>();
@@ -102,6 +104,10 @@ public class BasicWaveform implements Module {
 	
 	public void setModuleId(Integer id) {
 		this.moduleID = id;
+	}
+	
+	public int getID() {
+		return id;
 	}
 	
 	public Integer getModuleId() {
@@ -427,7 +433,6 @@ public class BasicWaveform implements Module {
 			}
 			index++;
 		}
-		new BasicWaveformEditor(this);
 	}
 	
 	public Double getInput(String prompt, double minBound, double maxBound) {
@@ -468,6 +473,8 @@ public class BasicWaveform implements Module {
 		if(g2 != null) g2.setFont(font);
 		currentX = cornerX + 4;
 		currentY = cornerY + yStep;
+		if(g2 != null) g2.drawString("Envelope " + id, currentX, currentY);
+		currentY += yStep;
 		if(g2 != null) g2.drawString(type.toString(), currentX, currentY);
 		if(g2 == null) typeControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		if(g2 != null) g2.setColor(Color.GREEN);
