@@ -15,9 +15,10 @@ public class BasicWaveformController implements MouseListener, MouseMotionListen
 	}
 
 	@Override
-	public void actionPerformed(ActionEvent arg0) {
-		// TODO Auto-generated method stub
-		
+	public void actionPerformed(ActionEvent e) {
+		for(int index = 0; index < parent.moduleEditor.getNumWaveforms(); index++) {
+			if (new Integer(index).toString().equals(e.getActionCommand())) parent.toggleWaveformDisplayed(index);
+		}
 	}
 
 	@Override
@@ -53,7 +54,7 @@ public class BasicWaveformController implements MouseListener, MouseMotionListen
 
 	@Override
 	public void mouseReleased(MouseEvent arg0) {
-		parent.basicWaveform.getModuleEditor().refreshData();
+		parent.moduleEditor.refreshData();
 	}
 
 }

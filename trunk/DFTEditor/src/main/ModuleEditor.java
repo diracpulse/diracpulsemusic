@@ -19,7 +19,9 @@ import javax.swing.JToolBar;
 
 import main.Module.Connector;
 import main.Module.ConnectorType;
+import main.Module.ModuleType;
 import main.modules.BasicWaveform;
+import main.modules.BasicWaveformEditor;
 import main.modules.Envelope;
 import main.modules.FIRFilter;
 import main.modules.IIRFilter;
@@ -38,23 +40,32 @@ public class ModuleEditor extends JPanel {
 	public ModuleController controller;
 	private int masterInputHeight;
 	private MasterInput masterInput = null;
+	private BasicWaveformEditor waveformEditor = null;
 	public static final int columnWidth = 150;
 	public static final int scrollableWidth = columnWidth * 16;
 	public static final int scrollableHeight = columnWidth * 16;
+	public TreeMap<Integer, Integer> waveformIDToModuleID;
 	public TreeMap<Integer, Module> moduleIDToModule = null;
 	public TreeMap<Integer, Connector> connectorIDToConnector = null;
 	public Integer selectedOutput = null;
 	private JToolBar navigationBar = null;
 	private static double[] left = null;
 	private static double[] right = null;
+	public final static double log2TodB = (Math.log(2.0) / Math.log(10.0)) * 20.0;
+	public final static double maxAmplitudeLog2 = 0.0;
+	public final static double minAmplitudeLog2 = -24.0; // 24 bit data
+	public final static double maxFMModLog2 = 10.0;
+	public final static double minFMModLog2 = -10.0;
 	public final static double maxAmplitudeIn_dB = 0.0;
-	public final static double minAmplitudeIn_dB = -144.5; // 24 bit data
-	public final static double maxFMModIn_dB = 60.0;
-	public final static double minFMModIn_dB = -60.0; // 24 bit data
+	public final static double minAmplitudeIn_dB = minAmplitudeLog2 * log2TodB;
+	public final static double maxFMModIn_dB = maxFMModLog2 * log2TodB;
+	public final static double minFMModIn_dB = minFMModLog2 * log2TodB;
 	public final static double defaultDuration = 2.0;
 	public final static double minDuration = FDData.timeStepInMillis / 1000.0;
-	public final static double minFrequency = 0.001;
+	public final static double minFrequency = 1.0 / 16.0;
 	public final static double maxFrequency = SynthTools.sampleRate / 2.0;
+	public final static double minFrequencyLog2 = Math.log(minFrequency) / Math.log(2.0);
+	public final static double maxFrequencyLog2 = Math.log(maxFrequency) / Math.log(2.0);
 	public final static double minOctave = 32.0;
 	public final static double maxOctave = 8192.0;
 	public final static double defaultOctave = 256.0;
@@ -76,6 +87,7 @@ public class ModuleEditor extends JPanel {
         addNavigationButton("DFT");
         addNavigationButton("Load");
         addNavigationButton("Save");
+        addNavigationButton("Waveforms");
     	return navigationBar;
 	}
 	
@@ -211,6 +223,7 @@ public class ModuleEditor extends JPanel {
 	
 	public void initModules() {
 		moduleIDToModule = new TreeMap<Integer, Module>();
+		waveformIDToModuleID = new TreeMap<Integer, Integer>();
 		connectorIDToConnector = new TreeMap<Integer, Connector>();
 		moduleIDToModule.put(0, new MasterInput(this, 0, 0));
 		masterInput = (MasterInput) moduleIDToModule.get(0);
@@ -282,7 +295,7 @@ public class ModuleEditor extends JPanel {
 		Module module = null;
 		switch(moduleType) {
 		case BASICWAVEFORM:
-			module = new BasicWaveform(this, currentX, currentY);
+			module = new BasicWaveform(this, currentX, currentY, waveformIDToModuleID.size());
 			addModule(module);
 			break;
 		case ENVELOPE:
@@ -329,6 +342,10 @@ public class ModuleEditor extends JPanel {
 		int nextKey = moduleIDToModule.lastKey() + 1;
 		module.setModuleId(nextKey);
 		moduleIDToModule.put(nextKey, module);
+		int currentWaveformID = waveformIDToModuleID.size();
+		if(module.getModuleType() == ModuleType.BASICWAVEFORM) {
+			waveformIDToModuleID.put(currentWaveformID, nextKey);
+		}
 		return nextKey;
 	}
 	
@@ -446,6 +463,20 @@ public class ModuleEditor extends JPanel {
 		}
 		//this.setTitle(filename);
 		JOptionPane.showMessageDialog(this, "Finished Loading File");
+	}
+	
+	public int getNumWaveforms() {
+		return waveformIDToModuleID.size();
+	}
+	
+	public BasicWaveform getWaveformByID(int index) {
+		return (BasicWaveform) moduleIDToModule.get(waveformIDToModuleID.get(index));
+	}
+	
+	public void displayWaveformEditor() {
+		ArrayList<BasicWaveform> basicWaveforms = new ArrayList<BasicWaveform>();
+		waveformEditor = new BasicWaveformEditor(basicWaveforms, this);
+		parent.newWindow(waveformEditor);
 	}
 
 }

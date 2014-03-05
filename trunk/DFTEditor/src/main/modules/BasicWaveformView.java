@@ -7,6 +7,8 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import javax.swing.JPanel;
 
+import main.modules.BasicWaveformEditor.ControlRect;
+
 public class BasicWaveformView extends JPanel {
 
 	private static final long serialVersionUID = -3597657941937913124L;
@@ -27,33 +29,53 @@ public class BasicWaveformView extends JPanel {
 		int padding = 4;
 		int currentX = padding;
 		int currentY = 0;
-		g2.setColor(Color.GREEN);
-		g2.drawString("Freq: " + parent.basicWaveform.getFreqInHz(), currentX, currentY + fontSize + padding - 1);
-		currentY += yStep;
-		parent.freqControl = new Rectangle(0, currentY, getWidth(), yStep);
-		g2.setColor(Color.DARK_GRAY);
-		g2.fillRect(0, currentY + 2, getWidth(), yStep - 2);
-		g2.setColor(Color.WHITE);
-		g2.fillRect(0, currentY + 2, parent.freqInHzToX(parent.basicWaveform.getFreqInHz()), yStep - 2);
-		currentY += yStep;
-		g2.setColor(Color.GREEN);
-		g2.drawString("Amp: " + Math.round(parent.basicWaveform.getAmplitude() * 100000.0) / 100000.0 + " (" + Math.round(Math.log(parent.basicWaveform.getAmplitude())/Math.log(10.0) * 2000.0) / 100.0 + "dB)", currentX, currentY + fontSize + padding - 1);
-		currentY += yStep;
-		parent.ampControl = new Rectangle(0, currentY, getWidth(), yStep);
-		g2.setColor(Color.DARK_GRAY);
-		g2.fillRect(0, currentY, getWidth(), yStep);
-		g2.setColor(Color.WHITE);
-		g2.fillRect(0, currentY, parent.amplitudeToX(parent.basicWaveform.getAmplitude()), yStep);
-		currentY += yStep;
-		g2.setColor(Color.GREEN);
-		g2.drawString("FMMod: " + Math.round(parent.basicWaveform.getFMMod() * 100000.0) / 100000.0 + " (" + Math.round(Math.log(parent.basicWaveform.getFMMod())/Math.log(10.0) * 2000.0) / 100.0 + "dB)", currentX, currentY + fontSize + padding - 1);
-		currentY += yStep;
-		parent.fmModControl = new Rectangle(0, currentY, getWidth(), yStep);
-		g2.setColor(Color.DARK_GRAY);
-		g2.fillRect(0, currentY, getWidth(), yStep);
-		g2.setColor(Color.WHITE);
-		g2.fillRect(0, currentY, parent.fmModToX(parent.basicWaveform.getFMMod()), yStep);
-		currentY += yStep;
+		for(BasicWaveformEditor.ControlRect controlRect: parent.controlRects) {
+			g2.setColor(Color.GREEN);
+			g2.drawString("Envelope: " + controlRect.basicWaveform.getID() + ":  Freq: " + controlRect.basicWaveform.getFreqInHz(), currentX, currentY + fontSize + padding - 1);
+			currentY += yStep;
+			controlRect.coarseFreqControl = new Rectangle(0, currentY, getWidth(), yStep - 2);
+			g2.setColor(Color.LIGHT_GRAY);
+			g2.fillRect(0, currentY + 2, getWidth(), yStep - 2);
+			g2.setColor(Color.WHITE);
+			g2.fillRect(0, currentY + 2, parent.freqToXCoarse(controlRect.basicWaveform.getFreqInHz()), yStep - 2);
+			currentY += yStep;
+			controlRect.fineFreqControl = new Rectangle(0, currentY, getWidth(), yStep - 2);
+			g2.setColor(Color.DARK_GRAY);
+			g2.fillRect(0, currentY + 2, getWidth(), yStep - 2);
+			g2.setColor(Color.WHITE);
+			g2.fillRect(0, currentY + 2, parent.valueToXFine(controlRect.basicWaveform.getFreqInHz()), yStep - 2);
+			currentY += yStep;
+			g2.setColor(Color.GREEN);
+			g2.drawString("Amp: " + Math.round(controlRect.basicWaveform.getAmplitude() * 100000.0) / 100000.0 + " (" + Math.round(Math.log(controlRect.basicWaveform.getAmplitude())/Math.log(10.0) * 2000.0) / 100.0 + "dB)", currentX, currentY + fontSize + padding - 1);
+			currentY += yStep;
+			controlRect.coarseAmpControl = new Rectangle(0, currentY, getWidth(), yStep - 2);
+			g2.setColor(Color.LIGHT_GRAY);
+			g2.fillRect(0, currentY, getWidth(), yStep - 2);
+			g2.setColor(Color.WHITE);
+			g2.fillRect(0, currentY, parent.amplitudeToXCoarse(controlRect.basicWaveform.getAmplitude()), yStep - 2);
+			currentY += yStep;
+			controlRect.fineAmpControl = new Rectangle(0, currentY, getWidth(), yStep - 2);
+			g2.setColor(Color.DARK_GRAY);
+			g2.fillRect(0, currentY, getWidth(), yStep - 2);
+			g2.setColor(Color.WHITE);
+			g2.fillRect(0, currentY, parent.valueToXFine(controlRect.basicWaveform.getAmplitude()), yStep - 2);
+			currentY += yStep;
+			g2.setColor(Color.GREEN);
+			g2.drawString("FMMod: " + Math.round(controlRect.basicWaveform.getFMMod() * 100000.0) / 100000.0 + " (" + Math.round(Math.log(controlRect.basicWaveform.getFMMod())/Math.log(10.0) * 2000.0) / 100.0 + "dB)", currentX, currentY + fontSize + padding - 1);
+			currentY += yStep;
+			controlRect.coarseFMModControl = new Rectangle(0, currentY, getWidth(), yStep - 2);
+			g2.setColor(Color.LIGHT_GRAY);
+			g2.fillRect(0, currentY, getWidth(), yStep - 2);
+			g2.setColor(Color.WHITE);
+			g2.fillRect(0, currentY, parent.fmModToXCoarse(controlRect.basicWaveform.getFMMod()), yStep - 2);
+			currentY += yStep;
+			controlRect.fineFMModControl = new Rectangle(0, currentY, getWidth(), yStep - 2);
+			g2.setColor(Color.DARK_GRAY);
+			g2.fillRect(0, currentY, getWidth(), yStep - 2);
+			g2.setColor(Color.WHITE);
+			g2.fillRect(0, currentY, parent.valueToXFine(controlRect.basicWaveform.getFMMod()), yStep - 2);
+			currentY += yStep;
+		}
 	}
 
 }

@@ -289,7 +289,7 @@ public class Filter {
 		public static double[] butterworthBandpass(double input[], double freq, double q, int order) {
 			if(order < minOrder || order > maxOrder) return null;
 			if(order % 2 == 1) {
-				order = order + order % 1;
+				order = order + order % 2;
 				System.out.println("Filter.ButterworthBandpass: order must be even");
 			}
 			double bandwidth = SynthTools.sampleRate;
