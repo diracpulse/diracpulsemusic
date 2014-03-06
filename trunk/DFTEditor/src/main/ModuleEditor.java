@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -44,9 +45,9 @@ public class ModuleEditor extends JPanel {
 	public static final int columnWidth = 150;
 	public static final int scrollableWidth = columnWidth * 16;
 	public static final int scrollableHeight = columnWidth * 16;
-	public TreeMap<Integer, Integer> waveformIDToModuleID;
-	public TreeMap<Integer, Module> moduleIDToModule = null;
-	public TreeMap<Integer, Connector> connectorIDToConnector = null;
+	public TreeMap<Module.ModuleType, TreeSet<Integer>> moduleTypeToModuleIDs;
+	public ArrayList<Module> modules = null;
+	public ArrayList<Connector> connectors = null;
 	public Integer selectedOutput = null;
 	private JToolBar navigationBar = null;
 	private static double[] left = null;
@@ -98,7 +99,7 @@ public class ModuleEditor extends JPanel {
 				control[index] = 1.0;
 			}
 		}
-		for(Connector connector : connectorIDToConnector.values()) {
+		for(Connector connector : connectors) {
 			if(connector instanceof Module.Output) {
 				//System.out.println("Output");
 				Module.Output output = (Module.Output) connector;
@@ -206,7 +207,6 @@ public class ModuleEditor extends JPanel {
 	public ModuleEditor(MultiWindow parent) {
 		super(new BorderLayout());
 		this.parent = parent;
-    	connectorIDToConnector = new TreeMap<Integer, Connector>();
         initModules();
         view = new ModuleView(this);
         view.setBackground(Color.black);
@@ -222,11 +222,11 @@ public class ModuleEditor extends JPanel {
 	}
 	
 	public void initModules() {
-		moduleIDToModule = new TreeMap<Integer, Module>();
-		waveformIDToModuleID = new TreeMap<Integer, Integer>();
-		connectorIDToConnector = new TreeMap<Integer, Connector>();
-		moduleIDToModule.put(0, new MasterInput(this, 0, 0));
-		masterInput = (MasterInput) moduleIDToModule.get(0);
+		modules = new ArrayList<Module>();
+		connectors = new ArrayList<Connector>();
+		moduleTypeToModuleIDs = new TreeMap<Module.ModuleType, TreeSet<Integer>>();
+		modules.add(new MasterInput(this, 0, 0));
+		masterInput = (MasterInput) modules.get(0);
 		masterInputHeight = masterInput.getHeight();
 		int col = 0;
 		addModuleToColumn(col, Module.ModuleType.SINEBANK);
@@ -281,7 +281,7 @@ public class ModuleEditor extends JPanel {
 	public void addModuleToColumn(int col, Module.ModuleType moduleType) {
 		int currentX = col * columnWidth;
 		int currentY = masterInputHeight;
-		for(Module loopModule: moduleIDToModule.values()) {
+		for(Module loopModule: modules) {
 			if(loopModule.getX() == currentX) {
 				if(loopModule.getY() + loopModule.getWidth() > currentY) {
 					currentY = loopModule.getY() + loopModule.getHeight();
@@ -295,7 +295,7 @@ public class ModuleEditor extends JPanel {
 		Module module = null;
 		switch(moduleType) {
 		case BASICWAVEFORM:
-			module = new BasicWaveform(this, currentX, currentY, waveformIDToModuleID.size());
+			module = new BasicWaveform(this, currentX, currentY);
 			addModule(module);
 			break;
 		case ENVELOPE:
@@ -338,32 +338,58 @@ public class ModuleEditor extends JPanel {
 		}
 	}
 	
-	public Integer addModule(Module module) {
-		int nextKey = moduleIDToModule.lastKey() + 1;
-		module.setModuleId(nextKey);
-		moduleIDToModule.put(nextKey, module);
-		int currentWaveformID = waveformIDToModuleID.size();
-		if(module.getModuleType() == ModuleType.BASICWAVEFORM) {
-			waveformIDToModuleID.put(currentWaveformID, nextKey);
-		}
-		return nextKey;
+	public void addModule(Module module) {
+		module.setModuleId(modules.size());
+		modules.add(module);
 	}
 	
-	public Integer addConnector(Connector connector) {
-		int nextKey = 0;
-		if(!connectorIDToConnector.isEmpty()) nextKey = connectorIDToConnector.lastKey() + 1;
-		connector.setConnectorID(nextKey);
-		connectorIDToConnector.put(nextKey, connector);
-		return nextKey;
+	public Integer getNumberOfModuleType(ModuleType type) {
+		int returnVal = 0;
+		for(Module module: modules) {
+			if(module.getModuleType() == type) returnVal++;
+		}
+		return returnVal;
+	}
+	
+	public int getIDFromModuleID(int moduleID, ModuleType type) {
+		int moduleIndex = 0;
+		int id = 0;
+		for(Module module: modules) {
+			if(moduleID == moduleIndex) return id;
+			if(module.getModuleType() == type) id++;
+			moduleIndex++;
+		}
+		return -1;
+	}
+	
+	public Module getModuleFromTypeID(int typeID, ModuleType type) {
+		int idIndex = 0;
+		for(Module module: modules) {
+			if(module.getModuleType() == type) {
+				if(idIndex == typeID) {
+					return module; 
+				} else {
+					idIndex++;
+				}
+			}
+		}
+		return null;
+	}
+	
+	public int addConnector(Connector connector) {
+		int newID = connectors.size();
+		connector.setConnectorID(newID);
+		connectors.add(connector);
+		return newID;
 	}
 
 	public void handleConnectorSelect(Integer connectorID) {
 		if(selectedOutput == null) {
-			if(connectorIDToConnector.get(connectorID).getConnectorType() == ConnectorType.OUTPUT) {
-				Integer connectedTo = connectorIDToConnector.get(connectorID).getConnection();
+			if(connectors.get(connectorID).getConnectorType() == ConnectorType.OUTPUT) {
+				Integer connectedTo = connectors.get(connectorID).getConnection();
 				if(connectedTo != null) {
-					connectorIDToConnector.get(connectorID).removeConnection();
-					connectorIDToConnector.get(connectedTo).removeConnection();
+					connectors.get(connectorID).removeConnection();
+					connectors.get(connectedTo).removeConnection();
 					refreshView();
 				} else {
 					selectedOutput = connectorID;
@@ -373,14 +399,14 @@ public class ModuleEditor extends JPanel {
 				System.out.println("ModuleEditor.handleConnectorSelect: please select output first");
 			}
 		} else {
-			if(connectorIDToConnector.get(connectorID).getConnectorType() == ConnectorType.INPUT) {
-				Integer connectedFrom = connectorIDToConnector.get(connectorID).getConnection();
+			if(connectors.get(connectorID).getConnectorType() == ConnectorType.INPUT) {
+				Integer connectedFrom = connectors.get(connectorID).getConnection();
 				if(connectedFrom != null) {
 					System.out.println("ModuleEditor.handleConnectorSelect: input already connected");
 					return;
 				}
-				connectorIDToConnector.get(selectedOutput).setConnection(connectorID);
-				connectorIDToConnector.get(connectorID).setConnection(selectedOutput);
+				connectors.get(selectedOutput).setConnection(connectorID);
+				connectors.get(connectorID).setConnection(selectedOutput);
 				selectedOutput = null;
 			} else {
 				System.out.println("ModuleEditor.handleConnectorSelect: please select input");
@@ -399,7 +425,7 @@ public class ModuleEditor extends JPanel {
 	}
 
 	public ArrayList<Module> getModules() {
-		return new ArrayList<Module>(moduleIDToModule.values());
+		return modules;
 	}
 	
 	public void saveToFile(String filename) {
@@ -416,7 +442,7 @@ public class ModuleEditor extends JPanel {
 				module.saveModuleInfo(out);
 			}
 			out.write("END MODULES");
-			for(Connector connector: connectorIDToConnector.values()) {
+			for(Connector connector: connectors) {
 				if(connector.getConnection() == null) continue;
 				out.newLine();
 				out.write(connector.getConnectorID() + "");
@@ -433,10 +459,10 @@ public class ModuleEditor extends JPanel {
 	}
 	
 	public void loadFromFile(String filename) {
-		moduleIDToModule = new TreeMap<Integer, Module>();
-		connectorIDToConnector = new TreeMap<Integer, Connector>();
-		moduleIDToModule.put(0, new MasterInput(this, 0, 0));
-		masterInput = (MasterInput) moduleIDToModule.get(0);
+		modules = new ArrayList<Module>();
+		connectors = new ArrayList<Connector>();
+		modules.add(new MasterInput(this, 0, 0));
+		masterInput = (MasterInput) modules.get(0);
 		masterInputHeight = masterInput.getHeight();
 		try {
 			BufferedReader in = new BufferedReader(new FileReader(filename));
@@ -446,7 +472,7 @@ public class ModuleEditor extends JPanel {
 				int x = new Integer(in.readLine());
 				int y = new Integer(in.readLine());
 				addModuleAbsolute(x, y, type);
-				moduleIDToModule.get(moduleIDToModule.lastKey()).loadModuleInfo(in);
+				modules.get(modules.size() - 1).loadModuleInfo(in);
 				currentLine = in.readLine();
 			}
 			while(true) {
@@ -454,7 +480,7 @@ public class ModuleEditor extends JPanel {
 				if(currentLine == null) break;
 				int connectorID = new Integer(currentLine);
 				int connectedID = new Integer(in.readLine());
-				connectorIDToConnector.get(connectorID).setConnection(connectedID);
+				connectors.get(connectorID).setConnection(connectedID);
 				System.out.println(connectorID + " " + connectedID);
 			}
 		} catch (Exception e) {
@@ -463,14 +489,6 @@ public class ModuleEditor extends JPanel {
 		}
 		//this.setTitle(filename);
 		JOptionPane.showMessageDialog(this, "Finished Loading File");
-	}
-	
-	public int getNumWaveforms() {
-		return waveformIDToModuleID.size();
-	}
-	
-	public BasicWaveform getWaveformByID(int index) {
-		return (BasicWaveform) moduleIDToModule.get(waveformIDToModuleID.get(index));
 	}
 	
 	public void displayWaveformEditor() {

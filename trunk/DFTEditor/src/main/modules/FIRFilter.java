@@ -135,10 +135,10 @@ public class FIRFilter implements Module {
 		for(int index = 0; index < inputSamples.length; index++) inputSamples[index] = 0.0;
 		ArrayList<double[]> inputArray = new ArrayList<double[]>();
 		for(Integer inputID: inputs) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
-			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
+			Module.Output output = (Module.Output) parent.connectors.get(input.getConnection());
 			inputArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
@@ -219,7 +219,7 @@ public class FIRFilter implements Module {
 		}
 		int index = 0;
 		for(Integer outputID: outputs) {
-			Output output = (Output) parent.connectorIDToConnector.get(outputID);
+			Output output = (Output) parent.connectors.get(outputID);
 			if(output.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(outputID);
 				System.out.println(type + " " + "output: " + index);
@@ -228,7 +228,7 @@ public class FIRFilter implements Module {
 		}
 		index = 0;
 		for(Integer inputID: inputs) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
 				System.out.println(type + " inputADD: " + index);

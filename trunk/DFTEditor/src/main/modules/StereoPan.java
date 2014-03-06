@@ -162,10 +162,10 @@ public class StereoPan implements Module {
 		double[] returnVal = new double[0];
 		ArrayList<double[]> inputsArray = new ArrayList<double[]>();
 		for(Integer inputID: inputs) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
-			Output output = (Output) parent.connectorIDToConnector.get(input.getConnection());
+			Output output = (Output) parent.connectors.get(input.getConnection());
 			inputsArray.add(output.getSamples(waitingForModuleIDs, control));
 		}
 		if(inputsArray.isEmpty()) return returnVal;
@@ -185,7 +185,7 @@ public class StereoPan implements Module {
 	public void mousePressed(int x, int y) {
 		int index = 0;
 		for(Integer outputID: outputsLeft) {
-			Output output = (Output) parent.connectorIDToConnector.get(outputID);
+			Output output = (Output) parent.connectors.get(outputID);
 			if(output.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(output.getConnectorID());
 				System.out.println(name + " " + "outputsLeft: " + index);
@@ -194,7 +194,7 @@ public class StereoPan implements Module {
 		}
 		index = 0;
 		for(Integer outputID: outputsRight) {
-			Output output = (Output) parent.connectorIDToConnector.get(outputID);
+			Output output = (Output) parent.connectors.get(outputID);
 			if(output.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(output.getConnectorID());
 				System.out.println(name + " outputsRight: " + index);
@@ -203,7 +203,7 @@ public class StereoPan implements Module {
 		}
 		index = 0;
 		for(Integer inputID: inputs) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(input.getConnectorID());
 				System.out.println(name + " inputs: " + index);
@@ -212,7 +212,7 @@ public class StereoPan implements Module {
 		}
 		index = 0;
 		for(Integer controlID: controls) {
-			Input control = (Input) parent.connectorIDToConnector.get(controlID);
+			Input control = (Input) parent.connectors.get(controlID);
 			if(control.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(control.getConnectorID());
 				System.out.println(name + " controls: " + index);

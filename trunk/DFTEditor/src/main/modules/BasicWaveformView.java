@@ -31,7 +31,7 @@ public class BasicWaveformView extends JPanel {
 		int currentY = 0;
 		for(BasicWaveformEditor.ControlRect controlRect: parent.controlRects) {
 			g2.setColor(Color.GREEN);
-			g2.drawString("Envelope: " + controlRect.basicWaveform.getID() + ":  Freq: " + controlRect.basicWaveform.getFreqInHz(), currentX, currentY + fontSize + padding - 1);
+			g2.drawString("Envelope: " + controlRect.basicWaveform.getTypeID() + ":  Freq: " + controlRect.basicWaveform.getFreqInHz(), currentX, currentY + fontSize + padding - 1);
 			currentY += yStep;
 			controlRect.coarseFreqControl = new Rectangle(0, currentY, getWidth(), yStep - 2);
 			g2.setColor(Color.LIGHT_GRAY);

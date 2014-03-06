@@ -64,9 +64,9 @@ public class MasterInput implements Module {
 		double[] leftOut = new double[0];
 		ArrayList<double[]> samplesLeftArray = new ArrayList<double[]>();
 		for(Integer inputID: inputLeft) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getConnection() == null) continue;
-			Output output = (Output) parent.connectorIDToConnector.get(input.getConnection());
+			Output output = (Output) parent.connectors.get(input.getConnection());
 			samplesLeftArray.add(output.getSamples(null, control));
 		}
 		if(samplesLeftArray.isEmpty()) return leftOut;
@@ -88,9 +88,9 @@ public class MasterInput implements Module {
 		double[] rightOut = new double[0];
 		ArrayList<double[]> samplesRightArray = new ArrayList<double[]>();
 		for(Integer inputID: inputRight) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getConnection() == null) continue;
-			Output output = (Output) parent.connectorIDToConnector.get(input.getConnection());
+			Output output = (Output) parent.connectors.get(input.getConnection());
 			samplesRightArray.add(output.getSamples(null, control));
 		}
 		if(samplesRightArray.isEmpty()) return rightOut;
@@ -110,7 +110,7 @@ public class MasterInput implements Module {
 	public void mousePressed(int x, int y) {
 		int index = 0;
 		for(Integer inputID: inputLeft) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(input.getConnectorID());
 				System.out.println("Master Input: inputLeft: " + index);
@@ -119,7 +119,7 @@ public class MasterInput implements Module {
 		}
 		index = 0;
 		for(Integer inputID: inputRight) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(input.getConnectorID());
 				System.out.println("Master Input: inputRight: " + index);

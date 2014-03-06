@@ -255,7 +255,7 @@ public class KarplusStrong implements Module {
 		}
 		int index = 0;
 		for(Integer outputID: outputs) {
-			Output output = (Output) parent.connectorIDToConnector.get(outputID);
+			Output output = (Output) parent.connectors.get(outputID);
 			if(output.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(outputID);
 				System.out.println("Karplus-Strong " + "output: " + index);
