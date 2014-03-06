@@ -119,10 +119,10 @@ public class SelfModulator implements Module {
 		}
 		ArrayList<double[]> inputArray = new ArrayList<double[]>();
 		for(Integer inputID: inputs) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
-			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
+			Module.Output output = (Module.Output) parent.connectors.get(input.getConnection());
 			inputArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
@@ -139,10 +139,10 @@ public class SelfModulator implements Module {
 		}
 		ArrayList<double[]> samplesFMModArray = new ArrayList<double[]>();
 		for(Integer inputID: inputFMMod) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
-			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
+			Module.Output output = (Module.Output) parent.connectors.get(input.getConnection());
 			samplesFMModArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
@@ -178,10 +178,10 @@ public class SelfModulator implements Module {
 		// Sum AM Inputs
 		ArrayList<double[]> samplesAMArray = new ArrayList<double[]>();
 		for(Integer inputID: inputAM) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
-			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
+			Module.Output output = (Module.Output) parent.connectors.get(input.getConnection());
 			samplesAMArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
@@ -197,10 +197,10 @@ public class SelfModulator implements Module {
 		// Sum add inputs
 		ArrayList<double[]> samplesADDArray = new ArrayList<double[]>();
 		for(Integer inputID: inputADD) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
-			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
+			Module.Output output = (Module.Output) parent.connectors.get(input.getConnection());
 			samplesADDArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
@@ -235,7 +235,7 @@ public class SelfModulator implements Module {
 		}
 		int index = 0;
 		for(Integer outputID: outputs) {
-			Output output = (Output) parent.connectorIDToConnector.get(outputID);
+			Output output = (Output) parent.connectors.get(outputID);
 			if(output.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(outputID);
 				System.out.println("Self Modulator " + "output: " + index);
@@ -244,7 +244,7 @@ public class SelfModulator implements Module {
 		}
 		index = 0;
 		for(Integer inputID: inputs) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
 				System.out.println("Self Modulator" + " input: " + index);
@@ -253,7 +253,7 @@ public class SelfModulator implements Module {
 		}
 		index = 0;
 		for(Integer inputID: inputADD) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
 				System.out.println("SelfModulator inputADD: " + index);
@@ -262,7 +262,7 @@ public class SelfModulator implements Module {
 		}
 		index = 0;
 		for(Integer inputID: inputAM) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
 				System.out.println("SelfModulator inputAM: " + index);
@@ -271,7 +271,7 @@ public class SelfModulator implements Module {
 		}
 		index = 0;
 		for(Integer inputID: inputFMMod) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
 				System.out.println(type + " inputFMMod: " + index);

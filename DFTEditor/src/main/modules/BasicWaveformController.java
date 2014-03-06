@@ -6,6 +6,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
+import main.Module.ModuleType;
+
 public class BasicWaveformController implements MouseListener, MouseMotionListener, ActionListener {
 
 	BasicWaveformEditor parent;
@@ -16,7 +18,7 @@ public class BasicWaveformController implements MouseListener, MouseMotionListen
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		for(int index = 0; index < parent.moduleEditor.getNumWaveforms(); index++) {
+		for(int index = 0; index < parent.moduleEditor.getNumberOfModuleType(ModuleType.BASICWAVEFORM); index++) {
 			if (new Integer(index).toString().equals(e.getActionCommand())) parent.toggleWaveformDisplayed(index);
 		}
 	}

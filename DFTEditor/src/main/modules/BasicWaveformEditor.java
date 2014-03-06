@@ -12,6 +12,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 
+import main.Module.ModuleType;
 import main.ModuleEditor;
 import main.MultiWindow;
 
@@ -54,7 +55,7 @@ public class BasicWaveformEditor extends JPanel {
 	
 	public JToolBar createNavigationBar() {
 		navigationBar = new JToolBar("Navigation Bar");
-        for(int index = 0; index < moduleEditor.getNumWaveforms(); index++) {
+        for(int index = 0; index < moduleEditor.getNumberOfModuleType(ModuleType.BASICWAVEFORM); index++) {
         	addNavigationButton(new Integer(index).toString());
         }
     	return navigationBar;
@@ -172,7 +173,7 @@ public class BasicWaveformEditor extends JPanel {
     	boolean remove = false;
     	int arrayListIndex = 0;
     	for(ControlRect controlRect: controlRects) {
-    		if(controlRect.basicWaveform.getID() == index) {
+    		if(controlRect.basicWaveform.getTypeID() == index) {
     			remove = true;
     			break;
     		}
@@ -181,7 +182,7 @@ public class BasicWaveformEditor extends JPanel {
     	if(remove) {
     		controlRects.remove(arrayListIndex);
     	} else {
-    		controlRects.add(new ControlRect(moduleEditor.getWaveformByID(index)));
+    		controlRects.add(new ControlRect((BasicWaveform) moduleEditor.getModuleFromTypeID(index, ModuleType.BASICWAVEFORM)));
     	}
     	view.repaint();
     }

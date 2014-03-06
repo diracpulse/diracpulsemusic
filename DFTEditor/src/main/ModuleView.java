@@ -29,11 +29,11 @@ public class ModuleView extends JPanel {
 		for(Module module: modules) {
 			module.draw(g);
 		}
-		for(Connector output: parent.connectorIDToConnector.values()) {
+		for(Connector output: parent.connectors) {
 			if(output.getConnectorType() == ConnectorType.INPUT) continue;
 			Integer connectedTo = output.getConnection();
 			if(connectedTo == null) continue;
-			Connector input = parent.connectorIDToConnector.get(connectedTo);
+			Connector input = parent.connectors.get(connectedTo);
 			int x0 = (int) Math.round(input.getSelectArea().getCenterX());
 			int y0 = (int) Math.round(input.getSelectArea().getCenterY());
 			int x1 = (int) Math.round(output.getSelectArea().getCenterX());
@@ -49,8 +49,8 @@ public class ModuleView extends JPanel {
 			int connectorID1 = parent.selectedOutput;
 			int x0 = parent.controller.getMouseX();
 			int y0 = parent.controller.getMouseY();
-			int x1 = (int) Math.round(parent.connectorIDToConnector.get(connectorID1).getSelectArea().getCenterX());
-			int y1 = (int) Math.round(parent.connectorIDToConnector.get(connectorID1).getSelectArea().getCenterY());
+			int x1 = (int) Math.round(parent.connectors.get(connectorID1).getSelectArea().getCenterX());
+			int y1 = (int) Math.round(parent.connectors.get(connectorID1).getSelectArea().getCenterY());
 			int red = (int) x1 % 128;
 			int green = (int) y1 % 128;
 			int blue = (int) (x0 + y0) % 128;

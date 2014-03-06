@@ -138,10 +138,10 @@ public class SineBank implements Module {
 		ArrayList<double[]> samplesFMArray = new ArrayList<double[]>();
 		for(Integer inputID: inputFM) {
 			if(nativeOutput) break;
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
-			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
+			Module.Output output = (Module.Output) parent.connectors.get(input.getConnection());
 			samplesFMArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
@@ -154,10 +154,10 @@ public class SineBank implements Module {
 		ArrayList<double[]> samplesAMArray = new ArrayList<double[]>();
 		for(Integer inputID: inputAM) {
 			if(nativeOutput) break;
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
-			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
+			Module.Output output = (Module.Output) parent.connectors.get(input.getConnection());
 			samplesAMArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
@@ -173,10 +173,10 @@ public class SineBank implements Module {
 		ArrayList<double[]> samplesADDArray = new ArrayList<double[]>();
 		for(Integer inputID: inputADD) {
 			if(nativeOutput) break;
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
-			Module.Output output = (Module.Output) parent.connectorIDToConnector.get(input.getConnection());
+			Module.Output output = (Module.Output) parent.connectors.get(input.getConnection());
 			samplesADDArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
@@ -224,7 +224,7 @@ public class SineBank implements Module {
 		}
 		index = 0;
 		for(Integer outputID: outputs) {
-			Output output = (Output) parent.connectorIDToConnector.get(outputID);
+			Output output = (Output) parent.connectors.get(outputID);
 			if(output.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(outputID);
 				System.out.println("Sine Bank output: " + index);
@@ -233,7 +233,7 @@ public class SineBank implements Module {
 		}
 		index = 0;
 		for(Integer inputID: inputADD) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
 				System.out.println("Sine Bank inputADD: " + index);
@@ -242,7 +242,7 @@ public class SineBank implements Module {
 		}
 		index = 0;
 		for(Integer inputID: inputAM) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
 				System.out.println("Sine Bank inputAM: " + index);
@@ -251,7 +251,7 @@ public class SineBank implements Module {
 		}
 		index = 0;
 		for(Integer inputID: inputFM) {
-			Input input = (Input) parent.connectorIDToConnector.get(inputID);
+			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
 				System.out.println("Sine Bank inputFM: " + index);
