@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
@@ -57,6 +58,7 @@ public class Sequencer extends JPanel {
         addNavigationButton("Load");
         addNavigationButton("Save");
         addNavigationButton("Get Module");
+        addNavigationButton("Scale");
     	return navigationBar;
 	}
 
@@ -128,5 +130,44 @@ public class Sequencer extends JPanel {
 		initLeftRight();
 		parent.dftEditorFrame.ModuleDFT(leftSamples, rightSamples);
 	}
+	
+	public void scale() {
+		Scale autoScale = new Scale(this, Scale.Type.PYTHAGOREAN_53, 3, 6);
+		boolean rating = false;
+		boolean loopAgain = true;
+		while(loopAgain) {
+			clearData();
+			ArrayList<Integer> notes = autoScale.getNextSequence(rating);
+			int index = 0;
+			for(int note: notes) {
+				double freqRatio = Math.pow(2.0, note / 53.0);
+				for(int innerIndex = index; innerIndex < index + pixelsPerBeat; innerIndex++) {
+					freqRatiosAtTimeInPixels.get(0)[innerIndex] = freqRatio;
+				}
+				index += pixelsPerBeat;
+			}
+			view.repaint();
+			play();
+			Object[] options = {"Yes", "No", "Quit"};
+			Integer result = JOptionPane.showOptionDialog(this, "Do you like this sequence", "Rate Sequence", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+			if(result == null) {
+				loopAgain = false;
+			} else {
+				if(result == 0) rating = true;
+				if(result == 1) rating = false;
+				if(result == 2) loopAgain = false;
+			}
+		}
+		autoScale.closeLogFile();
+	}
     
+	public void clearData() {
+		for(int index = 0; index < freqRatiosAtTimeInPixels.size(); index++) {
+			int numFreqRatios = freqRatiosAtTimeInPixels.get(index).length;
+			for(int innerIndex = 0; innerIndex < numFreqRatios ; innerIndex++) {
+				freqRatiosAtTimeInPixels.get(index)[innerIndex] = -1.0;
+			}
+		}
+	}
+	
 }
