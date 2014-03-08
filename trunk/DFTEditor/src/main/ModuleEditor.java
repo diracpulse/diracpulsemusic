@@ -57,10 +57,12 @@ public class ModuleEditor extends JPanel {
 	public final static double minAmplitudeLog2 = -24.0; // 24 bit data
 	public final static double maxFMModLog2 = 10.0;
 	public final static double minFMModLog2 = -10.0;
-	public final static double maxAmplitudeIn_dB = 0.0;
+	public final static double maxAmplitudeIn_dB = maxAmplitudeLog2 * log2TodB;
 	public final static double minAmplitudeIn_dB = minAmplitudeLog2 * log2TodB;
 	public final static double maxFMModIn_dB = maxFMModLog2 * log2TodB;
 	public final static double minFMModIn_dB = minFMModLog2 * log2TodB;
+	public final static double maxOverdrive = 100;
+	public final static double minOverdrive = 0.01;
 	public final static double defaultDuration = 2.0;
 	public final static double minDuration = FDData.timeStepInMillis / 1000.0;
 	public final static double minFrequency = 1.0 / 16.0;

@@ -20,12 +20,13 @@ public class SelfModulator implements Module {
 
 	public enum ModulationType {
 		SELFMODULATION,
-		TEST;
+		DECAY;
 	}
 	
 	ModuleEditor parent = null;
 	Integer moduleID = null;
 	double fmMod = 1.0;
+	double overdrive = Math.PI;
 	int cornerX;
 	int cornerY;
 	int width = 150; // should be >= value calculated by init
@@ -35,6 +36,7 @@ public class SelfModulator implements Module {
 	
 	Rectangle typeControl = null;
 	Rectangle fmModControl = null;
+	Rectangle overdriveControl = null;
 	ArrayList<Integer> inputs;
 	ArrayList<Integer> outputs;
 	ArrayList<Integer> inputADD;
@@ -159,12 +161,15 @@ public class SelfModulator implements Module {
 		switch(type) {
 			case SELFMODULATION:
 				for(int index = 0; index < inputSamples.length; index++) {
-					double phase = inputSamples[index] * fmMod * samplesFMMod[index];
-					if(phase > Math.PI) phase -= 2.0 * Math.PI;
+					double phase = fmMod * samplesFMMod[index] * Math.sin(inputSamples[index] * overdrive);
 					inputSamples[index] = Math.sin(phase);
 				}
 				break;
-			case TEST:
+			case DECAY:
+				for(int index = 0; index < inputSamples.length; index++) {
+					double phase = fmMod * samplesFMMod[index] * Math.sin(inputSamples[index] * overdrive);
+					phase = Math.sin(phase);
+				}
 				break;				
 		}
 		// Start AM and ADD operations
@@ -230,6 +235,13 @@ public class SelfModulator implements Module {
 			Double inputAmplitude = getInput("Input FMMod in dB", ModuleEditor.minFMModIn_dB, ModuleEditor.maxFMModIn_dB);
 			if(inputAmplitude == null) return;
 			fmMod = Math.pow(10.0, inputAmplitude / 20.0);
+			parent.refreshData();
+			return;
+		}
+		if(overdriveControl.contains(x, y)) {
+			Double inputOverdrive = getInput("Input Overdrive", ModuleEditor.minOverdrive, ModuleEditor.maxOverdrive);
+			if(inputOverdrive == null) return;
+			overdrive = inputOverdrive;
 			parent.refreshData();
 			return;
 		}
@@ -325,6 +337,9 @@ public class SelfModulator implements Module {
 		if(g2 != null) g2.drawString("FMMod: " + Math.round(fmMod * 100000.0) / 100000.0 + " (" + Math.round(Math.log(fmMod)/Math.log(10.0) * 2000.0) / 100.0 + "dB)", currentX, currentY);
 		if(g2 == null) fmModControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		currentY += yStep;
+		if(g2 != null) g2.drawString("Overdrive: " + (Math.round(overdrive * 100000.0) / 100000.0), currentX, currentY);
+		if(g2 == null) overdriveControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
+		currentY += yStep;
 		if(g2 != null) g2.drawString("ADD: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
@@ -353,13 +368,6 @@ public class SelfModulator implements Module {
 			if(g2 == null) inputs.add(parent.addConnector(new Input(this, currentRect)));
 		}
 		if(g2 != null) g2.setColor(Color.BLUE);
-		currentY += yStep;
-		if(g2 != null) g2.drawString("OUT: ", currentX, currentY);
-		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
-			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
-			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) outputs.add(parent.addConnector(new Output(this, currentRect)));
-		}
 		currentY += yStep;
 		if(g2 != null) g2.drawString("OUT: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {

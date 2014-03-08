@@ -132,7 +132,7 @@ public class Sequencer extends JPanel {
 	}
 	
 	public void scale() {
-		Scale autoScale = new Scale(this, Scale.Type.PYTHAGOREAN_53, 3, 6);
+		Scale autoScale = new Scale(this, Scale.Type.MINOR_JUST_INTONATION_53, 3, 6);
 		boolean rating = false;
 		boolean loopAgain = true;
 		while(loopAgain) {

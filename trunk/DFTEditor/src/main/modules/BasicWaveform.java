@@ -32,15 +32,17 @@ public class BasicWaveform implements Module {
 	private double amplitude = 1.0;
 	private double freqInHz = ModuleEditor.defaultOctave;
 	private double fmMod = 1.0;
+	private double overdrive = Math.PI;
 	private int cornerX;
 	private int cornerY;
 	private int width = 150; // should be >= value calculated by init
-	private int height = 200; // calculated by init
+	private int height = 250; // calculated by init
 	private WaveformType type = WaveformType.SINE;
 	private Rectangle typeControl = null;
 	private Rectangle freqControl = null;
 	private Rectangle ampControl = null;
 	private Rectangle fmModControl = null;
+	private Rectangle overdriveControl = null;
 	private ArrayList<Integer> outputs;
 	private ArrayList<Integer> inputADD;
 	private ArrayList<Integer> inputAM;
@@ -281,8 +283,7 @@ public class BasicWaveform implements Module {
 						phase = 0.0;
 						continue;
 					}
-					if(phase > Math.PI) phase -= 2.0 * Math.PI;
-					returnVal[index] = Math.sin(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
+					returnVal[index] = Math.sin(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index] * overdrive)) * samplesAM[index] * amplitude + samplesADD[index];
 					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * control[index];
 				}
 				break;
@@ -292,7 +293,7 @@ public class BasicWaveform implements Module {
 						phase = 0.0;
 						continue;
 					}
-					returnVal[index] = squarewave(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
+					returnVal[index] = squarewave(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index] * Math.PI)) * samplesAM[index] * amplitude + samplesADD[index];
 					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * control[index];
 				}
 				break;
@@ -302,7 +303,7 @@ public class BasicWaveform implements Module {
 						phase = 0.0;
 						continue;
 					}
-					returnVal[index] = triangle(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
+					returnVal[index] = triangle(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index] * Math.PI)) * samplesAM[index] * amplitude + samplesADD[index];
 					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * control[index];
 				}
 				break;
@@ -312,14 +313,14 @@ public class BasicWaveform implements Module {
 						phase = 0.0;
 						continue;
 					}
-					returnVal[index] = sawtooth(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index])) * samplesAM[index] * amplitude + samplesADD[index];
+					returnVal[index] = sawtooth(phase + fmMod * samplesFMMod[index] * Math.sin(samplesFM[index] * Math.PI)) * samplesAM[index] * amplitude + samplesADD[index];
 					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * control[index];
 				}
 				break;
 		}
 		return returnVal;
 	}
-	
+
 	public double sawtooth(double phase) {
 		phase -= Math.floor(phase / (Math.PI * 2.0)) * Math.PI * 2.0;
 		if(phase < Math.PI) return phase / Math.PI;
@@ -370,7 +371,13 @@ public class BasicWaveform implements Module {
 			parent.refreshData();
 			return;
 		}
-
+		if(overdriveControl.contains(x, y)) {
+			Double inputOverdrive = getInput("Input Overdrive", ModuleEditor.minOverdrive, ModuleEditor.maxOverdrive);
+			if(inputOverdrive == null) return;
+			overdrive = inputOverdrive;
+			parent.refreshData();
+			return;
+		}
 		int index = 0;
 		for(Integer outputID: outputs) {
 			Output output = (Output) parent.connectors.get(outputID);
@@ -485,6 +492,9 @@ public class BasicWaveform implements Module {
 		currentY += yStep;
 		if(g2 != null) g2.drawString("FMMod: " + Math.round(fmMod * 100000.0) / 100000.0 + " (" + Math.round(Math.log(fmMod)/Math.log(10.0) * 2000.0) / 100.0 + "dB)", currentX, currentY);
 		if(g2 == null) fmModControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
+		currentY += yStep;
+		if(g2 != null) g2.drawString("Overdrive: " + Math.round(overdrive * 100000.0) / 100000.0, currentX, currentY);
+		if(g2 == null) overdriveControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		currentY += yStep;
 		if(g2 != null) g2.drawString("ADD: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
