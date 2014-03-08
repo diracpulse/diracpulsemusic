@@ -17,10 +17,14 @@ public class Scale {
 	
 	private static final int[] pythagorian53 = {0, 1, 4, 5, 9, 13, 14, 18, 22, 26, 27, 31, 35, 36, 40, 44, 45, 48, 49};
 	private static final double[] carlosSuperJustIntonation = {1.0, 17.0 / 16.0, 9.0 / 8.0, 6.0 / 5.0, 5.0 / 4.0, 4.0 / 3.0, 11.0 / 8.0, 3.0 / 2.0, 13.0 / 8.0, 27.0 / 16.0, 7.0 / 4.0, 15.0 / 8.0};
+	private static final double[] majorJustIntonation = {1.0, 9.0 / 8.0, 5.0 / 4.0, 4.0 / 3.0, 3.0 / 2.0, 5.0 / 3.0, 15.0 / 8.0};
+	private static final double[] minorJustIntonation = {1.0, 9.0 / 8.0, 6.0 / 5.0, 4.0 / 3.0, 3.0 / 2.0, 8.0 / 5.0, 9.0 / 5.0};
 	
 	public enum Type {
 		PYTHAGOREAN_53,
-		SUPER_JUST_INTONATION_53;
+		SUPER_JUST_INTONATION_53,
+		MAJOR_JUST_INTONATION_53,
+		MINOR_JUST_INTONATION_53;
 	}
 	
 	private JPanel parent = null;
@@ -86,7 +90,18 @@ public class Scale {
 				returnVal.add((int) Math.round(Math.log(note) / Math.log(2.0) * 53.0));
 			}
 			return returnVal;
+		case MAJOR_JUST_INTONATION_53:
+			for(double note: majorJustIntonation) {
+				returnVal.add((int) Math.round(Math.log(note) / Math.log(2.0) * 53.0));
+			}
+			return returnVal;
+		case MINOR_JUST_INTONATION_53:
+			for(double note: minorJustIntonation) {
+				returnVal.add((int) Math.round(Math.log(note) / Math.log(2.0) * 53.0));
+			}
+			return returnVal;
 		}
+		
 		return null;
 	}
 	
@@ -107,19 +122,4 @@ public class Scale {
 		prevSequence = new ArrayList<Integer>(returnVal);
 		return returnVal;
 	}
-
-	private boolean sequenceAllowed(ArrayList<Integer> sequence) {
-		switch(scaleType) {
-		case PYTHAGOREAN_53:
-			int prevNote = sequence.get(0);
-			for(int index = 1; index < sequence.size(); index++) {
-				if(Math.abs(prevNote - sequence.get(index)) <= 1) return false;
-			}
-			return true;
-		case SUPER_JUST_INTONATION_53:
-			return true;
-		}
-		return true;
-	}
-	
 }
