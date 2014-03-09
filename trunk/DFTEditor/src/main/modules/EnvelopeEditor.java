@@ -4,13 +4,15 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Rectangle;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import main.modules.Envelope.EnvelopePoint;
 
-public class EnvelopeEditor extends JPanel {
+public class EnvelopeEditor extends JPanel implements WindowListener {
 
 	private static final long serialVersionUID = 3138005743637187863L;
 	
@@ -30,7 +32,11 @@ public class EnvelopeEditor extends JPanel {
         JScrollPane scrollPane = new JScrollPane(view);
         scrollPane.setSize(800, 600);
         add(scrollPane, BorderLayout.CENTER);
-        envelope.getMultiWindow().newWindow(this);
+        envelope.getParent().viewEnvelopeEditor(this);
+    }
+    
+    public Envelope getEnvelope() {
+    	return envelope;
     }
     
     public double getMillisPerPixel() {
@@ -86,5 +92,29 @@ public class EnvelopeEditor extends JPanel {
     	double dHeight = (double) view.getHeight();
     	return (dHeight - y) / dHeight;
     }
+
+	@Override
+	public void windowActivated(WindowEvent arg0) {}
+
+	@Override
+	public void windowClosed(WindowEvent arg0) {
+	}
+	
+	@Override
+	public void windowClosing(WindowEvent arg0) {
+		envelope.getParent().closeEnvelopeEditor(envelope);
+	}
+
+	@Override
+	public void windowDeactivated(WindowEvent arg0) {}
+
+	@Override
+	public void windowDeiconified(WindowEvent arg0) {}
+
+	@Override
+	public void windowIconified(WindowEvent arg0) {}
+
+	@Override
+	public void windowOpened(WindowEvent arg0) {}
     
 }

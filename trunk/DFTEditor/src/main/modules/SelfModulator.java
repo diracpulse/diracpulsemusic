@@ -232,16 +232,16 @@ public class SelfModulator implements Module {
 			return;
 		}
 		if(fmModControl.contains(x, y)) {
-			Double inputAmplitude = getInput("Input FMMod in dB", ModuleEditor.minFMModIn_dB, ModuleEditor.maxFMModIn_dB);
+			Double inputAmplitude = getInput("Input FMMod Log2", ModuleEditor.minAmplitudeLog2, ModuleEditor.maxAmplitudeLog2);
 			if(inputAmplitude == null) return;
-			fmMod = Math.pow(10.0, inputAmplitude / 20.0);
+			fmMod = Math.pow(2.0, inputAmplitude);
 			parent.refreshData();
 			return;
 		}
 		if(overdriveControl.contains(x, y)) {
-			Double inputOverdrive = getInput("Input Overdrive", ModuleEditor.minOverdrive, ModuleEditor.maxOverdrive);
+			Double inputOverdrive = getInput("Input Overdrive Log2", ModuleEditor.minAmplitudeLog2, ModuleEditor.maxAmplitudeLog2);
 			if(inputOverdrive == null) return;
-			overdrive = inputOverdrive;
+			overdrive = Math.pow(2.0, inputOverdrive);
 			parent.refreshData();
 			return;
 		}
@@ -334,7 +334,7 @@ public class SelfModulator implements Module {
 		if(g2 == null) typeControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		if(g2 != null) g2.setColor(Color.GREEN);
 		currentY += yStep;
-		if(g2 != null) g2.drawString("FMMod: " + Math.round(fmMod * 100000.0) / 100000.0 + " (" + Math.round(Math.log(fmMod)/Math.log(10.0) * 2000.0) / 100.0 + "dB)", currentX, currentY);
+		if(g2 != null) g2.drawString("FMMod: " + Math.round(fmMod * 100000.0) / 100000.0 + " (" + Math.round(Math.log(fmMod)/Math.log(2.0) * 1000.0) / 1000.0 + " Log2)", currentX, currentY);
 		if(g2 == null) fmModControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		currentY += yStep;
 		if(g2 != null) g2.drawString("Overdrive: " + (Math.round(overdrive * 100000.0) / 100000.0), currentX, currentY);

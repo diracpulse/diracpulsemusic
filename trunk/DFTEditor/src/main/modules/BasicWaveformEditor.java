@@ -5,7 +5,10 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.ArrayList;
+import java.util.Random;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -16,7 +19,7 @@ import main.Module.ModuleType;
 import main.ModuleEditor;
 import main.MultiWindow;
 
-public class BasicWaveformEditor extends JPanel {
+public class BasicWaveformEditor extends JPanel implements WindowListener {
 
 	private static final long serialVersionUID = 3138005743637187863L;
 	
@@ -26,6 +29,9 @@ public class BasicWaveformEditor extends JPanel {
 	BasicWaveformController controller;
 	ModuleEditor moduleEditor;
 	JToolBar navigationBar = null;
+	Random random = new Random();
+	double logAmplitudeStandardDeviation = 1.0;
+	double logFrequencyStandardDeviation = 2.0;
 	
 	public class ControlRect {
 		
@@ -35,10 +41,8 @@ public class BasicWaveformEditor extends JPanel {
 		
 		Rectangle coarseFreqControl = null;
 		Rectangle coarseAmpControl = null;
-		Rectangle coarseFMModControl = null;
 		Rectangle fineFreqControl = null;
 		Rectangle fineAmpControl = null;
-		Rectangle fineFMModControl = null;
 		BasicWaveform basicWaveform;
 	}
 	
@@ -58,17 +62,14 @@ public class BasicWaveformEditor extends JPanel {
         for(int index = 0; index < moduleEditor.getNumberOfModuleType(ModuleType.BASICWAVEFORM); index++) {
         	addNavigationButton(new Integer(index).toString());
         }
+        addNavigationButton("Random");
     	return navigationBar;
 	}
 	
-	
-    public BasicWaveformEditor(ArrayList<BasicWaveform> basicWaveforms, ModuleEditor moduleEditor) {
+    public BasicWaveformEditor(ModuleEditor moduleEditor) {
 		super(new BorderLayout());
 		this.moduleEditor = moduleEditor;
 		controlRects = new ArrayList<ControlRect>();
-		for(BasicWaveform basicWaveform: basicWaveforms) {
-			controlRects.add(new ControlRect(basicWaveform));
-		}
         view = new BasicWaveformView(this);
         view.setBackground(Color.black);
         controller = new BasicWaveformController(this);
@@ -95,14 +96,6 @@ public class BasicWaveformEditor extends JPanel {
     
     public double coarseXToFreq(int x) {
     	return coarseXToValue(x, ModuleEditor.minFrequencyLog2, Math.floor(ModuleEditor.maxFrequencyLog2));
-    }
- 
-    public int fmModToXCoarse(double fmMod) {
-    	return valueToXCoarse(fmMod, ModuleEditor.minFMModLog2, ModuleEditor.maxFMModLog2);
-    }
-
-    public double coarseXToFMMod(int x) {
-    	return coarseXToValue(x, ModuleEditor.minFMModLog2, ModuleEditor.maxFMModLog2);
     }
  
     public int valueToXCoarse(double value, double minValue, double maxValue) {
@@ -142,12 +135,6 @@ public class BasicWaveformEditor extends JPanel {
 	    		controlRect.basicWaveform.setAmplitude(coarseXToAmplitude(x) * Math.pow(2.0, fractionLogVal));
 	    		view.repaint();
 	    	}
-	       	if(controlRect.coarseFMModControl.contains(x, y)) {
-	       		double logVal = Math.log(controlRect.basicWaveform.getFMMod()) / Math.log(2.0);
-	    		double fractionLogVal = logVal - Math.floor(logVal);
-	    		controlRect.basicWaveform.setFMMod(coarseXToFMMod(x) * Math.pow(2.0, fractionLogVal));
-	    		view.repaint();
-	    	}
 	       	if(controlRect.fineFreqControl.contains(x, y)) {
 	       		double logVal = Math.log(controlRect.basicWaveform.getFreqInHz()) / Math.log(2.0);
 	    		double intLogVal = Math.floor(logVal);
@@ -158,12 +145,6 @@ public class BasicWaveformEditor extends JPanel {
 	       		double logVal = Math.log(controlRect.basicWaveform.getAmplitude()) / Math.log(2.0);
 	    		double intLogVal = Math.floor(logVal);
 	    		controlRect.basicWaveform.setAmplitude(Math.pow(2.0, intLogVal) * fineXToValue(x));
-	    		view.repaint();
-	    	}
-	       	if(controlRect.fineFMModControl.contains(x, y)) {
-	       		double logVal = Math.log(controlRect.basicWaveform.getFMMod()) / Math.log(2.0);
-	    		double intLogVal = Math.floor(logVal);
-	    		controlRect.basicWaveform.setFMMod(Math.pow(2.0, intLogVal) * fineXToValue(x));
 	    		view.repaint();
 	    	}
     	}
@@ -186,5 +167,47 @@ public class BasicWaveformEditor extends JPanel {
     	}
     	view.repaint();
     }
+    
+    public void randomize() {
+    	for(ControlRect controlRect: controlRects) {
+    		boolean inBounds = false;
+    		while(!inBounds) {
+    			double logAmplitude = random.nextGaussian() * logAmplitudeStandardDeviation;
+    			inBounds = controlRect.basicWaveform.setAmplitude(logAmplitude);
+    		}
+    		inBounds = false;
+    		while(!inBounds) {
+    			double freqInHzLog2 = random.nextGaussian() * logFrequencyStandardDeviation + Math.log(ModuleEditor.defaultOctave) / Math.log(2.0);
+    			inBounds = controlRect.basicWaveform.setFreqInHz(Math.pow(2.0, freqInHzLog2));
+    		}
+    	}
+    	view.repaint();
+    	moduleEditor.refreshData();
+    }
+    
+	@Override
+	public void windowActivated(WindowEvent arg0) {}
+
+	@Override
+	public void windowClosed(WindowEvent arg0) {
+	}
+	
+	@Override
+	public void windowClosing(WindowEvent arg0) {
+		moduleEditor.closeBasicWaveformEditor();
+	}
+
+	@Override
+	public void windowDeactivated(WindowEvent arg0) {}
+
+	@Override
+	public void windowDeiconified(WindowEvent arg0) {}
+
+	@Override
+	public void windowIconified(WindowEvent arg0) {}
+
+	@Override
+	public void windowOpened(WindowEvent arg0) {}
+    
     
 }

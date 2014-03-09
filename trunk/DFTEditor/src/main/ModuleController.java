@@ -62,7 +62,7 @@ public class ModuleController implements MouseListener, MouseMotionListener, Act
         if ("DFT".equals(e.getActionCommand())) parent.dft();
         if ("Save".equals(e.getActionCommand())) parent.save();
         if ("Load".equals(e.getActionCommand())) parent.open();
-        if ("Waveforms".equals(e.getActionCommand())) parent.displayWaveformEditor();
+        if ("Waveforms".equals(e.getActionCommand())) parent.viewBasicWaveformEditor();
     }
 
 }

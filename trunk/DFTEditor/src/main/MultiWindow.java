@@ -2,11 +2,18 @@ package main;
 
 import java.awt.Color;
 import java.awt.event.WindowAdapter;
+import java.awt.event.WindowListener;
 import java.util.ArrayList;
+import java.util.TreeMap;
+
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+
+import main.modules.BasicWaveformEditor;
+import main.modules.Envelope;
+import main.modules.EnvelopeEditor;
 
 public class MultiWindow extends WindowAdapter {
 
@@ -14,6 +21,7 @@ public class MultiWindow extends WindowAdapter {
 	//public GraphEditor graphEditorFrame;
 	//public FDEditor fdEditorFrame;
 	public JFrame sequencerFrame;
+	public TreeMap<Integer, JFrame> frameIDToFrame = new TreeMap<Integer, JFrame>();
 	public ArrayList<ModuleEditorInfo> moduleEditorInfo;
 	public Sequencer sequencer = null;
 	
@@ -54,13 +62,13 @@ public class MultiWindow extends WindowAdapter {
 		sequencerFrame.setLocation(100, 100);
 		JTabbedPane pane = new JTabbedPane();
 		moduleEditorInfo = new ArrayList<ModuleEditorInfo>();
-		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 1", new Color(255, 255, 255, 128), new ModuleEditor(this)));
-		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 2", new Color(255, 0, 0, 128), new ModuleEditor(this)));
-		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 3", new Color(0, 255, 0, 128), new ModuleEditor(this)));
-		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 4", new Color(0, 0, 255, 128), new ModuleEditor(this)));
-		moduleEditorInfo.add(new ModuleEditorInfo("Percussion 1", Color.YELLOW, new ModuleEditor(this)));
-		moduleEditorInfo.add(new ModuleEditorInfo("Percussion 2", Color.CYAN, new ModuleEditor(this)));
-		moduleEditorInfo.add(new ModuleEditorInfo("Percussion 3", Color.MAGENTA, new ModuleEditor(this)));
+		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 1", new Color(255, 255, 255, 128), new ModuleEditor(this, moduleEditorInfo.size())));
+		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 2", new Color(255, 0, 0, 128), new ModuleEditor(this, moduleEditorInfo.size())));
+		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 3", new Color(0, 255, 0, 128), new ModuleEditor(this, moduleEditorInfo.size())));
+		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 4", new Color(0, 0, 255, 128), new ModuleEditor(this, moduleEditorInfo.size())));
+		moduleEditorInfo.add(new ModuleEditorInfo("Percussion 1", Color.YELLOW, new ModuleEditor(this, moduleEditorInfo.size())));
+		moduleEditorInfo.add(new ModuleEditorInfo("Percussion 2", Color.CYAN, new ModuleEditor(this, moduleEditorInfo.size())));
+		moduleEditorInfo.add(new ModuleEditorInfo("Percussion 3", Color.MAGENTA, new ModuleEditor(this, moduleEditorInfo.size())));
 		pane.add("Sequencer", (JComponent) new Sequencer(this));
 		int index = 1;
 		for(ModuleEditorInfo info: moduleEditorInfo) {
@@ -74,14 +82,32 @@ public class MultiWindow extends WindowAdapter {
 		sequencerFrame.pack();
 		sequencerFrame.setVisible(true);
 	}
-	
-	public void newWindow(JPanel pane) {
-		JFrame envelopeFrame = new JFrame();
-		envelopeFrame.setLocation(100, 100);
-		envelopeFrame.add(pane);
-		envelopeFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		envelopeFrame.pack();
-		envelopeFrame.setVisible(true);
+
+	public int newFrame(JPanel pane, String title) {
+		int frameID = 0;
+		if(frameIDToFrame.size() != 0) frameID = frameIDToFrame.lastKey() + 1;
+		JFrame frame = new JFrame();
+		frame.add(pane);
+		frame.setLocation(100, 100);
+		frame.add(pane);
+		frame.pack();
+		frame.setVisible(true);
+		frame.setTitle(title);
+		frameIDToFrame.put(frameID, frame);
+		return frameID;
 	}
 	
+	public void addWindowListener(int frameID, WindowListener wl) {
+		frameIDToFrame.get(frameID).addWindowListener(wl);
+	}
+	
+	public void requestFocus(int frameID) {
+		frameIDToFrame.get(frameID).requestFocus();
+	}
+	
+	public void dispose(int frameID) {
+		frameIDToFrame.get(frameID).dispose();
+		frameIDToFrame.remove(frameID);
+	}
+
 }

@@ -214,9 +214,9 @@ public class SineBank implements Module {
 		int index = 0;
 		for(Rectangle ampControl: ampControls) {
 			if(ampControl.contains(x, y)) {
-				Double inputAmplitude = getInput("Input Amplitude in dB", ModuleEditor.minAmplitudeIn_dB, ModuleEditor.maxAmplitudeIn_dB);
+				Double inputAmplitude = getInput("Input Amplitude Log2", ModuleEditor.minAmplitudeLog2, ModuleEditor.maxAmplitudeLog2);
 				if(inputAmplitude == null) return;
-				amplitudes[index] = Math.pow(10.0, inputAmplitude / 20.0);
+				amplitudes[index] = Math.pow(2.0, inputAmplitude);
 				parent.refreshData();
 				return;
 			}
