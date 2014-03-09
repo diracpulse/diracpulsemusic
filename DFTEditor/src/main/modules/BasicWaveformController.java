@@ -21,6 +21,7 @@ public class BasicWaveformController implements MouseListener, MouseMotionListen
 		for(int index = 0; index < parent.moduleEditor.getNumberOfModuleType(ModuleType.BASICWAVEFORM); index++) {
 			if (new Integer(index).toString().equals(e.getActionCommand())) parent.toggleWaveformDisplayed(index);
 		}
+		if("Random".equals(e.getActionCommand())) parent.randomize();
 	}
 
 	@Override

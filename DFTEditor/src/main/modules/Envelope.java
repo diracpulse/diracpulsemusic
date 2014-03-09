@@ -16,6 +16,7 @@ import java.util.TreeSet;
 
 import main.Interpolate;
 import main.Interpolate.TAPair;
+import main.Module.ModuleType;
 import main.Module;
 import main.ModuleEditor;
 import main.MultiWindow;
@@ -109,6 +110,10 @@ public class Envelope implements Module {
 		init();
 	}
 	
+	public ModuleEditor getParent() {
+		return parent;
+	}
+	
 	public int getWidth() {
 		return width;
 	}
@@ -124,6 +129,11 @@ public class Envelope implements Module {
 	public Integer getModuleId() {
 		return moduleID;
 	}
+	
+	public int getTypeID() {
+		return parent.getIDFromModuleID(moduleID, ModuleType.ENVELOPE);
+	}
+
 	
 	public TreeMap<Double, EnvelopePoint> getSecondsToEnvelopePoint() {
 		TreeMap<Double, EnvelopePoint> returnVal = new TreeMap<Double, EnvelopePoint>();

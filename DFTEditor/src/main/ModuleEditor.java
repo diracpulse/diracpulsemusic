@@ -24,6 +24,7 @@ import main.Module.ModuleType;
 import main.modules.BasicWaveform;
 import main.modules.BasicWaveformEditor;
 import main.modules.Envelope;
+import main.modules.EnvelopeEditor;
 import main.modules.FIRFilter;
 import main.modules.IIRFilter;
 import main.modules.KarplusStrong;
@@ -39,9 +40,11 @@ public class ModuleEditor extends JPanel {
 	public MultiWindow parent;
 	public ModuleView view;
 	public ModuleController controller;
+	private int moduleEditorID;
+	private Integer basicWaveformEditorFrameID = null;
+	private TreeMap<Integer, Integer> envelopeIDToEditorFrameID = new TreeMap<Integer, Integer>();
 	private int masterInputHeight;
 	private MasterInput masterInput = null;
-	private BasicWaveformEditor waveformEditor = null;
 	public static final int columnWidth = 150;
 	public static final int scrollableWidth = columnWidth * 16;
 	public static final int scrollableHeight = columnWidth * 16;
@@ -52,18 +55,9 @@ public class ModuleEditor extends JPanel {
 	private JToolBar navigationBar = null;
 	private static double[] left = null;
 	private static double[] right = null;
-	public final static double log2TodB = (Math.log(2.0) / Math.log(10.0)) * 20.0;
-	public final static double maxAmplitudeLog2 = 0.0;
-	public final static double minAmplitudeLog2 = -24.0; // 24 bit data
-	public final static double maxFMModLog2 = 10.0;
-	public final static double minFMModLog2 = -10.0;
-	public final static double maxAmplitudeIn_dB = maxAmplitudeLog2 * log2TodB;
-	public final static double minAmplitudeIn_dB = minAmplitudeLog2 * log2TodB;
-	public final static double maxFMModIn_dB = maxFMModLog2 * log2TodB;
-	public final static double minFMModIn_dB = minFMModLog2 * log2TodB;
-	public final static double maxOverdrive = 100;
-	public final static double minOverdrive = 0.01;
-	public final static double defaultDuration = 2.0;
+	public final static double maxAmplitudeLog2 = 4;
+	public final static double minAmplitudeLog2 = -12.0;
+	public final static double defaultDuration = 1.0;
 	public final static double minDuration = FDData.timeStepInMillis / 1000.0;
 	public final static double minFrequency = 1.0 / 16.0;
 	public final static double maxFrequency = SynthTools.sampleRate / 2.0;
@@ -74,6 +68,10 @@ public class ModuleEditor extends JPanel {
 	public final static double defaultOctave = 256.0;
 	public final static int continuousBufferLength = 44100 / 2;
 	private boolean playContinuous = false;
+	
+	private String getTitle() {
+		return parent.moduleEditorInfo.get(moduleEditorID).getName();
+	}
 	
 	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);
@@ -206,9 +204,10 @@ public class ModuleEditor extends JPanel {
 		view.repaint();
 	}
 	
-	public ModuleEditor(MultiWindow parent) {
+	public ModuleEditor(MultiWindow parent, int moduleEditorID) {
 		super(new BorderLayout());
 		this.parent = parent;
+		this.moduleEditorID = moduleEditorID;
         initModules();
         view = new ModuleView(this);
         view.setBackground(Color.black);
@@ -493,10 +492,34 @@ public class ModuleEditor extends JPanel {
 		JOptionPane.showMessageDialog(this, "Finished Loading File");
 	}
 	
-	public void displayWaveformEditor() {
-		ArrayList<BasicWaveform> basicWaveforms = new ArrayList<BasicWaveform>();
-		waveformEditor = new BasicWaveformEditor(basicWaveforms, this);
-		parent.newWindow(waveformEditor);
+	public void viewEnvelopeEditor(EnvelopeEditor envelopeEditor) {
+		Envelope envelope = envelopeEditor.getEnvelope();
+		if(envelopeIDToEditorFrameID.containsKey(envelope.getTypeID())) {  
+			parent.requestFocus(envelopeIDToEditorFrameID.get(envelope.getTypeID()));
+		} else {
+			envelopeIDToEditorFrameID.put(envelope.getTypeID(), parent.newFrame(envelopeEditor, getTitle() + ": Envelope: " + envelope.getTypeID()));
+			parent.addWindowListener(envelopeIDToEditorFrameID.get(envelope.getTypeID()), envelopeEditor);
+		}
+	}
+	
+	public void viewBasicWaveformEditor() {
+		if(basicWaveformEditorFrameID == null) {  
+			BasicWaveformEditor bwe = new BasicWaveformEditor(this);
+			basicWaveformEditorFrameID = parent.newFrame(bwe, getTitle() + ": Basic Waveform Editor");
+			parent.addWindowListener(basicWaveformEditorFrameID, bwe);
+		} else {
+			parent.requestFocus(basicWaveformEditorFrameID);
+		}
+	}
+	
+	public void closeEnvelopeEditor(Envelope envelope) {
+		parent.dispose(envelopeIDToEditorFrameID.get(envelope.getTypeID()));
+		envelopeIDToEditorFrameID.remove(envelope.getTypeID());
 	}
 
+	public void closeBasicWaveformEditor() {
+		parent.dispose(basicWaveformEditorFrameID);
+		basicWaveformEditorFrameID = null;
+	}
+	
 }

@@ -197,7 +197,7 @@ public class FIRFilter implements Module {
 			return;
 		}
 		if(ampControl.contains(x, y)) {
-			Double inputAmplitude = getInput("Input Amplitude In dB", ModuleEditor.minAmplitudeIn_dB, ModuleEditor.maxAmplitudeIn_dB);
+			Double inputAmplitude = getInput("Input Amplitude In Log2", ModuleEditor.minAmplitudeLog2, ModuleEditor.maxAmplitudeLog2);
 			if(inputAmplitude == null) return;
 			amplitude = Math.pow(10.0, inputAmplitude / 20.0);
 			parent.refreshData();
@@ -211,9 +211,9 @@ public class FIRFilter implements Module {
 			return;
 		}
 		if(rolloffControl.contains(x, y)) {
-			Double inputAmplitude = getInput("Input Rolloff Per Octave In dB", ModuleEditor.minAmplitudeIn_dB, ModuleEditor.maxAmplitudeIn_dB);
+			Double inputAmplitude = getInput("Input Rolloff Per Octave Log2", ModuleEditor.minAmplitudeLog2, ModuleEditor.maxAmplitudeLog2);
 			if(inputAmplitude == null) return;
-			dBPerOctave = Math.pow(10.0, inputAmplitude / 20.0);
+			dBPerOctave = Math.pow(2.0, inputAmplitude);
 			parent.refreshData();
 			return;
 		}

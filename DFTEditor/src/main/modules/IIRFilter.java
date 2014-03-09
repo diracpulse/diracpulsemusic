@@ -192,9 +192,9 @@ public class IIRFilter implements Module {
 			return;
 		}
 		if(ampControl.contains(x, y)) {
-			Double inputAmplitude = getInput("Input Amplitude In dB", ModuleEditor.minAmplitudeIn_dB, ModuleEditor.maxAmplitudeIn_dB);
+			Double inputAmplitude = getInput("Input Amplitude Log(2.0)", ModuleEditor.minAmplitudeLog2, ModuleEditor.maxAmplitudeLog2);
 			if(inputAmplitude == null) return;
-			amplitude = Math.pow(10.0, inputAmplitude / 20.0);
+			amplitude = Math.pow(2.0, inputAmplitude);
 			parent.refreshData();
 			return;
 		}
