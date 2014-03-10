@@ -59,7 +59,7 @@ public class ModuleEditor extends JPanel {
 	public final static double minAmplitudeLog2 = -12.0;
 	public final static double defaultDuration = 1.0;
 	public final static double minDuration = FDData.timeStepInMillis / 1000.0;
-	public final static double minFrequency = 1.0 / 16.0;
+	public final static double minFrequency = 1.0 / 2.0;
 	public final static double maxFrequency = SynthTools.sampleRate / 2.0;
 	public final static double minFrequencyLog2 = Math.log(minFrequency) / Math.log(2.0);
 	public final static double maxFrequencyLog2 = Math.log(maxFrequency) / Math.log(2.0);
