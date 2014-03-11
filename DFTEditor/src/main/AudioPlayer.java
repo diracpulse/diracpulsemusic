@@ -66,6 +66,7 @@ public class AudioPlayer extends Thread {
 					//System.out.println("Finished");
 				}
 				if(this != currentThread) {
+					line.drain();
 					//System.out.println("changed");
 					return;
 				}
@@ -75,8 +76,7 @@ public class AudioPlayer extends Thread {
 					return;
 				}
 			}
-			line.drain();
-			position = 0;
+			//line.drain();
 			if(!playContinuous) {
 				return;
 			}
