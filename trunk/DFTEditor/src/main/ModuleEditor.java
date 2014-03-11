@@ -57,8 +57,7 @@ public class ModuleEditor extends JPanel {
 	private static double[] right = null;
 	public final static double maxAmplitudeLog2 = 4;
 	public final static double minAmplitudeLog2 = -12.0;
-	public final static double defaultDuration = 1.0;
-	public final static double minDuration = FDData.timeStepInMillis / 1000.0;
+	public final static double defaultDuration = 0.5;
 	public final static double minFrequency = 1.0 / 2.0;
 	public final static double maxFrequency = SynthTools.sampleRate / 2.0;
 	public final static double minFrequencyLog2 = Math.log(minFrequency) / Math.log(2.0);
@@ -134,7 +133,7 @@ public class ModuleEditor extends JPanel {
 		}
 		if(left.length == 0) {
 			//System.out.println("ModuleEditor.dft(): no signal");
-			return;
+			//return;
 		}
 		double maxAmplitude = 0.0;
 		for(int index = 0; index < left.length; index++) {

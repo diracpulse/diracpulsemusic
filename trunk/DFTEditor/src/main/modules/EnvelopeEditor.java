@@ -77,20 +77,25 @@ public class EnvelopeEditor extends JPanel implements WindowListener {
     }
     
     public int timeToX(double time) {
-    	return (int) Math.round(time / (getMillisPerPixel() / 1000.0));
+    	return (int) Math.round(time / (getMillisPerPixel() / 1000.0)) + EnvelopeView.xPadding;
     }
     
     public int amplitudeToY(double amplitude) {
-    	return (int) Math.round(view.getHeight() * (1.0 - amplitude));
+    	return (int) Math.round((view.getHeight() - EnvelopeView.yPadding * 2.0) * (1.0 - amplitude) + EnvelopeView.yPadding);
     }
     
     public double xToTime(int x) {
-    	return x * (getMillisPerPixel() / 1000.0);
+    	double time = (x - EnvelopeView.xPadding) * (getMillisPerPixel() / 1000.0);
+    	if(time < 0.0) time = 0.0;
+    	return time;
     }
     
     public double yToAmplitude(int y) {
-    	double dHeight = (double) view.getHeight();
-    	return (dHeight - y) / dHeight;
+    	double dHeight = (double) view.getHeight() - EnvelopeView.yPadding * 2;
+    	double amplitude = (view.getHeight() - y - EnvelopeView.yPadding) / dHeight;
+    	if(amplitude < 0.0) amplitude = 0.0;
+    	if(amplitude > 1.0) amplitude = 1.0;
+    	return amplitude;
     }
 
 	@Override
