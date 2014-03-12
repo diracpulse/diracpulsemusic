@@ -133,7 +133,7 @@ public class ModuleEditor extends JPanel {
 		}
 		if(left.length == 0) {
 			//System.out.println("ModuleEditor.dft(): no signal");
-			//return;
+			return;
 		}
 		double maxAmplitude = 0.0;
 		for(int index = 0; index < left.length; index++) {

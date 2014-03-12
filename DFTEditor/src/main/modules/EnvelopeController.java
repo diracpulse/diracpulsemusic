@@ -30,7 +30,7 @@ public class EnvelopeController implements MouseListener, MouseMotionListener, A
 		if(oldPoint == null) return;
 		int x = arg0.getX();
 		int y = arg0.getY();
-		EnvelopePoint newPoint = new EnvelopePoint(parent.xToTime(x), parent.yToAmplitude(y), oldPoint.type);
+		EnvelopePoint newPoint = new EnvelopePoint(parent.xToTime(x), parent.yToAmplitude(y), oldPoint.bits);
 		parent.envelope.replaceEnvelopePoint(oldPoint, newPoint);
 		oldPoint = newPoint;
 		parent.view.repaint();
@@ -58,6 +58,20 @@ public class EnvelopeController implements MouseListener, MouseMotionListener, A
 	public void mousePressed(MouseEvent arg0) {
 		int x = arg0.getX();
 		int y = arg0.getY();
+		if(arg0.isControlDown()) {
+			for(Rectangle rect: parent.getControlAreas()) {
+				if(rect.contains(x, y)) {
+					int index = parent.envelope.getIndexFromEnvelopeTime(parent.getEnvelopePoint(x, y).seconds);
+					if(index == parent.envelope.sustainIndex) {
+						parent.envelope.sustainIndex = Integer.MAX_VALUE;
+					} else {
+						parent.envelope.sustainIndex = index;
+					}
+					parent.view.repaint();
+					return;
+				}
+			}
+		}
 		for(Rectangle rect: parent.getControlAreas()) {
 			if(rect.contains(x, y)) {
 				oldPoint = parent.getEnvelopePoint(x, y);
