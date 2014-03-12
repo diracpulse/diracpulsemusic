@@ -44,6 +44,7 @@ public class AudioPlayer extends Thread {
 	
 	public static void stopPlaying() {
 		currentThread = null;
+		if(line != null) line.drain();
 	}
 
 	public void run() {
@@ -59,25 +60,26 @@ public class AudioPlayer extends Thread {
 				if(bytesLeftToWrite > bytesToWrite) {
 					line.write(audioByteData, position, bytesToWrite);
 					position += bytesToWrite;
-					//System.out.println("Available");
+					System.out.println("Available");
 				} else {
 					line.write(audioByteData, position, bytesLeftToWrite);
 					position = audioByteData.length;
-					//System.out.println("Finished");
+					System.out.println("Finished");
 				}
 				if(this != currentThread) {
-					line.drain();
-					//System.out.println("changed");
-					return;
+					//line.drain();
+					System.out.println("Changed");
+					//return;
 				}
 				if(interrupted()) {
 					line.drain();
-					//System.out.println("interrupted");
+					System.out.println("Interrupted");
 					return;
 				}
 			}
-			//line.drain();
 			if(!playContinuous) {
+				//line.drain();
+				System.out.println("Non-continuous");
 				return;
 			}
 		}
