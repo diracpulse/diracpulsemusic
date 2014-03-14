@@ -24,8 +24,9 @@ public class MultiWindow extends WindowAdapter {
 	public TreeMap<Integer, JFrame> frameIDToFrame = new TreeMap<Integer, JFrame>();
 	public ArrayList<ModuleEditorInfo> moduleEditorInfo;
 	public Sequencer sequencer = null;
+	public JTabbedPane pane;
 	
-	public class ModuleEditorInfo {
+	public static class ModuleEditorInfo {
 		
 		String name;
 		Color color;
@@ -60,7 +61,7 @@ public class MultiWindow extends WindowAdapter {
 		//fdEditorFrame.setLocation(200, 200);
 		sequencerFrame = new JFrame();
 		sequencerFrame.setLocation(100, 100);
-		JTabbedPane pane = new JTabbedPane();
+		pane = new JTabbedPane();
 		moduleEditorInfo = new ArrayList<ModuleEditorInfo>();
 		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 1", new Color(255, 255, 255, 128), new ModuleEditor(this, moduleEditorInfo.size())));
 		moduleEditorInfo.add(new ModuleEditorInfo("Tonal 2", new Color(255, 0, 0, 128), new ModuleEditor(this, moduleEditorInfo.size())));
@@ -81,6 +82,28 @@ public class MultiWindow extends WindowAdapter {
 		sequencerFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		sequencerFrame.pack();
 		sequencerFrame.setVisible(true);
+	}
+	
+	public void newProject(ArrayList<ModuleEditorInfo> moduleEditorInfoIn) {
+		for(JFrame frame: frameIDToFrame.values()) {
+			frame.dispose();
+		}
+		frameIDToFrame = new TreeMap<Integer, JFrame>();
+		for(ModuleEditorInfo info: moduleEditorInfo) {
+			pane.remove((JComponent) info.getModuleEditor());
+		}
+		moduleEditorInfo = moduleEditorInfoIn;
+		int index = 1;
+		for(ModuleEditorInfo info: moduleEditorInfo) {
+			pane.add(info.getName(), (JComponent) info.getModuleEditor());
+			pane.setBackgroundAt(index, info.color);
+			pane.setForeground(Color.BLACK);
+			index++;
+		}
+		//sequencerFrame.add(pane);
+		//sequencerFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		//sequencerFrame.pack();
+		//sequencerFrame.setVisible(true);
 	}
 
 	public int newFrame(JPanel pane, String title) {

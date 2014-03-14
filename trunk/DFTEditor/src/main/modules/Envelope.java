@@ -92,6 +92,11 @@ public class Envelope implements Module {
 		this.cornerX = x;
 		this.cornerY = y;
 		this.parent = parent;
+		initEnvelopePoints();
+		init();
+	}
+	
+	public void initEnvelopePoints() {
 		outputs = new ArrayList<Integer>();
 		envelopePoints = new ArrayList<EnvelopePoint>();
 		envelopePoints.add(new EnvelopePoint(0.0, 0.0, 8));
@@ -99,7 +104,6 @@ public class Envelope implements Module {
 		envelopePoints.add(new EnvelopePoint(0.04, 0.7, 8));
 		envelopePoints.add(new EnvelopePoint(0.1, 0.0, 8));
 		sustainIndex = 2;
-		init();
 	}
 	
 	public ModuleEditor getParent() {

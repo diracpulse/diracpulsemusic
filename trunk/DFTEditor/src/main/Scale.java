@@ -30,8 +30,8 @@ public class Scale {
 	private JPanel parent = null;
 	private Random random = null;
 	private Type scaleType = null;
-	private int minLength = 3;
-	private int maxLength = 6;
+	private int minLength = 8;
+	private int maxLength = 8;
 	private ArrayList<Integer> prevSequence = null;
 	private BufferedWriter writer = null;
 
@@ -105,19 +105,37 @@ public class Scale {
 		return null;
 	}
 	
+	private static double randomStepStdDev = 2.0;
+	private static double stepRepeatProbability = 0.5;
+	private static double noteRepeatProbability = 0.5;
+	
 	public ArrayList<Integer> getNextSequence(boolean prevRating) {
 		if(prevSequence != null) writeToLogFile(prevSequence, prevRating);
 		ArrayList<Integer> notes = new ArrayList<Integer>(getNotes());
+		TreeSet<Integer> noteIndices = new TreeSet<Integer>();
+		TreeSet<Integer> noteSteps = new TreeSet<Integer>();
 		ArrayList<Integer> returnVal = new ArrayList<Integer>();
+		boolean repeat = true;
 		int length = minLength + random.nextInt(maxLength - minLength + 1);
-		for(int index = 0; index < length; index++) {
-			returnVal.add(notes.get(random.nextInt(notes.size())));
-			if(index >= 1) {
-				while(Math.abs(returnVal.get(index) - returnVal.get(index - 1)) <= 1) {
-					returnVal.remove(index);
-					returnVal.add(index, notes.get(random.nextInt(notes.size())));
-				}
+		int noteIndex = -1;
+		int noteStep = -1;
+		int prevNoteIndex = random.nextInt(notes.size());
+		returnVal.add(notes.get(prevNoteIndex));
+		noteIndices.add(prevNoteIndex);
+		for(int index = 1; index < length; index++) {
+			while (noteIndex < 0 || noteIndex >= notes.size() || repeat) {
+				repeat = true;
+				noteStep = (int) Math.round(random.nextGaussian() * randomStepStdDev);
+				if(noteSteps.contains(noteStep)) if(Math.random() < stepRepeatProbability) continue;
+				noteIndex = prevNoteIndex + noteStep;
+				if(noteIndices.contains(noteStep)) if(Math.random() < noteRepeatProbability) continue;
+				repeat = false;
 			}
+			noteIndices.add(noteIndex);
+			noteSteps.add(noteStep);
+			returnVal.add(notes.get(noteIndex));
+			prevNoteIndex = noteIndex;
+			repeat = true;
 		}
 		prevSequence = new ArrayList<Integer>(returnVal);
 		return returnVal;
