@@ -37,6 +37,36 @@ public class ModuleFileTools {
     	}
 	}
 	
+	public static String PromptForDirectoryOpen(Component c) {
+	   	JFileChooser fc = new JFileChooser();
+	   	//ModuleFileTools.DPMSynthFilter filter = new ModuleFileTools.DPMSynthFilter();
+		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		fc.setCurrentDirectory(new File("."));
+		//fc.setFileFilter(filter);
+        int returnVal = fc.showOpenDialog(c);
+		if (returnVal == JFileChooser.APPROVE_OPTION) {
+        	File file = fc.getSelectedFile();
+        	return file.toString();
+    	} else {
+	    	return null;
+    	}
+	}
+	
+	public static String PromptForDirectorySave(Component c) {
+	   	JFileChooser fc = new JFileChooser();
+	   	//ModuleFileTools.DPMSynthFilter filter = new ModuleFileTools.DPMSynthFilter();
+		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		fc.setCurrentDirectory(new File("."));
+		//fc.setFileFilter(filter);
+        int returnVal = fc.showSaveDialog(c);
+		if (returnVal == JFileChooser.APPROVE_OPTION) {
+        	File file = fc.getSelectedFile();
+            return file.toString();
+    	} else {
+	    	return null;
+    	}
+	}
+	
 	public static class DPMSynthFilter extends FileFilter {
 		
 		public DPMSynthFilter() {};

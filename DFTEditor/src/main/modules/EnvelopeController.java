@@ -20,9 +20,8 @@ public class EnvelopeController implements MouseListener, MouseMotionListener, A
 	}
 
 	@Override
-	public void actionPerformed(ActionEvent arg0) {
-		// TODO Auto-generated method stub
-		
+	public void actionPerformed(ActionEvent e) {
+		if("Reset".equals(e.getActionCommand())) parent.reset();
 	}
 
 	@Override

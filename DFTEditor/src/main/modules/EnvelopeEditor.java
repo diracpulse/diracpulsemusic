@@ -4,12 +4,17 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Rectangle;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
+
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JToolBar;
 
+import main.Module.ModuleType;
 import main.modules.Envelope.EnvelopePoint;
 
 public class EnvelopeEditor extends JPanel implements WindowListener {
@@ -19,6 +24,19 @@ public class EnvelopeEditor extends JPanel implements WindowListener {
 	Envelope envelope;
 	EnvelopeView view;
 	EnvelopeController controller;
+	JToolBar navigationBar = null;
+	
+	public void addNavigationButton(String buttonText) {
+		JButton button = new JButton(buttonText);
+		button.addActionListener((ActionListener) controller);
+		navigationBar.add(button);
+	}
+	
+	public JToolBar createNavigationBar() {
+		navigationBar = new JToolBar("Navigation Bar");
+        addNavigationButton("Reset");
+    	return navigationBar;
+	}
 	
     public EnvelopeEditor(Envelope envelope) {
 		super(new BorderLayout());
@@ -26,6 +44,7 @@ public class EnvelopeEditor extends JPanel implements WindowListener {
         view = new EnvelopeView(this);
         view.setBackground(Color.black);
         controller = new EnvelopeController(this);
+        add(createNavigationBar(), BorderLayout.PAGE_START);
         view.addMouseListener(controller);
         view.addMouseMotionListener(controller);
         view.setPreferredSize(new Dimension((int) Math.round(Envelope.maxEnvelopeDuration * 1000.0 / getMillisPerPixel()), 600));
@@ -33,6 +52,12 @@ public class EnvelopeEditor extends JPanel implements WindowListener {
         scrollPane.setSize(800, 600);
         add(scrollPane, BorderLayout.CENTER);
         envelope.getParent().viewEnvelopeEditor(this);
+    }
+    
+    public void reset() {
+    	envelope.initEnvelopePoints();
+    	view.repaint();
+    	envelope.parent.refreshData();
     }
     
     public Envelope getEnvelope() {
