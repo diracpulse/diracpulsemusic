@@ -359,7 +359,7 @@ public class IIRFilter implements Module {
 
 	public ModuleType getModuleType() {
 		// TODO Auto-generated method stub
-		return Module.ModuleType.FIRFILTER;
+		return Module.ModuleType.IIRFILTER;
 	}
 
 	public int getX() {
