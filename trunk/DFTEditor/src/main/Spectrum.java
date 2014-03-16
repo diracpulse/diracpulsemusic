@@ -30,7 +30,7 @@ public class Spectrum extends JPanel implements WindowListener {
 	double minFreq = 0;
 	double maxFreq = 0;
 	double maxAmplitude = 0.0;
-	double minAmplitude = Double.MAX_VALUE;
+	double minAmplitude = 0.0;
 	
 	public static final int fontSize = 12;
 	public static final int xPadding = fontSize * 4;
@@ -45,6 +45,42 @@ public class Spectrum extends JPanel implements WindowListener {
         scrollPane.setSize(1500, 800);
         add(scrollPane, BorderLayout.CENTER);
         this.multiWindow = multiWindow;
+	}
+	
+	public void initFFTData(double[] left, double[] right) {
+		int windowLength = 1024;
+		double[] logFreq = new double[windowLength];
+		double[] samples = new double[windowLength * 2];
+		double[] kbdWindow = new double[windowLength];
+		Filter.CreateWindow(kbdWindow, kbdWindow.length, 5.0);
+		for(int freq = 1; freq < windowLength / 2; freq++) {
+			double currentFreq = Math.log((SynthTools.sampleRate / windowLength) * freq) / Math.log(2.0);
+			logFreq[freq] = currentFreq;
+			freqToTimeToAmplitude.put(currentFreq, new TreeMap<Double, Double>());
+		}
+		minFreq = Math.log((SynthTools.sampleRate / windowLength)) / Math.log(2.0);
+		maxFreq = Math.log((SynthTools.sampleRate / 2.0)) / Math.log(2.0);
+		minTime = 0.0;
+		maxTime = left.length / SynthTools.sampleRate;
+		for(int index = 0; index < (left.length - windowLength); index += windowLength) {
+			for(int windowIndex = 0; windowIndex < windowLength; windowIndex++) {
+				samples[windowIndex * 2] = left[index + windowIndex] * kbdWindow[windowIndex];
+				samples[windowIndex * 2 + 1] = 0.0;
+			}
+			FFT.runFFT(samples, samples.length / 2, 1);
+			double time = index / SynthTools.sampleRate;
+			for(int freq = 1; freq < windowLength / 2; freq++) {
+				double currentFreq = logFreq[freq];
+				double real = samples[freq * 2] / (windowLength / 2);
+				double complex = samples[freq * 2 + 1] / (windowLength / 2);
+				double amplitude = Math.log(Math.sqrt(real * real + complex * complex)) / Math.log(2.0);
+				if(amplitude <= 0.0) continue;
+				if(amplitude > maxAmplitude) maxAmplitude = amplitude;
+				//if(amplitude < minAmplitude) minAmplitude = amplitude;
+				freqToTimeToAmplitude.get(currentFreq).put(time, amplitude);
+			}
+		}
+		view.repaint();
 	}
 	
 	public void initDFTData(double[] left, double[] right) {
@@ -102,6 +138,8 @@ public class Spectrum extends JPanel implements WindowListener {
 		double amplitudePerPixel = (maxAmplitude - minAmplitude) / (view.getHeight() - yPadding);
 		return (int) Math.round(view.getHeight() - (amplitude - minAmplitude) / amplitudePerPixel - yPadding);
 	}
+
+	
 	
 	@Override
 	public void windowActivated(WindowEvent arg0) {

@@ -2,7 +2,7 @@ package main;
 
 public class FFT {
 
-	static float[] runFFT(float[] data, int nn, int isign) {
+	static double[] runFFT(double[] data, int nn, int isign) {
         /*      Varient of Numerical Recipes code from off the internet.  It takes nn
         interleaved complex input data samples in the array data and returns nn interleaved
         complex data samples in place where the output is the FFT of input if isign==1 and it
@@ -18,9 +18,9 @@ public class FFT {
 
         int n, mmax, m, j, i;
         double theta;
-        float wtemp, wr, wpr, wpi, wi, wpin;
-        float tempr, tempi, datar, datai;
-        float data1r, data1i, tmp;
+        double wtemp, wr, wpr, wpi, wi, wpin;
+        double tempr, tempi, datar, datai;
+        double data1r, data1i, tmp;
 
         n = nn * 2;
 
@@ -53,21 +53,21 @@ public class FFT {
         wpin = 0;   /* sin(+-PI) */
         for (mmax = 2; n > mmax; mmax *= 2) {
             wpi = wpin;
-            wpin = (float) (Math.sin(theta));
+            wpin = (double) (Math.sin(theta));
             wpr = 1 - wpin * wpin - wpin * wpin; /* cos(theta*2) */
             theta *= .5;
             wr = 1;
             wi = 0;
             for (m = 0; m < mmax; m += 2) {
                 j = m + mmax;
-                tempr = (float) wr * (data1r = data[j]);
-                tempi = (float) wi * (data1i = data[j + 1]);
+                tempr = (double) wr * (data1r = data[j]);
+                tempi = (double) wi * (data1i = data[j + 1]);
                 for (i = m; i < n - mmax * 2; i += mmax * 2) {
                     /* mixed precision not significantly more
-                     * accurate here; if removing float casts,
+                     * accurate here; if removing double casts,
                      * tempr and tempi should be double */
                     tempr -= tempi;
-                    tempi = (float) wr * data1i + (float) wi * data1r;
+                    tempi = (double) wr * data1i + (double) wi * data1r;
                     /* don't expect compiler to analyze j > i + 1 */
                     data1r = data[j + mmax * 2];
                     data1i = data[j + mmax * 2 + 1];
@@ -75,12 +75,12 @@ public class FFT {
                     data[i + 1] = (datai = data[i + 1]) + tempi;
                     data[j] = datar - tempr;
                     data[j + 1] = datai - tempi;
-                    tempr = (float) wr * data1r;
-                    tempi = (float) wi * data1i;
+                    tempr = (double) wr * data1r;
+                    tempi = (double) wi * data1i;
                     j += mmax * 2;
                 }
                 tempr -= tempi;
-                tempi = (float) wr * data1i + (float) wi * data1r;
+                tempi = (double) wr * data1i + (double) wi * data1r;
                 data[i] = (datar = data[i]) + tempr;
                 data[i + 1] = (datai = data[i + 1]) + tempi;
                 data[j] = datar - tempr;

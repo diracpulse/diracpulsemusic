@@ -85,7 +85,8 @@ public class ModuleEditor extends JPanel {
         addNavigationButton("Play Continuous");
         addNavigationButton("Stop");
         addNavigationButton("DFT");
-        addNavigationButton("Spectrum");
+        addNavigationButton("Spectrum (DFT)");
+        addNavigationButton("Spectrum (FFT)");
         addNavigationButton("Load");
         addNavigationButton("Save");
         addNavigationButton("Waveforms");
@@ -522,11 +523,18 @@ public class ModuleEditor extends JPanel {
 		basicWaveformEditorFrameID = null;
 	}
 
-	public void viewSpectrum() {
+	public void viewSpectrumDFT() {
 		initLeftRight(null);
 		Spectrum spectrum = new Spectrum(parent);
 		parent.newFrame(spectrum, "Spectrum");
 		spectrum.initDFTData(left, right);
 	}
 	
+	public void viewSpectrumFFT() {
+		initLeftRight(null);
+		Spectrum spectrum = new Spectrum(parent);
+		parent.newFrame(spectrum, "Spectrum");
+		spectrum.initFFTData(left, right);
+	}
+
 }
