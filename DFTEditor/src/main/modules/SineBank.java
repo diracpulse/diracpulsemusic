@@ -194,16 +194,19 @@ public class SineBank implements Module {
 			startIndex = 1;
 		}
 		for(double freq = minFreqInHz; freq <= maxFreqInHz; freq *= 2.0) {
+			// delay is for phase testing
+			int delay = 0; // (int) Math.round(Math.random() * 256.0);
+			for(int index = 0; index < delay; index++) returnVal[index] = 0.0;
 			if(freq >= SynthTools.sampleRate / 2.0) continue;
 			double deltaPhase = freq / SynthTools.sampleRate * Math.PI * 2.0;
-			for(int index = startIndex; index < numSamples; index++) {
+			for(int index = startIndex; index < numSamples - delay; index++) {
 				if(samplesAM[index] == 0.0 || control[index] < 0.0) {
 					phase = 0.0;
 					continue;
 				}
 				double inputPhase =  (phase + Math.sin(samplesFM[index]));
 				if(inputPhase > Math.PI) inputPhase -= 2.0 * Math.PI;
-				returnVal[index] += Math.sin(inputPhase) * samplesAM[index] * amplitude + samplesADD[index];
+				returnVal[index + delay] += Math.sin(inputPhase) * samplesAM[index] * amplitude + samplesADD[index];
 				phase += deltaPhase * control[index];
 			}
 		}

@@ -137,12 +137,38 @@ public class ModuleEditor extends JPanel {
 			//System.out.println("ModuleEditor.dft(): no signal");
 			return;
 		}
-		double maxAmplitude = 0.0;
+		double minAmplitudeLeft = 0.0;
+		double maxAmplitudeLeft = 0.0;
+		double minAmplitudeRight = 0.0;
+		double maxAmplitudeRight = 0.0;
 		for(int index = 0; index < left.length; index++) {
-			if(Math.abs(left[index]) > maxAmplitude) maxAmplitude = Math.abs(left[index]);
-			if(Math.abs(right[index]) > maxAmplitude) maxAmplitude = Math.abs(right[index]);
+			if(left[index] > maxAmplitudeLeft) maxAmplitudeLeft = left[index];
+			if(right[index] > maxAmplitudeRight) maxAmplitudeRight = right[index];
+			if(left[index] < minAmplitudeLeft) minAmplitudeLeft = left[index];
+			if(right[index] < minAmplitudeRight) minAmplitudeRight = right[index];
 		}
-		if(maxAmplitude == 0.0) return;
+		double dcLeft = (maxAmplitudeLeft + minAmplitudeLeft) / 2.0;
+		double dcRight = (maxAmplitudeRight + minAmplitudeRight) / 2.0;
+		minAmplitudeLeft = 0.0;
+		maxAmplitudeLeft = 0.0;
+		minAmplitudeRight = 0.0;
+		maxAmplitudeRight = 0.0;
+		System.out.println("DC Right " + dcRight);
+		System.out.println("DC Left" + dcLeft);
+		for(int index = 0; index < left.length; index++) {
+			left[index] -= dcLeft;
+			right[index] -= dcRight;
+			if(left[index] > maxAmplitudeLeft) maxAmplitudeLeft = left[index];
+			if(right[index] > maxAmplitudeRight) maxAmplitudeRight = right[index];
+			if(left[index] < minAmplitudeLeft) minAmplitudeLeft = left[index];
+			if(right[index] < minAmplitudeRight) minAmplitudeRight = right[index];
+		}
+		dcLeft = (maxAmplitudeLeft + minAmplitudeLeft);
+		dcRight = (maxAmplitudeRight + minAmplitudeRight);
+		System.out.println("DC Right Corrected " + dcRight);
+		System.out.println("DC Left Corrected" + dcLeft);
+		double maxAmplitude = maxAmplitudeRight;
+		if(maxAmplitudeLeft > maxAmplitudeRight) maxAmplitude = maxAmplitudeLeft;
 		double scale = (Short.MAX_VALUE - 1) / maxAmplitude;
 		for(int index = 0; index < left.length; index++) {
 			left[index] *= scale;

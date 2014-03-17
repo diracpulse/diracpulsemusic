@@ -25,6 +25,7 @@ public class Spectrum extends JPanel implements WindowListener {
 	SpectrumView view;
 	
 	TreeMap<Double, TreeMap<Double, Double>> freqToTimeToAmplitude = new TreeMap<Double, TreeMap<Double, Double>>();
+	double[] leftIFFT;
 	double minTime = 0;
 	double maxTime = 0;
 	double minFreq = 0;
@@ -48,45 +49,108 @@ public class Spectrum extends JPanel implements WindowListener {
 	}
 	
 	public void initFFTData(double[] left, double[] right) {
-		int windowLength = 1024;
-		double[] logFreq = new double[windowLength];
+		initFFTData(left);
+		//initFFTData(leftIFFT);
+		AudioPlayer.playAudio(leftIFFT);
+	}
+	
+	public void initFFTData(double[] channel) {
+		if(channel == null) return;
+		if(channel.length == 0) return;
+		freqToTimeToAmplitude = new TreeMap<Double, TreeMap<Double, Double>>();
+		leftIFFT = new double[channel.length];
+		for(int index = 0; index < leftIFFT.length; index++) {
+			leftIFFT[index] = 0.0;
+		}
+		int minWindowLength = 512;
+		int minStepSize = 512;
+		minFreq = Math.log((SynthTools.sampleRate / 2048.0)) / Math.log(2.0);
+		maxFreq = Math.log((SynthTools.sampleRate / 2.0)) / Math.log(2.0);
+		minTime = 0.0;
+		maxTime = channel.length / SynthTools.sampleRate;
+		// calculate minStepSize, use lowest window length to avoid time being slightly different
+		double[] kbdWindow = new double[minWindowLength];
+		Filter.CreateWindow(kbdWindow, kbdWindow.length, 5.0);
+		for(int index = 0; index < kbdWindow.length; index++) {
+			if(index > 0) {
+				if(kbdWindow[index - 1] >= 0.5 && kbdWindow[index] <= 0.5) {
+					//minStepSize = index;
+				}
+			}
+		}
+		filterAndFFTData(channel, SynthTools.sampleRate / 2048.0, SynthTools.sampleRate / 256.0, minWindowLength * 16, minStepSize * 16);
+		filterAndFFTData(channel, SynthTools.sampleRate / 256.0, SynthTools.sampleRate / 128.0, minWindowLength * 8, minStepSize * 8);
+		filterAndFFTData(channel, SynthTools.sampleRate / 128.0, SynthTools.sampleRate / 64.0, minWindowLength * 4, minStepSize * 4);
+		filterAndFFTData(channel, SynthTools.sampleRate / 64.0, SynthTools.sampleRate / 32.0, minWindowLength * 2, minStepSize * 2);
+		filterAndFFTData(channel, SynthTools.sampleRate / 32.0, SynthTools.sampleRate / 2.0, minWindowLength, minStepSize);
+	}
+	
+	public void filterAndFFTData(double[] channel, double lowCutoff, double highCutoff, int windowLength, int samplesPerStep) {
+		//double[] filtered = Filter.butterworthHighpass(channel, lowCutoff, 2);
+		//if(highCutoff < SynthTools.sampleRate / 2.0) filtered = Filter.butterworthLowpass(filtered, highCutoff, 2);
+		initFFTData(channel, lowCutoff, highCutoff, windowLength, samplesPerStep);
+	}
+	
+	public void initFFTData(double[] channel, double lowCutoff, double highCutoff, int windowLength, int samplesPerStep) {
+		double[] logFreq = new double[windowLength / 2];
+		double binStep = SynthTools.sampleRate / windowLength;
+		int minFreq = 8192 / 2048;
+		if(lowCutoff > SynthTools.sampleRate / 2048.0) {
+			minFreq = (int) Math.round(lowCutoff / binStep) / 2;
+		}
+		int maxFreq = windowLength / 2;
+		if(highCutoff < SynthTools.sampleRate / 2.0) {
+			maxFreq = (int) Math.round(highCutoff / binStep) * 2;
+		}
+		for(int freq = minFreq; freq < maxFreq; freq++) {
+			logFreq[freq] = Math.log(SynthTools.sampleRate / windowLength * freq) / Math.log(2.0);
+		}
 		double[] samples = new double[windowLength * 2];
 		double[] kbdWindow = new double[windowLength];
 		double windowGain = 0.0;
-		Filter.CreateWindow(kbdWindow, kbdWindow.length, 10.0);
+		Filter.CreateWindow(kbdWindow, kbdWindow.length, 5.0);
 		for(int index = 0; index < kbdWindow.length; index++) {
-			if(index > 0) {
-				if(kbdWindow[index - 1] <= 0.5 && kbdWindow[index] >= 0.5) {
-					System.out.println("KBD 0.5: " + ((double) index) / kbdWindow.length);
-				}
-			}
 			windowGain += kbdWindow[index];
 		}
-		for(int freq = 1; freq < windowLength / 2; freq++) {
-			double currentFreq = Math.log((SynthTools.sampleRate / windowLength) * freq) / Math.log(2.0);
-			logFreq[freq] = currentFreq;
-			freqToTimeToAmplitude.put(currentFreq, new TreeMap<Double, Double>());
-		}
-		minFreq = Math.log((SynthTools.sampleRate / windowLength)) / Math.log(2.0);
-		maxFreq = Math.log((SynthTools.sampleRate / 2.0)) / Math.log(2.0);
-		minTime = 0.0;
-		maxTime = left.length / SynthTools.sampleRate;
-		for(int index = 0; index < (left.length - windowLength); index += windowLength) {
+		for(int index = 0; index < (channel.length - windowLength); index += samplesPerStep) {
 			for(int windowIndex = 0; windowIndex < windowLength; windowIndex++) {
-				samples[windowIndex * 2] = left[index + windowIndex] * kbdWindow[windowIndex];
+				samples[windowIndex * 2] = channel[index + windowIndex] * kbdWindow[windowIndex];
 				samples[windowIndex * 2 + 1] = 0.0;
 			}
 			FFT.runFFT(samples, samples.length / 2, 1);
+			double[] idft = new double[samples.length];
+			for(int idftIndex = 0; idftIndex < minFreq * 2; idftIndex++) idft[idftIndex] = 0.0;
+			for(int idftIndex = maxFreq * 2; idftIndex < samples.length; idftIndex++) idft[idftIndex] = 0.0;
+			for(int idftIndex = minFreq; idftIndex < maxFreq * 2; idftIndex += 2) {
+				double real = samples[idftIndex * 2];
+				double imag = samples[idftIndex * 2 + 1];
+				idft[idftIndex * 2] = real;
+				idft[idftIndex * 2 + 1] = imag;
+			}
+			FFT.runFFT(idft, idft.length / 2, -1);
+			for(int idftIndex = 0; idftIndex < idft.length; idftIndex += 2) {
+				double real = idft[idftIndex] / windowGain;
+				leftIFFT[idftIndex / 2 + index] += real;
+			}
 			double time = index / SynthTools.sampleRate;
-			for(int freq = 1; freq < windowLength / 2; freq++) {
+			for(int freq = minFreq; freq < maxFreq; freq++) {
 				double currentFreq = logFreq[freq];
 				double real = samples[freq * 2] / windowGain;
-				double complex = samples[freq * 2 + 1] / windowGain;
-				double amplitude = Math.log(Math.sqrt(real * real + complex * complex)) / Math.log(2.0) + 1.0;
+				double imag = samples[freq * 2 + 1] / windowGain;
+				double amplitude = Math.log(Math.sqrt(real * real + imag * imag)) / Math.log(2.0);
 				if(amplitude <= 0.0) continue;
 				if(amplitude > maxAmplitude) maxAmplitude = amplitude;
-				//if(amplitude < minAmplitude) minAmplitude = amplitude;
-				freqToTimeToAmplitude.get(currentFreq).put(time, amplitude);
+				if(!freqToTimeToAmplitude.containsKey(currentFreq)) {
+					freqToTimeToAmplitude.put(currentFreq, new TreeMap<Double, Double>());
+				}
+				if(!freqToTimeToAmplitude.get(currentFreq).containsKey(time)) {
+					freqToTimeToAmplitude.get(currentFreq).put(time, amplitude);
+				} else {
+					double prevAmplitude = freqToTimeToAmplitude.get(currentFreq).get(time);
+					amplitude = Math.log(Math.pow(2.0, prevAmplitude) + Math.pow(2.0, amplitude)) / Math.log(2.0);
+					freqToTimeToAmplitude.get(currentFreq).put(time, amplitude);
+				}
+				if(amplitude > maxAmplitude) maxAmplitude = amplitude;
 			}
 		}
 		view.repaint();
