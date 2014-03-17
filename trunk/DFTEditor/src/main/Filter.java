@@ -402,5 +402,80 @@ public class Filter {
 			}
 			return y;
 		}
+		
+		public static double[] linkwitzReillyLowpass(double input[], double freq, int order) {
+			if(order < minOrder || order > maxOrder) return null;
+			if(order % 2 == 1) {
+				order = order + order % 2;
+				System.out.println("Filter.linkwitzReilly: order must be even");
+			}
+			double[] returnVal = linkwitzReillyLowpass2(input, freq);
+			order -= 2;
+			while (order > 0) {
+				returnVal = linkwitzReillyLowpass2(returnVal, freq);
+				order -= 2;
+			}
+			return returnVal;
+		}
+		
+		public static double[] linkwitzReillyHighpass(double input[], double freq, int order) {
+			if(order < minOrder || order > maxOrder) return null;
+			if(order % 2 == 1) {
+				order = order + order % 2;
+				System.out.println("Filter.linkwitzReilly: order must be even");
+			}
+			double[] returnVal = linkwitzReillyHighpass2(input, freq);
+			order -= 2;
+			while (order > 0) {
+				returnVal = linkwitzReillyHighpass2(returnVal, freq);
+				order -= 2;
+			}
+			return returnVal;
+		}
+
+		private static double[] linkwitzReillyLowpass2(double[] input, double freq) {
+			double gamma = Math.tan((Math.PI * freq) / SynthTools.sampleRate);
+			double D = gamma * gamma + 2.0 * gamma + 1.0;
+			b0 = (gamma * gamma) / D;
+			b1 = 2.0 * (gamma * gamma) / D;
+			b2 = b0;
+			a0 = 2.0 * (gamma * gamma - 1.0) / D;
+			a1 = (gamma * gamma - 2.0 * gamma + 1.0) / D;
+			System.out.println(b0 + " " + b1 + " " + b2 + " " + a0 + " " + a1);
+			double[] y = new double[input.length];
+			for(int index = 0; index < input.length; index++) {
+				y[index] = 0.0;
+			}
+			y[0] = b0 * input[0];
+			y[1] = b0 * input[1] + b1 * input[0] + a0 * y[0];
+			for(int n = 2; n < input.length; n++) {
+				y[n] = b0 * input[n] + b1 * input[n - 1] + b2 * input[n - 2] - a0 * y[n - 1] - a1 * y[n - 2];
+				
+			}
+			return y;
+		}
+		
+		private static double[] linkwitzReillyHighpass2(double[] input, double freq) {
+			double gamma = Math.tan((Math.PI * freq) / SynthTools.sampleRate);
+			double D = gamma * gamma + 2.0 * gamma + 1.0;
+			b0 = 1.0 / D;
+			b1 = -2.0 / D;
+			b2 = 1.0 / D;
+			a0 = 2.0 * (gamma * gamma - 1.0) / D;
+			a1 = (gamma * gamma - 2.0 * gamma + 1.0) / D;
+			//System.out.println(b0 + " " + b1 + " " + b2 + " " + a0 + " " + a1);
+			double[] y = new double[input.length];
+			for(int index = 0; index < input.length; index++) {
+				y[index] = 0.0;
+			}
+			y[0] = b0 * input[0];
+			y[1] = b0 * input[1] + b1 * input[0] + a0 * y[0];
+			for(int n = 2; n < input.length; n++) {
+				y[n] = b0 * input[n] + b1 * input[n - 1] + b2 * input[n - 2] - a0 * y[n - 1] - a1 * y[n - 2];
+				
+			}
+			return y;
+		}
+		
 
 }
