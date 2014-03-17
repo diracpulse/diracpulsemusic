@@ -52,7 +52,16 @@ public class Spectrum extends JPanel implements WindowListener {
 		double[] logFreq = new double[windowLength];
 		double[] samples = new double[windowLength * 2];
 		double[] kbdWindow = new double[windowLength];
-		Filter.CreateWindow(kbdWindow, kbdWindow.length, 5.0);
+		double windowGain = 0.0;
+		Filter.CreateWindow(kbdWindow, kbdWindow.length, 10.0);
+		for(int index = 0; index < kbdWindow.length; index++) {
+			if(index > 0) {
+				if(kbdWindow[index - 1] <= 0.5 && kbdWindow[index] >= 0.5) {
+					System.out.println("KBD 0.5: " + ((double) index) / kbdWindow.length);
+				}
+			}
+			windowGain += kbdWindow[index];
+		}
 		for(int freq = 1; freq < windowLength / 2; freq++) {
 			double currentFreq = Math.log((SynthTools.sampleRate / windowLength) * freq) / Math.log(2.0);
 			logFreq[freq] = currentFreq;
@@ -71,9 +80,9 @@ public class Spectrum extends JPanel implements WindowListener {
 			double time = index / SynthTools.sampleRate;
 			for(int freq = 1; freq < windowLength / 2; freq++) {
 				double currentFreq = logFreq[freq];
-				double real = samples[freq * 2] / (windowLength / 2);
-				double complex = samples[freq * 2 + 1] / (windowLength / 2);
-				double amplitude = Math.log(Math.sqrt(real * real + complex * complex)) / Math.log(2.0);
+				double real = samples[freq * 2] / windowGain;
+				double complex = samples[freq * 2 + 1] / windowGain;
+				double amplitude = Math.log(Math.sqrt(real * real + complex * complex)) / Math.log(2.0) + 1.0;
 				if(amplitude <= 0.0) continue;
 				if(amplitude > maxAmplitude) maxAmplitude = amplitude;
 				//if(amplitude < minAmplitude) minAmplitude = amplitude;
