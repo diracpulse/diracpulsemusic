@@ -15,7 +15,7 @@ public class AudioPlayer extends Thread {
 	final static int channels = 2;
 	final static boolean signed = true;
 	final static boolean bigEndian = false;
-	final static double fullScale = Short.MAX_VALUE - 1;
+	final static double fullScale = Short.MAX_VALUE;
 	final static int frameSize = 1024;
 	private static volatile boolean playContinuous = false;
 	private static volatile byte[] audioByteData = null;
