@@ -42,6 +42,12 @@ public class ModuleEditor extends JPanel {
 	public ModuleController controller;
 	private int moduleEditorID;
 	private Integer basicWaveformEditorFrameID = null;
+	private Integer spectrumFFTFrameID = null;
+	private Spectrum spectrumFFT = null;
+	private Integer spectrumDFTFrameID = null;
+	private Spectrum spectrumDFT = null;
+	private Integer samplesFrameID = null;
+	private SamplesEditor samplesEditor = null;
 	private TreeMap<Integer, Integer> envelopeIDToEditorFrameID = new TreeMap<Integer, Integer>();
 	private int masterInputHeight;
 	private MasterInput masterInput = null;
@@ -67,6 +73,7 @@ public class ModuleEditor extends JPanel {
 	public final static double defaultOctave = 256.0;
 	public final static int continuousBufferLength = 44100 / 2;
 	private boolean playContinuous = false;
+	private boolean correctDC = true;
 	
 	private String getTitle() {
 		return parent.moduleEditorInfo.get(moduleEditorID).getName();
@@ -90,6 +97,7 @@ public class ModuleEditor extends JPanel {
         addNavigationButton("Load");
         addNavigationButton("Save");
         addNavigationButton("Waveforms");
+        addNavigationButton("Samples");
     	return navigationBar;
 	}
 	
@@ -137,6 +145,28 @@ public class ModuleEditor extends JPanel {
 			//System.out.println("ModuleEditor.dft(): no signal");
 			return;
 		}
+		if(correctDC) {
+			correctDC(left, right);
+		} else {
+			scaleOnly(left, right);
+		}
+	}
+	
+	public void scaleOnly(double[] left, double[] right) {
+		double maxAmplitude = 0.0;
+		for(int index = 0; index < left.length; index++) {
+			if(Math.abs(left[index]) > maxAmplitude) maxAmplitude = Math.abs(left[index]);
+			if(Math.abs(right[index]) > maxAmplitude) maxAmplitude = Math.abs(right[index]);
+		}
+		if(maxAmplitude == 0.0) return;
+		double scale = Short.MAX_VALUE / maxAmplitude;
+		for(int index = 0; index < left.length; index++) {
+			left[index] *= scale;
+			right[index] *= scale;
+		}
+	}
+	
+	public void correctDC(double[] left, double[] right) {
 		double minAmplitudeLeft = 0.0;
 		double maxAmplitudeLeft = 0.0;
 		double minAmplitudeRight = 0.0;
@@ -169,10 +199,13 @@ public class ModuleEditor extends JPanel {
 		System.out.println("DC Left Corrected" + dcLeft);
 		double maxAmplitude = maxAmplitudeRight;
 		if(maxAmplitudeLeft > maxAmplitudeRight) maxAmplitude = maxAmplitudeLeft;
-		double scale = (Short.MAX_VALUE - 1) / maxAmplitude;
+		if(maxAmplitude == 0.0) return;
+		double scale = Short.MAX_VALUE / maxAmplitude;
 		for(int index = 0; index < left.length; index++) {
 			left[index] *= scale;
 			right[index] *= scale;
+			left[index] = Math.round(left[index]);
+			right[index] = Math.round(right[index]);
 		}
 	}
 	
@@ -550,17 +583,54 @@ public class ModuleEditor extends JPanel {
 	}
 
 	public void viewSpectrumDFT() {
+		if(spectrumDFTFrameID == null) {
+			spectrumDFT = new Spectrum(this);
+			spectrumDFTFrameID = parent.newFrame(spectrumDFT, getTitle() + ": Spectrum (DFT)");
+			parent.addWindowListener(spectrumDFTFrameID, spectrumDFT);
+		}
 		initLeftRight(null);
-		Spectrum spectrum = new Spectrum(parent);
-		parent.newFrame(spectrum, "Spectrum");
-		spectrum.initDFTData(left, right);
+		spectrumDFT.initDFTData(left, right);
+		parent.requestFocus(spectrumDFTFrameID);
 	}
 	
+	public void closeSpectrumDFT() {
+		parent.dispose(spectrumDFTFrameID);
+		spectrumDFTFrameID = null;
+		spectrumDFT = null;
+	}	
+	
 	public void viewSpectrumFFT() {
+		if(spectrumFFTFrameID == null) {
+			spectrumFFT = new Spectrum(this);
+			spectrumFFTFrameID = parent.newFrame(spectrumFFT, getTitle() + ": Spectrum (FFT)");
+			parent.addWindowListener(spectrumFFTFrameID, spectrumFFT);
+		}
 		initLeftRight(null);
-		Spectrum spectrum = new Spectrum(parent);
-		parent.newFrame(spectrum, "Spectrum");
-		spectrum.initFFTData(left, right);
+		spectrumFFT.initFFTData(left, right);
+		parent.requestFocus(spectrumFFTFrameID);
 	}
-
+	
+	public void closeSpectrumFFT() {
+		parent.dispose(spectrumFFTFrameID);
+		spectrumFFTFrameID = null;
+		spectrumFFT = null;
+	}		
+	
+	public void viewSamplesEditor() {
+		if(samplesFrameID == null) {
+			samplesEditor = new SamplesEditor(this);
+			samplesFrameID = parent.newFrame(samplesEditor, getTitle() + ": Samples");
+			parent.addWindowListener(samplesFrameID, samplesEditor);
+		}
+		initLeftRight(null);
+		samplesEditor.initData(left, right);
+		parent.requestFocus(samplesFrameID);
+	}
+	
+	public void closeSamplesEditor() {
+		parent.dispose(samplesFrameID);
+		samplesFrameID = null;
+		samplesEditor = null;
+	}
+	
 }

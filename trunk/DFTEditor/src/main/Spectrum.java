@@ -22,7 +22,13 @@ import main.modules.BasicWaveformEditor.ControlRect;
 public class Spectrum extends JPanel implements WindowListener {
 	
 	MultiWindow multiWindow;
+	ModuleEditor moduleEditor;
 	SpectrumView view;
+	
+	public enum SpectrumType {
+		DFT,
+		FFT;
+	}
 	
 	TreeMap<Double, TreeMap<Double, Double>> freqToTimeToAmplitude = new TreeMap<Double, TreeMap<Double, Double>>();
 	double[] leftIFFT;
@@ -32,12 +38,14 @@ public class Spectrum extends JPanel implements WindowListener {
 	double maxFreq = 0;
 	double maxAmplitude = 0.0;
 	double minAmplitude = 0.0;
+	private SpectrumType type = null;
 	
 	public static final int fontSize = 12;
 	public static final int xPadding = fontSize * 4;
 	public static final int yPadding = fontSize + 6;
 
-	public Spectrum(MultiWindow multiWindow) {
+	
+	public Spectrum(ModuleEditor moduleEditor) {
 		super(new BorderLayout());
         view = new SpectrumView(this);
         view.setBackground(Color.black);
@@ -45,10 +53,12 @@ public class Spectrum extends JPanel implements WindowListener {
         JScrollPane scrollPane = new JScrollPane(view);
         scrollPane.setSize(1500, 800);
         add(scrollPane, BorderLayout.CENTER);
-        this.multiWindow = multiWindow;
+        this.moduleEditor = moduleEditor;
+        this.multiWindow = moduleEditor.parent;
 	}
 	
 	public void initFFTData(double[] left, double[] right) {
+		this.type = SpectrumType.FFT;
 		initFFTData(left);
 		//initFFTData(leftIFFT);
 		AudioPlayer.playAudio(leftIFFT);
@@ -157,6 +167,7 @@ public class Spectrum extends JPanel implements WindowListener {
 	}
 	
 	public void initDFTData(double[] left, double[] right) {
+		this.type = SpectrumType.DFT;
         multiWindow.dftEditorFrame.ModuleDFT(left, right);
         maxFreq = Math.log(DFTEditor.maxFreqHz) / Math.log(2.0);
         minFreq = Math.log(DFTEditor.minFreqHz) / Math.log(2.0);
@@ -228,14 +239,13 @@ public class Spectrum extends JPanel implements WindowListener {
 
 	@Override
 	public void windowClosing(WindowEvent arg0) {
-		// TODO Auto-generated method stub
+		if(type == SpectrumType.FFT) moduleEditor.closeSpectrumFFT();
+		if(type == SpectrumType.DFT) moduleEditor.closeSpectrumDFT();
 		
 	}
 
 	@Override
 	public void windowDeactivated(WindowEvent arg0) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
