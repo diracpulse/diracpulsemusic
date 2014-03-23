@@ -52,6 +52,7 @@ public class Sequencer extends JPanel {
 	public int currentModuleIndex = 0;
 	double[] leftSamples = null;
 	double[] rightSamples = null;
+	public static double[] cache = new double[(int) Math.round(maxTimeInSeconds * SynthTools.sampleRate)]; 
 	
 	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);

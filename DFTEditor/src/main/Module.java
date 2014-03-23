@@ -23,7 +23,8 @@ public interface Module {
 		WHITENOISE,
 		SINEBANK,
 		KARPLUSSTRONG, 
-		IIRFILTER;
+		IIRFILTER,
+		SPECTRUM_EQ;
 	}
 	
 	abstract void mousePressed(int x, int y);

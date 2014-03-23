@@ -31,6 +31,8 @@ import main.modules.KarplusStrong;
 import main.modules.MasterInput;
 import main.modules.SelfModulator;
 import main.modules.SineBank;
+import main.modules.SpectrumEQ;
+import main.modules.SpectrumEQEditor;
 import main.modules.StereoPan;
 import main.modules.WhiteNoise;
 
@@ -48,6 +50,8 @@ public class ModuleEditor extends JPanel {
 	private Spectrum spectrumDFT = null;
 	private Integer samplesFrameID = null;
 	private SamplesEditor samplesEditor = null;
+	private Integer spectrumEQFrameID = null;
+	private SpectrumEQEditor spectrumEQEditor = null;
 	private TreeMap<Integer, Integer> envelopeIDToEditorFrameID = new TreeMap<Integer, Integer>();
 	private int masterInputHeight;
 	private MasterInput masterInput = null;
@@ -183,8 +187,8 @@ public class ModuleEditor extends JPanel {
 		maxAmplitudeLeft = 0.0;
 		minAmplitudeRight = 0.0;
 		maxAmplitudeRight = 0.0;
-		System.out.println("DC Right " + dcRight);
-		System.out.println("DC Left" + dcLeft);
+		//System.out.println("DC Right " + dcRight);
+		//System.out.println("DC Left" + dcLeft);
 		for(int index = 0; index < left.length; index++) {
 			left[index] -= dcLeft;
 			right[index] -= dcRight;
@@ -195,8 +199,8 @@ public class ModuleEditor extends JPanel {
 		}
 		dcLeft = (maxAmplitudeLeft + minAmplitudeLeft);
 		dcRight = (maxAmplitudeRight + minAmplitudeRight);
-		System.out.println("DC Right Corrected " + dcRight);
-		System.out.println("DC Left Corrected" + dcLeft);
+		//System.out.println("DC Right Corrected " + dcRight);
+		//System.out.println("DC Left Corrected" + dcLeft);
 		double maxAmplitude = maxAmplitudeRight;
 		if(maxAmplitudeLeft > maxAmplitudeRight) maxAmplitude = maxAmplitudeLeft;
 		if(maxAmplitude == 0.0) return;
@@ -313,15 +317,15 @@ public class ModuleEditor extends JPanel {
 		addModuleToColumn(col, Module.ModuleType.BASICWAVEFORM);
 		addModuleToColumn(col, Module.ModuleType.BASICWAVEFORM);
 		col++;
-		addModuleToColumn(col, Module.ModuleType.SELFMODULATOR);
-		addModuleToColumn(col, Module.ModuleType.SELFMODULATOR);
-		addModuleToColumn(col, Module.ModuleType.SELFMODULATOR);
-		addModuleToColumn(col, Module.ModuleType.SELFMODULATOR);
+		addModuleToColumn(col, Module.ModuleType.WHITENOISE);
+		addModuleToColumn(col, Module.ModuleType.WHITENOISE);
+		addModuleToColumn(col, Module.ModuleType.WHITENOISE);
+		addModuleToColumn(col, Module.ModuleType.WHITENOISE);
 		col++;
-		addModuleToColumn(col, Module.ModuleType.WHITENOISE);
-		addModuleToColumn(col, Module.ModuleType.WHITENOISE);
-		addModuleToColumn(col, Module.ModuleType.WHITENOISE);
-		addModuleToColumn(col, Module.ModuleType.WHITENOISE);
+		addModuleToColumn(col, Module.ModuleType.SPECTRUM_EQ);
+		addModuleToColumn(col, Module.ModuleType.SPECTRUM_EQ);
+		addModuleToColumn(col, Module.ModuleType.SPECTRUM_EQ);
+		addModuleToColumn(col, Module.ModuleType.SPECTRUM_EQ);
 		col++;
 		addModuleToColumn(col, Module.ModuleType.IIRFILTER);
 		addModuleToColumn(col, Module.ModuleType.IIRFILTER);
@@ -392,6 +396,10 @@ public class ModuleEditor extends JPanel {
 			break;
 		case KARPLUSSTRONG:
 			module = new KarplusStrong(this, currentX, currentY);
+			addModule(module);
+			break;
+		case SPECTRUM_EQ:
+			module = new SpectrumEQ(this, currentX, currentY);
 			addModule(module);
 			break;
 		default:
@@ -631,6 +639,23 @@ public class ModuleEditor extends JPanel {
 		parent.dispose(samplesFrameID);
 		samplesFrameID = null;
 		samplesEditor = null;
+	}
+	
+	public void viewSpectrumEQEditor(SpectrumEQ spectrumEQ) {
+		if(spectrumEQFrameID == null) {
+			spectrumEQEditor = new SpectrumEQEditor(spectrumEQ);
+			spectrumEQFrameID = parent.newFrame(spectrumEQEditor, getTitle() + ": Samples");
+			parent.addWindowListener(spectrumEQFrameID, spectrumEQEditor);
+		}
+		initLeftRight(null);
+		//spectrumEQEditor.initData(left, right);
+		parent.requestFocus(spectrumEQFrameID);
+	}
+	
+	public void closeSpectrumEQEditor() {
+		parent.dispose(spectrumEQFrameID);
+		spectrumEQFrameID = null;
+		spectrumEQEditor = null;
 	}
 	
 }
