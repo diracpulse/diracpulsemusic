@@ -2,7 +2,7 @@ package main;
 
 public class FFT {
 
-	static double[] runFFT(double[] data, int nn, int isign) {
+	public static double[] runFFT(double[] data, int nn, int isign) {
         /*      Varient of Numerical Recipes code from off the internet.  It takes nn
         interleaved complex input data samples in the array data and returns nn interleaved
         complex data samples in place where the output is the FFT of input if isign==1 and it

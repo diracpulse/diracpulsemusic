@@ -26,23 +26,32 @@ public class Filter {
 		double upperBound;
 		double lpFilter[] = null;
 		double hpFilter[] = null;
+		public static double[] returnCache;
 
 		CriticalBand(double lowerBound, double upperBound) {
 			this.upperBound = upperBound;
 			this.lowerBound = lowerBound;
 		}
 	
-		double getLowerBound() {
+		public double getLowerBound() {
 			return lowerBound;
 		}
 		
-		double getUpperBound() {
+		public double getUpperBound() {
 			return upperBound;
 		}
 		
-		double getCenterFreq() {
+		public double getCenterFreq() {
 			//return Math.sqrt(upperBound * lowerBound);
-			return (upperBound + lowerBound) / 2.0;
+			return Math.sqrt(upperBound * lowerBound);
+		}
+		
+		public double getQ() {
+			return getCenterFreq() / (upperBound - lowerBound);
+		}
+		
+		public double[] getAudioData(double[] samples) {
+			return butterworthBandpass(samples, getCenterFreq(), getQ(), 4);
 		}
 
 	}
@@ -230,14 +239,14 @@ public class Filter {
 			return filteredSamples;
 		}
 		
-		public static ArrayList<CriticalBand> calculateCriticalBands(double barkStep) {
+		public static ArrayList<CriticalBand> calculateCriticalBands(double minFreq, double maxFreq, double barkStep) {
 			ArrayList<CriticalBand> criticalBands = new ArrayList<CriticalBand>();
-			double startFreqInHz = FDData.minFrequencyInHz;
+			double startFreqInHz = minFreq;
 			double startBark = 13.0 * Math.atan(0.00076 * startFreqInHz) + 3.5 * Math.atan((startFreqInHz / 7500.0) * (startFreqInHz / 7500.0));
 			double endBark = 0.0;
 			double endFreqInHz = startFreqInHz;
 			double minRatio = Math.pow(2.0, 1 / 1000.0);
-			while(endFreqInHz < FDData.maxFrequencyInHz) {
+			while(endFreqInHz < maxFreq) {
 				endFreqInHz *= minRatio;
 				endBark = 13.0 * Math.atan(0.00076 * endFreqInHz) + 3.5 * Math.atan((endFreqInHz / 7500.0) * (endFreqInHz / 7500.0));
 				if(endBark - startBark > barkStep) {
@@ -246,9 +255,9 @@ public class Filter {
 					startFreqInHz = endFreqInHz;
 				}
 			}
-			criticalBands.add(new CriticalBand(startFreqInHz, FDData.maxFrequencyInHz));
+			criticalBands.add(new CriticalBand(startFreqInHz, maxFreq));
 			for(CriticalBand bounds: criticalBands) {
-				System.out.println("Critical Band: " + bounds.getLowerBound() + " " + bounds.getUpperBound());
+				//System.out.println("Critical Band: " + bounds.getLowerBound() + " " + bounds.getUpperBound());
 			}
 			return criticalBands;
 			
@@ -257,8 +266,12 @@ public class Filter {
 		private static double b0 = 0.0;
 		private static double b1 = 0.0;
 		private static double b2 = 0.0;
+		private static double b3 = 0.0;
+		private static double b4 = 0.0;
 		private static double a0 = 0.0;
 		private static double a1 = 0.0;
+		private static double a2 = 0.0;
+		private static double a3 = 0.0;
 		
 		public static double[] butterworthLowpass(double input[], double freq, int order) {
 			if(order < minOrder || order > maxOrder) return null;
@@ -288,18 +301,21 @@ public class Filter {
 		
 		public static double[] butterworthBandpass(double input[], double freq, double q, int order) {
 			if(order < minOrder || order > maxOrder) return null;
-			if(order % 2 == 1) {
-				order = order + order % 2;
-				System.out.println("Filter.ButterworthBandpass: order must be even");
-			}
+			double[] returnVal = new double[0];
 			double bandwidth = SynthTools.sampleRate;
+			//calculateCriticalBands(SynthTools.sampleRate / 2048.0, SynthTools.sampleRate / 2.0, 1.0);
 			if(q > 0.0) bandwidth = freq / q;
-			double[] returnVal = butterworthBandpass2(input, freq, bandwidth);
-			order -= 2;
-			while (order > 0) {
-				returnVal = butterworthBandpass2(returnVal, freq, bandwidth);
-				order -= 2;
+			if(order == 2) {
+				return butterworthBandpass2(input, freq, bandwidth);
 			}
+			if(order == 4) {
+				return butterworthBandpass4(input, freq, bandwidth);
+			}
+			if(order == 8) {
+				returnVal = butterworthBandpass4(input, freq, bandwidth);
+				return butterworthBandpass4(returnVal, freq, bandwidth);
+			}
+			System.out.println("Butterworth Bandpass: order " + order + " not supported");
 			return returnVal;
 		}
 
@@ -328,7 +344,7 @@ public class Filter {
 			b2 = b0;
 			a0 = 2.0 * (gamma * gamma - 1.0) / D;
 			a1 = (gamma * gamma - Math.sqrt(2.0) * gamma + 1.0) / D;
-			System.out.println(b0 + " " + b1 + " " + b2 + " " + a0 + " " + a1);
+			//System.out.println(b0 + " " + b1 + " " + b2 + " " + a0 + " " + a1);
 			double[] y = new double[input.length];
 			for(int index = 0; index < input.length; index++) {
 				y[index] = 0.0;
@@ -403,6 +419,31 @@ public class Filter {
 			return y;
 		}
 		
+		private static double[] butterworthBandpass4(double[] input, double freq, double bandwidth) {
+			double gamma = Math.tan((Math.PI * freq) / SynthTools.sampleRate);
+			double D = freq * freq * (Math.pow(gamma, 4.0) + 2.0 * gamma * gamma + 1.0) + Math.sqrt(2.0) * bandwidth * freq * gamma * (gamma * gamma + 1) + bandwidth * bandwidth * gamma * gamma;
+			b0 = bandwidth * bandwidth * gamma * gamma / D;
+			b1 = 0.0;
+			b2 = -2.0 * b0;
+			b3 = 0.0;
+			b4 = b0;
+			a0 = (2.0 * (2.0 * freq * freq * (Math.pow(gamma,  4.0) - 1.0) + Math.sqrt(2.0) * bandwidth * freq * gamma * (gamma * gamma - 1.0))) / D;
+			a1 = (2.0 * (3.0 * freq * freq * (Math.pow(gamma,  4.0) + 1.0) - gamma * gamma * (2.0 * freq * freq + bandwidth * bandwidth))) / D;
+			a2 = (2.0 * (2.0 * freq * freq * (Math.pow(gamma,  4.0) - 1.0) + Math.sqrt(2.0) * bandwidth * freq * gamma * (1.0 - gamma * gamma))) / D;
+			a3 = (freq * freq * (Math.pow(gamma, 4.0) + 2.0 * gamma * gamma + 1.0) - Math.sqrt(2.0) * bandwidth * freq * gamma * (gamma * gamma + 1) + bandwidth * bandwidth * gamma * gamma) / D;
+			//System.out.println(b0 + " " + b1 + " " + b2 + " " + b3 + " " + b4 + " " + a0 + " " + a1 + " " + a2 + " " + a3);
+			double[] y = new double[input.length];
+			y[0] = b0 * input[0];
+			y[1] = b0 * input[1] + b1 * input[0] - a0 * y[0];
+			y[2] = b0 * input[2] + b1 * input[1] + b2 * input[0] - a0 * y[1] - a1 * y[0];
+			y[3] = b0 * input[3] + b1 * input[2] + b2 * input[1] + b3 * input[0] - a0 * y[2] - a1 * y[1] - a2 * y[0];
+			for(int n = 4; n < input.length; n++) {
+				y[n] = b0 * input[n] + b2 * input[n - 2] + b3 * input[n - 3] + b4 * input[n - 4] - a0 * y[n - 1] - a1 * y[n - 2] - a2 * y[n - 3] - a3 * y[n - 4];
+				
+			}
+			return y;
+		}
+		
 		public static double[] linkwitzReillyLowpass(double input[], double freq, int order) {
 			if(order < minOrder || order > maxOrder) return null;
 			if(order % 2 == 1) {
@@ -441,7 +482,7 @@ public class Filter {
 			b2 = b0;
 			a0 = 2.0 * (gamma * gamma - 1.0) / D;
 			a1 = (gamma * gamma - 2.0 * gamma + 1.0) / D;
-			System.out.println(b0 + " " + b1 + " " + b2 + " " + a0 + " " + a1);
+			//System.out.println(b0 + " " + b1 + " " + b2 + " " + a0 + " " + a1);
 			double[] y = new double[input.length];
 			for(int index = 0; index < input.length; index++) {
 				y[index] = 0.0;

@@ -1,5 +1,5 @@
 
-package main;
+package main.modules;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -10,26 +10,29 @@ import java.awt.Graphics2D;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.TreeMap;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import main.AudioPlayer;
+import main.FFT;
+import main.Filter;
+import main.ModuleEditor;
+import main.MultiWindow;
+import main.SynthTools;
 import main.modules.BasicWaveformController;
 import main.modules.BasicWaveformView;
 import main.modules.BasicWaveformEditor.ControlRect;
 
-public class Spectrum extends JPanel implements WindowListener {
+public class SpectrumEQEditor extends JPanel implements WindowListener {
 	
 	MultiWindow multiWindow;
 	ModuleEditor moduleEditor;
-	SpectrumView view;
-	
-	public enum SpectrumType {
-		DFT,
-		FFT;
-	}
-	
+	SpectrumEQView view;
+	SpectrumEQ parent;
+
 	TreeMap<Double, TreeMap<Double, Double>> freqToTimeToAmplitude = new TreeMap<Double, TreeMap<Double, Double>>();
 	double[] leftIFFT;
 	double minTime = 0;
@@ -38,30 +41,46 @@ public class Spectrum extends JPanel implements WindowListener {
 	double maxFreq = 0;
 	double maxAmplitude = 0.0;
 	double minAmplitude = 0.0;
-	private SpectrumType type = null;
 	
 	public static final int fontSize = 12;
 	public static final int xPadding = fontSize * 4;
 	public static final int yPadding = fontSize + 6;
 
 	
-	public Spectrum(ModuleEditor moduleEditor) {
+	public SpectrumEQEditor(SpectrumEQ parent) {
 		super(new BorderLayout());
-        view = new SpectrumView(this);
+        view = new SpectrumEQView(this);
         view.setBackground(Color.black);
         view.setPreferredSize(new Dimension(1500, 800));
         JScrollPane scrollPane = new JScrollPane(view);
         scrollPane.setSize(1500, 800);
         add(scrollPane, BorderLayout.CENTER);
-        this.moduleEditor = moduleEditor;
+        this.parent = parent;
+        this.moduleEditor = parent.getParent();
         this.multiWindow = moduleEditor.parent;
+        initFFTData();
 	}
 	
-	public void initFFTData(double[] left, double[] right) {
-		this.type = SpectrumType.FFT;
-		initFFTData(left);
-		//initFFTData(leftIFFT);
+	public void initFFTData() {
+		double[] control = new double[(int) Math.round(ModuleEditor.defaultDuration * SynthTools.sampleRate)];
+		for(int index = 0; index < control.length; index++) {
+			control[index] = 1.0;
+		}
+		
+		initFFTData(scaleData(parent.masterGetSamples(new HashSet<Integer>(), control)));
 		AudioPlayer.playAudio(leftIFFT);
+	}
+	
+	public double[] scaleData(double[] samples) {
+		maxAmplitude = 0.0;
+		for(int index = 0; index < samples.length; index++) {
+			if(Math.abs(samples[index]) > maxAmplitude) {
+				maxAmplitude = Math.abs(samples[index]);
+			}
+		}
+		if(maxAmplitude == 0) return samples;
+		for(int index = 0; index < samples.length; index++) samples[index] *= Short.MAX_VALUE / maxAmplitude;
+		return samples;
 	}
 	
 	public void initFFTData(double[] channel) {
@@ -163,42 +182,9 @@ public class Spectrum extends JPanel implements WindowListener {
 				if(amplitude > maxAmplitude) maxAmplitude = amplitude;
 			}
 		}
+		System.out.println(minAmplitude);
+		System.out.println(maxAmplitude);
 		view.repaint();
-	}
-	
-	public void initDFTData(double[] left, double[] right) {
-		this.type = SpectrumType.DFT;
-        multiWindow.dftEditorFrame.ModuleDFT(left, right);
-        maxFreq = Math.log(DFTEditor.maxFreqHz) / Math.log(2.0);
-        minFreq = Math.log(DFTEditor.minFreqHz) / Math.log(2.0);
-        minTime = 0.0;
-        maxTime = (DFTEditor.timeStepInMillis / 1000.0) * (DFTEditor.amplitudesLeft.length - 1);
-        loadData(DFTEditor.amplitudesLeft, minTime, maxTime, maxFreq, minFreq);
-        view.repaint();
-	}
-	
-	public void loadData(double[][] timeLogFreqLogAmp, double startTime, double endTime, double startFreq, double endFreq) {
-		int numTimes = timeLogFreqLogAmp.length;
-		int numFreqs = timeLogFreqLogAmp[0].length;
-		double timeStep = (endTime - startTime) / numTimes;
-		double freqStep = (endFreq - startFreq) / numFreqs;
-		for(int timeIndex = 0; timeIndex < numTimes; timeIndex++) {
-			double currentTime = startTime + timeStep * timeIndex;
-			System.out.println("Time " + currentTime);
-			for(int freqIndex = 0; freqIndex < numFreqs; freqIndex++) {
-				double currentFreq = startFreq + freqStep * freqIndex;
-				double amplitude = timeLogFreqLogAmp[timeIndex][freqIndex];
-				if(amplitude == 0.0) continue;
-				if(amplitude > maxAmplitude) maxAmplitude = amplitude;
-				if(amplitude < minAmplitude) minAmplitude = amplitude;
-				if(!freqToTimeToAmplitude.containsKey(currentFreq)) {
-					System.out.println("Freq" + currentFreq);
-					freqToTimeToAmplitude.put(currentFreq, new TreeMap<Double, Double>());
-				}
-				freqToTimeToAmplitude.get(currentFreq).put(currentTime, timeLogFreqLogAmp[timeIndex][freqIndex]);
-			}
-		}
-		System.out.println("Time " + minTime + " " + maxTime + " " + minFreq + " " + maxFreq);
 	}
 	
 	public double xToFreq(int x) {
@@ -222,9 +208,18 @@ public class Spectrum extends JPanel implements WindowListener {
 		double amplitudePerPixel = (maxAmplitude - minAmplitude) / (view.getHeight() - yPadding);
 		return (int) Math.round(view.getHeight() - (amplitude - minAmplitude) / amplitudePerPixel - yPadding);
 	}
+	
+	public int gainToY(double gain) {
+		//return (int) Math.round(Math.random() * view.getHeight());
+		double gainPerPixel = (ModuleEditor.maxAmplitudeLog2 - ModuleEditor.minAmplitudeLog2) / (view.getHeight() - yPadding);
+		return (int) Math.round(view.getHeight() - (gain - ModuleEditor.minAmplitudeLog2) / gainPerPixel - yPadding);
+	}
+	
+	public double yToGain(int y) {
+		double pixelsPerGainStep = (view.getHeight() - yPadding) / (ModuleEditor.maxAmplitudeLog2 - ModuleEditor.minAmplitudeLog2);
+		return Math.pow(2.0, pixelsPerGainStep * y + yPadding);
+	}
 
-	
-	
 	@Override
 	public void windowActivated(WindowEvent arg0) {
 		// TODO Auto-generated method stub
@@ -239,9 +234,7 @@ public class Spectrum extends JPanel implements WindowListener {
 
 	@Override
 	public void windowClosing(WindowEvent arg0) {
-		if(type == SpectrumType.FFT) moduleEditor.closeSpectrumFFT();
-		if(type == SpectrumType.DFT) moduleEditor.closeSpectrumDFT();
-		
+		moduleEditor.closeSpectrumEQEditor();
 	}
 
 	@Override
@@ -265,7 +258,5 @@ public class Spectrum extends JPanel implements WindowListener {
 		// TODO Auto-generated method stub
 		
 	}
-	
-	
 
 }
