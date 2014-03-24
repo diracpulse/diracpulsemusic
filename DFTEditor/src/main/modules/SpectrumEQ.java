@@ -47,6 +47,9 @@ public class SpectrumEQ implements Module {
 			this.gain = gain;
 		}
 		
+		public void setGain(double gain) {
+			this.gain = gain;
+		}
 	}
 	
 	private class Input extends Module.Input {

@@ -52,9 +52,9 @@ public class Filter {
 		}
 		
 		public double[] getAudioData(double[] samples) {
-			//double[] returnVal = butterworthLowpass2(samples, upperBound);
-			//return butterworthHighpass2(returnVal, lowerBound);
-			return butterworthBandpass4(samples, getCenterFreq(), upperBound - lowerBound);
+			double[] returnVal = linkwitzReillyLowpass2(samples, upperBound);
+			return linkwitzReillyHighpass2(returnVal, lowerBound);
+			//return butterworthBandpass4(samples, getCenterFreq(), upperBound - lowerBound);
 		}
 
 	}
@@ -441,7 +441,7 @@ public class Filter {
 			y[2] = b0 * input[2] + b1 * input[1] + b2 * input[0] - a0 * y[1] - a1 * y[0];
 			y[3] = b0 * input[3] + b1 * input[2] + b2 * input[1] + b3 * input[0] - a0 * y[2] - a1 * y[1] - a2 * y[0];
 			for(int n = 4; n < input.length; n++) {
-				y[n] = b0 * input[n] + b2 * input[n - 2] + b3 * input[n - 3] + b4 * input[n - 4] - a0 * y[n - 1] - a1 * y[n - 2] - a2 * y[n - 3] - a3 * y[n - 4];
+				y[n] = b0 * input[n] + b2 * input[n - 2] + b4 * input[n - 4] - a0 * y[n - 1] - a1 * y[n - 2] - a2 * y[n - 3] - a3 * y[n - 4];
 				
 			}
 			return y;
@@ -520,6 +520,8 @@ public class Filter {
 			}
 			return y;
 		}
+		
+		
 		
 
 }
