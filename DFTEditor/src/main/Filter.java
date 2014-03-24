@@ -52,8 +52,11 @@ public class Filter {
 		}
 		
 		public double[] getAudioData(double[] samples) {
-			double[] returnVal = linkwitzReillyLowpass2(samples, upperBound);
-			return linkwitzReillyHighpass2(returnVal, lowerBound);
+			double[] returnVal = linkwitzReillyLowpass4(samples, upperBound);
+			//returnVal = linkwitzReillyHighpass4(returnVal, lowerBound);
+			//if(getQ() < 1.0) return returnVal;
+			//returnVal = linkwitzReillyLowpass4(returnVal, upperBound);
+			return linkwitzReillyHighpass4(returnVal, lowerBound);
 			//return butterworthBandpass4(samples, getCenterFreq(), upperBound - lowerBound);
 		}
 
@@ -499,6 +502,30 @@ public class Filter {
 			return y;
 		}
 		
+		private static double[] linkwitzReillyLowpass4(double[] input, double freq) {
+			double gamma = Math.tan((Math.PI * freq) / SynthTools.sampleRate);
+			double D = Math.pow(gamma, 4.0) + 2.0 * Math.sqrt(2.0) * Math.pow(gamma, 3.0) + 4.0 * gamma * gamma + 2.0 * Math.sqrt(2.0) * gamma + 1.0;
+			b0 = Math.pow(gamma, 4.0) / D;
+			b1 = 4.0 * b0;
+			b2 = 6.0 * b0;
+			b3 = b1;
+			b4 = b0;
+			a0 = 4.0 * (Math.pow(gamma, 4.0) + Math.sqrt(2.0) * Math.pow(gamma, 3.0) - Math.sqrt(2.0) * gamma - 1.0) / D;
+			a1 = 2.0 * (3.0 * Math.pow(gamma, 4.0) - 4.0 * gamma * gamma + 3.0) / D;
+			a2 = 4.0 * (Math.pow(gamma, 4.0) - Math.sqrt(2.0) * Math.pow(gamma, 3.0) + Math.sqrt(2.0) * gamma - 1.0) / D;
+			a3 = (Math.pow(gamma, 4.0) - 2.0 * Math.sqrt(2.0) * Math.pow(gamma, 3.0) + 4.0 * gamma * gamma - 2.0 * Math.sqrt(2.0) * gamma + 1.0) / D;
+			//System.out.println(b0 + " " + b1 + " " + b2 + " " + b3 + " " + b4 + " " + a0 + " " + a1 + " " + a2 + " " + a3);
+			double[] y = new double[input.length];
+			y[0] = b0 * input[0];
+			y[1] = b0 * input[1] + b1 * input[0] - a0 * y[0];
+			y[2] = b0 * input[2] + b1 * input[1] + b2 * input[0] - a0 * y[1] - a1 * y[0];
+			y[3] = b0 * input[3] + b1 * input[2] + b2 * input[1] + b3 * input[0] - a0 * y[2] - a1 * y[1] - a2 * y[0];
+			for(int n = 4; n < input.length; n++) {
+				y[n] = b0 * input[n] + b1 * input[n - 1] + b2 * input[n - 2] + b3 * input[n - 3] + b4 * input[n - 4] - a0 * y[n - 1] - a1 * y[n - 2] - a2 * y[n - 3] - a3 * y[n - 4];
+			}
+			return y;
+		}
+		
 		private static double[] linkwitzReillyHighpass2(double[] input, double freq) {
 			double gamma = Math.tan((Math.PI * freq) / SynthTools.sampleRate);
 			double D = gamma * gamma + 2.0 * gamma + 1.0;
@@ -521,7 +548,30 @@ public class Filter {
 			return y;
 		}
 		
-		
+		private static double[] linkwitzReillyHighpass4(double[] input, double freq) {
+			double gamma = Math.tan((Math.PI * freq) / SynthTools.sampleRate);
+			double D = Math.pow(gamma, 4.0) + 2.0 * Math.sqrt(2.0) * Math.pow(gamma, 3.0) + 4.0 * gamma * gamma + 2.0 * Math.sqrt(2.0) * gamma + 1.0;
+			b0 = 1.0 / D;
+			b1 = -4.0 / D;
+			b2 = 6.0 / D;
+			b3 = b1;
+			b4 = b0;
+			a0 = 4.0 * (Math.pow(gamma, 4.0) + Math.sqrt(2.0) * Math.pow(gamma, 3.0) - Math.sqrt(2.0) * gamma - 1.0) / D;
+			a1 = 2.0 * (3.0 * Math.pow(gamma, 4.0) - 4.0 * gamma * gamma + 3.0) / D;
+			a2 = 4.0 * (Math.pow(gamma, 4.0) - Math.sqrt(2.0) * Math.pow(gamma, 3.0) + Math.sqrt(2.0) * gamma - 1.0) / D;
+			a3 = (Math.pow(gamma, 4.0) - 2.0 * Math.sqrt(2.0) * Math.pow(gamma, 3.0) + 4.0 * gamma * gamma - 2.0 * Math.sqrt(2.0) * gamma + 1.0) / D;
+			//System.out.println(b0 + " " + b1 + " " + b2 + " " + b3 + " " + b4 + " " + a0 + " " + a1 + " " + a2 + " " + a3);
+			double[] y = new double[input.length];
+			y[0] = b0 * input[0];
+			y[1] = b0 * input[1] + b1 * input[0] - a0 * y[0];
+			y[2] = b0 * input[2] + b1 * input[1] + b2 * input[0] - a0 * y[1] - a1 * y[0];
+			y[3] = b0 * input[3] + b1 * input[2] + b2 * input[1] + b3 * input[0] - a0 * y[2] - a1 * y[1] - a2 * y[0];
+			for(int n = 4; n < input.length; n++) {
+				y[n] = b0 * input[n] + b1 * input[n - 1] + b2 * input[n - 2] + b3 * input[n - 3] + b4 * input[n - 4] - a0 * y[n - 1] - a1 * y[n - 2] - a2 * y[n - 3] - a3 * y[n - 4];
+				
+			}
+			return y;
+		}
 		
 
 }

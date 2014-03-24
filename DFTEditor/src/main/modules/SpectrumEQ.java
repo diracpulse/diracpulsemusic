@@ -89,11 +89,15 @@ public class SpectrumEQ implements Module {
 		this.parent = parent;
 		outputs = new ArrayList<Integer>();
 		inputs = new ArrayList<Integer>();
+		initEQBands();
+		init();
+	}
+	
+	public void initEQBands() {
 		eqBands = new ArrayList<EQBand>();
-		for(CriticalBand criticalBand: Filter.calculateCriticalBands(minFreqInHz, maxFreqInHz, 1.0)) {
+		for(CriticalBand criticalBand: Filter.calculateCriticalBands(minFreqInHz, maxFreqInHz, 2.0)) {
 			eqBands.add(new EQBand(criticalBand, 1.0));
 		}
-		init();
 	}
 	
 	public int getWidth() {
@@ -125,6 +129,10 @@ public class SpectrumEQ implements Module {
 	}
 
 	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] control) {
+		return masterGetSamples(waitingForModuleIDs, control, false);
+	}
+	
+	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] control, boolean returnInput) {
 		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
 			//JOptionPane.showMessageDialog(parent.getParentFrame(), "Loop in FIRFilter");
@@ -147,6 +155,7 @@ public class SpectrumEQ implements Module {
 				inputSamples[index] += samplesIn[index]; 
 			}
 		}
+		if(returnInput) return inputSamples;
 		// chop up input for filtering
 		TreeMap<Integer, Integer> startToEnd = new TreeMap<Integer, Integer>();
 		double[] returnVal = new double[control.length];
