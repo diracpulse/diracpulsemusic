@@ -88,7 +88,7 @@ public class SpectrumEQ implements Module {
 		inputs = new ArrayList<Integer>();
 		eqBands = new ArrayList<EQBand>();
 		for(CriticalBand criticalBand: Filter.calculateCriticalBands(minFreqInHz, maxFreqInHz, 1.0)) {
-			eqBands.add(new EQBand(criticalBand, Math.random()));
+			eqBands.add(new EQBand(criticalBand, 1.0));
 		}
 		init();
 	}
