@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
@@ -25,12 +26,15 @@ import main.SynthTools;
 import main.modules.BasicWaveformController;
 import main.modules.BasicWaveformView;
 import main.modules.BasicWaveformEditor.ControlRect;
+import main.modules.Envelope.EnvelopePoint;
+import main.modules.SpectrumEQ.EQBand;
 
 public class SpectrumEQEditor extends JPanel implements WindowListener {
 	
 	MultiWindow multiWindow;
 	ModuleEditor moduleEditor;
 	SpectrumEQView view;
+	SpectrumEQController controller;
 	SpectrumEQ parent;
 	double alpha = 5.0;
 
@@ -47,12 +51,19 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 	public static final int xPadding = fontSize * 4;
 	public static final int yPadding = fontSize + 6;
 
-	
+    
+    public int getControlPointWidth() {
+    	return 16;
+    }
+
 	public SpectrumEQEditor(SpectrumEQ parent) {
 		super(new BorderLayout());
         view = new SpectrumEQView(this);
         view.setBackground(Color.black);
         view.setPreferredSize(new Dimension(1500, 800));
+        controller = new SpectrumEQController(this);
+        view.addMouseListener(controller);
+        view.addMouseMotionListener(controller);
         JScrollPane scrollPane = new JScrollPane(view);
         scrollPane.setSize(1500, 800);
         add(scrollPane, BorderLayout.CENTER);
@@ -62,13 +73,27 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
         initFFTData();
 	}
 	
+    public ArrayList<Rectangle> getControlAreas() {
+    	int height = getControlPointWidth();
+    	ArrayList<Rectangle> returnVal = new ArrayList<Rectangle>();
+    	for(EQBand eqBand: parent.eqBands) {
+    		double gain = Math.log(eqBand.gain) / Math.log(2.0);
+    		int leftX = freqToX(Math.log(eqBand.criticalBand.getCenterFreq()) / Math.log(2.0)) - height / 2;
+       		int upperY = gainToY(gain) - height / 2;
+    		returnVal.add(new Rectangle(leftX, upperY, height, height));
+    		System.out.println(leftX + " " + upperY);
+    	}
+    	return returnVal;
+    }
+	
 	public void initFFTData() {
 		double[] control = new double[(int) Math.round(ModuleEditor.defaultDuration * SynthTools.sampleRate)];
 		for(int index = 0; index < control.length; index++) {
 			control[index] = 1.0;
 		}
-		initFFTData(scaleData(parent.masterGetSamples(new HashSet<Integer>(), control)));
-		AudioPlayer.playAudio(ifft);
+		double[] filteredOutput = scaleData(parent.masterGetSamples(new HashSet<Integer>(), control));
+		initFFTData(filteredOutput);
+		AudioPlayer.playAudio(filteredOutput);
 		view.repaint();
 	}
 	
@@ -217,8 +242,21 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 	}
 	
 	public double yToGain(int y) {
-		double pixelsPerGainStep = (view.getHeight() - yPadding) / (ModuleEditor.maxAmplitudeLog2 - ModuleEditor.minAmplitudeLog2);
-		return Math.pow(2.0, pixelsPerGainStep * y + yPadding);
+		double gainPerPixel = (ModuleEditor.maxAmplitudeLog2 - ModuleEditor.minAmplitudeLog2) / (view.getHeight() - yPadding);
+		double gain = (view.getHeight()- y - yPadding) * gainPerPixel + ModuleEditor.minAmplitudeLog2;
+		System.out.println(gain + " " + y + " " + gainToY(gain));
+		return gain;
+	}
+	
+	public int xToEQBandIndex(int x) {
+		int index = 0;
+		for(EQBand eqBand: parent.eqBands) {
+			int lowerX = freqToX(Math.log(eqBand.criticalBand.getCenterFreq()) / Math.log(2.0)) - getControlPointWidth() / 2;
+			int upperX = lowerX + getControlPointWidth();
+			if(x > lowerX && x < upperX) return index;
+			index++;
+		}
+		return -1;
 	}
 
 	@Override
