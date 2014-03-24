@@ -8,14 +8,17 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.TreeMap;
 
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JToolBar;
 
 import main.AudioPlayer;
 import main.FFT;
@@ -35,6 +38,7 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 	ModuleEditor moduleEditor;
 	SpectrumEQView view;
 	SpectrumEQController controller;
+	JToolBar navigationBar = null;
 	SpectrumEQ parent;
 	double alpha = 5.0;
 
@@ -55,6 +59,19 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
     public int getControlPointWidth() {
     	return 16;
     }
+	
+	public void addNavigationButton(String buttonText) {
+		JButton button = new JButton(buttonText);
+		button.addActionListener((ActionListener) controller);
+		navigationBar.add(button);
+	}
+	
+	public JToolBar createNavigationBar() {
+		navigationBar = new JToolBar("Navigation Bar");
+        addNavigationButton("Reset");
+    	return navigationBar;
+	}
+	
 
 	public SpectrumEQEditor(SpectrumEQ parent) {
 		super(new BorderLayout());
@@ -62,6 +79,7 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
         view.setBackground(Color.black);
         view.setPreferredSize(new Dimension(1500, 800));
         controller = new SpectrumEQController(this);
+        add(createNavigationBar(), BorderLayout.PAGE_START);
         view.addMouseListener(controller);
         view.addMouseMotionListener(controller);
         JScrollPane scrollPane = new JScrollPane(view);
@@ -91,19 +109,29 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 		for(int index = 0; index < control.length; index++) {
 			control[index] = 1.0;
 		}
-		double[] filteredOutput = scaleData(parent.masterGetSamples(new HashSet<Integer>(), control));
+		//double maxAmplitude = getMaxAmplitude(parent.masterGetSamples(new HashSet<Integer>(), control, true));
+		double[] filteredOutput = scaleData(parent.masterGetSamples(new HashSet<Integer>(), control)); //, maxAmplitude);
 		initFFTData(filteredOutput);
 		AudioPlayer.playAudio(filteredOutput);
 		view.repaint();
 	}
 	
 	public double[] scaleData(double[] samples) {
+		double maxAmplitude = getMaxAmplitude(samples);
+		return scaleData(samples, maxAmplitude);
+	}
+	
+	public double getMaxAmplitude(double[] samples) {
 		maxAmplitude = 0.0;
 		for(int index = 0; index < samples.length; index++) {
 			if(Math.abs(samples[index]) > maxAmplitude) {
 				maxAmplitude = Math.abs(samples[index]);
 			}
 		}
+		return maxAmplitude;
+	}
+	
+	public double[] scaleData(double[] samples, double maxAmplitude) {
 		if(maxAmplitude == 0) return samples;
 		for(int index = 0; index < samples.length; index++) samples[index] *= Short.MAX_VALUE / maxAmplitude;
 		return samples;
