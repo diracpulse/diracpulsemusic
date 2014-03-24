@@ -44,6 +44,7 @@ public class Filter {
 		public double getCenterFreq() {
 			//return Math.sqrt(upperBound * lowerBound);
 			return Math.sqrt(upperBound * lowerBound);
+			//return (upperBound + lowerBound) / 2.0;
 		}
 		
 		public double getQ() {
@@ -51,7 +52,9 @@ public class Filter {
 		}
 		
 		public double[] getAudioData(double[] samples) {
-			return butterworthBandpass(samples, getCenterFreq(), getQ(), 4);
+			//double[] returnVal = butterworthLowpass2(samples, upperBound);
+			//return butterworthHighpass2(returnVal, lowerBound);
+			return butterworthBandpass4(samples, getCenterFreq(), upperBound - lowerBound);
 		}
 
 	}
@@ -255,7 +258,7 @@ public class Filter {
 					startFreqInHz = endFreqInHz;
 				}
 			}
-			criticalBands.add(new CriticalBand(startFreqInHz, maxFreq));
+			//criticalBands.add(new CriticalBand(criticalBands.get(criticalBands.size() - 1).upperBound, maxFreq));
 			for(CriticalBand bounds: criticalBands) {
 				//System.out.println("Critical Band: " + bounds.getLowerBound() + " " + bounds.getUpperBound());
 			}

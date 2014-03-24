@@ -32,9 +32,10 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 	ModuleEditor moduleEditor;
 	SpectrumEQView view;
 	SpectrumEQ parent;
+	double alpha = 5.0;
 
 	TreeMap<Double, TreeMap<Double, Double>> freqToTimeToAmplitude = new TreeMap<Double, TreeMap<Double, Double>>();
-	double[] leftIFFT;
+	double[] ifft;
 	double minTime = 0;
 	double maxTime = 0;
 	double minFreq = 0;
@@ -66,9 +67,9 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 		for(int index = 0; index < control.length; index++) {
 			control[index] = 1.0;
 		}
-		
 		initFFTData(scaleData(parent.masterGetSamples(new HashSet<Integer>(), control)));
-		AudioPlayer.playAudio(leftIFFT);
+		AudioPlayer.playAudio(ifft);
+		view.repaint();
 	}
 	
 	public double[] scaleData(double[] samples) {
@@ -87,9 +88,9 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 		if(channel == null) return;
 		if(channel.length == 0) return;
 		freqToTimeToAmplitude = new TreeMap<Double, TreeMap<Double, Double>>();
-		leftIFFT = new double[channel.length];
-		for(int index = 0; index < leftIFFT.length; index++) {
-			leftIFFT[index] = 0.0;
+		ifft = new double[channel.length];
+		for(int index = 0; index < ifft.length; index++) {
+			ifft[index] = 0.0;
 		}
 		int minWindowLength = 512;
 		int minStepSize = 512 / 2;
@@ -99,7 +100,7 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 		maxTime = channel.length / SynthTools.sampleRate;
 		// calculate minStepSize, use lowest window length to avoid time being slightly different
 		double[] kbdWindow = new double[minWindowLength];
-		Filter.CreateWindow(kbdWindow, kbdWindow.length, 5.0);
+		Filter.CreateWindow(kbdWindow, kbdWindow.length, 1.0);
 		for(int index = 0; index < kbdWindow.length; index++) {
 			if(index > 0) {
 				if(kbdWindow[index - 1] >= 0.5 && kbdWindow[index] <= 0.5) {
@@ -137,7 +138,7 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 		double[] samples = new double[windowLength * 2];
 		double[] kbdWindow = new double[windowLength];
 		double windowGain = 0.0;
-		Filter.CreateWindow(kbdWindow, kbdWindow.length, 5.0);
+		Filter.CreateWindow(kbdWindow, kbdWindow.length, alpha);
 		for(int index = 0; index < kbdWindow.length; index++) {
 			windowGain += kbdWindow[index];
 		}
@@ -159,7 +160,7 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 			FFT.runFFT(idft, idft.length / 2, -1);
 			for(int idftIndex = 0; idftIndex < idft.length; idftIndex += 2) {
 				double real = idft[idftIndex] / windowGain;
-				leftIFFT[idftIndex / 2 + index] += real;
+				ifft[idftIndex / 2 + index] += real;
 			}
 			double time = index / SynthTools.sampleRate;
 			for(int freq = minFreq; freq < maxFreq; freq++) {
@@ -182,9 +183,9 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 				if(amplitude > maxAmplitude) maxAmplitude = amplitude;
 			}
 		}
-		System.out.println(minAmplitude);
-		System.out.println(maxAmplitude);
-		view.repaint();
+		//System.out.println(minAmplitude);
+		//System.out.println(maxAmplitude);
+		//view.repaint();
 	}
 	
 	public double xToFreq(int x) {
