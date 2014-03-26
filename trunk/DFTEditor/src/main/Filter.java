@@ -8,6 +8,15 @@ public class Filter {
 	
 	public static final int minOrder = 1;
 	public static final int maxOrder = 24; // for 24 bit data
+	public final static double minFilterFrequency = SynthTools.sampleRate / 4096.0;
+	// filters set to nyquist freqency behave poorly
+	public final static double maxFilterFrequency = SynthTools.sampleRate / 2.0 * 7.0 / 8.0;
+	public final static double minFilterFrequencyLog2 = Math.log(minFilterFrequency) / Math.log(2.0);
+	public final static double maxFilterFrequencyLog2 = Math.log(maxFilterFrequency) / Math.log(2.0);
+	public final static double maxOvershootLog2 = 4.0;
+	public final static double minOvershootLog2 = -4.0;
+	public final static double maxFilterQLog2 = 8;
+	public final static double minFilterQLog2 = -8;
 	
 	public enum Implementation {
 		BUTTERWORTH,
@@ -19,45 +28,71 @@ public class Filter {
 		HIGHPASS,
 		BANDPASS;
 	}
-	
+
 	public static class CriticalBand {
 		
 		double lowerBound;
 		double upperBound;
-		double lpFilter[] = null;
-		double hpFilter[] = null;
-		public static double[] returnCache;
+		double overshoot = 1.0;
+		double filterQ = Math.sqrt(2.0) / 2.0; // Butterworth
+		double maxFreq = maxFilterFrequency;
+		double minFreq = minFilterFrequency;
 
 		CriticalBand(double lowerBound, double upperBound) {
 			this.upperBound = upperBound;
 			this.lowerBound = lowerBound;
 		}
-	
+
+		public void setOvershoot(double overshoot) {
+			this.overshoot = overshoot;
+		}
+		
+		public void setFilterQ(double filterQ) {
+			this.filterQ = filterQ;
+		}
+		
+		public double getOvershoot() {
+			return overshoot;
+		}
+		
+		public double getFilterQ() {
+			return filterQ;
+		}
+		
 		public double getLowerBound() {
-			return lowerBound;
+			double returnVal = lowerBound / overshoot;
+			if(returnVal < minFreq) return minFreq;
+			if(returnVal > upperBound * overshoot) return Math.sqrt(upperBound * lowerBound);
+			return returnVal;
 		}
 		
 		public double getUpperBound() {
-			return upperBound;
+			double returnVal = upperBound * overshoot;
+			if(returnVal > maxFreq) return maxFreq;
+			if(returnVal < lowerBound / overshoot) return Math.sqrt(upperBound * lowerBound);
+			return returnVal;
+		}
+		
+		public double getBandwidth() {
+			return getUpperBound() - getLowerBound();
 		}
 		
 		public double getCenterFreq() {
-			//return Math.sqrt(upperBound * lowerBound);
-			return Math.sqrt(upperBound * lowerBound);
-			//return (upperBound + lowerBound) / 2.0;
+			return Math.sqrt(getUpperBound() * getLowerBound());
 		}
 		
 		public double getQ() {
-			return getCenterFreq() / (upperBound - lowerBound);
+			if(getBandwidth() == 0.0) return Float.MAX_VALUE;
+			return getCenterFreq() / getBandwidth();
 		}
 		
 		public double[] getAudioData(double[] samples) {
-			double[] returnVal = linkwitzReillyLowpass4(samples, upperBound);
+			//double[] returnVal = linkwitzReillyLowpass4(samples, upperBound);
 			//returnVal = linkwitzReillyHighpass4(returnVal, lowerBound);
 			//if(getQ() < 1.0) return returnVal;
 			//returnVal = linkwitzReillyLowpass4(returnVal, upperBound);
-			return linkwitzReillyHighpass4(returnVal, lowerBound);
-			//return butterworthBandpass4(samples, getCenterFreq(), upperBound - lowerBound);
+			//return linkwitzReillyHighpass4(returnVal, lowerBound);
+			return variableQBandpass4(samples, getCenterFreq(), getBandwidth() , filterQ);
 		}
 
 	}
@@ -66,7 +101,7 @@ public class Filter {
 	final static double twoPI = 6.283185307179586476925286766559;
 	final static double onePI = 3.1415926535897932384626433832795;
 	final static double halfPI = 1.5707963267948966192313216916398;
-	final static double samplingRate = 44100.0;
+	final static double samplingRate = SynthTools.sampleRate;
 	final static double maxBinStep = 1.0;
 	final static double optimalLPRejectRatio = 1.38;
 	public static TreeMap<Float, Integer> passFreqToFilterLength = null;
@@ -268,7 +303,7 @@ public class Filter {
 			return criticalBands;
 			
 		}
-		
+
 		private static double b0 = 0.0;
 		private static double b1 = 0.0;
 		private static double b2 = 0.0;
@@ -573,5 +608,54 @@ public class Filter {
 			return y;
 		}
 		
-
+		private static double[] besselBandpass4(double[] input, double f, double b) {
+			double g = Math.tan((Math.PI * f) / SynthTools.sampleRate);
+			double D = f * f * Math.pow(g, 4.0) + 3.0 * b * f * Math.pow(g, 3.0) + (2.0 * f * f + 3.0 * b * b) * g * g + 3.0 * b * f * g + f * f;
+			b0 = 3.0 * b * b * g * g / D;
+			b1 = 0.0;
+			b2 = -2.0 * b0;
+			b3 = 0.0;
+			b4 = b0;
+			a0 = 2 * f * (2 * f * Math.pow(g, 4) + 3 * b * (Math.pow(g,  3) - g) - 2 * f) / D;
+			a1 = 2 * (3 * f * f * Math.pow(g,  4) - (2 * f * f + 3 * b * b) * g * g + 3 * f * f) / D;
+			a2 = 2 * f * (2 * f * Math.pow(g, 4) - 3 * b * (Math.pow(g,  3) - g) - 2 * f) / D;
+			a3 = (f * f * Math.pow(g, 4.0) - 3.0 * b * f * Math.pow(g, 3.0) + (2.0 * f * f + 3.0 * b * b) * g * g - 3.0 * b * f * g + f * f) / D;
+			//System.out.println(b0 + " " + b1 + " " + b2 + " " + b3 + " " + b4 + " " + a0 + " " + a1 + " " + a2 + " " + a3);
+			double[] y = new double[input.length];
+			y[0] = b0 * input[0];
+			y[1] = b0 * input[1] + b1 * input[0] - a0 * y[0];
+			y[2] = b0 * input[2] + b1 * input[1] + b2 * input[0] - a0 * y[1] - a1 * y[0];
+			y[3] = b0 * input[3] + b1 * input[2] + b2 * input[1] + b3 * input[0] - a0 * y[2] - a1 * y[1] - a2 * y[0];
+			for(int n = 4; n < input.length; n++) {
+				y[n] = b0 * input[n] + b1 * input[n - 1] + b2 * input[n - 2] + b3 * input[n - 3] + b4 * input[n - 4] - a0 * y[n - 1] - a1 * y[n - 2] - a2 * y[n - 3] - a3 * y[n - 4];
+				
+			}
+			return y;
+		}
+		
+		public static double[] variableQBandpass4(double[] input, double f, double b, double q) {
+			double g = Math.tan((Math.PI * f) / SynthTools.sampleRate);
+			double D = q * f * f * Math.pow(g, 4.0) + f * b * (g * g + 1) * g + q * (2.0 * f * f + b * b) * g * g + q * f * f;
+			b0 = q * b * b * g * g / D;
+			b1 = 0.0;
+			b2 = -2.0 * b0;
+			b3 = 0.0;
+			b4 = b0;
+			a0 = 2 * f * (2 * q * f * Math.pow(g, 4) + b * (g * g - 1) * g - 2 * q * f) / D;
+			a1 = 2 * q * (3 * f * f * Math.pow(g,  4) - (2 * f * f + b * b) * g * g + 3 * f * f) / D;
+			a2 = 2 * f * (2 * q * f * Math.pow(g, 4) - b * (g * g - 1) * g - 2 * q * f) / D;
+			a3 = (q * f * f * Math.pow(g, 4.0) - f * b * (g * g + 1) * g  + q * (2.0 * f * f + b * b) * g * g + q * f * f) / D;
+			//System.out.println("b0 " + b0 + "\nb1 " + b1 + "\nb2 " + b2 + "\nb3 " + b3 + "\nb4 " + b4 + "\na0 " + a0 + "\na1 " + a1 + "\na2 " + a2 + "\na3 " + a3);
+			double[] y = new double[input.length];
+			y[0] = b0 * input[0];
+			y[1] = b0 * input[1] + b1 * input[0] - a0 * y[0];
+			y[2] = b0 * input[2] + b1 * input[1] + b2 * input[0] - a0 * y[1] - a1 * y[0];
+			y[3] = b0 * input[3] + b1 * input[2] + b2 * input[1] + b3 * input[0] - a0 * y[2] - a1 * y[1] - a2 * y[0];
+			for(int n = 4; n < input.length; n++) {
+				y[n] = b0 * input[n] + b1 * input[n - 1] + b2 * input[n - 2] + b3 * input[n - 3] + b4 * input[n - 4] - a0 * y[n - 1] - a1 * y[n - 2] - a2 * y[n - 3] - a3 * y[n - 4];
+				
+			}
+			return y;
+		}
+		
 }

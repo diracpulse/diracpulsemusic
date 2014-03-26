@@ -25,8 +25,8 @@ public class SpectrumEQ implements Module {
 	ModuleEditor parent = null;
 	Integer moduleID = null;
 	double amplitude = 1.0;
-	double minFreqInHz = SynthTools.sampleRate / 2048.0;
-	double maxFreqInHz = ModuleEditor.maxFrequency;
+	double minFreqInHz = Filter.minFilterFrequency;
+	double maxFreqInHz = Filter.maxFilterFrequency;
 	ArrayList<EQBand> eqBands;
 
 	int cornerX;

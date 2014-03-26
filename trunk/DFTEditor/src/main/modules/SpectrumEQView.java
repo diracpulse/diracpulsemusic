@@ -16,6 +16,7 @@ import java.util.TreeMap;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import main.Filter;
 import main.ModuleEditor;
 import main.modules.BasicWaveformController;
 import main.modules.BasicWaveformView;
@@ -72,21 +73,32 @@ public class SpectrumEQView extends JPanel {
 			g2.drawLine(parent.freqToX(freq), getHeight() - parent.yPadding, parent.freqToX(freq), 0);
 			g2.drawString(Math.round(Math.pow(2.0, freq)) + "", parent.freqToX(freq), getHeight() - 2);
 		}
-		for(double amplitude = Math.ceil(parent.minAmplitude); amplitude < parent.maxAmplitude; amplitude += 1.0) {
+		for(double amplitude = 0.0; amplitude < parent.absoluteMaxAmplitude; amplitude += 1.0) {
 			g2.drawLine(parent.xPadding, parent.amplitudeToY(amplitude), getWidth(),  parent.amplitudeToY(amplitude));
 			g2.drawString(Math.round(Math.pow(2.0, amplitude)) + "", 0, parent.amplitudeToY(amplitude));
 		}
-		g2.setColor(new Color(1.0f, 0.0f, 1.0f, 0.5f));
+		g2.setColor(new Color(0.0f, 1.0f, 1.0f, 0.5f));
 		for(double gain = ModuleEditor.minAmplitudeLog2; gain <= ModuleEditor.maxAmplitudeLog2; gain += 1.0) {
 			g2.drawLine(parent.xPadding, parent.gainToY(gain), getWidth(),  parent.gainToY(gain));
-			g2.drawString(Math.round(Math.pow(2.0, gain)) + "", 0, parent.gainToY(gain));
+			//g2.drawString(Math.round(Math.pow(2.0, gain)) + "", 0, parent.gainToY(gain));
 		}
+		g2.setColor(new Color(1.0f, 0.0f, 0.0f, 0.5f));
+		for(double filterQ = Filter.minFilterQLog2; filterQ <= Filter.maxFilterQLog2; filterQ += 1.0) {
+			g2.drawLine(parent.xPadding, parent.filterQToY(filterQ), getWidth(),  parent.filterQToY(filterQ));
+			//g2.drawString(Math.round(Math.pow(2.0, filterQ)) + "", 0, parent.filterQToY(filterQ));
+		}
+		g2.setColor(new Color(0.0f, 0.0f, 1.0f, 0.5f));
+		for(double overshoot = Filter.minFilterQLog2; overshoot <= Filter.maxFilterQLog2; overshoot += 1.0) {
+			g2.drawLine(parent.xPadding, parent.overshootToY(overshoot), getWidth(),  parent.overshootToY(overshoot));
+			//g2.drawString(Math.round(Math.pow(2.0, overshoot)) + "", 0, parent.overshootToY(overshoot));
+		}
+		
 	}
 	
 	private void drawEQBands(Graphics2D g2) {
-		g2.setColor(new Color(0.0f, 1.0f, 0.0f, 0.5f));
 		g2.setStroke(new BasicStroke(2));
 		for(EQBand eqBand: parent.parent.eqBands) {
+			g2.setColor(new Color(0.0f, 1.0f, 0.0f, 0.5f));
 			int x = parent.freqToX(Math.log(eqBand.criticalBand.getCenterFreq()) / Math.log(2.0));
 			int x0 = parent.freqToX(Math.log(eqBand.criticalBand.getLowerBound()) / Math.log(2.0));
 			int x1 = parent.freqToX(Math.log(eqBand.criticalBand.getUpperBound()) / Math.log(2.0));
@@ -94,6 +106,12 @@ public class SpectrumEQView extends JPanel {
 			int y0 = parent.gainToY(Math.log(eqBand.gain)/Math.log(2.0) - 1.0);
 			g2.drawLine(x0, y0, x, y);
 			g2.drawLine(x1, y0, x, y);
+			g2.fillRect(x - 6, y - 6, 12, 12);
+			g2.setColor(new Color(1.0f, 0.0f, 0.0f, 0.5f));
+			y = parent.overshootToY(Math.log(eqBand.criticalBand.getOvershoot())/Math.log(2.0));
+			g2.fillRect(x - 6, y - 6, 12, 12);
+			g2.setColor(new Color(0.0f, 0.0f, 1.0f, 0.5f));
+			y = parent.filterQToY(Math.log(eqBand.criticalBand.getFilterQ())/Math.log(2.0));
 			g2.fillRect(x - 6, y - 6, 12, 12);
 		}
 	}

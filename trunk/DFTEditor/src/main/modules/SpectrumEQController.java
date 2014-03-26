@@ -8,6 +8,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
+import main.modules.SpectrumEQEditor.SelectionMode;
+
 public class SpectrumEQController implements MouseListener, MouseMotionListener, ActionListener {
 
 	SpectrumEQEditor parent;
@@ -27,13 +29,26 @@ public class SpectrumEQController implements MouseListener, MouseMotionListener,
 
 	@Override
 	public void mouseDragged(MouseEvent arg0) {
-		if(eqBandIndex == null) return;
 		int x = arg0.getX();
 		int y = arg0.getY();
-		parent.parent.eqBands.get(eqBandIndex).setGain(Math.pow(2.0, parent.yToGain(y)));
+		if(eqBandIndex == null) return;
+		switch(parent.selectionMode) {
+			case GAIN:
+				parent.parent.eqBands.get(eqBandIndex).setGain(Math.pow(2.0, parent.yToGain(y)));
+				break;
+			case OVERSHOOT:
+				parent.parent.eqBands.get(eqBandIndex).criticalBand.setOvershoot(Math.pow(2.0, parent.yToOvershoot(y)));
+				break;
+			case FILTER_EQ:
+				parent.parent.eqBands.get(eqBandIndex).criticalBand.setFilterQ(Math.pow(2.0, parent.yToFilterQ(y)));
+				break;
+			case NONE:
+				System.out.println("SpectrumEQController.mouseReleased: unexpected state");
+				break;
+		}
 		parent.view.repaint();
 	}
-
+	
 	@Override
 	public void mouseMoved(MouseEvent arg0) {
 	}
@@ -49,6 +64,9 @@ public class SpectrumEQController implements MouseListener, MouseMotionListener,
 
 	@Override
 	public void mouseExited(MouseEvent arg0) {
+		if(eqBandIndex == null) return;
+		parent.selectionMode = SelectionMode.NONE;
+		parent.initFFTData();
 		eqBandIndex = null;
 	}
 
@@ -56,10 +74,29 @@ public class SpectrumEQController implements MouseListener, MouseMotionListener,
 	public void mousePressed(MouseEvent arg0) {
 		int x = arg0.getX();
 		int y = arg0.getY();
-		for(Rectangle rect: parent.getControlAreas()) {
+		if(arg0.isControlDown()) {
+			for(Rectangle rect: parent.getFilterQControlAreas()) {
+				if(rect.contains(x, y)) {
+					parent.selectionMode = SelectionMode.FILTER_EQ;
+					eqBandIndex = parent.xToEQBandIndex(x);
+					return;
+				}
+			}
+		}
+		if(arg0.isShiftDown()) {
+			for(Rectangle rect: parent.getOvershootControlAreas()) {
+				if(rect.contains(x, y)) {
+					parent.selectionMode = SelectionMode.OVERSHOOT;
+					eqBandIndex = parent.xToEQBandIndex(x);
+					return;
+				}
+			}
+		}
+		for(Rectangle rect: parent.getGainControlAreas()) {
 			if(rect.contains(x, y)) {
+				parent.selectionMode = SelectionMode.GAIN;
 				eqBandIndex = parent.xToEQBandIndex(x);
-				System.out.println("Selected");
+				//System.out.println("Selected");
 				return;
 			}
 		}
@@ -71,7 +108,21 @@ public class SpectrumEQController implements MouseListener, MouseMotionListener,
 		if(eqBandIndex == null) return;
 		int x = arg0.getX();
 		int y = arg0.getY();
-		parent.parent.eqBands.get(eqBandIndex).setGain(Math.pow(2.0, parent.yToGain(y)));
+		switch(parent.selectionMode) {
+			case GAIN:
+				parent.parent.eqBands.get(eqBandIndex).setGain(Math.pow(2.0, parent.yToGain(y)));
+				break;
+			case OVERSHOOT:
+				parent.parent.eqBands.get(eqBandIndex).criticalBand.setOvershoot(Math.pow(2.0, parent.yToOvershoot(y)));
+				break;
+			case FILTER_EQ:
+				parent.parent.eqBands.get(eqBandIndex).criticalBand.setFilterQ(Math.pow(2.0, parent.yToFilterQ(y)));
+				break;
+			case NONE:
+				System.out.println("SpectrumEQController.mouseReleased: unexpected state");
+				break;
+		}
+		parent.selectionMode = SelectionMode.NONE;
 		parent.initFFTData();
 		eqBandIndex = null;
 	}
