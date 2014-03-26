@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.TreeMap;
 
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
@@ -46,16 +47,97 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 	double[] ifft;
 	double minTime = 0;
 	double maxTime = 0;
-	double minFreq = 0;
-	double maxFreq = 0;
-	double maxAmplitude = 0.0;
+	double minFreq = Math.log((SynthTools.sampleRate / 2048.0)) / Math.log(2.0);
+	double maxFreq = Math.log((SynthTools.sampleRate / 2.0)) / Math.log(2.0);
+	double absoluteMaxAmplitude = Math.log(Short.MAX_VALUE) / Math.log(2.0);
+	double fftMaxAmplitude = 0.0;
 	double minAmplitude = 0.0;
 	
 	public static final int fontSize = 12;
 	public static final int xPadding = fontSize * 4;
 	public static final int yPadding = fontSize + 6;
+	
+	PixelValue freqPV = new PixelValue(minFreq, maxFreq, xPadding, true);
+	PixelValue amplitudePV = new PixelValue(0.0, absoluteMaxAmplitude, yPadding, false);
+	PixelValue gainPV = new PixelValue(-16.0, 0.0, yPadding, false);
+	PixelValue overshootPV = new PixelValue(Filter.minOvershootLog2, Filter.maxOvershootLog2, yPadding, false);
+	PixelValue filterQPV = new PixelValue(Filter.minFilterQLog2, Filter.maxFilterQLog2, yPadding, false);
+	
+	SelectionMode selectionMode = SelectionMode.NONE;
+	
+	public enum SelectionMode {
+		NONE,
+		GAIN,
+		OVERSHOOT,
+		FILTER_EQ;
+	}
+	
+	public class PixelValue {
+		
+		int padding;
+		boolean lowToHigh;
+		double maxValue;
+		double minValue;
+		
+		PixelValue(double minValue, double maxValue, int padding, boolean lowToHigh) {
+			this.minValue = minValue;
+			this.maxValue = maxValue;
+			this.padding = padding;
+			this.lowToHigh = lowToHigh;
+		}
+		
+		public int valueToPixel(double value, int maxPixel) {
+			if(lowToHigh) {
+				double valuePerPixel = (maxValue - minValue) / (maxPixel - padding * 2);
+				return (int) Math.round((value - minValue) / valuePerPixel + padding);
+			}
+			double valuePerPixel = (maxValue - minValue) / (maxPixel - padding * 2);
+			return (int) Math.round(maxPixel - (value - minValue) / valuePerPixel - padding);
+		}
+		
+		public double pixelToValue(int pixel, int maxPixel) {
+			if(lowToHigh) {
+				double valuesPerPixel = (maxValue - minValue) / (maxPixel - padding * 2);
+				return (pixel - padding) * valuesPerPixel + minValue;
+			}
+			double valuesPerPixel = (maxValue - minValue) / (maxPixel - padding * 2);
+			return (maxPixel - pixel - padding) * valuesPerPixel + minValue;
+		}
+		
+	}
+	
+	public int freqToX(double freq) {
+		return freqPV.valueToPixel(freq, view.getWidth());
+	}
 
-    
+	public int amplitudeToY(double amplitude) {
+		return amplitudePV.valueToPixel(amplitude, view.getHeight());
+	}
+	
+	public int gainToY(double gain) {
+		return gainPV.valueToPixel(gain, view.getHeight());
+	}
+	
+	public double yToGain(int y) {
+		return gainPV.pixelToValue(y, view.getHeight());
+	}
+	
+	public int overshootToY(double overshoot) {
+		return overshootPV.valueToPixel(overshoot, view.getHeight());
+	}
+	
+	public double yToOvershoot(int y) {
+		return overshootPV.pixelToValue(y, view.getHeight());
+	}
+	
+	public int filterQToY(double filterQ) {
+		return filterQPV.valueToPixel(filterQ, view.getHeight());
+	}
+	
+	public double yToFilterQ(int y) {
+		return filterQPV.pixelToValue(y, view.getHeight());
+	}
+	
     public int getControlPointWidth() {
     	return 16;
     }
@@ -91,13 +173,45 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
         initFFTData();
 	}
 	
-    public ArrayList<Rectangle> getControlAreas() {
+    public ArrayList<Rectangle> getGainControlAreas() {
     	int height = getControlPointWidth();
     	ArrayList<Rectangle> returnVal = new ArrayList<Rectangle>();
     	for(EQBand eqBand: parent.eqBands) {
     		double gain = Math.log(eqBand.gain) / Math.log(2.0);
-    		int leftX = freqToX(Math.log(eqBand.criticalBand.getCenterFreq()) / Math.log(2.0)) - height / 2;
-       		int upperY = gainToY(gain) - height / 2;
+    		int x = freqToX(Math.log(eqBand.criticalBand.getCenterFreq()) / Math.log(2.0));
+    		int leftX = x - height / 2;
+    		int y = gainToY(gain);
+       		int upperY = y - height / 2;
+    		returnVal.add(new Rectangle(leftX, upperY, height, height));
+    		System.out.println(leftX + " " + upperY);
+    	}
+    	return returnVal;
+    }
+    
+    public ArrayList<Rectangle> getOvershootControlAreas() {
+    	int height = getControlPointWidth();
+    	ArrayList<Rectangle> returnVal = new ArrayList<Rectangle>();
+    	for(EQBand eqBand: parent.eqBands) {
+    		double overshoot = Math.log(eqBand.criticalBand.getOvershoot()) / Math.log(2.0);
+    		int x = freqToX(Math.log(eqBand.criticalBand.getCenterFreq()) / Math.log(2.0));
+    		int leftX = x - height / 2;
+    		int y = overshootToY(overshoot);
+       		int upperY = y - height / 2;
+    		returnVal.add(new Rectangle(leftX, upperY, height, height));
+    		System.out.println(leftX + " " + upperY);
+    	}
+    	return returnVal;
+    }
+    
+    public ArrayList<Rectangle> getFilterQControlAreas() {
+    	int height = getControlPointWidth();
+    	ArrayList<Rectangle> returnVal = new ArrayList<Rectangle>();
+    	for(EQBand eqBand: parent.eqBands) {
+    		double filterQ = Math.log(eqBand.criticalBand.getFilterQ()) / Math.log(2.0);
+    		int x = freqToX(Math.log(eqBand.criticalBand.getCenterFreq()) / Math.log(2.0));
+    		int leftX = x - height / 2;
+    		int y = filterQToY(filterQ);
+       		int upperY = y - height / 2;
     		returnVal.add(new Rectangle(leftX, upperY, height, height));
     		System.out.println(leftX + " " + upperY);
     	}
@@ -111,6 +225,10 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 		}
 		//double maxAmplitude = getMaxAmplitude(parent.masterGetSamples(new HashSet<Integer>(), control, true));
 		double[] filteredOutput = scaleData(parent.masterGetSamples(new HashSet<Integer>(), control)); //, maxAmplitude);
+		if(filteredOutput == null) {
+			JOptionPane.showMessageDialog(parent.getParent(), "Filter is unstable");
+			return;
+		}
 		initFFTData(filteredOutput);
 		AudioPlayer.playAudio(filteredOutput);
 		view.repaint();
@@ -122,17 +240,25 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 	}
 	
 	public double getMaxAmplitude(double[] samples) {
-		maxAmplitude = 0.0;
+		double maxAmplitude = 0.0;
 		for(int index = 0; index < samples.length; index++) {
 			if(Math.abs(samples[index]) > maxAmplitude) {
 				maxAmplitude = Math.abs(samples[index]);
 			}
 		}
-		return maxAmplitude;
+		if(maxAmplitude > absoluteMaxAmplitude) {
+			//JOptionPane.showMessageDialog(parent.getParent(), "Filter is unstable");
+			//return -1;
+		}
+		return 1.0; // maxAmplitude;
 	}
 	
 	public double[] scaleData(double[] samples, double maxAmplitude) {
 		if(maxAmplitude == 0) return samples;
+		if(maxAmplitude == -1) {
+			for(int index = 0; index < samples.length; index++) samples[index] = 0.0;
+			return samples;
+		}
 		for(int index = 0; index < samples.length; index++) samples[index] *= Short.MAX_VALUE / maxAmplitude;
 		return samples;
 	}
@@ -140,6 +266,7 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 	public void initFFTData(double[] channel) {
 		if(channel == null) return;
 		if(channel.length == 0) return;
+		fftMaxAmplitude = 0.0;
 		freqToTimeToAmplitude = new TreeMap<Double, TreeMap<Double, Double>>();
 		ifft = new double[channel.length];
 		for(int index = 0; index < ifft.length; index++) {
@@ -222,7 +349,7 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 				double imag = samples[freq * 2 + 1] / windowGain;
 				double amplitude = Math.log(Math.sqrt(real * real + imag * imag)) / Math.log(2.0);
 				if(amplitude <= 0.0) continue;
-				if(amplitude > maxAmplitude) maxAmplitude = amplitude;
+				if(amplitude > fftMaxAmplitude) fftMaxAmplitude = amplitude;
 				if(!freqToTimeToAmplitude.containsKey(currentFreq)) {
 					freqToTimeToAmplitude.put(currentFreq, new TreeMap<Double, Double>());
 				}
@@ -230,10 +357,11 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 					freqToTimeToAmplitude.get(currentFreq).put(time, amplitude);
 				} else {
 					double prevAmplitude = freqToTimeToAmplitude.get(currentFreq).get(time);
-					amplitude = Math.log(Math.pow(2.0, prevAmplitude) + Math.pow(2.0, amplitude)) / Math.log(2.0);
-					freqToTimeToAmplitude.get(currentFreq).put(time, amplitude);
+					if(amplitude > prevAmplitude) {
+						freqToTimeToAmplitude.get(currentFreq).put(time, amplitude);
+					}
 				}
-				if(amplitude > maxAmplitude) maxAmplitude = amplitude;
+				if(amplitude > fftMaxAmplitude) fftMaxAmplitude = amplitude;
 			}
 		}
 		//System.out.println(minAmplitude);
@@ -241,41 +369,7 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 		//view.repaint();
 	}
 	
-	public double xToFreq(int x) {
-		double pixelsPerFreqStep = (view.getWidth() - xPadding) / (maxFreq - minFreq);
-		return Math.round(pixelsPerFreqStep * x + xPadding);
-	}
-	
-	public double yToAmplitude(int y) {
-		double pixelsPerAmplitudeStep = (view.getHeight() - yPadding) / (maxAmplitude - minAmplitude);
-		return Math.round(pixelsPerAmplitudeStep * y + yPadding);
-	}
-	
-	public int freqToX(double freq) {
-		//return (int) Math.round(Math.random() * view.getWidth());
-		double freqPerPixel = (maxFreq - minFreq) / (view.getWidth() - xPadding);
-		return (int) Math.round((freq - minFreq) / freqPerPixel + xPadding);
-	}
-	
-	public int amplitudeToY(double amplitude) {
-		//return (int) Math.round(Math.random() * view.getHeight());
-		double amplitudePerPixel = (maxAmplitude - minAmplitude) / (view.getHeight() - yPadding);
-		return (int) Math.round(view.getHeight() - (amplitude - minAmplitude) / amplitudePerPixel - yPadding);
-	}
-	
-	public int gainToY(double gain) {
-		//return (int) Math.round(Math.random() * view.getHeight());
-		double gainPerPixel = (ModuleEditor.maxAmplitudeLog2 - ModuleEditor.minAmplitudeLog2) / (view.getHeight() - yPadding);
-		return (int) Math.round(view.getHeight() - (gain - ModuleEditor.minAmplitudeLog2) / gainPerPixel - yPadding);
-	}
-	
-	public double yToGain(int y) {
-		double gainPerPixel = (ModuleEditor.maxAmplitudeLog2 - ModuleEditor.minAmplitudeLog2) / (view.getHeight() - yPadding);
-		double gain = (view.getHeight()- y - yPadding) * gainPerPixel + ModuleEditor.minAmplitudeLog2;
-		System.out.println(gain + " " + y + " " + gainToY(gain));
-		return gain;
-	}
-	
+
 	public int xToEQBandIndex(int x) {
 		int index = 0;
 		for(EQBand eqBand: parent.eqBands) {
