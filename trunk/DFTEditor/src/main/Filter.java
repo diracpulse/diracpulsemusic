@@ -8,15 +8,15 @@ public class Filter {
 	
 	public static final int minOrder = 1;
 	public static final int maxOrder = 24; // for 24 bit data
-	public final static double minFilterFrequency = SynthTools.sampleRate / 4096.0;
+	public final static double minFilterFrequency = SynthTools.sampleRate / 2048.0;
 	// filters set to nyquist freqency behave poorly
 	public final static double maxFilterFrequency = SynthTools.sampleRate / 2.0 * 7.0 / 8.0;
 	public final static double minFilterFrequencyLog2 = Math.log(minFilterFrequency) / Math.log(2.0);
 	public final static double maxFilterFrequencyLog2 = Math.log(maxFilterFrequency) / Math.log(2.0);
 	public final static double maxOvershootLog2 = 4.0;
 	public final static double minOvershootLog2 = -4.0;
-	public final static double maxFilterQLog2 = 8;
-	public final static double minFilterQLog2 = -8;
+	public final static double minFilterQLog2 = 2;
+	public final static double maxFilterQLog2 = -2;
 	
 	public enum Implementation {
 		BUTTERWORTH,
@@ -92,7 +92,8 @@ public class Filter {
 			//if(getQ() < 1.0) return returnVal;
 			//returnVal = linkwitzReillyLowpass4(returnVal, upperBound);
 			//return linkwitzReillyHighpass4(returnVal, lowerBound);
-			return variableQBandpass4(samples, getCenterFreq(), getBandwidth() , filterQ);
+			double[] returnVal = variableQBandpass4(samples, getCenterFreq(), getBandwidth() , filterQ);
+			return variableQBandpass4(returnVal, getCenterFreq(), getBandwidth() , filterQ);
 		}
 
 	}

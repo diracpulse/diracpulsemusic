@@ -69,7 +69,8 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 		NONE,
 		GAIN,
 		OVERSHOOT,
-		FILTER_EQ;
+		FILTER_EQ,
+		CENTER_FREQ;
 	}
 	
 	public class PixelValue {
@@ -108,6 +109,10 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 	
 	public int freqToX(double freq) {
 		return freqPV.valueToPixel(freq, view.getWidth());
+	}
+	
+	public double xToFreq(int x) {
+		return freqPV.pixelToValue(x, view.getWidth());
 	}
 
 	public int amplitudeToY(double amplitude) {
@@ -178,7 +183,7 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
     	ArrayList<Rectangle> returnVal = new ArrayList<Rectangle>();
     	for(EQBand eqBand: parent.eqBands) {
     		double gain = Math.log(eqBand.gain) / Math.log(2.0);
-    		int x = freqToX(Math.log(eqBand.criticalBand.getCenterFreq()) / Math.log(2.0));
+    		int x = freqToX(Math.log(eqBand.getCenterFreq()) / Math.log(2.0));
     		int leftX = x - height / 2;
     		int y = gainToY(gain);
        		int upperY = y - height / 2;
@@ -192,8 +197,9 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
     	int height = getControlPointWidth();
     	ArrayList<Rectangle> returnVal = new ArrayList<Rectangle>();
     	for(EQBand eqBand: parent.eqBands) {
-    		double overshoot = Math.log(eqBand.criticalBand.getOvershoot()) / Math.log(2.0);
-    		int x = freqToX(Math.log(eqBand.criticalBand.getCenterFreq()) / Math.log(2.0));
+    		if(eqBand.getType() != EQBand.FilterType.BANDPASS) continue;
+    		double overshoot = Math.log(eqBand.getOvershoot()) / Math.log(2.0);
+    		int x = freqToX(Math.log(eqBand.getCenterFreq()) / Math.log(2.0));
     		int leftX = x - height / 2;
     		int y = overshootToY(overshoot);
        		int upperY = y - height / 2;
@@ -207,8 +213,8 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
     	int height = getControlPointWidth();
     	ArrayList<Rectangle> returnVal = new ArrayList<Rectangle>();
     	for(EQBand eqBand: parent.eqBands) {
-    		double filterQ = Math.log(eqBand.criticalBand.getFilterQ()) / Math.log(2.0);
-    		int x = freqToX(Math.log(eqBand.criticalBand.getCenterFreq()) / Math.log(2.0));
+    		double filterQ = Math.log(eqBand.getFilterQ()) / Math.log(2.0);
+    		int x = freqToX(Math.log(eqBand.getCenterFreq()) / Math.log(2.0));
     		int leftX = x - height / 2;
     		int y = filterQToY(filterQ);
        		int upperY = y - height / 2;
@@ -373,7 +379,7 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 	public int xToEQBandIndex(int x) {
 		int index = 0;
 		for(EQBand eqBand: parent.eqBands) {
-			int lowerX = freqToX(Math.log(eqBand.criticalBand.getCenterFreq()) / Math.log(2.0)) - getControlPointWidth() / 2;
+			int lowerX = freqToX(Math.log(eqBand.getCenterFreq()) / Math.log(2.0)) - getControlPointWidth() / 2;
 			int upperX = lowerX + getControlPointWidth();
 			if(x > lowerX && x < upperX) return index;
 			index++;

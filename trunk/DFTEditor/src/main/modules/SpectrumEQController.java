@@ -7,7 +7,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.ArrayList;
 
+import javax.swing.JOptionPane;
+
+import main.MultiWindow;
+import main.Sequencer;
+import main.modules.SpectrumEQ.EQBand;
 import main.modules.SpectrumEQEditor.SelectionMode;
 
 public class SpectrumEQController implements MouseListener, MouseMotionListener, ActionListener {
@@ -22,7 +28,7 @@ public class SpectrumEQController implements MouseListener, MouseMotionListener,
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if("Reset".equals(e.getActionCommand())) {
-			parent.parent.initEQBands();
+			parent.parent.initCriticalBands();
 			parent.initFFTData();
 		}
 	}
@@ -37,10 +43,13 @@ public class SpectrumEQController implements MouseListener, MouseMotionListener,
 				parent.parent.eqBands.get(eqBandIndex).setGain(Math.pow(2.0, parent.yToGain(y)));
 				break;
 			case OVERSHOOT:
-				parent.parent.eqBands.get(eqBandIndex).criticalBand.setOvershoot(Math.pow(2.0, parent.yToOvershoot(y)));
+				parent.parent.eqBands.get(eqBandIndex).setOvershoot(Math.pow(2.0, parent.yToOvershoot(y)));
 				break;
 			case FILTER_EQ:
-				parent.parent.eqBands.get(eqBandIndex).criticalBand.setFilterQ(Math.pow(2.0, parent.yToFilterQ(y)));
+				parent.parent.eqBands.get(eqBandIndex).setFilterQ(Math.pow(2.0, parent.yToFilterQ(y)));
+				break;
+			case CENTER_FREQ:
+				parent.parent.eqBands.get(eqBandIndex).setCenterFreq(Math.pow(2.0, parent.xToFreq(x)));
 				break;
 			case NONE:
 				System.out.println("SpectrumEQController.mouseReleased: unexpected state");
@@ -55,6 +64,21 @@ public class SpectrumEQController implements MouseListener, MouseMotionListener,
 
 	@Override
 	public void mouseClicked(MouseEvent arg0) {
+		int x = arg0.getX();
+		int y = arg0.getY();
+		if(arg0.getClickCount() == 2) {
+			for(Rectangle rect: parent.getGainControlAreas()) {
+				if(rect.contains(x, y)) {
+					Integer result = JOptionPane.showOptionDialog(parent, "Change Filter", "Select A Filter Type", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, EQBand.FilterType.values(), EQBand.FilterType.BANDPASS);
+		        	if(result == null) return;
+		        	EQBand.FilterType type = EQBand.FilterType.values()[result];
+		        	eqBandIndex = parent.xToEQBandIndex(x);
+		        	parent.parent.eqBands.get(eqBandIndex).setType(type);
+		    		parent.initFFTData();
+		        	return;
+				}
+			}
+		}
 	}
 
 	@Override
@@ -92,6 +116,15 @@ public class SpectrumEQController implements MouseListener, MouseMotionListener,
 				}
 			}
 		}
+		if(arg0.isAltDown()) {
+			for(Rectangle rect: parent.getGainControlAreas()) {
+				if(rect.contains(x, y)) {
+					parent.selectionMode = SelectionMode.CENTER_FREQ;
+					eqBandIndex = parent.xToEQBandIndex(x);
+					return;
+				}
+			}
+		}
 		for(Rectangle rect: parent.getGainControlAreas()) {
 			if(rect.contains(x, y)) {
 				parent.selectionMode = SelectionMode.GAIN;
@@ -113,10 +146,13 @@ public class SpectrumEQController implements MouseListener, MouseMotionListener,
 				parent.parent.eqBands.get(eqBandIndex).setGain(Math.pow(2.0, parent.yToGain(y)));
 				break;
 			case OVERSHOOT:
-				parent.parent.eqBands.get(eqBandIndex).criticalBand.setOvershoot(Math.pow(2.0, parent.yToOvershoot(y)));
+				parent.parent.eqBands.get(eqBandIndex).setOvershoot(Math.pow(2.0, parent.yToOvershoot(y)));
 				break;
 			case FILTER_EQ:
-				parent.parent.eqBands.get(eqBandIndex).criticalBand.setFilterQ(Math.pow(2.0, parent.yToFilterQ(y)));
+				parent.parent.eqBands.get(eqBandIndex).setFilterQ(Math.pow(2.0, parent.yToFilterQ(y)));
+				break;
+			case CENTER_FREQ:
+				parent.parent.eqBands.get(eqBandIndex).setCenterFreq(Math.pow(2.0, parent.xToFreq(x)));
 				break;
 			case NONE:
 				System.out.println("SpectrumEQController.mouseReleased: unexpected state");

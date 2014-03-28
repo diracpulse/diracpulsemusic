@@ -98,21 +98,45 @@ public class SpectrumEQView extends JPanel {
 	private void drawEQBands(Graphics2D g2) {
 		g2.setStroke(new BasicStroke(2));
 		for(EQBand eqBand: parent.parent.eqBands) {
-			g2.setColor(new Color(0.0f, 1.0f, 0.0f, 0.5f));
-			int x = parent.freqToX(Math.log(eqBand.criticalBand.getCenterFreq()) / Math.log(2.0));
-			int x0 = parent.freqToX(Math.log(eqBand.criticalBand.getLowerBound()) / Math.log(2.0));
-			int x1 = parent.freqToX(Math.log(eqBand.criticalBand.getUpperBound()) / Math.log(2.0));
-			int y = parent.gainToY(Math.log(eqBand.gain)/Math.log(2.0));
-			int y0 = parent.gainToY(Math.log(eqBand.gain)/Math.log(2.0) - 1.0);
-			g2.drawLine(x0, y0, x, y);
-			g2.drawLine(x1, y0, x, y);
-			g2.fillRect(x - 6, y - 6, 12, 12);
-			g2.setColor(new Color(1.0f, 0.0f, 0.0f, 0.5f));
-			y = parent.overshootToY(Math.log(eqBand.criticalBand.getOvershoot())/Math.log(2.0));
-			g2.fillRect(x - 6, y - 6, 12, 12);
-			g2.setColor(new Color(0.0f, 0.0f, 1.0f, 0.5f));
-			y = parent.filterQToY(Math.log(eqBand.criticalBand.getFilterQ())/Math.log(2.0));
-			g2.fillRect(x - 6, y - 6, 12, 12);
+			if(eqBand.getType() == EQBand.FilterType.BANDPASS) {
+				g2.setColor(new Color(0.0f, 1.0f, 0.0f, 0.5f));
+				int x = parent.freqToX(Math.log(eqBand.getCenterFreq()) / Math.log(2.0));
+				int x0 = parent.freqToX(Math.log(eqBand.getLowerBound()) / Math.log(2.0));
+				int x1 = parent.freqToX(Math.log(eqBand.getUpperBound()) / Math.log(2.0));
+				int y = parent.gainToY(Math.log(eqBand.gain)/Math.log(2.0));
+				int y0 = parent.gainToY(Math.log(eqBand.gain)/Math.log(2.0) - 1.0);
+				g2.drawLine(x0, y0, x, y);
+				g2.drawLine(x1, y0, x, y);
+				g2.fillRect(x - 6, y - 6, 12, 12);
+				g2.setColor(new Color(1.0f, 0.0f, 0.0f, 0.5f));
+				y = parent.overshootToY(Math.log(eqBand.getOvershoot())/Math.log(2.0));
+				g2.fillRect(x - 6, y - 6, 12, 12);
+				g2.setColor(new Color(0.0f, 0.0f, 1.0f, 0.5f));
+				y = parent.filterQToY(Math.log(eqBand.getFilterQ())/Math.log(2.0));
+				g2.fillRect(x - 6, y - 6, 12, 12);
+			}
+			if(eqBand.getType() == EQBand.FilterType.LOWPASS) {
+				g2.setColor(new Color(0.0f, 1.0f, 0.0f, 0.5f));
+				int x = parent.freqToX(Math.log(eqBand.getCenterFreq()) / Math.log(2.0));
+				int y = parent.gainToY(Math.log(eqBand.gain)/Math.log(2.0));
+				g2.drawLine(parent.xPadding, y, x, y);
+				g2.drawLine(x, y, x, getHeight() - parent.yPadding);
+				g2.fillRect(x - 6, y - 6, 12, 12);
+				g2.setColor(new Color(0.0f, 0.0f, 1.0f, 0.5f));
+				y = parent.filterQToY(Math.log(eqBand.getFilterQ())/Math.log(2.0));
+				g2.fillRect(x - 6, y - 6, 12, 12);
+			}
+			if(eqBand.getType() == EQBand.FilterType.HIGHPASS) {
+				g2.setColor(new Color(0.0f, 1.0f, 0.0f, 0.5f));
+				int x = parent.freqToX(Math.log(eqBand.getCenterFreq()) / Math.log(2.0));
+				int y = parent.gainToY(Math.log(eqBand.gain)/Math.log(2.0));
+				g2.drawLine(getWidth() - parent.xPadding, y, x, y);
+				g2.drawLine(x, y, x, getHeight() - parent.yPadding);
+				g2.fillRect(x - 6, y - 6, 12, 12);
+				g2.setColor(new Color(0.0f, 0.0f, 1.0f, 0.5f));
+				y = parent.filterQToY(Math.log(eqBand.getFilterQ())/Math.log(2.0));
+				g2.fillRect(x - 6, y - 6, 12, 12);
+			}
 		}
 	}
 
