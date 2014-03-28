@@ -27,7 +27,7 @@ public class SpectrumEQ implements Module {
 	double amplitude = 1.0;
 	double minFreqInHz = Filter.minFilterFrequency;
 	double maxFreqInHz = Filter.maxFilterFrequency;
-	ArrayList<EQBand> eqBands;
+	ArrayList<EQBand> eqBands = new ArrayList<EQBand>();
 
 	int cornerX;
 	int cornerY;
@@ -37,19 +37,114 @@ public class SpectrumEQ implements Module {
 	ArrayList<Integer> outputs;
 	ArrayList<Integer> inputs;
 	
-	public class EQBand {
+	public static class EQBand {
 		
-		CriticalBand criticalBand;
-		double gain;
+		public enum FilterType {
+			BANDPASS,
+			LOWPASS,
+			HIGHPASS;
+		}
 		
-		EQBand(CriticalBand criticalBand, double gain) {
-			this.criticalBand = criticalBand;
-			this.gain = gain;
+		FilterType type = FilterType.BANDPASS;
+		double gain = 1.0;
+		double lowerBound;
+		double upperBound;
+		double overshoot = 1.0;
+		double filterQ = Math.sqrt(2.0) / 2.0; // Butterworth
+		double maxFreq = Filter.maxFilterFrequency;
+		double minFreq = Filter.minFilterFrequency;
+
+		EQBand(double lowerBound, double upperBound) {
+			this.upperBound = upperBound;
+			this.lowerBound = lowerBound;
+		}
+		
+		EQBand(FilterType type, double centerFreq) {
+			this.type = type;
+			upperBound = centerFreq;
+			lowerBound = centerFreq;
+		}
+
+		public void setOvershoot(double overshoot) {
+			this.overshoot = overshoot;
+		}
+		
+		public void setFilterQ(double filterQ) {
+			this.filterQ = filterQ;
+		}
+		
+		public void setCenterFreq(double centerFreq) {
+			double freqRatio = this.getCenterFreq() / centerFreq;
+			upperBound /= freqRatio;
+			lowerBound /= freqRatio;
+			if(upperBound > maxFreq) upperBound = maxFreq;
+			if(lowerBound < minFreq) lowerBound = minFreq;
+		}
+		
+		public double getOvershoot() {
+			return overshoot;
+		}
+		
+		public double getFilterQ() {
+			return filterQ;
+		}
+		
+		public double getLowerBound() {
+			double returnVal = lowerBound / overshoot;
+			if(returnVal < minFreq) return minFreq;
+			if(returnVal > upperBound * overshoot) return Math.sqrt(upperBound * lowerBound);
+			return returnVal;
+		}
+		
+		public double getUpperBound() {
+			double returnVal = upperBound * overshoot;
+			if(returnVal > maxFreq) return maxFreq;
+			if(returnVal < lowerBound / overshoot) return Math.sqrt(upperBound * lowerBound);
+			return returnVal;
+		}
+		
+		public double getBandwidth() {
+			return getUpperBound() - getLowerBound();
+		}
+		
+		public double getCenterFreq() {
+			return Math.sqrt(getUpperBound() * getLowerBound());
+		}
+		
+		public double getQ() {
+			if(getBandwidth() == 0.0) return Float.MAX_VALUE;
+			return getCenterFreq() / getBandwidth();
+		}
+		
+		public double getGain() {
+			return gain;
 		}
 		
 		public void setGain(double gain) {
 			this.gain = gain;
 		}
+		
+		public FilterType getType() {
+			return type;
+		}
+		
+		public void setType(FilterType type) {
+			this.type = type;
+		}
+		
+		public double[] getAudioData(double[] samples) {
+			switch (type) {
+			case BANDPASS: 
+				double[] returnVal = Filter.variableQBandpass4(samples, getCenterFreq(), getBandwidth() , filterQ);
+				return Filter.variableQBandpass4(returnVal, getCenterFreq(), getBandwidth() , filterQ);
+			case LOWPASS:
+				return Filter.butterworthLowpass(samples, getCenterFreq(), 4);
+			case HIGHPASS:
+				return Filter.butterworthHighpass(samples, getCenterFreq(), 4);
+			}
+			return null;
+		}
+
 	}
 	
 	private class Input extends Module.Input {
@@ -89,14 +184,13 @@ public class SpectrumEQ implements Module {
 		this.parent = parent;
 		outputs = new ArrayList<Integer>();
 		inputs = new ArrayList<Integer>();
-		initEQBands();
 		init();
 	}
 	
-	public void initEQBands() {
+	public void initCriticalBands() {
 		eqBands = new ArrayList<EQBand>();
 		for(CriticalBand criticalBand: Filter.calculateCriticalBands(minFreqInHz, maxFreqInHz, 2.0)) {
-			eqBands.add(new EQBand(criticalBand, 1.0));
+			eqBands.add(new EQBand(criticalBand.getLowerBound(), criticalBand.getUpperBound()));
 		}
 	}
 	
@@ -200,7 +294,7 @@ public class SpectrumEQ implements Module {
 		for(int index = 0; index < returnVal.length; index++) returnVal[index] = 0.0;
 		for(EQBand eqBand: eqBands) {
 			//System.out.println(criticalBand.getCenterFreq());
-			double[] filtered = eqBand.criticalBand.getAudioData(input);
+			double[] filtered = eqBand.getAudioData(input);
 			for(int index = 0; index < input.length; index++) {
 				returnVal[index] += filtered[index] * eqBand.gain;
 			}
