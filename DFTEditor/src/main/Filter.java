@@ -659,4 +659,42 @@ public class Filter {
 			return y;
 		}
 		
+		public static double[] variableQLowpass2(double[] input, double f, double q) {
+			double g = Math.tan((Math.PI * f) / SynthTools.sampleRate);
+			double D = q * g * g + g + q;
+			b0 = q * (g * g) / D;
+			b1 = 2.0 * b0;
+			b2 = b0;
+			a0 = 2.0 * q * (g * g - 1.0) / D;
+			a1 = (q * g * g - g + q) / D;
+			//System.out.println(b0 + " " + b1 + " " + b2 + " " + a0 + " " + a1);
+			double[] y = new double[input.length];
+			y[0] = b0 * input[0];
+			y[1] = b0 * input[1] + b1 * input[0] + a0 * y[0];
+			for(int n = 2; n < input.length; n++) {
+				y[n] = b0 * input[n] + b1 * input[n - 1] + b2 * input[n - 2] - a0 * y[n - 1] - a1 * y[n - 2];
+				
+			}
+			return y;
+		}
+		
+		public static double[] variableQHighpass2(double[] input, double f, double q) {
+			double g = Math.tan((Math.PI * f) / SynthTools.sampleRate);
+			double D = q * g * g + g + q;
+			b0 = q / D;
+			b1 = -2.0 * b0;
+			b2 = b0;
+			a0 = 2.0 * q * (g * g - 1.0) / D;
+			a1 = (q * g * g - g + q) / D;
+			//System.out.println(b0 + " " + b1 + " " + b2 + " " + a0 + " " + a1);
+			double[] y = new double[input.length];
+			y[0] = b0 * input[0];
+			y[1] = b0 * input[1] + b1 * input[0] + a0 * y[0];
+			for(int n = 2; n < input.length; n++) {
+				y[n] = b0 * input[n] + b1 * input[n - 1] + b2 * input[n - 2] - a0 * y[n - 1] - a1 * y[n - 2];
+				
+			}
+			return y;
+		}
+		
 }
