@@ -14,12 +14,14 @@ import javax.swing.JOptionPane;
 import main.MultiWindow;
 import main.Sequencer;
 import main.modules.SpectrumEQ.EQBand;
+import main.modules.SpectrumEQ.EQBand.FilterType;
 import main.modules.SpectrumEQEditor.SelectionMode;
 
 public class SpectrumEQController implements MouseListener, MouseMotionListener, ActionListener {
 
 	SpectrumEQEditor parent;
 	Integer eqBandIndex = null;
+	boolean dragInProgress = false;
 
 	public SpectrumEQController(SpectrumEQEditor parent) {
 		this.parent = parent;
@@ -38,6 +40,7 @@ public class SpectrumEQController implements MouseListener, MouseMotionListener,
 		int x = arg0.getX();
 		int y = arg0.getY();
 		if(eqBandIndex == null) return;
+		dragInProgress = true;
 		switch(parent.selectionMode) {
 			case GAIN:
 				parent.parent.eqBands.get(eqBandIndex).setGain(Math.pow(2.0, parent.yToGain(y)));
@@ -69,15 +72,16 @@ public class SpectrumEQController implements MouseListener, MouseMotionListener,
 		if(arg0.getClickCount() == 2) {
 			for(Rectangle rect: parent.getGainControlAreas()) {
 				if(rect.contains(x, y)) {
-					Integer result = JOptionPane.showOptionDialog(parent, "Change Filter", "Select A Filter Type", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, EQBand.FilterType.values(), EQBand.FilterType.BANDPASS);
-		        	if(result == null) return;
-		        	EQBand.FilterType type = EQBand.FilterType.values()[result];
 		        	eqBandIndex = parent.xToEQBandIndex(x);
-		        	parent.parent.eqBands.get(eqBandIndex).setType(type);
-		    		parent.initFFTData();
+		        	parent.changeFilterParams(eqBandIndex);
 		        	return;
 				}
 			}
+			EQBand eqBand = new SpectrumEQ.EQBand(FilterType.LOWPASS, Math.pow(2.0, parent.xToFreq(x)));
+			eqBand.setGain(Math.pow(2.0, parent.yToGain(y)));
+			parent.parent.eqBands.add(eqBand);
+			parent.initFFTData();
+			return;
 		}
 	}
 
@@ -139,6 +143,7 @@ public class SpectrumEQController implements MouseListener, MouseMotionListener,
 	@Override
 	public void mouseReleased(MouseEvent arg0) {
 		if(eqBandIndex == null) return;
+		if(!dragInProgress) return;
 		int x = arg0.getX();
 		int y = arg0.getY();
 		switch(parent.selectionMode) {
@@ -161,6 +166,7 @@ public class SpectrumEQController implements MouseListener, MouseMotionListener,
 		parent.selectionMode = SelectionMode.NONE;
 		parent.initFFTData();
 		eqBandIndex = null;
+		dragInProgress = false;
 	}
 
 }

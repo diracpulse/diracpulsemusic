@@ -27,6 +27,8 @@ public class SpectrumEQ implements Module {
 	double amplitude = 1.0;
 	double minFreqInHz = Filter.minFilterFrequency;
 	double maxFreqInHz = Filter.maxFilterFrequency;
+	double minFreqInHzLog2 = Math.log(minFreqInHz) / Math.log(2.0);
+	double maxFreqInHzLog2 = Math.log(maxFreqInHz) / Math.log(2.0);
 	ArrayList<EQBand> eqBands = new ArrayList<EQBand>();
 
 	int cornerX;
@@ -46,7 +48,10 @@ public class SpectrumEQ implements Module {
 		}
 		
 		FilterType type = FilterType.BANDPASS;
+		boolean controlled = false; // if true, centerFreq varies with control
+		boolean subtractive = false; // if true signals blocked by filter are not in output
 		double gain = 1.0;
+		int order = 4;
 		double lowerBound;
 		double upperBound;
 		double overshoot = 1.0;
@@ -55,12 +60,21 @@ public class SpectrumEQ implements Module {
 		double minFreq = Filter.minFilterFrequency;
 
 		EQBand(double lowerBound, double upperBound) {
+			type = FilterType.BANDPASS;
 			this.upperBound = upperBound;
 			this.lowerBound = lowerBound;
+			if(upperBound > maxFreq) upperBound = maxFreq;
+			if(lowerBound < minFreq) lowerBound = minFreq;
+			if(upperBound < lowerBound) {
+				upperBound = maxFreq;
+				lowerBound = minFreq;
+			}
 		}
 		
 		EQBand(FilterType type, double centerFreq) {
 			this.type = type;
+			if(centerFreq > maxFreq) centerFreq = maxFreq;
+			if(centerFreq < minFreq) centerFreq = minFreq;
 			upperBound = centerFreq;
 			lowerBound = centerFreq;
 		}
@@ -74,11 +88,18 @@ public class SpectrumEQ implements Module {
 		}
 		
 		public void setCenterFreq(double centerFreq) {
-			double freqRatio = this.getCenterFreq() / centerFreq;
-			upperBound /= freqRatio;
-			lowerBound /= freqRatio;
-			if(upperBound > maxFreq) upperBound = maxFreq;
-			if(lowerBound < minFreq) lowerBound = minFreq;
+			if(type == FilterType.BANDPASS) {
+				double freqRatio = this.getCenterFreq() / centerFreq;
+				upperBound /= freqRatio;
+				lowerBound /= freqRatio;
+				if(upperBound > maxFreq) upperBound = maxFreq;
+				if(lowerBound < minFreq) lowerBound = minFreq;
+			} else {
+				if(centerFreq > maxFreq) centerFreq = maxFreq;
+				if(centerFreq < minFreq) centerFreq = minFreq;
+				lowerBound = centerFreq;
+				upperBound = centerFreq;
+			}
 		}
 		
 		public double getOvershoot() {
@@ -116,6 +137,14 @@ public class SpectrumEQ implements Module {
 			return getCenterFreq() / getBandwidth();
 		}
 		
+		public int getOrder() {
+			return order;
+		}
+		
+		public void setOrder(int order) {
+			this.order = order;
+		}
+		
 		public double getGain() {
 			return gain;
 		}
@@ -129,22 +158,68 @@ public class SpectrumEQ implements Module {
 		}
 		
 		public void setType(FilterType type) {
+			double currentFreq = getCenterFreq();
+			if(type == FilterType.LOWPASS || type == FilterType.HIGHPASS) {
+				upperBound = currentFreq;
+				lowerBound = currentFreq;
+			} else {
+				if(upperBound == lowerBound) {
+					upperBound = currentFreq * Math.sqrt(2.0);
+					lowerBound = currentFreq / Math.sqrt(2.0);
+				}
+			}
 			this.type = type;
 		}
 		
+		public boolean isSubtractive() {
+			return subtractive;
+		}
+		
+		public boolean isControlled() {
+			return controlled;
+		}
+		
+		public void toggleSubtractive() {
+			subtractive = !subtractive;
+		}
+		
+		public void toggleControlled() {
+			controlled = !controlled;
+		}
+		
 		public double[] getAudioData(double[] samples) {
+			return getAudioData(samples, 1.0);
+		}
+		
+		public double[] getAudioData(double[] samples, double controlValue) {
+			double[] returnVal = null;
+			double saveCenterFreq = getCenterFreq();
+			if(controlled) setCenterFreq(getCenterFreq() * controlValue);
 			switch (type) {
 			case BANDPASS: 
-				double[] returnVal = Filter.variableQBandpass4(samples, getCenterFreq(), getBandwidth() , filterQ);
-				return Filter.variableQBandpass4(returnVal, getCenterFreq(), getBandwidth() , filterQ);
+				returnVal = Filter.variableQBandpass4(samples, getCenterFreq(), getBandwidth() , filterQ);
+				for(int apply = 4; apply < order; apply += 4) {
+					returnVal = Filter.variableQBandpass4(returnVal, getCenterFreq(), getBandwidth() , filterQ);
+				}
+				setCenterFreq(saveCenterFreq);
+				return returnVal;
 			case LOWPASS:
-				return Filter.butterworthLowpass(samples, getCenterFreq(), 4);
+				returnVal = Filter.variableQLowpass2(samples, getCenterFreq(), filterQ);
+				for(int apply = 2; apply < order; apply += 2) {
+					returnVal = Filter.variableQLowpass2(returnVal, getCenterFreq(), filterQ);
+				}
+				setCenterFreq(saveCenterFreq);
+				return returnVal;
 			case HIGHPASS:
-				return Filter.butterworthHighpass(samples, getCenterFreq(), 4);
+				returnVal = Filter.variableQHighpass2(samples, getCenterFreq(), filterQ);
+				for(int apply = 2; apply < order; apply += 2) {
+					returnVal = Filter.variableQHighpass2(returnVal, getCenterFreq(), filterQ);
+				}
+				setCenterFreq(saveCenterFreq);
+				return returnVal;
 			}
 			return null;
 		}
-
 	}
 	
 	private class Input extends Module.Input {
@@ -279,7 +354,8 @@ public class SpectrumEQ implements Module {
 		for(int start: startToEnd.keySet()) {
 			double[] input = new double[startToEnd.get(start) - start];
 			for(int index = 0; index < input.length; index++) input[index] = inputSamples[index + start];
-			double[] samples = getFilteredSamples(input);
+			double controlValue = control[start];
+			double[] samples = getFilteredSamples(input, controlValue);
 			for(int index = 0; index < samples.length; index++) {
 				int returnIndex = start + index;
 				if(returnIndex == returnVal.length) return returnVal;
@@ -289,12 +365,23 @@ public class SpectrumEQ implements Module {
 		return returnVal;
 	}
 	
-	private double[] getFilteredSamples(double[] input) {
-		double[] returnVal = new double[input.length];
-		for(int index = 0; index < returnVal.length; index++) returnVal[index] = 0.0;
+	private double[] getFilteredSamples(double[] input, double controlValue) {
+		double[] returnVal = null;
 		for(EQBand eqBand: eqBands) {
-			//System.out.println(criticalBand.getCenterFreq());
-			double[] filtered = eqBand.getAudioData(input);
+			if(!eqBand.isSubtractive()) continue;
+			if(returnVal == null) {
+				returnVal = eqBand.getAudioData(input, controlValue);
+			} else {
+				returnVal = eqBand.getAudioData(returnVal, controlValue);
+			}
+		}
+		if(returnVal == null) {
+			returnVal = new double[input.length];
+			for(int index = 0; index < returnVal.length; index++) returnVal[index] = 0.0;
+		}
+		for(EQBand eqBand: eqBands) {
+			if(eqBand.isSubtractive()) continue;
+			double[] filtered = eqBand.getAudioData(input, controlValue);
 			for(int index = 0; index < input.length; index++) {
 				returnVal[index] += filtered[index] * eqBand.gain;
 			}
@@ -348,6 +435,14 @@ public class SpectrumEQ implements Module {
 		currentX = cornerX + 4;
 		currentY = cornerY + yStep;
 		if(g2 != null) g2.drawString("SpectrumEQ", currentX, currentY);
+		currentY += yStep;
+		if(g2 != null) g2.setColor(Color.GREEN);
+		if(g2 != null) g2.drawString("IN: ", currentX, currentY);
+		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
+			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
+			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
+			if(g2 == null) inputs.add(parent.addConnector(new Input(this, currentRect)));
+		}
 		currentY += yStep;
 		if(g2 != null) g2.setColor(Color.GREEN);
 		if(g2 != null) g2.drawString("IN: ", currentX, currentY);

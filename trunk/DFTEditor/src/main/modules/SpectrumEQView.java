@@ -27,6 +27,12 @@ public class SpectrumEQView extends JPanel {
 
 	private static final long serialVersionUID = 9057228507254113149L;
 	
+	private enum BoxType {
+		GAIN,
+		FILTER_Q,
+		BANDWIDTH;
+	}
+	
 	SpectrumEQEditor parent;
 	
 	public SpectrumEQView(SpectrumEQEditor parent) {
@@ -50,6 +56,22 @@ public class SpectrumEQView extends JPanel {
 		return new Color(red, green, blue, 0.5f);
 	}
 	
+	protected Color freqToColor(double freq) {
+		float currentVal = (float) (freq - parent.minFreq) / (float) (parent.maxFreq - parent.minFreq);
+		if (currentVal < 0.0f)
+			currentVal = 0.0f;
+		if (currentVal > 1.0f)
+			currentVal = 1.0f;
+		float red = 1.0f - currentVal;
+		float green = 0.0f;
+		float blue = currentVal;
+		if (red >= 0.5f) {
+			//green = (1.0f - red) * 2.0f;
+		} else {
+			//green = red * 2.0f;
+		}
+		return new Color(red, green, blue, 1.0f);
+	}
 	
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
@@ -99,7 +121,7 @@ public class SpectrumEQView extends JPanel {
 		g2.setStroke(new BasicStroke(2));
 		for(EQBand eqBand: parent.parent.eqBands) {
 			if(eqBand.getType() == EQBand.FilterType.BANDPASS) {
-				g2.setColor(new Color(0.0f, 1.0f, 0.0f, 0.5f));
+				g2.setColor(freqToColor(Math.log(eqBand.getCenterFreq()) / Math.log(2.0)));
 				int x = parent.freqToX(Math.log(eqBand.getCenterFreq()) / Math.log(2.0));
 				int x0 = parent.freqToX(Math.log(eqBand.getLowerBound()) / Math.log(2.0));
 				int x1 = parent.freqToX(Math.log(eqBand.getUpperBound()) / Math.log(2.0));
@@ -107,24 +129,21 @@ public class SpectrumEQView extends JPanel {
 				int y0 = parent.gainToY(Math.log(eqBand.gain)/Math.log(2.0) - 1.0);
 				g2.drawLine(x0, y0, x, y);
 				g2.drawLine(x1, y0, x, y);
-				g2.fillRect(x - 6, y - 6, 12, 12);
-				g2.setColor(new Color(1.0f, 0.0f, 0.0f, 0.5f));
+				drawControlBox(g2, x, y, BoxType.GAIN, eqBand.controlled, eqBand.subtractive);
 				y = parent.overshootToY(Math.log(eqBand.getOvershoot())/Math.log(2.0));
-				g2.fillRect(x - 6, y - 6, 12, 12);
-				g2.setColor(new Color(0.0f, 0.0f, 1.0f, 0.5f));
+				drawControlBox(g2, x, y, BoxType.BANDWIDTH, eqBand.controlled, eqBand.subtractive);
 				y = parent.filterQToY(Math.log(eqBand.getFilterQ())/Math.log(2.0));
-				g2.fillRect(x - 6, y - 6, 12, 12);
+				drawControlBox(g2, x, y, BoxType.FILTER_Q, eqBand.controlled, eqBand.subtractive);
 			}
 			if(eqBand.getType() == EQBand.FilterType.LOWPASS) {
-				g2.setColor(new Color(0.0f, 1.0f, 0.0f, 0.5f));
+				g2.setColor(freqToColor(Math.log(eqBand.getCenterFreq()) / Math.log(2.0)));
 				int x = parent.freqToX(Math.log(eqBand.getCenterFreq()) / Math.log(2.0));
 				int y = parent.gainToY(Math.log(eqBand.gain)/Math.log(2.0));
 				g2.drawLine(parent.xPadding, y, x, y);
 				g2.drawLine(x, y, x, getHeight() - parent.yPadding);
-				g2.fillRect(x - 6, y - 6, 12, 12);
-				g2.setColor(new Color(0.0f, 0.0f, 1.0f, 0.5f));
+				drawControlBox(g2, x, y, BoxType.GAIN, eqBand.controlled, eqBand.subtractive);
 				y = parent.filterQToY(Math.log(eqBand.getFilterQ())/Math.log(2.0));
-				g2.fillRect(x - 6, y - 6, 12, 12);
+				drawControlBox(g2, x, y, BoxType.FILTER_Q, eqBand.controlled, eqBand.subtractive);
 			}
 			if(eqBand.getType() == EQBand.FilterType.HIGHPASS) {
 				g2.setColor(new Color(0.0f, 1.0f, 0.0f, 0.5f));
@@ -132,11 +151,24 @@ public class SpectrumEQView extends JPanel {
 				int y = parent.gainToY(Math.log(eqBand.gain)/Math.log(2.0));
 				g2.drawLine(getWidth() - parent.xPadding, y, x, y);
 				g2.drawLine(x, y, x, getHeight() - parent.yPadding);
-				g2.fillRect(x - 6, y - 6, 12, 12);
-				g2.setColor(new Color(0.0f, 0.0f, 1.0f, 0.5f));
+				drawControlBox(g2, x, y, BoxType.GAIN, eqBand.controlled, eqBand.subtractive);
 				y = parent.filterQToY(Math.log(eqBand.getFilterQ())/Math.log(2.0));
-				g2.fillRect(x - 6, y - 6, 12, 12);
+				drawControlBox(g2, x, y, BoxType.FILTER_Q, eqBand.controlled, eqBand.subtractive);
 			}
+		}
+	}
+	
+	private void drawControlBox(Graphics2D g2, int x, int y, BoxType bt, boolean controlled, boolean subtractive) {
+		if(bt == BoxType.GAIN) g2.setColor(Color.GREEN);
+		if(bt == BoxType.FILTER_Q) g2.setColor(Color.BLUE);
+		if(bt == BoxType.BANDWIDTH) g2.setColor(Color.RED);
+		g2.fillRect(x - 6, y - 6, 12, 12);
+		g2.setColor(Color.GRAY);
+		if(controlled) g2.setColor(Color.WHITE);
+		g2.drawRect(x - 6, y - 6, 12, 12);
+		g2.drawLine(x - 4, y, x + 4, y);
+		if(!subtractive) {
+			g2.drawLine(x, y - 4, x, y + 4);
 		}
 	}
 
