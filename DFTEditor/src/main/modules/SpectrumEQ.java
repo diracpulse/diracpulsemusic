@@ -19,6 +19,7 @@ import main.Filter.CriticalBand;
 import main.Module;
 import main.ModuleEditor;
 import main.SynthTools;
+import main.modules.SpectrumEQ.EQBand.FilterType;
 
 public class SpectrumEQ implements Module {
 	
@@ -106,6 +107,7 @@ public class SpectrumEQ implements Module {
 			return overshoot;
 		}
 		
+		// THIS CONTROLS FILTER SHAPE, NOT BANDWIDTH
 		public double getFilterQ() {
 			return filterQ;
 		}
@@ -132,6 +134,7 @@ public class SpectrumEQ implements Module {
 			return Math.sqrt(getUpperBound() * getLowerBound());
 		}
 		
+		// THIS IS RELATED TO BANDWIDTH
 		public double getQ() {
 			if(getBandwidth() == 0.0) return Float.MAX_VALUE;
 			return getCenterFreq() / getBandwidth();
@@ -366,27 +369,29 @@ public class SpectrumEQ implements Module {
 	}
 	
 	private double[] getFilteredSamples(double[] input, double controlValue) {
-		double[] returnVal = null;
+		boolean additive = false;
+		double[] returnVal = new double[input.length];
+		double[] filteredInput = null;
 		for(EQBand eqBand: eqBands) {
 			if(!eqBand.isSubtractive()) continue;
-			if(returnVal == null) {
-				returnVal = eqBand.getAudioData(input, controlValue);
+			if(filteredInput == null) {
+				filteredInput = eqBand.getAudioData(input, controlValue);
 			} else {
-				returnVal = eqBand.getAudioData(returnVal, controlValue);
+				filteredInput = eqBand.getAudioData(filteredInput, controlValue);
 			}
 		}
-		if(returnVal == null) {
-			returnVal = new double[input.length];
-			for(int index = 0; index < returnVal.length; index++) returnVal[index] = 0.0;
-		}
+		if(filteredInput == null) filteredInput = input;
+		for(int index = 0; index < input.length; index++) returnVal[index] = 0.0;
 		for(EQBand eqBand: eqBands) {
 			if(eqBand.isSubtractive()) continue;
-			double[] filtered = eqBand.getAudioData(input, controlValue);
+			additive = true;
+			double[] filtered = eqBand.getAudioData(filteredInput, controlValue);
 			for(int index = 0; index < input.length; index++) {
 				returnVal[index] += filtered[index] * eqBand.gain;
 			}
 		}
-		return returnVal;
+		if(additive) return returnVal;
+		return filteredInput;
 	}
 	
 	public void mousePressed(int x, int y) {
@@ -465,31 +470,50 @@ public class SpectrumEQ implements Module {
 	}
 
 	public void loadModuleInfo(BufferedReader in) {
-		try { 
-			String currentLine = in.readLine();
-			//this.type = Filter.Type.valueOf(currentLine);
-			currentLine = in.readLine();
-			//this.freqInHz = new Double(currentLine);
-			currentLine = in.readLine();
-			//this.amplitude = new Double(currentLine);
-			currentLine = in.readLine();
-			//this.filterOrder = new Integer(currentLine);
+		try {
+			eqBands = new ArrayList<EQBand>();
+			int numBands = new Integer(in.readLine());
+			for(int index = 0; index < numBands; index++) {
+				FilterType type = FilterType.valueOf(in.readLine());
+				double lowerBound = new Double(in.readLine());
+				double upperBound = new Double(in.readLine());
+				EQBand eqBand = new EQBand(type, lowerBound);
+				if(type.equals(FilterType.BANDPASS)) eqBand = new EQBand(lowerBound, upperBound);
+				eqBand.setOrder(new Integer(in.readLine()));
+				eqBand.setGain(new Double(in.readLine()));
+				eqBand.setFilterQ(new Double(in.readLine()));
+				eqBand.controlled = new Boolean(in.readLine());
+				eqBand.subtractive = new Boolean(in.readLine());
+				eqBands.add(eqBand);
+			}
 		} catch (Exception e) {
-			System.out.println("IIRFilter.loadModuleInfo: Error reading from file");
+			System.out.println("SpectrumEQ: loadModuleInfo: Error reading from file");
 		}
 		
 	}
 
 	public void saveModuleInfo(BufferedWriter out) {
 		try { 
-			//out.write(this.type.toString());
+			out.write(new Integer(eqBands.size()).toString());
 			out.newLine();
-			//out.write(new Double(freqInHz).toString());
-			out.newLine();		
-			//out.write(new Double(amplitude).toString());
-			out.newLine();	
-			//out.write(new Integer(filterOrder).toString());
-			out.newLine();	
+			for(EQBand eqBand: eqBands) {
+				out.write(eqBand.type.toString());
+				out.newLine();
+				out.write(new Double(eqBand.getLowerBound()).toString());
+				out.newLine();		
+				out.write(new Double(eqBand.getUpperBound()).toString());
+				out.newLine();
+				out.write(new Integer(eqBand.getOrder()).toString());
+				out.newLine();
+				out.write(new Double(eqBand.getGain()).toString());
+				out.newLine();
+				out.write(new Double(eqBand.getFilterQ()).toString());
+				out.newLine();
+				out.write(new Boolean(eqBand.isControlled()).toString());
+				out.newLine();
+				out.write(new Boolean(eqBand.isSubtractive()).toString());
+				out.newLine();
+			}
 		} catch (Exception e) {
 			System.out.println("SpectrumEQ.saveModuleInfo: Error saving to file");
 		}
