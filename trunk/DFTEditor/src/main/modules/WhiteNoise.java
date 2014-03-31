@@ -10,8 +10,11 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
+
+import main.Filter;
 import main.Module;
 import main.ModuleEditor;
+import main.SynthTools;
 
 public class WhiteNoise implements Module {
 
@@ -125,13 +128,10 @@ public class WhiteNoise implements Module {
 				samplesAM[index] += samplesAMIn[index]; 
 			}
 		}
-		int indexStart = 0;
-		if(nativeOutput) {
-			samplesAM[0] = 0.0;
-			indexStart = 1;
-		}
-		for(int index = indexStart; index < samplesAM.length; index++) {
-			samplesAM[index] *= (Math.random() - 0.5) * 2.0;
+		double dither = Math.PI;
+		for(int index = 0; index < samplesAM.length; index++) {
+			double random = (Math.random() - 0.5) * 2.0;
+			samplesAM[index] = Math.sin(index * dither * random);
 		}
 		return samplesAM;
 	}

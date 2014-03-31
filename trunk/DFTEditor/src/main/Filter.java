@@ -10,7 +10,7 @@ public class Filter {
 	public static final int maxOrder = 24; // for 24 bit data
 	public final static double minFilterFrequency = SynthTools.sampleRate / 2048.0;
 	// filters set to nyquist freqency behave poorly
-	public final static double maxFilterFrequency = SynthTools.sampleRate / 2.0 * 7.0 / 8.0;
+	public final static double maxFilterFrequency = SynthTools.sampleRate / 2.0; // * 7.0 / 8.0;
 	public final static double minFilterFrequencyLog2 = Math.log(minFilterFrequency) / Math.log(2.0);
 	public final static double maxFilterFrequencyLog2 = Math.log(maxFilterFrequency) / Math.log(2.0);
 	public final static double maxOvershootLog2 = 4.0;
@@ -673,7 +673,6 @@ public class Filter {
 			y[1] = b0 * input[1] + b1 * input[0] + a0 * y[0];
 			for(int n = 2; n < input.length; n++) {
 				y[n] = b0 * input[n] + b1 * input[n - 1] + b2 * input[n - 2] - a0 * y[n - 1] - a1 * y[n - 2];
-				
 			}
 			return y;
 		}
@@ -686,13 +685,12 @@ public class Filter {
 			b2 = b0;
 			a0 = 2.0 * q * (g * g - 1.0) / D;
 			a1 = (q * g * g - g + q) / D;
-			//System.out.println(b0 + " " + b1 + " " + b2 + " " + a0 + " " + a1);
+			System.out.println(b0 + " " + b1 + " " + b2 + " " + a0 + " " + a1);
 			double[] y = new double[input.length];
 			y[0] = b0 * input[0];
 			y[1] = b0 * input[1] + b1 * input[0] + a0 * y[0];
 			for(int n = 2; n < input.length; n++) {
 				y[n] = b0 * input[n] + b1 * input[n - 1] + b2 * input[n - 2] - a0 * y[n - 1] - a1 * y[n - 2];
-				
 			}
 			return y;
 		}
