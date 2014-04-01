@@ -129,11 +129,26 @@ public class SpectrumEQController implements MouseListener, MouseMotionListener,
 				}
 			}
 		}
+		// No CNTRL key pressed
 		for(Rectangle rect: parent.getGainControlAreas()) {
 			if(rect.contains(x, y)) {
 				parent.selectionMode = SelectionMode.GAIN;
 				eqBandIndex = parent.xToEQBandIndex(x);
 				//System.out.println("Selected");
+				return;
+			}
+		}
+		for(Rectangle rect: parent.getFilterQControlAreas()) {
+			if(rect.contains(x, y)) {
+				parent.selectionMode = SelectionMode.FILTER_EQ;
+				eqBandIndex = parent.xToEQBandIndex(x);
+				return;
+			}
+		}
+		for(Rectangle rect: parent.getOvershootControlAreas()) {
+			if(rect.contains(x, y)) {
+				parent.selectionMode = SelectionMode.OVERSHOOT;
+				eqBandIndex = parent.xToEQBandIndex(x);
 				return;
 			}
 		}

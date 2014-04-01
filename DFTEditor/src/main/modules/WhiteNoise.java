@@ -128,10 +128,9 @@ public class WhiteNoise implements Module {
 				samplesAM[index] += samplesAMIn[index]; 
 			}
 		}
-		double dither = Math.PI;
 		for(int index = 0; index < samplesAM.length; index++) {
 			double random = (Math.random() - 0.5) * 2.0;
-			samplesAM[index] = Math.sin(index * dither * random);
+			samplesAM[index] *= Math.sin(index * Math.PI * random);
 		}
 		return samplesAM;
 	}
