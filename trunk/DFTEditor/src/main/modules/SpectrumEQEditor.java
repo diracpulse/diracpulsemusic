@@ -392,48 +392,41 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 	
 	public void changeFilterParams(int eqBandIndex) {
 		EQBand eqBand = parent.eqBands.get(eqBandIndex);
-		String toggleControl = "Turn ON Control";
-		if(eqBand.controlled) toggleControl = "Turn OFF Control";
+		String toggleControl = "Turn On Control";
+		if(eqBand.controlled) toggleControl = "Turn Off Control";
 		String toggleSubtractive = "Make Subtractive";
 		if(eqBand.subtractive) toggleSubtractive = "Make Additive";
 		Object[] actions = {"Change Type", "Change Order", toggleControl, toggleSubtractive, "Delete", "Cancel"};
-		String result = (String) JOptionPane.showInputDialog(this, "Select An Action", "SpectrumEQ Modify Filter", JOptionPane.PLAIN_MESSAGE, null, actions, actions[0]);
+		Integer result = (Integer) JOptionPane.showOptionDialog(this, "Select An Action", "SpectrumEQ Modify Filter", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, actions, actions[0]);
 		if(result == null) return;
-    	if(result == actions[0]) {
-    		FilterType type = (FilterType) JOptionPane.showInputDialog(this, "Select A Filter Type", "SpectrumEQ Modify Filter", JOptionPane.PLAIN_MESSAGE, null, FilterType.values(), FilterType.values()[0]);
-    		parent.eqBands.get(eqBandIndex).setType(type);
+    	if(result == 0) {
+    		 Integer result1 = (Integer) JOptionPane.showOptionDialog(this, "Select A Filter Type", "SpectrumEQ Modify Filter", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, FilterType.values(), FilterType.values()[0]);
+    		 if(result1 == null) return;
+    		 parent.eqBands.get(eqBandIndex).setType(FilterType.values()[result1]);
     	}
-      	if(result == actions[1]) {
+      	if(result == 1) {
       		Object[] orderActions4 = {"Order 4 X 1 (24dB/Octave)", "Order 4 X 2 (48dB/Octave)", "Order 4 X 3 (72dB/Octave)", "Order 4 X 4 (96dB/Octave)"};
       		Object[] orderActions2 = {"Order 2 X 1 (12dB/Octave)", "Order 2 X 2 (24dB/Octave)", "Order 2 X 3 (36dB/Octave)", "Order 2 X 4 (48dB/Octave)"};
       		if(eqBand.type == FilterType.LOWPASS || eqBand.type == FilterType.HIGHPASS) {
-      			result = (String) JOptionPane.showInputDialog(this, "Select A Filter Order", "SpectrumEQ Modify Filter", JOptionPane.PLAIN_MESSAGE, null, orderActions2, orderActions2[0]);
-      			if(result == null) return;
-      			for(int index = 0; index < orderActions2.length; index++) {
-      				if(result == orderActions2[index]) {
-      					eqBand.setOrder(index * 2);
-      				}
-      			}
+      			Integer result1 = (Integer) JOptionPane.showOptionDialog(this, "Select A Filter Order", "SpectrumEQ Modify Filter", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, orderActions2, orderActions2[0]);
+      			if(result1 == null) return;
+      			eqBand.setOrder(2 * (result1 + 1));
       		} else {
-      			result = (String) JOptionPane.showInputDialog(this, "Select A Filter Order", "SpectrumEQ Modify Filter", JOptionPane.PLAIN_MESSAGE, null, orderActions4, orderActions4[0]);
-      			if(result == null) return;
-      			for(int index = 0; index < orderActions4.length; index++) {
-      				if(result == orderActions4[index]) {
-      					eqBand.setOrder(index * 4);
-      				}
-      			}
+      			Integer result1 = (Integer) JOptionPane.showOptionDialog(this, "Select A Filter Order", "SpectrumEQ Modify Filter", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, orderActions4, orderActions4[0]);
+      			if(result1 == null) return;
+      			eqBand.setOrder(4 * (result1 + 1));
       		}
     	}
-     	if(result == actions[2]) {
+     	if(result == 2) {
      		eqBand.toggleControlled();
      	}
-     	if(result == actions[3]) {
+     	if(result == 3) {
      		eqBand.toggleSubtractive();
      	}
-     	if(result == actions[4]) {
+     	if(result == 4) {
      		parent.eqBands.remove(eqBandIndex);
      	}
-     	if(result == actions[5]) return;
+     	if(result == 5) return;
      	initFFTData();
 	}
 
