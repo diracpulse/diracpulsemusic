@@ -29,7 +29,15 @@ public class SpectrumEQController implements MouseListener, MouseMotionListener,
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if("Reset".equals(e.getActionCommand())) {
+		if("Blank".equals(e.getActionCommand())) {
+			parent.parent.initBlank();
+			parent.initFFTData();
+		}
+		if("Octaves".equals(e.getActionCommand())) {
+			parent.parent.initOctaves();
+			parent.initFFTData();
+		}
+		if("Critical Bands".equals(e.getActionCommand())) {
 			parent.parent.initCriticalBands();
 			parent.initFFTData();
 		}

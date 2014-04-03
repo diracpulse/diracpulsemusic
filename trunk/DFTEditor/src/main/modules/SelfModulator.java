@@ -19,29 +19,26 @@ import main.ModuleEditor;
 public class SelfModulator implements Module {
 
 	public enum ModulationType {
-		SELFMODULATION,
-		DECAY;
+		COMPRESSOR,
+		RECTIFIER;
 	}
 	
 	ModuleEditor parent = null;
 	Integer moduleID = null;
-	double fmMod = 1.0;
-	double overdrive = Math.PI;
+	double exponent = 0.5;
+	double gain = 1.0;
 	int cornerX;
 	int cornerY;
 	int width = 150; // should be >= value calculated by init
 	int height = 150; // calculated by init
-	ModulationType type = ModulationType.SELFMODULATION;
-	
+	ModulationType type = ModulationType.COMPRESSOR;
 	
 	Rectangle typeControl = null;
-	Rectangle fmModControl = null;
-	Rectangle overdriveControl = null;
+	Rectangle exponentControl = null;
+	Rectangle gainControl = null;
 	ArrayList<Integer> inputs;
 	ArrayList<Integer> outputs;
-	ArrayList<Integer> inputADD;
-	ArrayList<Integer> inputAM;
-	ArrayList<Integer> inputFMMod;
+	ArrayList<Integer> controlInputs;
 	//HashMap<Integer, Long> outputToModuleID = null;
 	//HashMap<Integer, Long> inputAddToModuleID = null;
 	
@@ -82,9 +79,7 @@ public class SelfModulator implements Module {
 		this.parent = parent;
 		outputs = new ArrayList<Integer>();
 		inputs = new ArrayList<Integer>();
-		inputADD = new ArrayList<Integer>();
-		inputAM = new ArrayList<Integer>();
-		inputFMMod = new ArrayList<Integer>();
+		controlInputs = new ArrayList<Integer>();
 		init();
 	}
 	
@@ -135,89 +130,46 @@ public class SelfModulator implements Module {
 				inputSamples[index] += inputIn[index]; 
 			}
 		}
-		double[] samplesFMMod = new double[inputSamples.length];
-		for(int index = 0; index < inputSamples.length; index++) {
-			samplesFMMod[index] = 1.0;
-		}
-		ArrayList<double[]> samplesFMModArray = new ArrayList<double[]>();
-		for(Integer inputID: inputFMMod) {
+		double[] controlSamples = new double[control.length];
+		ArrayList<double[]> controlInputArray = new ArrayList<double[]>();
+		for(Integer inputID: controlInputs) {
 			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getConnection() == null) continue;
 			waitingForModuleIDs.add(moduleID);
 			Module.Output output = (Module.Output) parent.connectors.get(input.getConnection());
-			samplesFMModArray.add(output.getSamples(waitingForModuleIDs, control));
+			controlInputArray.add(output.getSamples(waitingForModuleIDs, control));
 			waitingForModuleIDs.remove(moduleID);
 		}
-		if(!samplesFMModArray.isEmpty()) {
-			for(int index = 0; index < inputSamples.length; index++) samplesFMMod[index] = 0.0;
+		if(!controlInputArray.isEmpty()) {
+			for(int index = 0; index < controlSamples.length; index++) controlSamples[index] = 0.0;
+		} else {
+			for(int index = 0; index < controlSamples.length; index++) controlSamples[index] = 1.0;
 		}
-		for(double[] samplesFMModIn: samplesFMModArray) {
+		for(double[] controlSamplesIn: controlInputArray) {
 			for(int index = 0; index < inputSamples.length; index++) {
-				if(index >= samplesFMModIn.length) break;
-				samplesFMMod[index] += samplesFMModIn[index]; 
+				if(index >= controlSamplesIn.length) continue;
+				controlSamples[index] += controlSamplesIn[index]; 
 			}
 		}
-		// Perform self modulation first
 		switch(type) {
-			case SELFMODULATION:
+			case COMPRESSOR:
 				for(int index = 0; index < inputSamples.length; index++) {
-					double phase = fmMod * samplesFMMod[index] * Math.sin(inputSamples[index] * overdrive);
-					inputSamples[index] = Math.sin(phase);
+					if(exponent != 1.0) {
+						if(inputSamples[index] < 0.0) {
+							inputSamples[index] = Math.pow(Math.abs(inputSamples[index]), exponent) * -1.0 * gain;
+						} else {
+							inputSamples[index] = Math.pow(Math.abs(inputSamples[index]), exponent) * gain;
+						}
+					} else {
+						inputSamples[index] *= gain;
+					}
 				}
 				break;
-			case DECAY:
+			case RECTIFIER:
 				for(int index = 0; index < inputSamples.length; index++) {
-					double phase = fmMod * samplesFMMod[index] * Math.sin(inputSamples[index] * overdrive);
-					phase = Math.sin(phase);
+					inputSamples[index] = Math.abs(inputSamples[index]);
 				}
 				break;				
-		}
-		// Start AM and ADD operations
-		double[] samplesAM = new double[inputSamples.length];
-		double[] samplesADD = new double[inputSamples.length];
-		for(int index = 0; index < inputSamples.length; index++) {
-			samplesAM[index] = 1.0;
-			samplesADD[index] = 0.0;
-			samplesFMMod[index] = 1.0;
-		}
-		// Sum AM Inputs
-		ArrayList<double[]> samplesAMArray = new ArrayList<double[]>();
-		for(Integer inputID: inputAM) {
-			Input input = (Input) parent.connectors.get(inputID);
-			if(input.getConnection() == null) continue;
-			waitingForModuleIDs.add(moduleID);
-			Module.Output output = (Module.Output) parent.connectors.get(input.getConnection());
-			samplesAMArray.add(output.getSamples(waitingForModuleIDs, control));
-			waitingForModuleIDs.remove(moduleID);
-		}
-		if(!samplesAMArray.isEmpty()) {
-			for(int index = 0; index < samplesAM.length; index++) samplesAM[index] = 0.0;
-		}
-		for(double[] samplesAMIn: samplesAMArray) {
-			for(int index = 0; index < inputSamples.length; index++) {
-				if(index >= samplesAMIn.length) continue;
-				samplesAM[index] += samplesAMIn[index]; 
-			}
-		}
-		// Sum add inputs
-		ArrayList<double[]> samplesADDArray = new ArrayList<double[]>();
-		for(Integer inputID: inputADD) {
-			Input input = (Input) parent.connectors.get(inputID);
-			if(input.getConnection() == null) continue;
-			waitingForModuleIDs.add(moduleID);
-			Module.Output output = (Module.Output) parent.connectors.get(input.getConnection());
-			samplesADDArray.add(output.getSamples(waitingForModuleIDs, control));
-			waitingForModuleIDs.remove(moduleID);
-		}
-		// no change if samplesADD.isEmpty()
-		for(double[] samplesADDIn: samplesADDArray) {
-			for(int index = 0; index < inputSamples.length; index++) {
-				if(index >= samplesADDIn.length) break;
-				samplesADD[index] += samplesADDIn[index]; 
-			}
-		}
-		for(int index = 0; index < inputSamples.length; index++) {
-			inputSamples[index] = inputSamples[index] * samplesAM[index] + samplesADD[index];
 		}
 		return inputSamples;
 	}
@@ -225,23 +177,23 @@ public class SelfModulator implements Module {
 
 	public void mousePressed(int x, int y) {
 		if(typeControl.contains(x, y)) {
-			ModulationType inputType = (ModulationType) JOptionPane.showInputDialog(null, "Choose a type", "Type Select", JOptionPane.INFORMATION_MESSAGE, null, ModulationType.values(),  ModulationType.SELFMODULATION);
+			ModulationType inputType = (ModulationType) JOptionPane.showInputDialog(null, "Choose a type", "Type Select", JOptionPane.INFORMATION_MESSAGE, null, ModulationType.values(),  ModulationType.COMPRESSOR);
 			if(inputType == null) return;
 			type = inputType;
 			parent.refreshData();
 			return;
 		}
-		if(fmModControl.contains(x, y)) {
-			Double inputAmplitude = getInput("Input FMMod Log2", ModuleEditor.minAmplitudeLog2, ModuleEditor.maxAmplitudeLog2);
-			if(inputAmplitude == null) return;
-			fmMod = Math.pow(2.0, inputAmplitude);
+		if(exponentControl.contains(x, y)) {
+			Double inputExponent = getInput("Input Exponent", 0.0, 16.0);
+			if(inputExponent == null) return;
+			exponent = inputExponent;
 			parent.refreshData();
 			return;
 		}
-		if(overdriveControl.contains(x, y)) {
-			Double inputOverdrive = getInput("Input Overdrive Log2", ModuleEditor.minAmplitudeLog2, ModuleEditor.maxAmplitudeLog2);
-			if(inputOverdrive == null) return;
-			overdrive = Math.pow(2.0, inputOverdrive);
+		if(gainControl.contains(x, y)) {
+			Double inputGain = getInput("Input Gain (Log2)", ModuleEditor.minAmplitudeLog2, ModuleEditor.maxAmplitudeLog2);
+			if(inputGain == null) return;
+			gain = Math.pow(2.0, inputGain);
 			parent.refreshData();
 			return;
 		}
@@ -259,34 +211,16 @@ public class SelfModulator implements Module {
 			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
-				System.out.println("Self Modulator" + " input: " + index);
+				System.out.println(type.toString() + " input: " + index);
 			}
 			index++;
 		}
 		index = 0;
-		for(Integer inputID: inputADD) {
+		for(Integer inputID: controlInputs) {
 			Input input = (Input) parent.connectors.get(inputID);
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
-				System.out.println("SelfModulator inputADD: " + index);
-			}
-			index++;
-		}
-		index = 0;
-		for(Integer inputID: inputAM) {
-			Input input = (Input) parent.connectors.get(inputID);
-			if(input.getSelectArea().contains(x, y)) {
-				parent.handleConnectorSelect(inputID);
-				System.out.println("SelfModulator inputAM: " + index);
-			}
-			index++;
-		}
-		index = 0;
-		for(Integer inputID: inputFMMod) {
-			Input input = (Input) parent.connectors.get(inputID);
-			if(input.getSelectArea().contains(x, y)) {
-				parent.handleConnectorSelect(inputID);
-				System.out.println(type + " inputFMMod: " + index);
+				System.out.println(type.toString() + " control input: " + index);
 			}
 			index++;
 		}
@@ -334,31 +268,17 @@ public class SelfModulator implements Module {
 		if(g2 == null) typeControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		if(g2 != null) g2.setColor(Color.GREEN);
 		currentY += yStep;
-		if(g2 != null) g2.drawString("FMMod: " + Math.round(fmMod * 100000.0) / 100000.0 + " (" + Math.round(Math.log(fmMod)/Math.log(2.0) * 1000.0) / 1000.0 + " Log2)", currentX, currentY);
-		if(g2 == null) fmModControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
+		if(g2 != null) g2.drawString("Gain: " + Math.round(gain * 10000.0) / 10000.0 + " (" + Math.round(Math.log(gain)/Math.log(2.0) * 100.0) / 100.0 + " Log2)", currentX, currentY);
+		if(g2 == null) gainControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		currentY += yStep;
-		if(g2 != null) g2.drawString("Overdrive: " + (Math.round(overdrive * 100000.0) / 100000.0), currentX, currentY);
-		if(g2 == null) overdriveControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
+		if(g2 != null) g2.drawString("Exponent: " + exponent, currentX, currentY);
+		if(g2 == null) exponentControl = new Rectangle(currentX, currentY - fontSize, width, fontSize);
 		currentY += yStep;
-		if(g2 != null) g2.drawString("ADD: ", currentX, currentY);
+		if(g2 != null) g2.drawString("Control: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputADD.add(parent.addConnector(new Input(this, currentRect)));
-		}
-		currentY += yStep;
-		if(g2 != null) g2.drawString("AM: ", currentX, currentY);
-		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
-			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
-			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputAM.add(parent.addConnector(new Input(this, currentRect)));
-		}
-		currentY += yStep;
-		if(g2 != null) g2.drawString("FMMod: ", currentX, currentY);
-		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
-			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
-			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputFMMod.add(parent.addConnector(new Input(this, currentRect)));
+			if(g2 == null) controlInputs.add(parent.addConnector(new Input(this, currentRect)));
 		}
 		currentY += yStep;
 		if(g2 != null) g2.drawString("IN: ", currentX, currentY);
@@ -382,7 +302,9 @@ public class SelfModulator implements Module {
 			String currentLine = in.readLine();
 			this.type = SelfModulator.ModulationType.valueOf(currentLine);
 			currentLine = in.readLine();
-			this.fmMod = new Double(currentLine);
+			this.exponent = new Double(currentLine);
+			currentLine = in.readLine();
+			this.gain = new Double(currentLine);
 		} catch (Exception e) {
 			System.out.println("SelfModulator.loadModuleInfo: Error reading from file");
 		}
@@ -393,7 +315,9 @@ public class SelfModulator implements Module {
 		try {
 			out.write(this.type.toString());
 			out.newLine();
-			out.write(new Double(fmMod).toString());
+			out.write(new Double(exponent).toString());
+			out.newLine();
+			out.write(new Double(gain).toString());
 			out.newLine();
 		} catch (Exception e) {
 			System.out.println("SelfModulator.loadModuleInfo: Error reading from file");

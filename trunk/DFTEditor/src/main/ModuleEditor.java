@@ -327,8 +327,8 @@ public class ModuleEditor extends JPanel {
 		addModuleToColumn(col, Module.ModuleType.SPECTRUM_EQ);
 		addModuleToColumn(col, Module.ModuleType.SPECTRUM_EQ);
 		col++;
-		addModuleToColumn(col, Module.ModuleType.IIRFILTER);
-		addModuleToColumn(col, Module.ModuleType.IIRFILTER);
+		addModuleToColumn(col, Module.ModuleType.SELFMODULATOR);
+		addModuleToColumn(col, Module.ModuleType.SELFMODULATOR);
 		addModuleToColumn(col, Module.ModuleType.IIRFILTER);
 		addModuleToColumn(col, Module.ModuleType.IIRFILTER);
 		col++;
