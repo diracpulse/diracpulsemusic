@@ -272,6 +272,18 @@ public class SpectrumEQ implements Module {
 		}
 	}
 	
+	public void initOctaves() {
+		eqBands = new ArrayList<EQBand>();
+		for(double octave = ModuleEditor.minOctave; octave < maxFreqInHz; octave *= 2.0) {
+			eqBands.add(new EQBand(octave / Math.sqrt(2.0), octave * Math.sqrt(2.0)));
+			eqBands.get(eqBands.size() - 1).controlled = true;
+		}
+	}
+	
+	public void initBlank() {
+		eqBands = new ArrayList<EQBand>();
+	}
+	
 	public int getWidth() {
 		return width;
 	}

@@ -158,7 +158,9 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 	
 	public JToolBar createNavigationBar() {
 		navigationBar = new JToolBar("Navigation Bar");
-        addNavigationButton("Reset");
+        addNavigationButton("Blank");
+        addNavigationButton("Octaves");
+        addNavigationButton("Critical Bands");
     	return navigationBar;
 	}
 	
