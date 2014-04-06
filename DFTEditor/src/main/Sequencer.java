@@ -42,7 +42,9 @@ public class Sequencer extends JPanel {
 	public static int divisionsPerBeat = 8;
 	public static int pixelsPerDivision = pixelsPerBeat / divisionsPerBeat;
 	public static double secondsPerBeat = 60.0 / bpm;
-	public static double maxTimeInSeconds = maxBeats * secondsPerBeat;
+	public static double maxReverbInSeconds = 2.0;
+	public static double maxDelayInSeconds = 0.1;
+	//public static double maxTimeInSeconds = maxBeats * secondsPerBeat + maxReverbInSeconds + maxDelayInSeconds;
 	public static int leftDigits = 9;
 	public static int scrollableWidth = totalPixels + SequencerUtils.digitWidth * leftDigits;
 	public static double secondsPerPixel = secondsPerBeat / pixelsPerBeat;
@@ -52,7 +54,6 @@ public class Sequencer extends JPanel {
 	public int currentModuleIndex = 0;
 	double[] leftSamples = null;
 	double[] rightSamples = null;
-	public static double[] cache = new double[(int) Math.round(maxTimeInSeconds * SynthTools.sampleRate)]; 
 	
 	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);
@@ -116,15 +117,12 @@ public class Sequencer extends JPanel {
     public void initLeftRight() {
     	double samplesPerPixel = (secondsPerBeat / pixelsPerBeat) * SynthTools.sampleRate;
     	int numPixels = getNumActivePixels();
-    	int numSamples = (int) Math.round(numPixels * samplesPerPixel);
-    	leftSamples = new double[numSamples];
-    	rightSamples = new double[numSamples];
-    	for(int sample = 0; sample < numSamples; sample++) {
-    		leftSamples[sample] = 0.0;
-    		rightSamples[sample] = 0.0;
-    	}
+    	int numControlSamples = (int) Math.round(numPixels * samplesPerPixel);
+    	int numTailSamples = (int) Math.round((maxDelayInSeconds + maxReverbInSeconds) * SynthTools.sampleRate);
+    	leftSamples = new double[numControlSamples + numTailSamples];
+    	rightSamples = new double[leftSamples.length];
     	for(int moduleIndex = 0; moduleIndex < parent.moduleEditorInfo.size(); moduleIndex++) {
-    		double[] controlSamples = new double[numSamples];
+    		double[] controlSamples = new double[numControlSamples];
     		double[] controlPixels = freqRatiosAtTimeInPixels.get(moduleIndex);
 	    	for(int pixel = 0; pixel < numPixels; pixel++) {
 	    		int startSample = (int) Math.round(pixel * samplesPerPixel);
@@ -132,14 +130,14 @@ public class Sequencer extends JPanel {
 	    		double controlVal = controlPixels[pixel];
 	    		if(controlVal > 0.0 && controlVal < 1.0) controlVal = 1.0; // percussion
 	    		for(int sample = startSample; sample < endSample; sample++) {
-	    			if(sample >= numSamples) break;
+	    			if(sample >= numControlSamples) break;
 	    			controlSamples[sample] = controlVal;
 	    		}
 	    	}
 	    	double[] leftOut = parent.moduleEditorInfo.get(moduleIndex).getModuleEditor().getSamples(controlSamples).get(0);
 	    	double[] rightOut = parent.moduleEditorInfo.get(moduleIndex).getModuleEditor().getSamples(controlSamples).get(1);
 	    	if(leftOut == null || rightOut == null) continue; 
-	    	for(int sample = 0; sample < numSamples; sample++) {
+	    	for(int sample = 0; sample < leftSamples.length; sample++) {
 	    		if(sample < leftOut.length) leftSamples[sample] += leftOut[sample];
 	    		if(sample < rightOut.length) rightSamples[sample] += rightOut[sample];
 	    	}

@@ -77,7 +77,7 @@ public class ModuleEditor extends JPanel {
 	public final static double defaultOctave = 256.0;
 	public final static int continuousBufferLength = 44100 / 2;
 	private boolean playContinuous = false;
-	private boolean correctDC = true;
+	private boolean correctDC = false;
 	
 	private String getTitle() {
 		return parent.moduleEditorInfo.get(moduleEditorID).getName();
