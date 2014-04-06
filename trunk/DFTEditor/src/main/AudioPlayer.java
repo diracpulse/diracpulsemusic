@@ -59,25 +59,42 @@ public class AudioPlayer extends Thread {
 			if(audioByteData == null) continue;
 			while(position < audioByteData.length) {
 				int bytesLeftToWrite = audioByteData.length - position;
-				int bytesToWrite = line.available();
+				int bytesToWrite = 0;
+				if(line != null) {
+					if(line.available() > frameSize) {
+						bytesToWrite = frameSize;
+					} else {
+						bytesToWrite = line.available();
+					}
+				} else {
+					getLine();
+				}
 				//if(bytesToWrite > frameSize) bytesToWrite = frameSize;
 				if(bytesToWrite <= 0) continue;
 				if(bytesLeftToWrite > bytesToWrite) {
+					if(line == null) getLine();
 					line.write(audioByteData, position, bytesToWrite);
 					position += bytesToWrite;
 					//System.out.println("Available");
 				} else {
+					if(line == null) getLine();
 					line.write(audioByteData, position, bytesLeftToWrite);
 					position = audioByteData.length;
 					//System.out.println("Finished");
 				}
 				if(this != currentThread) {
-					line.drain();
-					//System.out.println("Changed");
-					//return;
+					if(line != null) {
+						line.drain();
+					} else {
+						getLine();
+					}
 				}
 				if(interrupted()) {
-					line.drain();
+					if(line != null) {
+						line.drain();
+					} else {
+						getLine();
+					}
 					//System.out.println("Interrupted");
 					return;
 				}
