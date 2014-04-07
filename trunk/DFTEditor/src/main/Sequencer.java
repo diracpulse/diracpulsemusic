@@ -159,7 +159,7 @@ public class Sequencer extends JPanel {
 		boolean rating = false;
 		boolean loopAgain = true;
 		while(loopAgain) {
-			clearData();
+			clearInstrument(currentModuleIndex);
 			ArrayList<Integer> notes = autoScale.getNextSequence(rating);
 			int index = 0;
 			for(int note: notes) {
@@ -178,7 +178,10 @@ public class Sequencer extends JPanel {
 			} else {
 				if(result == 0) rating = true;
 				if(result == 1) rating = false;
-				if(result == 2) loopAgain = false;
+				if(result == 2) {
+					autoScale.getNextSequence(true);
+					loopAgain = false;
+				}
 			}
 		}
 		autoScale.closeLogFile();
@@ -190,6 +193,13 @@ public class Sequencer extends JPanel {
 			for(int innerIndex = 0; innerIndex < numFreqRatios ; innerIndex++) {
 				freqRatiosAtTimeInPixels.get(index)[innerIndex] = -1.0;
 			}
+		}
+	}
+	
+	public void clearInstrument(int index) {
+		int numFreqRatios = freqRatiosAtTimeInPixels.get(index).length;
+		for(int innerIndex = 0; innerIndex < numFreqRatios ; innerIndex++) {
+			freqRatiosAtTimeInPixels.get(index)[innerIndex] = -1.0;
 		}
 	}
 	

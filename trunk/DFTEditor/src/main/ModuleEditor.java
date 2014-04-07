@@ -340,7 +340,6 @@ public class ModuleEditor extends JPanel {
 		addModuleToColumn(col, Module.ModuleType.STEREOPAN);
 		addModuleToColumn(col, Module.ModuleType.STEREOPAN);	
 		addModuleToColumn(col, Module.ModuleType.STEREOPAN);
-		addModuleToColumn(col, Module.ModuleType.STEREOPAN);	
 	}
 	
 	public void addModuleToColumn(int col, Module.ModuleType moduleType) {
