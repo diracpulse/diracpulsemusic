@@ -38,7 +38,7 @@ public class BasicWaveformEditor extends JPanel implements WindowListener {
 	
 	public enum ControlType {
 		FREQUENCY,
-		AMPLITUDE;
+		AMPLITUDE,
 	}
 	
 	public class ControlRect {
@@ -110,21 +110,30 @@ public class BasicWaveformEditor extends JPanel implements WindowListener {
 			return -1;
 		}
 		
-		public void setToRandomValue() {
+		public void setToRandomValue(ControlType inputType, double randomness) {
 			boolean inBounds = false;
 			switch(controlType) {
 			case FREQUENCY:
+				if(inputType != ControlType.FREQUENCY) return;
 				while(!inBounds) {
-					double freqInHzLog2 = random.nextGaussian() * logFrequencyStandardDeviation + Math.log(ModuleEditor.defaultOctave) / Math.log(2.0);
-	    			//int octave = (int) Math.floor(freqInHzLog2 * Scale.minorJustIntonation.length) / Scale.minorJustIntonation.length;
-	    			//int note = (int) Math.round(freqInHzLog2 * Scale.minorJustIntonation.length) % Scale.minorJustIntonation.length;
-	    			//double freqInHz = Math.pow(2.0, octave) * Math.pow(2.0, note / (double) Scale.minorJustIntonation.length);
+					double freqInHzLog2 = Math.log(basicWaveform.getFreqInHz()) / Math.log(2.0);
+					if(randomness < 0.0) {
+						freqInHzLog2 = random.nextGaussian() * logFrequencyStandardDeviation + Math.log(ModuleEditor.defaultOctave) / Math.log(2.0);
+					} else {
+						freqInHzLog2 += random.nextGaussian() * randomness; 
+					}
 	    			inBounds = basicWaveform.setFreqInHz(Math.pow(2.0, Math.round(freqInHzLog2 * steps) / steps));
 				}
 			case AMPLITUDE:
-		   		while(!inBounds) {	
-	    			double logAmplitude = random.nextGaussian() * logAmplitudeStandardDeviation;
-	    			inBounds = basicWaveform.setAmplitude(Math.pow(2.0, Math.round(logAmplitude * steps) / steps));
+				if(inputType != ControlType.AMPLITUDE) return;
+		   		while(!inBounds) {
+		   			double logAmplitude = Math.log(basicWaveform.getAmplitude()) / Math.log(2.0);
+		   			if(randomness < 0.0) {
+		   				logAmplitude = random.nextGaussian() * logAmplitudeStandardDeviation;
+		   			} else {
+		   				logAmplitude += random.nextGaussian() * randomness;
+		   			}
+ 	    			inBounds = basicWaveform.setAmplitude(Math.pow(2.0, Math.round(logAmplitude * steps) / steps));
 	    		}
 			}
 		}
@@ -217,7 +226,14 @@ public class BasicWaveformEditor extends JPanel implements WindowListener {
         for(int index = 0; index < moduleEditor.getNumberOfModuleType(ModuleType.BASICWAVEFORM); index++) {
         	addNavigationButton(new Integer(index).toString());
         }
+        addNavigationButton("Reset");
+        addNavigationButton("Round");
         addNavigationButton("Random");
+        addNavigationButton("Random .5");
+        addNavigationButton("Random Amp");
+        addNavigationButton("Random Freq");
+        addNavigationButton("Random Amp .5");
+        addNavigationButton("Random Freq .5");
     	return navigationBar;
 	}
 	
@@ -267,12 +283,70 @@ public class BasicWaveformEditor extends JPanel implements WindowListener {
     public void randomize() {
        	for(ArrayList<ControlRect> controlArray: controlRects.values()) {
 	    	for(ControlRect controlRect: controlArray) {
-	    		controlRect.setToRandomValue();
+	    		controlRect.setToRandomValue(ControlType.AMPLITUDE, -1.0);
+	    		controlRect.setToRandomValue(ControlType.FREQUENCY, -1.0);
 	    	}
        	}
     	view.repaint();
     	moduleEditor.refreshData();
     }
+    
+    public void reset() {
+       	for(ArrayList<ControlRect> controlArray: controlRects.values()) {
+	    	for(ControlRect controlRect: controlArray) {
+	    		controlRect.basicWaveform.setAmplitude(1.0);
+	    		controlRect.basicWaveform.setFreqInHz(ModuleEditor.defaultOctave);
+	    	}
+       	}
+    	view.repaint();
+    	moduleEditor.refreshData();
+    }
+    
+    public void round() {
+       	for(ArrayList<ControlRect> controlArray: controlRects.values()) {
+	    	for(ControlRect controlRect: controlArray) {
+	    		double amplitude = controlRect.basicWaveform.getAmplitude();
+	    		controlRect.basicWaveform.setAmplitude(Math.pow(2.0, Math.round(Math.log(amplitude) / Math.log(2.0))));
+	    		double frequency = controlRect.basicWaveform.getFreqInHz();
+	    		controlRect.basicWaveform.setFreqInHz(Math.pow(2.0, Math.round(Math.log(frequency) / Math.log(2.0))));
+	    	}
+       	}
+    	view.repaint();
+    	moduleEditor.refreshData();
+    }
+    
+    public void randomize(double random) {
+       	for(ArrayList<ControlRect> controlArray: controlRects.values()) {
+	    	for(ControlRect controlRect: controlArray) {
+	    		controlRect.setToRandomValue(ControlType.AMPLITUDE, random);
+	    		controlRect.setToRandomValue(ControlType.FREQUENCY, random);
+	    	}
+       	}
+    	view.repaint();
+    	moduleEditor.refreshData();
+    }
+    
+    public void randomize(ControlType inputType) {
+       	for(ArrayList<ControlRect> controlArray: controlRects.values()) {
+	    	for(ControlRect controlRect: controlArray) {
+	    		controlRect.setToRandomValue(inputType, -1.0);
+	    	}
+       	}
+    	view.repaint();
+    	moduleEditor.refreshData();
+    }
+    
+    public void randomize(ControlType inputType, double random) {
+       	for(ArrayList<ControlRect> controlArray: controlRects.values()) {
+	    	for(ControlRect controlRect: controlArray) {
+	    		controlRect.setToRandomValue(inputType, random);
+	    	}
+       	}
+    	view.repaint();
+    	moduleEditor.refreshData();
+    }
+    
+    
     
 	@Override
 	public void windowActivated(WindowEvent arg0) {}

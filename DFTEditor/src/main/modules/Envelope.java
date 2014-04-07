@@ -183,6 +183,8 @@ public class Envelope implements Module {
 		TreeMap<Integer, Integer> startToEnd = new TreeMap<Integer, Integer>();
 		int controlIndex = 0;
 		while(true) {
+			if(control == null) break;
+			if(control.length == 0) break;
 			while(control[controlIndex] < 0.0) {
 				controlIndex++;
 				if(controlIndex == control.length) break;

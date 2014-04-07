@@ -33,7 +33,7 @@ public class StereoPan implements Module {
 	private static final double maxDelayInSeconds = Sequencer.maxDelayInSeconds;
 	private double reverbTime = 0.1;
 	private double reverbDecay = 0.5;
-	private double reverbRandom = 1.0;
+	private double reverbRandom = 0.0;
 	private double leftDelay = 0.0;
 	private double leftGain = 1.0;
 	private double[] randomVals;
@@ -405,14 +405,33 @@ public class StereoPan implements Module {
 
 	@Override
 	public void loadModuleInfo(BufferedReader in) {
-		// TODO Auto-generated method stub
-		
+		try { 
+			reverbTime = new Double(in.readLine());
+			reverbDecay = new Double(in.readLine());
+			reverbRandom = new Double(in.readLine());
+			leftDelay = new Double(in.readLine());
+			leftGain = new Double(in.readLine());
+		} catch (Exception e) {
+			System.out.println("StereoPan.loadModuleInfo: Error reading from file");
+		}
 	}
 
 	@Override
 	public void saveModuleInfo(BufferedWriter out) {
-		// TODO Auto-generated method stub
-		
+		try {
+		out.write(new Double(reverbTime).toString());
+		out.newLine();		
+		out.write(new Double(reverbDecay).toString());
+		out.newLine();
+		out.write(new Double(reverbRandom).toString());
+		out.newLine();		
+		out.write(new Double(leftDelay).toString());
+		out.newLine();
+		out.write(new Double(leftGain).toString());
+		out.newLine();
+		} catch (Exception e) {
+			System.out.println("StereoPan.saveModuleInfo: Error saving to file");
+		}
 	}
 
 	@Override

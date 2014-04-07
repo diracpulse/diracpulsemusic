@@ -241,7 +241,7 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 			return;
 		}
 		initFFTData(filteredOutput);
-		AudioPlayer.playAudio(filteredOutput);
+		AudioPlayer.playAudio(filteredOutput, filteredOutput);
 		view.repaint();
 	}
 	
@@ -381,7 +381,7 @@ public class SpectrumEQEditor extends JPanel implements WindowListener {
 	}
 	
 
-	public int xToEQBandIndex(int x) {
+	public Integer xToEQBandIndex(int x) {
 		int index = 0;
 		for(EQBand eqBand: parent.eqBands) {
 			int lowerX = freqToX(Math.log(eqBand.getCenterFreq()) / Math.log(2.0)) - getControlPointWidth() / 2;

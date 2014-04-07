@@ -319,7 +319,7 @@ public class SpectrumEQ implements Module {
 	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] control, boolean returnInput) {
 		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
-			//JOptionPane.showMessageDialog(parent.getParentFrame(), "Loop in FIRFilter");
+			JOptionPane.showMessageDialog(parent.getParentFrame(), "Loop in FIRFilter");
 			return new double[0];
 		}
 		double[] inputSamples = new double[control.length];
@@ -348,6 +348,8 @@ public class SpectrumEQ implements Module {
 		}
 		int controlIndex = 0;
 		while(true) {
+			if(control == null) break;
+			if(control.length == 0) break;
 			while(control[controlIndex] < 0.0) {
 				controlIndex++;
 				if(controlIndex == control.length) break;

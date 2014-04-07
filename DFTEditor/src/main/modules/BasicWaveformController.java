@@ -7,6 +7,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
 import main.Module.ModuleType;
+import main.modules.BasicWaveformEditor.ControlType;
 
 public class BasicWaveformController implements MouseListener, MouseMotionListener, ActionListener {
 
@@ -21,7 +22,14 @@ public class BasicWaveformController implements MouseListener, MouseMotionListen
 		for(int index = 0; index < parent.moduleEditor.getNumberOfModuleType(ModuleType.BASICWAVEFORM); index++) {
 			if (new Integer(index).toString().equals(e.getActionCommand())) parent.toggleWaveformDisplayed(index);
 		}
+		if("Reset".equals(e.getActionCommand())) parent.reset();
+		if("Round".equals(e.getActionCommand())) parent.round();
 		if("Random".equals(e.getActionCommand())) parent.randomize();
+		if("Random .5".equals(e.getActionCommand())) parent.randomize(0.5);
+		if("Random Amp".equals(e.getActionCommand())) parent.randomize(ControlType.AMPLITUDE);
+		if("Random Freq".equals(e.getActionCommand())) parent.randomize(ControlType.FREQUENCY);
+		if("Random Amp .5".equals(e.getActionCommand())) parent.randomize(ControlType.AMPLITUDE, 0.5);
+		if("Random Freq .5".equals(e.getActionCommand())) parent.randomize(ControlType.FREQUENCY, 0.5);
 	}
 
 	@Override
