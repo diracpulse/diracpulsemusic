@@ -33,7 +33,7 @@ public class Sequencer extends JPanel {
 	private JToolBar navigationBar = null;
 	public static int noteBase = 53;
 	public static double minFreq = 256.0;
-	public static int noteHeight = 11;
+	public static int noteHeight = 13;
 	public static int numPercussion = 3;
 	public static double bpm = 120;
 	public static int maxBeats = 20;
@@ -71,6 +71,7 @@ public class Sequencer extends JPanel {
         addNavigationButton("Save");
         addNavigationButton("Get Module");
         addNavigationButton("Scale");
+        addNavigationButton("Chord");
     	return navigationBar;
 	}
 	
@@ -185,6 +186,13 @@ public class Sequencer extends JPanel {
 			}
 		}
 		autoScale.closeLogFile();
+	}
+
+	public void chord() {
+		double[] chordVals = ScaleUtils.addMinorChords(freqRatiosAtTimeInPixels.get(0), noteBase, 1.0);
+		freqRatiosAtTimeInPixels.remove(1);
+		freqRatiosAtTimeInPixels.add(1, chordVals);
+		view.repaint();
 	}
     
 	public void clearData() {
