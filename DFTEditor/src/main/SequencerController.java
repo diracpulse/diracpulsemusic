@@ -46,6 +46,7 @@ public class SequencerController implements MouseListener, MouseMotionListener, 
         	return;
         }
         if("Scale".equals(e.getActionCommand())) parent.scale();
+        if("Chord".equals(e.getActionCommand())) parent.chord();
 	}
 
 	@Override
