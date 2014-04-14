@@ -177,9 +177,6 @@ public class Envelope implements Module {
 	
 	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] control, boolean defaultEnvelope) {
 		double[] returnVal = new double[control.length];
-		for(int index = 0; index < returnVal.length; index++) {
-			returnVal[index] = 0.0;
-		}
 		TreeMap<Integer, Integer> startToEnd = new TreeMap<Integer, Integer>();
 		int controlIndex = 0;
 		while(true) {
