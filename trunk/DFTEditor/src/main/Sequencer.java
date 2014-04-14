@@ -72,6 +72,7 @@ public class Sequencer extends JPanel {
         addNavigationButton("Get Module");
         addNavigationButton("Scale");
         addNavigationButton("Chord");
+        addNavigationButton("Rhythm");
     	return navigationBar;
 	}
 	
@@ -192,6 +193,13 @@ public class Sequencer extends JPanel {
 		double[] chordVals = ScaleUtils.addMinorChords(freqRatiosAtTimeInPixels.get(0), noteBase, 1.0);
 		freqRatiosAtTimeInPixels.remove(1);
 		freqRatiosAtTimeInPixels.add(1, chordVals);
+		view.repaint();
+	}
+	
+	public void rhythm() {
+		double[] rhythmVals = ScaleUtils.rhythm(freqRatiosAtTimeInPixels.get(0));
+		freqRatiosAtTimeInPixels.remove(0);
+		freqRatiosAtTimeInPixels.add(0, rhythmVals);
 		view.repaint();
 	}
     
