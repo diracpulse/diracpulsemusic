@@ -43,6 +43,7 @@ public class BasicWaveform implements Module {
 	private ArrayList<Integer> inputAM;
 	private ArrayList<Integer> inputVCO;
 	private ArrayList<Integer> inputFM;
+	private double[] calculatedSamples = null;
 
 	private class Input extends Module.Input {
 
@@ -55,8 +56,6 @@ public class BasicWaveform implements Module {
 	
 	private class Output extends Module.Output {
 
-		private double[] calculatedSamples = null;
-		
 		public Output(Module parent, Rectangle selectArea) {
 			super(parent, selectArea);
 			// TODO Auto-generated constructor stub

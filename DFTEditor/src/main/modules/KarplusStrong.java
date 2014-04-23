@@ -42,6 +42,7 @@ public class KarplusStrong implements Module {
 	Rectangle aControl = null;
 	Rectangle bControl = null;
 	ArrayList<Integer> outputs;
+	private double[] calculatedSamples = null;
 	
 	@SuppressWarnings("unused")
 	private class Input extends Module.Input {
@@ -54,8 +55,6 @@ public class KarplusStrong implements Module {
 	}
 	
 	private class Output extends Module.Output {
-
-		private double[] calculatedSamples = null;
 		
 		public Output(Module parent, Rectangle selectArea) {
 			super(parent, selectArea);

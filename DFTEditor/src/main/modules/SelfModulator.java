@@ -41,6 +41,7 @@ public class SelfModulator implements Module {
 	ArrayList<Integer> controlInputs;
 	//HashMap<Integer, Long> outputToModuleID = null;
 	//HashMap<Integer, Long> inputAddToModuleID = null;
+	private double[] calculatedSamples = null;
 	
 	private class Input extends Module.Input {
 
@@ -53,8 +54,6 @@ public class SelfModulator implements Module {
 	
 	private class Output extends Module.Output {
 
-		private double[] calculatedSamples = null;
-		
 		public Output(Module parent, Rectangle selectArea) {
 			super(parent, selectArea);
 			// TODO Auto-generated constructor stub

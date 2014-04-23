@@ -32,6 +32,7 @@ public class SineBank implements Module {
 	int cornerY;
 	int width = 150; // should be >= value calculated by init
 	int height = 300; // calculated by init
+	private double[] calculatedSamples = null;
 	
 	ArrayList<Rectangle> ampControls = null;
 	ArrayList<Integer> outputs;
@@ -49,8 +50,6 @@ public class SineBank implements Module {
 	}
 	
 	private class Output extends Module.Output {
-
-		private double[] calculatedSamples = null;
 		
 		public Output(Module parent, Rectangle selectArea) {
 			super(parent, selectArea);

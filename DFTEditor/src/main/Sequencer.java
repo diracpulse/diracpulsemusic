@@ -166,7 +166,7 @@ public class Sequencer extends JPanel {
 			int index = 0;
 			for(int note: notes) {
 				double freqRatio = Math.pow(2.0, note / 53.0);
-				for(int innerIndex = index; innerIndex < index + pixelsPerBeat - divisionsPerBeat; innerIndex++) {
+				for(int innerIndex = index; innerIndex < index + pixelsPerBeat - pixelsPerDivision; innerIndex++) {
 					freqRatiosAtTimeInPixels.get(0)[innerIndex] = freqRatio;
 				}
 				index += pixelsPerBeat;

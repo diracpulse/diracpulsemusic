@@ -31,6 +31,7 @@ public class SpectrumEQ implements Module {
 	double minFreqInHzLog2 = Math.log(minFreqInHz) / Math.log(2.0);
 	double maxFreqInHzLog2 = Math.log(maxFreqInHz) / Math.log(2.0);
 	ArrayList<EQBand> eqBands = new ArrayList<EQBand>();
+	private double[] calculatedSamples = null;
 
 	int cornerX;
 	int cornerY;
@@ -235,8 +236,6 @@ public class SpectrumEQ implements Module {
 	}
 	
 	private class Output extends Module.Output {
-
-		private double[] calculatedSamples = null;
 		
 		public Output(Module parent, Rectangle selectArea) {
 			super(parent, selectArea);

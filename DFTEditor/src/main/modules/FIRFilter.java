@@ -59,6 +59,7 @@ public class FIRFilter implements Module {
 	Rectangle rolloffControl = null;	
 	ArrayList<Integer> outputs;
 	ArrayList<Integer> inputs;
+	private double[] calculatedSamples = null;
 	
 	private class Input extends Module.Input {
 
@@ -70,8 +71,6 @@ public class FIRFilter implements Module {
 	}
 	
 	private class Output extends Module.Output {
-
-		private double[] calculatedSamples = null;
 		
 		public Output(Module parent, Rectangle selectArea) {
 			super(parent, selectArea);

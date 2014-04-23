@@ -24,6 +24,7 @@ public class WhiteNoise implements Module {
 	int cornerY;
 	int width = 150; // should be >= value calculated by init
 	int height = 150; // calculated by init
+	private double[] calculatedSamples = null;
 	
 	ArrayList<Integer> outputs;
 	ArrayList<Integer> inputAM;
@@ -39,8 +40,6 @@ public class WhiteNoise implements Module {
 	
 	private class Output extends Module.Output {
 
-		private double[] calculatedSamples = null;
-		
 		public Output(Module parent, Rectangle selectArea) {
 			super(parent, selectArea);
 			// TODO Auto-generated constructor stub
