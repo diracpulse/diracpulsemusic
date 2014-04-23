@@ -24,7 +24,8 @@ public interface Module {
 		SINEBANK,
 		KARPLUSSTRONG, 
 		IIRFILTER,
-		SPECTRUM_EQ;
+		SPECTRUM_EQ,
+		PLAYABLEWAVEFORM;
 	}
 	
 	abstract void mousePressed(int x, int y);

@@ -14,6 +14,7 @@ import javax.swing.JTabbedPane;
 import main.modules.BasicWaveformEditor;
 import main.modules.Envelope;
 import main.modules.EnvelopeEditor;
+import main.playable.PlayableWaveformEditor;
 
 public class MultiWindow extends WindowAdapter {
 
@@ -70,6 +71,7 @@ public class MultiWindow extends WindowAdapter {
 		moduleEditorInfo.add(new ModuleEditorInfo("Percussion 1", Color.YELLOW, new ModuleEditor(this, moduleEditorInfo.size())));
 		moduleEditorInfo.add(new ModuleEditorInfo("Percussion 2", Color.CYAN, new ModuleEditor(this, moduleEditorInfo.size())));
 		moduleEditorInfo.add(new ModuleEditorInfo("Percussion 3", Color.MAGENTA, new ModuleEditor(this, moduleEditorInfo.size())));
+		pane.add("Playable", (JComponent) new PlayableWaveformEditor(this));
 		pane.add("Sequencer", (JComponent) new Sequencer(this));
 		int index = 1;
 		for(ModuleEditorInfo info: moduleEditorInfo) {

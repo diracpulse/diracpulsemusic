@@ -54,6 +54,7 @@ public class Envelope implements Module {
 	int numPoints = 3;
 	int sustainIndex = Integer.MAX_VALUE;
 	public static final double maxEnvelopeDuration = 5.0;
+	private double[] calculatedSamples = null;
 
 	ArrayList<Integer> outputs = null;
 	
@@ -68,9 +69,7 @@ public class Envelope implements Module {
 	}
 
 	private class Output extends Module.Output {
-
-		private double[] calculatedSamples;
-		
+	
 		public Output(Module parent, Rectangle selectArea) {
 			super(parent, selectArea);
 			// TODO Auto-generated constructor stub

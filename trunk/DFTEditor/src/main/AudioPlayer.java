@@ -20,6 +20,7 @@ public class AudioPlayer extends Thread {
 	private static volatile boolean playContinuous = false;
 	private static volatile byte[] audioByteData = null;
 	private static volatile AudioPlayer currentThread = null;
+	public static volatile long prevFramePosition = 0;
 	
 	private static void getLine() {
 		
@@ -79,6 +80,16 @@ public class AudioPlayer extends Thread {
 		}
 	}
 	
+	public synchronized static void addToLine() {
+		if(line == null) {
+			getLine();
+		}
+		while(line.available() < audioByteData.length) continue;
+		//System.out.println(line.getFramePosition() - prevFramePosition);
+		line.write(audioByteData, 0, audioByteData.length);
+		//prevFramePosition = line.getFramePosition();
+	}
+	
 	public static void playAudio(double[] mono) {
 		if(line == null) getLine();
 		getAudioBytes(mono, 1.0);
@@ -116,7 +127,7 @@ public class AudioPlayer extends Thread {
 		//System.out.println(Thread.getAllStackTraces().keySet().size());
 	}
 
-	private static void getAudioBytes(double[] mono, double masterVolume) {
+	public static void getAudioBytes(double[] mono, double masterVolume) {
 		if(mono == null) return;
 		final int numberOfSamples = mono.length;
 		double[] left = new double[numberOfSamples];
@@ -129,7 +140,7 @@ public class AudioPlayer extends Thread {
 		getAudioBytes(left, right, masterVolume);
 	}
 
-	private static void getAudioBytes(double[] left, double[] right, double masterVolume) {
+	public static void getAudioBytes(double[] left, double[] right, double masterVolume) {
 		if(left == null || right == null) return;
 		int numberOfSamples = right.length;
 		if (left.length < right.length) numberOfSamples = left.length;

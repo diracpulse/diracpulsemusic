@@ -42,6 +42,7 @@ public class IIRFilter implements Module {
 	Rectangle qControl = null;
 	ArrayList<Integer> outputs;
 	ArrayList<Integer> inputs;
+	private double[] calculatedSamples = null;
 	
 	private class Input extends Module.Input {
 
@@ -54,8 +55,6 @@ public class IIRFilter implements Module {
 	
 	private class Output extends Module.Output {
 
-		private double[] calculatedSamples = null;
-		
 		public Output(Module parent, Rectangle selectArea) {
 			super(parent, selectArea);
 			// TODO Auto-generated constructor stub

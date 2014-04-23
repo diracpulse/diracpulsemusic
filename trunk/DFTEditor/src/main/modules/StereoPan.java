@@ -47,6 +47,8 @@ public class StereoPan implements Module {
 	ArrayList<Integer> controls;
 	ArrayList<Integer> outputsLeft;
 	ArrayList<Integer> outputsRight;
+	private double[] calculatedSamplesLeft = null;
+	private double[] calculatedSamplesRight = null;
 	
 	private class Input extends Module.Input {
 
@@ -58,8 +60,6 @@ public class StereoPan implements Module {
 	}
 	
 	private class OutputLeft extends Module.Output {
-
-		private double[] calculatedSamples = null;
 		
 		public OutputLeft(Module parent, Rectangle selectArea) {
 			super(parent, selectArea);
@@ -68,21 +68,18 @@ public class StereoPan implements Module {
 
 		@Override
 		public double[] getSamples(HashSet<Integer> waitingForModuleIDs, double[] control) {
-			if(calculatedSamples != null) return calculatedSamples;
-			calculatedSamples = getSamplesLeft(waitingForModuleIDs, control);
-			return calculatedSamples;
+			if(calculatedSamplesLeft != null) return calculatedSamplesLeft;
+			calculatedSamplesLeft = getSamplesLeft(waitingForModuleIDs, control);
+			return calculatedSamplesLeft;
 		}
 		
 		public void clearSamples() {
-			calculatedSamples = null;
+			calculatedSamplesLeft = null;
 		}
 	}
 	
 	private class OutputRight extends Module.Output {
 		
-		private double[] calculatedSamples = null;
-
-
 		public OutputRight(Module parent, Rectangle selectArea) {
 			super(parent, selectArea);
 			// TODO Auto-generated constructor stub
@@ -90,13 +87,13 @@ public class StereoPan implements Module {
 
 		@Override
 		public double[] getSamples(HashSet<Integer> waitingForModuleIDs, double[] control) {
-			if(calculatedSamples != null) return calculatedSamples;
-			calculatedSamples = getSamplesRight(waitingForModuleIDs, control);
-			return calculatedSamples;
+			if(calculatedSamplesRight != null) return calculatedSamplesRight;
+			calculatedSamplesRight = getSamplesRight(waitingForModuleIDs, control);
+			return calculatedSamplesRight;
 		}
 		
 		public void clearSamples() {
-			calculatedSamples = null;
+			calculatedSamplesRight = null;
 		}
 	}
 	
