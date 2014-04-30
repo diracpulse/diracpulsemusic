@@ -15,7 +15,7 @@ public class AudioPlayer extends Thread {
 	final static int channels = 2;
 	final static boolean signed = true;
 	final static boolean bigEndian = false;
-	final static double fullScale = Short.MAX_VALUE;
+	public final static double fullScale = Short.MAX_VALUE;
 	final static int frameSize = 1024;
 	private static volatile boolean playContinuous = false;
 	private static volatile byte[] audioByteData = null;
@@ -80,14 +80,22 @@ public class AudioPlayer extends Thread {
 		}
 	}
 	
-	public synchronized static void addToLine() {
+	public synchronized static void addToLine(double[] mono) {
 		if(line == null) {
 			getLine();
 		}
+		getAudioBytes(mono);
 		while(line.available() < audioByteData.length) continue;
-		//System.out.println(line.getFramePosition() - prevFramePosition);
 		line.write(audioByteData, 0, audioByteData.length);
-		//prevFramePosition = line.getFramePosition();
+	}
+	
+	public synchronized static void addToLine(double[] left, double[] right) {
+		if(line == null) {
+			getLine();
+		}
+		getAudioBytes(left, right);
+		while(line.available() < audioByteData.length) continue;
+		line.write(audioByteData, 0, audioByteData.length);
 	}
 	
 	public static void playAudio(double[] mono) {
@@ -170,6 +178,41 @@ public class AudioPlayer extends Thread {
 			audioByteData[sampleIndex] = (byte) (leftSample & 0xFF);
 			audioByteData[sampleIndex + 1] = (byte) (leftSample >> 8);
 			rightSample = (int) Math.round(right[index] * volume);
+			audioByteData[sampleIndex + 2] = (byte) (rightSample & 0xFF);
+			audioByteData[sampleIndex + 3] = (byte) (rightSample >> 8);			
+		}
+	}
+	
+	public static void getAudioBytes(double[] mono) {
+		if(mono == null) return;
+		final int numberOfSamples = mono.length;
+		double[] left = new double[numberOfSamples];
+		double[] right = new double[numberOfSamples];
+		int index;
+		for (index = 0; index < numberOfSamples; index++) { 
+			left[index] = mono[index];
+			right[index] = mono[index];
+		}
+		getAudioBytes(left, right);
+	}
+
+	
+	public static void getAudioBytes(double[] left, double[] right) {
+		if(left == null || right == null) return;
+		int numberOfSamples = right.length;
+		if (left.length < right.length) numberOfSamples = left.length;
+		//System.out.println("AudioPlayer.PlayBuffer: left samples = " + left.length + " | right samples = " + right.length);
+		int numBytesToWrite = numberOfSamples * 4;
+		audioByteData = new byte[numBytesToWrite];
+		int leftSample;
+		int rightSample;
+		int sampleIndex;
+		for (int index = 0; index < numberOfSamples; index++) {
+			sampleIndex = index * 4;
+			leftSample = (int) Math.round(left[index]);
+			audioByteData[sampleIndex] = (byte) (leftSample & 0xFF);
+			audioByteData[sampleIndex + 1] = (byte) (leftSample >> 8);
+			rightSample = (int) Math.round(right[index]);
 			audioByteData[sampleIndex + 2] = (byte) (rightSample & 0xFF);
 			audioByteData[sampleIndex + 3] = (byte) (rightSample >> 8);			
 		}

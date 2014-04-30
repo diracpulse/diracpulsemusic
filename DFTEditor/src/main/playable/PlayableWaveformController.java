@@ -24,7 +24,7 @@ public class PlayableWaveformController implements MouseListener, MouseMotionLis
 	public void mouseDragged(MouseEvent arg0) {
 		int x = arg0.getX();
 		int y = arg0.getY();
-		parent.pointSelected(x, y);
+		parent.mouseDragged(x, y);
 	}
 
 	@Override
@@ -48,14 +48,14 @@ public class PlayableWaveformController implements MouseListener, MouseMotionLis
 	public void mousePressed(MouseEvent arg0) {
 		int x = arg0.getX();
 		int y = arg0.getY();
-		parent.pointSelected(x, y);
+		parent.mousePressed(x, y);
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent arg0) {
 		int x = arg0.getX();
 		int y = arg0.getY();
-		parent.pointSelected(x, y);
+		parent.mouseReleased(x, y);
 	}
 
 }

@@ -27,19 +27,26 @@ import main.PlayDataInWindow.SynthType;
 import main.ModuleEditor;
 import main.MultiWindow;
 import main.Scale;
+import main.SynthTools;
 
 public class PlayableWaveformEditor extends JPanel implements ActionListener {
 
 	private static final long serialVersionUID = 3138005743637187863L;
 	
 	MultiWindow parent;
-	PlayableWaveform osc1;
+	PlayableSnare snare;
 	PlayableWaveformView view;
 	PlayableWaveformController controller;
 	JToolBar navigationBar = null;
 	Timer timer = null;
-	volatile long prevTime = 0; 
-
+	long timerCalls = 0;
+	private int latencyInMillis = 1;
+	public final int framesPerSecond = 50;
+	public final int frameLengthInMillis = 1000 / framesPerSecond;
+	public final int frameLengthInSamples = (int) Math.round(SynthTools.sampleRate / framesPerSecond);
+	double[] loopData = new double[frameLengthInSamples * framesPerSecond * 4];
+	int loopPosition = 0;
+	
 	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);
 		button.addActionListener((ActionListener) controller);
@@ -66,30 +73,38 @@ public class PlayableWaveformEditor extends JPanel implements ActionListener {
         JScrollPane scrollPane = new JScrollPane(view);
         scrollPane.setSize(800, 600);
         add(scrollPane, BorderLayout.CENTER);
-        osc1 = new PlayableWaveform(this);
+        snare = new PlayableSnare(this);
     }
     
-    public void pointSelected(int x, int y) {
-    	osc1.pointSelected(x, y);
+    public void mousePressed(int x, int y) {
+    	snare.pointSelected(x, y);
     }
+    
+    public void mouseReleased(int x, int y) {
+    	
+    }
+    
+    public void mouseDragged(int x, int y) {
+
+    }
+    
     
     public void record() {
     	int latency = 0;
     	// let JIT Compiler Optimize
     	for(int index = 0; index < 10; index++) {
-    		latency += getLatency();
+    		//latency += getLatency();
     	}
     	latency = 0;
     	for(int index = 0; index < 10; index++) {
-    		latency += getLatency();
+    		//latency += getLatency();
     	}
     	latency = (int) Math.round(latency / 10.0);
     	if(latency == 0) latency = 1;
     	System.out.println(latency);
-		timer = new Timer(20 - latency, this);
+		timer = new Timer(frameLengthInMillis - latencyInMillis, this);
         timer.setInitialDelay(0);
-		getAudioData();
-		AudioPlayer.addToLine();
+		playAudioData();
         timer.start();
     }
     
@@ -99,18 +114,26 @@ public class PlayableWaveformEditor extends JPanel implements ActionListener {
 
 	@Override
 	public synchronized void actionPerformed(ActionEvent arg0) {
-		getAudioData();
-		AudioPlayer.addToLine();
+		if(loopPosition + frameLengthInSamples * 2 > loopData.length) {
+			loopPosition = 0;
+		} else {
+			loopPosition += frameLengthInSamples;
+		}
+		playAudioData();
 	}
 	
-	public void getAudioData() {
-		double[] mono = osc1.masterGetSamples(new double[882]);
-		AudioPlayer.getAudioBytes(mono, 1.0);
+	public void playAudioData() {
+		double[] mono = new double[frameLengthInSamples];
+		double maxAmplitude = 0.0;
+		for(int index = 0; index < loopData.length; index++) {
+			if(Math.abs(loopData[index]) > maxAmplitude) maxAmplitude = Math.abs(loopData[index]);
+		}
+		if(maxAmplitude == 0.0) return;
+		double scale = AudioPlayer.fullScale / maxAmplitude;
+		for(int index = loopPosition; index < loopPosition + frameLengthInSamples; index++) {
+			mono[index - loopPosition] = loopData[index] * scale;
+		}
+		AudioPlayer.addToLine(mono);
 	}
-	
-	public int getLatency() {
-		long startTime = System.currentTimeMillis();
-		getAudioData();
-		return (int) (System.currentTimeMillis() - startTime);
-	}
+
 }
