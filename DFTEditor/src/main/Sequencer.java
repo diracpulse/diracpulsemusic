@@ -164,13 +164,16 @@ public class Sequencer extends JPanel {
 			clearInstrument(currentModuleIndex);
 			ArrayList<Integer> notes = autoScale.getNextSequence(rating);
 			int index = 0;
+			double freqRatio = 0.0;
 			for(int note: notes) {
-				double freqRatio = Math.pow(2.0, note / 53.0);
-				for(int innerIndex = index; innerIndex < index + pixelsPerBeat - pixelsPerDivision; innerIndex++) {
+				freqRatio = Math.pow(2.0, note / 53.0);
+				for(int innerIndex = index; innerIndex < index + pixelsPerBeat - 1; innerIndex++) {
 					freqRatiosAtTimeInPixels.get(0)[innerIndex] = freqRatio;
 				}
 				index += pixelsPerBeat;
 			}
+			// having space before final beat causes rhythm to slowly add time to beats
+			freqRatiosAtTimeInPixels.get(0)[index - 1] = freqRatio;
 			view.repaint();
 			play();
 			Object[] options = {"Yes", "No", "Quit"};

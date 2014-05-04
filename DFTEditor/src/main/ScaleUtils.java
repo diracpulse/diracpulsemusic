@@ -3,6 +3,7 @@ package main;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class ScaleUtils {
 	
@@ -33,6 +34,7 @@ public class ScaleUtils {
 	}
 	
 	public static double[] rhythm(double[] freqRatios) {
+		Random random = new Random();
 		double[] returnVal = new double[freqRatios.length];
 		for(int index = 0; index < returnVal.length; index++) returnVal[index] = -1.0;
 		TreeMap<Integer, Integer> startToEnd = new TreeMap<Integer, Integer>();
@@ -64,18 +66,50 @@ public class ScaleUtils {
 		double[] noteLengths = new double[numNotes];
 		double[] pauseLengths = new double[numNotes];
 		double lengthSum = 0.0;
-		for(int index = 0; index < numNotes; index++) {
-			noteLengths[index] = (Math.random() + 1.0);
-			pauseLengths[index] = Math.random();
+		double pixelsPerNote = startToEnd.lastKey() / numNotes;
+		double pauseLength = 1.0 / pixelsPerNote;
+		ArrayList<Integer> beats = new ArrayList<Integer>();
+		TreeSet<Integer> noteStarts = new TreeSet<Integer>();
+		int numBeats = numNotes * 2;
+		for(int index = 1; index < numBeats - 1; index++) {
+			beats.add(index);
+		}
+		for(int index = 0; index < numNotes - 1; index++) {
+			int beatIndex = random.nextInt(beats.size());
+			int noteStart = beats.get(beatIndex);
+			beats.remove(beatIndex);
+			noteStarts.add(noteStart);
+		}
+		for(int noteStart: noteStarts) {
+			//System.out.println(noteStart);
+		}
+		int startNote = 0;
+		for(int index = 0; index < numNotes + 1; index++) {
+			if(noteStarts.isEmpty()) {
+				noteLengths[index] = numBeats - startNote;
+				pauseLengths[index] = 0.0;
+				lengthSum += noteLengths[index] + pauseLengths[index];
+				break;
+			}
+			noteLengths[index] = noteStarts.first() - startNote - pauseLength;
+			pauseLengths[index] = pauseLength;
+			startNote = noteStarts.first();
+			noteStarts.remove(startNote);
 			lengthSum += noteLengths[index] + pauseLengths[index];
+		}
+		for(int index = 0; index < numNotes; index++) {
+			//System.out.println(noteLengths[index] + " " + pauseLengths[index]);
 		}
 		for(int index = 0; index < numNotes; index++) {
 			noteLengths[index] = noteLengths[index] * sequenceLength / lengthSum;
 			pauseLengths[index] = pauseLengths[index] * sequenceLength / lengthSum;
 		}
-		int startNote = 0;
 		for(int index = 0; index < numNotes; index++) {
-			startNote += (int) Math.round(pauseLengths[index] / Sequencer.secondsPerPixel);
+			if(index == 0) {
+				startNote = 0;
+			} else {
+				startNote += (int) Math.round(pauseLengths[index] / Sequencer.secondsPerPixel);
+			}
 			int endNote = (int) Math.round(noteLengths[index] / Sequencer.secondsPerPixel + startNote);
 			double freqRatio = noteFreqRatios.get(index);
 			for(int innerIndex = startNote; innerIndex < endNote; innerIndex++) {

@@ -34,7 +34,7 @@ public class PlayableSnare implements Playable {
 		freqControl = new Slider(minLogFreq, maxLogFreq, new Rectangle(4, 4, 16, 700));
 		ampControl = new Slider(minLogAmp, maxLogAmp, new Rectangle(24, 4, 16, 700));
 		bControl = new Slider(0.0, 1.0, new Rectangle(44, 4, 16, 700));
-		button = new Button(parent, this, new Rectangle(4, 704, 24, 744));
+		button = new Button(parent, this, new Rectangle(4, 704, 40, 20));
 	}
 
 	public void triggered(double[] loopData, int loopIndex) {
