@@ -19,12 +19,14 @@ public class Scale {
 	public static final double[] carlosSuperJustIntonation = {1.0, 17.0 / 16.0, 9.0 / 8.0, 6.0 / 5.0, 5.0 / 4.0, 4.0 / 3.0, 11.0 / 8.0, 3.0 / 2.0, 13.0 / 8.0, 27.0 / 16.0, 7.0 / 4.0, 15.0 / 8.0};
 	public static final double[] majorJustIntonation = {1.0, 9.0 / 8.0, 5.0 / 4.0, 4.0 / 3.0, 3.0 / 2.0, 5.0 / 3.0, 15.0 / 8.0};
 	public static final double[] minorJustIntonation = {1.0, 9.0 / 8.0, 6.0 / 5.0, 4.0 / 3.0, 3.0 / 2.0, 8.0 / 5.0, 9.0 / 5.0};
+	public static final double[] allJustIntonation = {1.0, 9.0 / 8.0, 6.0 / 5.0, 5.0 / 4.0, 4.0 / 3.0, 3.0 / 2.0, 5.0 / 3.0, 8.0 / 5.0, 9.0 / 5.0, 15.0 / 8.0};
 	
 	public enum Type {
 		PYTHAGOREAN_53,
 		SUPER_JUST_INTONATION_53,
 		MAJOR_JUST_INTONATION_53,
-		MINOR_JUST_INTONATION_53;
+		MINOR_JUST_INTONATION_53,
+		ALL_JUST_INTONATION_53;
 	}
 	
 	private JPanel parent = null;
@@ -100,14 +102,18 @@ public class Scale {
 				returnVal.add((int) Math.round(Math.log(note) / Math.log(2.0) * 53.0));
 			}
 			return returnVal;
+		case ALL_JUST_INTONATION_53:
+			for(double note: minorJustIntonation) {
+			returnVal.add((int) Math.round(Math.log(note) / Math.log(2.0) * 53.0));
+			}
+			return returnVal;
 		}
-		
 		return null;
 	}
 	
 	private static double randomStepStdDev = 2.0;
-	private static double stepRepeatProbability = 0.5;
-	private static double noteRepeatProbability = 0.5;
+	private static double stepRepeatProbability = 0.25;
+	private static double noteRepeatProbability = 0.25;
 	
 	public ArrayList<Integer> getNextSequence(boolean prevRating) {
 		if(prevSequence != null) writeToLogFile(prevSequence, prevRating);

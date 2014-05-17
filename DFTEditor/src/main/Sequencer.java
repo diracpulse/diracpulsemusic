@@ -161,7 +161,7 @@ public class Sequencer extends JPanel {
 		boolean rating = false;
 		boolean loopAgain = true;
 		while(loopAgain) {
-			clearInstrument(currentModuleIndex);
+			clearData();
 			ArrayList<Integer> notes = autoScale.getNextSequence(rating);
 			int index = 0;
 			double freqRatio = 0.0;
