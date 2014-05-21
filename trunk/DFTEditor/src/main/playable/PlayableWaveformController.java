@@ -6,6 +6,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 
+import main.ScaleUtils;
+
 public class PlayableWaveformController implements MouseListener, MouseMotionListener, ActionListener {
 
 	PlayableWaveformEditor parent;
@@ -18,6 +20,7 @@ public class PlayableWaveformController implements MouseListener, MouseMotionLis
 	public void actionPerformed(ActionEvent e) {
         if ("Record".equals(e.getActionCommand())) parent.record();
         if ("Stop".equals(e.getActionCommand())) parent.stop();
+        if ("Arduino".equals(e.getActionCommand())) ScaleUtils.arduinoROMArray(8, 32);
 	}
 
 	@Override
