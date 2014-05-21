@@ -135,4 +135,86 @@ public class ScaleUtils {
 		return returnVal;
 	}
 	
+	private static int scaleNotes = 7;
+	private static double randomStepStdDev = 2.0;
+	private static double stepRepeatProbability = 0.25;
+	private static double noteRepeatProbability = 0.25;
+
+	public static ArrayList<Integer> getNoteSequence(int length) {
+		Random random = new Random();
+		ArrayList<Integer> notes = new ArrayList<Integer>();
+		TreeSet<Integer> noteSteps = new TreeSet<Integer>();
+		boolean repeat = true;
+		int note = -1;
+		int noteStep = -1;
+		int prevNote = random.nextInt(scaleNotes);
+		notes.add(prevNote);
+		for(int index = 1; index < length; index++) {
+			while (note < 0 || note >= scaleNotes || repeat) {
+				repeat = true;
+				noteStep = (int) Math.round(random.nextGaussian() * randomStepStdDev);
+				if(noteSteps.contains(noteStep)) if(Math.random() < stepRepeatProbability) continue;
+				note = prevNote + noteStep;
+				if(notes.contains(noteStep)) if(Math.random() < noteRepeatProbability) continue;
+				repeat = false;
+			}
+			notes.add(note);
+			noteSteps.add(noteStep);
+			prevNote = note;
+			repeat = true;
+		}
+		return notes;
+	}
+	
+	public static String arduinoROMLoop(int patternLength, boolean lastLoop) {
+		Random random = new Random();
+		ArrayList<Integer> notes = getNoteSequence(patternLength);
+		ArrayList<Integer> durations = new ArrayList<Integer>();
+		ArrayList<Integer> beats = new ArrayList<Integer>();
+		int numBeats = patternLength * 2;
+		for(int index = 1; index < numBeats + 1; index++) {
+			beats.add(index);
+		}
+		for(int index = 0; index < patternLength; index++) {
+			int beatIndex = random.nextInt(beats.size());
+			beats.remove(beatIndex);
+		}
+		int beatStart = 0;
+		for(int index = 0; index < patternLength - 1; index++) {
+			durations.add(beats.get(index) - beatStart);
+			beatStart = beats.get(index);
+		}
+		int lastPosition = 0;
+		for(int index = 0; index < durations.size(); index++) {
+			lastPosition += durations.get(index);
+		}
+		durations.add(numBeats - lastPosition);
+		lastPosition = 0;
+		for(int index = 0; index < durations.size(); index++) {
+			lastPosition += durations.get(index);
+		}
+		System.out.println(lastPosition);
+		StringBuffer returnVal = new StringBuffer();
+		for(int index = 0; index < patternLength - 1; index++) {
+			returnVal.append(notes.get(index) + " , " + durations.get(index) + " , ");
+		}
+		if(lastLoop) {
+			returnVal.append(notes.get(patternLength - 1) + " , " + durations.get(patternLength - 1) + " };\n");
+		} else {
+			returnVal.append(notes.get(patternLength - 1) + " , " + durations.get(patternLength - 1) + " ,\n");
+		}
+		return returnVal.toString();
+	}
+	
+	public static String arduinoROMArray(int patternLength, int numLoops) {
+		StringBuffer returnVal = new StringBuffer();
+		returnVal.append("const int mydata[" + patternLength * 2 + "][" + numLoops + "] PROGMEM = {\n");
+		for(int index = 0; index < numLoops - 1; index++) {
+			returnVal.append(arduinoROMLoop(patternLength, false));
+		}
+		returnVal.append(arduinoROMLoop(patternLength, true));
+		System.out.println(returnVal.toString());
+		return returnVal.toString();
+	}
+	
 }

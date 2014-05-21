@@ -56,6 +56,7 @@ public class PlayableWaveformEditor extends JPanel implements ActionListener {
 	public JToolBar createNavigationBar() {
         addNavigationButton("Record");
         addNavigationButton("Stop");
+        addNavigationButton("Arduino");
     	return navigationBar;
 	}
 	
