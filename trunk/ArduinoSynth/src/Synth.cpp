@@ -45,15 +45,18 @@ void timer2ISR();
 const float octave[] = {63.05, 126.1, 252.2, 504.4};
 const float scale[] = {1.0, 17.0 / 16.0, 9.0 / 8.0, 6.0 / 5.0, 5.0 / 4.0, 4.0 / 3.0, 11.0 / 8.0, 3.0 / 2.0, 13.0 / 8.0, 27.0 / 16.0, 7.0 / 4.0, 15.0 / 8.0};
 byte octaveIndex = 2;
-byte pattern[] = {1, 5, 6, 6, 13};
+byte pattern[] = {11, 5, 6, 6, 1, 8, 13};
 byte patternIndex = 0;
-const float slideTimeInMicros = 500.0 * 1000.0;
+const float slideTimeInMicros = 50.0 * 1000.0;
+float accentApexInMicros = 200.0 * 1000.0;
+float accentApexScalar = 1.25;
 float beatLengthInMicros = 1000.0 * 1000.0;
 volatile float microsElapsed = 0;
 float startSlideTimeInMicros = 0;
 float bpm = 30;
 byte currentNote = 0;
 byte nextNote = 0;
+float saveCurrentMicrosPerPulse;
 float currentMicrosPerPulse;
 float nextMicrosPerPulse;
 float deltaMicrosPerPulse;
@@ -62,6 +65,10 @@ bool slide = true;
 bool startSlide = true;
 bool firstBeat = true;
 bool newFreq = false;
+bool accent = true;
+bool accentUpward = true;
+bool accentDownward = true;
+bool accentToggle = true;
 byte nextBeat = 1;
 
 void setup()
@@ -93,6 +100,9 @@ void loop() {
 		microsElapsed = 0.0;
 		startSlideTimeInMicros = beatLengthInMicros - slideTimeInMicros;
 		startSlide = true;
+		accentUpward = true;
+		accentDownward = true;
+		accentToggle = true;
 		currentMicrosPerPulse = newCurrentMicrosPerPulse;
 		nextMicrosPerPulse = newNextMicrosPerPulse;
 		if(firstBeat) {
@@ -115,7 +125,30 @@ void timer1ISR()
 		digitalWrite(7, 0);
 	}
 	microsElapsed += currentMicrosPerPulse;
-	if(microsElapsed >= startSlideTimeInMicros) {
+	if(accent && accentToggle) {
+		if(accentUpward) {
+			saveCurrentMicrosPerPulse = currentMicrosPerPulse;
+			float averageMicrosPerPulse = (currentMicrosPerPulse / accentApexScalar + currentMicrosPerPulse) / 2.0;
+			float numPulsesInSlide = accentApexInMicros / averageMicrosPerPulse;
+			deltaMicrosPerPulse = (currentMicrosPerPulse / accentApexScalar - currentMicrosPerPulse) / numPulsesInSlide;
+			accentUpward = false;
+		} else {
+			if(microsElapsed >= accentApexInMicros && accentDownward) {
+				float averageMicrosPerPulse = (saveCurrentMicrosPerPulse / accentApexScalar + saveCurrentMicrosPerPulse) / 2.0;
+				float numPulsesInSlide = accentApexInMicros / averageMicrosPerPulse;
+				deltaMicrosPerPulse = (saveCurrentMicrosPerPulse - saveCurrentMicrosPerPulse / accentApexScalar) / numPulsesInSlide;
+				accentDownward = false;
+			}
+			if(microsElapsed >= accentApexInMicros * 2) {
+				currentMicrosPerPulse = saveCurrentMicrosPerPulse;
+				deltaMicrosPerPulse = 0;
+				accentToggle = false;
+			}
+		}
+		currentMicrosPerPulse += deltaMicrosPerPulse;
+		Timer1.setPeriod(round(currentMicrosPerPulse));
+	}
+	if(microsElapsed >= startSlideTimeInMicros && slide) {
 		if(startSlide) {
 			float averageMicrosPerPulse = (currentMicrosPerPulse + nextMicrosPerPulse) / 2.0;
 			float numPulsesInSlide = slideTimeInMicros / averageMicrosPerPulse;
