@@ -42,26 +42,29 @@ Blink
 void timer1ISR();
 void timer2ISR();
 
-const float octave[] = {63.05, 126.1, 252.2, 504.4};
+const float octave[] = {63.05, 126.1, 252.2};
 const float scale[] = {1.0, 17.0 / 16.0, 9.0 / 8.0, 6.0 / 5.0, 5.0 / 4.0, 4.0 / 3.0, 11.0 / 8.0, 3.0 / 2.0, 13.0 / 8.0, 27.0 / 16.0, 7.0 / 4.0, 15.0 / 8.0};
 byte octaveIndex = 2;
-byte pattern[] = {11, 5, 6, 6, 1, 8, 13};
+byte pattern[] = {1, 3, 6, 6, 1, 8, 11, 1, 12};
+byte accentArray[]  = {1, 0, 1, 0, 0, 1, 0,  0, 12};
+byte slideArray[]   = {0, 0, 1, 0, 0, 1, 0,  1, 12};
 byte patternIndex = 0;
-const float slideTimeInMicros = 50.0 * 1000.0;
-float accentApexInMicros = 200.0 * 1000.0;
-float accentApexScalar = 1.25;
+const float slideTimeInMicros = 25.0 * 1000.0;
+float accentApexInMicros = 50.0 * 1000.0;
+float accentApexScalar = 1.5;
 float beatLengthInMicros = 1000.0 * 1000.0;
 volatile float microsElapsed = 0;
 float startSlideTimeInMicros = 0;
-float bpm = 30;
+float bpm = 180;
 byte currentNote = 0;
 byte nextNote = 0;
 float saveCurrentMicrosPerPulse;
 float currentMicrosPerPulse;
 float nextMicrosPerPulse;
 float deltaMicrosPerPulse;
-long pulsePhase = 0;
-bool slide = true;
+bool pulsePhase = false;
+bool silence = false;
+bool slide = false;
 bool startSlide = true;
 bool firstBeat = true;
 bool newFreq = false;
@@ -70,6 +73,7 @@ bool accentUpward = true;
 bool accentDownward = true;
 bool accentToggle = true;
 byte nextBeat = 1;
+byte nextPulse = 1;
 
 void setup()
 {
@@ -84,9 +88,13 @@ void setup()
 void loop() {
 	if(nextBeat == 1) {
 		currentNote = pattern[(int) patternIndex];
+		slide = slideArray[patternIndex];
+		accent = accentArray[patternIndex];
 		if(currentNote > 11) {
 			patternIndex = 0;
 			currentNote = pattern[(int) patternIndex];
+			slide = slideArray[patternIndex];
+			accent = accentArray[patternIndex];
 		}
 		patternIndex++;
 		nextNote = pattern[(int) patternIndex];
@@ -100,6 +108,7 @@ void loop() {
 		microsElapsed = 0.0;
 		startSlideTimeInMicros = beatLengthInMicros - slideTimeInMicros;
 		startSlide = true;
+		silence = false;
 		accentUpward = true;
 		accentDownward = true;
 		accentToggle = true;
@@ -118,12 +127,22 @@ void loop() {
 
 void timer1ISR()
 {
-	pulsePhase++;
-	if(pulsePhase % 2 == 0) {
+	if(silence) {
+		digitalWrite(7, 0);
+		return;
+	}
+	pulsePhase = !pulsePhase;
+	if(pulsePhase) {
 		digitalWrite(7, 1);
 	} else {
 		digitalWrite(7, 0);
 	}
+	if(nextBeat == 1) return; // variables in flux
+	if(nextPulse > 0) {
+		nextPulse--;
+		return;
+	}
+	nextPulse = 16;
 	microsElapsed += currentMicrosPerPulse;
 	if(accent && accentToggle) {
 		if(accentUpward) {
@@ -148,18 +167,23 @@ void timer1ISR()
 		currentMicrosPerPulse += deltaMicrosPerPulse;
 		Timer1.setPeriod(round(currentMicrosPerPulse));
 	}
-	if(microsElapsed >= startSlideTimeInMicros && slide) {
-		if(startSlide) {
-			float averageMicrosPerPulse = (currentMicrosPerPulse + nextMicrosPerPulse) / 2.0;
-			float numPulsesInSlide = slideTimeInMicros / averageMicrosPerPulse;
-			deltaMicrosPerPulse = (nextMicrosPerPulse - currentMicrosPerPulse) / numPulsesInSlide;
-			Timer1.setPeriod(round(currentMicrosPerPulse));
-			startSlide = false;
+	if(microsElapsed >= startSlideTimeInMicros) {
+		if(slide) {
+			if(startSlide) {
+				float averageMicrosPerPulse = (currentMicrosPerPulse + nextMicrosPerPulse) / 2.0;
+				float numPulsesInSlide = slideTimeInMicros / averageMicrosPerPulse;
+				deltaMicrosPerPulse = (nextMicrosPerPulse - currentMicrosPerPulse) / numPulsesInSlide;
+				Timer1.setPeriod(round(currentMicrosPerPulse));
+				startSlide = false;
+			} else {
+				currentMicrosPerPulse += deltaMicrosPerPulse;
+				Timer1.setPeriod(round(currentMicrosPerPulse));
+			}
 		} else {
-			currentMicrosPerPulse += deltaMicrosPerPulse;
-			Timer1.setPeriod(round(currentMicrosPerPulse));
+			silence = true;
 		}
 	}
+	nextPulse = 0;
 }
 
 void timer2ISR()
