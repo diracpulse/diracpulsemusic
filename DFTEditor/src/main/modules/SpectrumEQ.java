@@ -40,6 +40,9 @@ public class SpectrumEQ implements Module {
 	
 	ArrayList<Integer> outputs;
 	ArrayList<Integer> inputs;
+	ArrayList<Integer> inputCutoff;
+	ArrayList<Integer> inputQ;
+	ArrayList<Integer> inputBW;
 	
 	public static class EQBand {
 		
@@ -191,33 +194,29 @@ public class SpectrumEQ implements Module {
 			controlled = !controlled;
 		}
 		
-		public double[] getAudioData(double[] samples) {
-			return getAudioData(samples, 1.0);
-		}
-		
-		public double[] getAudioData(double[] samples, double controlValue) {
+		public double[] getAudioData(double[] samples, double controlValue, double[] fControl, double[] qControl, double[] bwControl) {
 			double[] returnVal = null;
 			double saveCenterFreq = getCenterFreq();
 			if(controlled) setCenterFreq(getCenterFreq() * controlValue);
 			switch (type) {
 			case BANDPASS: 
-				returnVal = Filter.variableQBandpass4(samples, getCenterFreq(), getBandwidth() , filterQ);
+				returnVal = Filter.variableQBandpass4(samples, getCenterFreq(), getBandwidth() , filterQ, fControl, qControl, bwControl);
 				for(int apply = 4; apply < order; apply += 4) {
-					returnVal = Filter.variableQBandpass4(returnVal, getCenterFreq(), getBandwidth() , filterQ);
+					returnVal = Filter.variableQBandpass4(returnVal, getCenterFreq(), getBandwidth() , filterQ, fControl, qControl, bwControl);
 				}
 				setCenterFreq(saveCenterFreq);
 				return returnVal;
 			case LOWPASS:
-				returnVal = Filter.variableQLowpass2(samples, getCenterFreq(), filterQ);
+				returnVal = Filter.variableQLowpass2(samples, getCenterFreq(), filterQ, fControl, qControl);
 				for(int apply = 2; apply < order; apply += 2) {
-					returnVal = Filter.variableQLowpass2(returnVal, getCenterFreq(), filterQ);
+					returnVal = Filter.variableQLowpass2(returnVal, getCenterFreq(), filterQ, fControl, qControl);
 				}
 				setCenterFreq(saveCenterFreq);
 				return returnVal;
 			case HIGHPASS:
-				returnVal = Filter.variableQHighpass2(samples, getCenterFreq(), filterQ);
+				returnVal = Filter.variableQHighpass2(samples, getCenterFreq(), filterQ, fControl, qControl);
 				for(int apply = 2; apply < order; apply += 2) {
-					returnVal = Filter.variableQHighpass2(returnVal, getCenterFreq(), filterQ);
+					returnVal = Filter.variableQHighpass2(returnVal, getCenterFreq(), filterQ, fControl, qControl);
 				}
 				setCenterFreq(saveCenterFreq);
 				return returnVal;
@@ -261,6 +260,9 @@ public class SpectrumEQ implements Module {
 		this.parent = parent;
 		outputs = new ArrayList<Integer>();
 		inputs = new ArrayList<Integer>();
+		inputCutoff = new ArrayList<Integer>();
+		inputQ = new ArrayList<Integer>();
+		inputBW = new ArrayList<Integer>();
 		init();
 	}
 	
@@ -318,8 +320,19 @@ public class SpectrumEQ implements Module {
 	public double[] masterGetSamples(HashSet<Integer> waitingForModuleIDs, double[] control, boolean returnInput) {
 		if(waitingForModuleIDs == null) waitingForModuleIDs = new HashSet<Integer>();
 		if(waitingForModuleIDs.contains(moduleID)) {
-			JOptionPane.showMessageDialog(parent.getParentFrame(), "Loop in FIRFilter");
+			JOptionPane.showMessageDialog(parent.getParentFrame(), "Loop in SpectrumEQ");
 			return new double[0];
+		}
+		int numSamples = control.length;
+		double[] returnVal = new double[numSamples];
+		double[] samplesCutoff = new double[numSamples];
+		double[] samplesQ = new double[numSamples];
+		double[] samplesBW = new double[numSamples];
+		for(int index = 0; index < numSamples; index++) {
+			returnVal[index] = 0.0;
+			samplesCutoff[index] = 0.0;
+			samplesQ[index] = 0.0;
+			samplesBW[index] = 0.0;
 		}
 		double[] inputSamples = new double[control.length];
 		for(int index = 0; index < inputSamples.length; index++) inputSamples[index] = 0.0;
@@ -339,13 +352,61 @@ public class SpectrumEQ implements Module {
 			}
 		}
 		if(returnInput) return inputSamples;
+		// Mix Cutoff Control Inputs
+		ArrayList<double[]> samplesCutoffArray = new ArrayList<double[]>();
+		for(Integer inputID: inputCutoff) {
+			Input input = (Input) parent.connectors.get(inputID);
+			if(input.getConnection() == null) continue;
+			waitingForModuleIDs.add(moduleID);
+			Module.Output output = (Module.Output) parent.connectors.get(input.getConnection());
+			samplesCutoffArray.add(output.getSamples(waitingForModuleIDs, control));
+			waitingForModuleIDs.remove(moduleID);
+		}
+		// no change if samplesCutoff.isEmpty()
+		for(double[] samplesCutoffIn: samplesCutoffArray) {
+			for(int index = 0; index < numSamples; index++) {
+				if(index >= samplesCutoffIn.length) break;
+				samplesCutoff[index] += samplesCutoffIn[index]; 
+			}
+		}
+		// Mix Q Control Inputs
+		ArrayList<double[]> samplesQArray = new ArrayList<double[]>();
+		for(Integer inputID: inputQ) {
+			Input input = (Input) parent.connectors.get(inputID);
+			if(input.getConnection() == null) continue;
+			waitingForModuleIDs.add(moduleID);
+			Module.Output output = (Module.Output) parent.connectors.get(input.getConnection());
+			samplesQArray.add(output.getSamples(waitingForModuleIDs, control));
+			waitingForModuleIDs.remove(moduleID);
+		}
+		// no change if samplesQ.isEmpty()
+		for(double[] samplesQIn: samplesQArray) {
+			for(int index = 0; index < numSamples; index++) {
+				if(index >= samplesQIn.length) break;
+				samplesQ[index] += samplesQIn[index]; 
+			}
+		}
+		// Mix BW Control Inputs
+		ArrayList<double[]> samplesBWArray = new ArrayList<double[]>();
+		for(Integer inputID: inputBW) {
+			Input input = (Input) parent.connectors.get(inputID);
+			if(input.getConnection() == null) continue;
+			waitingForModuleIDs.add(moduleID);
+			Module.Output output = (Module.Output) parent.connectors.get(input.getConnection());
+			samplesBWArray.add(output.getSamples(waitingForModuleIDs, control));
+			waitingForModuleIDs.remove(moduleID);
+		}
+		// no change if samplesBW.isEmpty()
+		for(double[] samplesBWIn: samplesBWArray) {
+			for(int index = 0; index < numSamples; index++) {
+				if(index >= samplesBWIn.length) break;
+				samplesBW[index] += samplesBWIn[index]; 
+			}
+		}
 		// chop up input for filtering
 		TreeMap<Integer, Integer> startToEnd = new TreeMap<Integer, Integer>();
-		double[] returnVal = new double[control.length];
-		for(int index = 0; index < returnVal.length; index++) {
-			returnVal[index] = 0.0;
-		}
 		int controlIndex = 0;
+		// split up notes if freq varies or there is space between notes
 		while(true) {
 			if(control == null) break;
 			if(control.length == 0) break;
@@ -371,7 +432,7 @@ public class SpectrumEQ implements Module {
 			double[] input = new double[startToEnd.get(start) - start];
 			for(int index = 0; index < input.length; index++) input[index] = inputSamples[index + start];
 			double controlValue = control[start];
-			double[] samples = getFilteredSamples(input, controlValue);
+			double[] samples = getFilteredSamples(input, samplesCutoff, samplesQ, samplesBW, controlValue);
 			for(int index = 0; index < samples.length; index++) {
 				int returnIndex = start + index;
 				if(returnIndex == returnVal.length) return returnVal;
@@ -381,16 +442,16 @@ public class SpectrumEQ implements Module {
 		return returnVal;
 	}
 	
-	private double[] getFilteredSamples(double[] input, double controlValue) {
+	private double[] getFilteredSamples(double[] input, double[] fControl, double[] qControl, double[] bwControl, double controlValue) {
 		boolean additive = false;
 		double[] returnVal = new double[input.length];
 		double[] filteredInput = null;
 		for(EQBand eqBand: eqBands) {
 			if(!eqBand.isSubtractive()) continue;
 			if(filteredInput == null) {
-				filteredInput = eqBand.getAudioData(input, controlValue);
+				filteredInput = eqBand.getAudioData(input, controlValue, fControl, qControl, bwControl);
 			} else {
-				filteredInput = eqBand.getAudioData(filteredInput, controlValue);
+				filteredInput = eqBand.getAudioData(filteredInput, controlValue, fControl, qControl, bwControl);
 			}
 		}
 		if(filteredInput == null) filteredInput = input;
@@ -398,7 +459,7 @@ public class SpectrumEQ implements Module {
 		for(EQBand eqBand: eqBands) {
 			if(eqBand.isSubtractive()) continue;
 			additive = true;
-			double[] filtered = eqBand.getAudioData(filteredInput, controlValue);
+			double[] filtered = eqBand.getAudioData(filteredInput, controlValue, fControl, qControl, bwControl);
 			for(int index = 0; index < input.length; index++) {
 				returnVal[index] += filtered[index] * eqBand.gain;
 			}
@@ -424,6 +485,36 @@ public class SpectrumEQ implements Module {
 			if(input.getSelectArea().contains(x, y)) {
 				parent.handleConnectorSelect(inputID);
 				System.out.println("SpectrumEQ input: " + index);
+				return;
+			}
+			index++;
+		}
+		index = 0;
+		for(Integer inputID: inputCutoff) {
+			Input input = (Input) parent.connectors.get(inputID);
+			if(input.getSelectArea().contains(x, y)) {
+				parent.handleConnectorSelect(inputID);
+				System.out.println("SpectrumEQ inputCutoff: " + index);
+				return;
+			}
+			index++;
+		}
+		index = 0;
+		for(Integer inputID: inputQ) {
+			Input input = (Input) parent.connectors.get(inputID);
+			if(input.getSelectArea().contains(x, y)) {
+				parent.handleConnectorSelect(inputID);
+				System.out.println("SpectrumEQ inputQ: " + index);
+				return;
+			}
+			index++;
+		}
+		index = 0;
+		for(Integer inputID: inputBW) {
+			Input input = (Input) parent.connectors.get(inputID);
+			if(input.getSelectArea().contains(x, y)) {
+				parent.handleConnectorSelect(inputID);
+				System.out.println("SpectrumEQ inputBW: " + index);
 				return;
 			}
 			index++;
@@ -463,11 +554,27 @@ public class SpectrumEQ implements Module {
 		}
 		currentY += yStep;
 		if(g2 != null) g2.setColor(Color.GREEN);
-		if(g2 != null) g2.drawString("IN: ", currentX, currentY);
+		if(g2 != null) g2.drawString("Cutoff: ", currentX, currentY);
 		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
 			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
 			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-			if(g2 == null) inputs.add(parent.addConnector(new Input(this, currentRect)));
+			if(g2 == null) inputCutoff.add(parent.addConnector(new Input(this, currentRect)));
+		}
+		currentY += yStep;
+		if(g2 != null) g2.setColor(Color.GREEN);
+		if(g2 != null) g2.drawString("Q: ", currentX, currentY);
+		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
+			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
+			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
+			if(g2 == null) inputQ.add(parent.addConnector(new Input(this, currentRect)));
+		}
+		currentY += yStep;
+		if(g2 != null) g2.setColor(Color.GREEN);
+		if(g2 != null) g2.drawString("BW: ", currentX, currentY);
+		for(int xOffset = currentX + yStep * 3; xOffset < currentX + width + fontSize - fontSize * 2; xOffset += fontSize * 2) {
+			Rectangle currentRect = new Rectangle(xOffset, currentY - fontSize, fontSize, fontSize);
+			if(g2 != null) g2.fillRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
+			if(g2 == null) inputBW.add(parent.addConnector(new Input(this, currentRect)));
 		}
 		if(g2 != null) g2.setColor(Color.BLUE);
 		currentY += yStep;
