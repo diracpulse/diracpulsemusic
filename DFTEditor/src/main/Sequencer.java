@@ -32,8 +32,9 @@ public class Sequencer extends JPanel {
 	public JScrollPane scrollPane;
 	private JToolBar navigationBar = null;
 	public static int noteBase = 53;
+	public static int octaves = 2;
 	public static double minFreq = 256.0;
-	public static int noteHeight = 13;
+	public static int noteHeight = 7;
 	public static int numPercussion = 3;
 	public static double bpm = 120;
 	public static int maxBeats = 20;

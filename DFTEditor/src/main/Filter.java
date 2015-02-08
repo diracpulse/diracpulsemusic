@@ -697,8 +697,19 @@ public class Filter {
 		
 		public static double[] variableQLowpass2(double[] input, double fIn, double qIn, double[] fControl, double[] qControl) {
 			double[] y = new double[input.length];
-			y[0] = b0 * input[0];
-			y[1] = b0 * input[1] + b1 * input[0] + a0 * y[0];
+			for(int n = 0; n < 2; n++) {
+				double f = Math.pow(2.0, fControl[n]) * fIn;
+				double q = Math.pow(2.0, qControl[n]) * qIn;
+				double g = Math.tan((Math.PI * f) / SynthTools.sampleRate);
+				double D = q * g * g + g + q;
+				b0 = q * (g * g) / D;
+				b1 = 2.0 * b0;
+				b2 = b0;
+				a0 = 2.0 * q * (g * g - 1.0) / D;
+				a1 = (q * g * g - g + q) / D;
+				if(n == 0) y[0] = b0 * input[0];
+				if(n == 1) y[1] = b0 * input[1] + b1 * input[0] + a0 * y[0];
+			}
 			for(int n = 2; n < input.length; n++) {
 				double f = Math.pow(2.0, fControl[n]) * fIn;
 				double q = Math.pow(2.0, qControl[n]) * qIn;
@@ -717,8 +728,19 @@ public class Filter {
 		
 		public static double[] variableQHighpass2(double[] input, double fIn, double qIn, double[] fControl, double[] qControl) {
 			double[] y = new double[input.length];
-			y[0] = b0 * input[0];
-			y[1] = b0 * input[1] + b1 * input[0] + a0 * y[0];
+			for(int n = 0; n < 2; n++) {
+				double f = Math.pow(2.0, fControl[n]) * fIn;
+				double q = Math.pow(2.0, qControl[n]) * qIn;
+				double g = Math.tan((Math.PI * f) / SynthTools.sampleRate);
+				double D = q * g * g + g + q;
+				b0 = q / D;
+				b1 = -2.0 * b0;
+				b2 = b0;
+				a0 = 2.0 * q * (g * g - 1.0) / D;
+				a1 = (q * g * g - g + q) / D;
+				if(n == 0) y[0] = b0 * input[0];
+				if(n == 1) y[1] = b0 * input[1] + b1 * input[0] + a0 * y[0];
+			}
 			for(int n = 2; n < input.length; n++) {
 				double f = Math.pow(2.0, fControl[n]) * fIn;
 				double q = Math.pow(2.0, qControl[n]) * qIn;
@@ -737,10 +759,26 @@ public class Filter {
 		
 		public static double[] variableQBandpass4(double[] input, double fIn, double bIn, double qIn, double[] fControl, double[] qControl, double[] bControl) {
 			double[] y = new double[input.length];
-			y[0] = b0 * input[0];
-			y[1] = b0 * input[1] + b1 * input[0] - a0 * y[0];
-			y[2] = b0 * input[2] + b1 * input[1] + b2 * input[0] - a0 * y[1] - a1 * y[0];
-			y[3] = b0 * input[3] + b1 * input[2] + b2 * input[1] + b3 * input[0] - a0 * y[2] - a1 * y[1] - a2 * y[0];
+			for(int n = 0; n < 4; n++) {
+				double f = Math.pow(2.0, fControl[n]) * fIn;
+				double q = Math.pow(2.0, qControl[n]) * qIn;
+				double b = Math.pow(2.0, bControl[n]) * bIn;
+				double g = Math.tan((Math.PI * f) / SynthTools.sampleRate);
+				double D = q * f * f * Math.pow(g, 4.0) + f * b * (g * g + 1) * g + q * (2.0 * f * f + b * b) * g * g + q * f * f;
+				b0 = q * b * b * g * g / D;
+				b1 = 0.0;
+				b2 = -2.0 * b0;
+				b3 = 0.0;
+				b4 = b0;
+				a0 = 2 * f * (2 * q * f * Math.pow(g, 4) + b * (g * g - 1) * g - 2 * q * f) / D;
+				a1 = 2 * q * (3 * f * f * Math.pow(g,  4) - (2 * f * f + b * b) * g * g + 3 * f * f) / D;
+				a2 = 2 * f * (2 * q * f * Math.pow(g, 4) - b * (g * g - 1) * g - 2 * q * f) / D;
+				a3 = (q * f * f * Math.pow(g, 4.0) - f * b * (g * g + 1) * g  + q * (2.0 * f * f + b * b) * g * g + q * f * f) / D;
+				if(n == 0) y[0] = b0 * input[0];
+				if(n == 1) y[1] = b0 * input[1] + b1 * input[0] - a0 * y[0];
+				if(n == 2) y[2] = b0 * input[2] + b1 * input[1] + b2 * input[0] - a0 * y[1] - a1 * y[0];
+				if(n == 3) y[3] = b0 * input[3] + b1 * input[2] + b2 * input[1] + b3 * input[0] - a0 * y[2] - a1 * y[1] - a2 * y[0];
+			}
 			for(int n = 4; n < input.length; n++) {
 				double f = Math.pow(2.0, fControl[n]) * fIn;
 				double q = Math.pow(2.0, qControl[n]) * qIn;

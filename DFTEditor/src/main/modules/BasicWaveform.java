@@ -13,10 +13,13 @@ import java.util.HashSet;
 
 import javax.swing.JOptionPane;
 
+import main.Filter;
 import main.Module;
 import main.ModuleEditor;
 import main.MultiWindow;
 import main.SynthTools;
+import main.modules.FIRFilter.FilterType;
+import main.modules.FIRFilter.FilterWithGain;
 
 public class BasicWaveform implements Module {
 	
@@ -247,24 +250,64 @@ public class BasicWaveform implements Module {
 				}
 				break;
 			case SAWTOOTH:
+				double[] phaseVals = new double[numSamples];
 				for(int index = startIndex; index < numSamples; index++) {
 					if(samplesAM[index] == 0.0 || control[index] < 0.0) {
 						phase = 0.0;
 						continue;
 					}
-					returnVal[index] = sawtooth(phase + samplesFM[index]) * samplesAM[index] * amplitude;
 					phase += (deltaPhase * Math.pow(2.0, samplesVCO[index])) * control[index];
+					phaseVals[index] = phase + samplesFM[index];
 				}
-				break;
+				returnVal = correctAliasing(phaseVals);
+				for(int index = startIndex; index < numSamples; index++) {
+					if(samplesAM[index] == 0.0 || control[index] < 0.0) {
+						phase = 0.0;
+						continue;
+					}
+					returnVal[index] *= samplesAM[index] * amplitude;
+				}
+				return returnVal;
 		}
 		return returnVal;
+	}
+	
+	public double[] correctAliasing(double[] phaseVals) {
+		int interpolate = 8;
+		double[] interpolateVals = new double[phaseVals.length * interpolate];
+		for(int phaseIndex = 0; phaseIndex < phaseVals.length - 1; phaseIndex++) {
+			for(int offset = 0; offset < interpolate; offset++) {
+				double deltaPhase = (phaseVals[phaseIndex + 1] - phaseVals[phaseIndex]) / (double) interpolate;
+				interpolateVals[phaseIndex * interpolate + offset] = sawtooth(phaseVals[phaseIndex] + deltaPhase * offset);
+			}
+		}
+		double bins = 4.0;
+		double alpha = 5.0;
+		double freqInHz = SynthTools.sampleRate / (interpolate * 2.0);
+		double samplesPerCycle = SynthTools.sampleRate / freqInHz;
+		int filterLength = (int) Math.round(bins * samplesPerCycle);
+		filterLength += filterLength % 2;
+		double[] filter = Filter.getLPFilter(freqInHz, filterLength, alpha);
+		double[] filteredSamples = new double[interpolateVals.length];
+		for(int index = 0; index < interpolateVals.length; index++) {
+			filteredSamples[index] = 0.0;
+			for(int filterIndex = 0; filterIndex < filter.length; filterIndex++) {
+				int innerIndex = index + filterIndex - filter.length / 2;
+				if(innerIndex < 0) continue;
+				if(innerIndex == filteredSamples.length) break;
+				filteredSamples[index] += interpolateVals[innerIndex] * filter[filterIndex];
+			}
+		}
+		for(int outputIndex = 0; outputIndex < interpolateVals.length; outputIndex += interpolate) {
+			 phaseVals[outputIndex / interpolate] = filteredSamples[outputIndex];
+		}
+		return phaseVals;
 	}
 
 	public double sawtooth(double phase) {
 		phase -= Math.floor(phase / (Math.PI * 2.0)) * Math.PI * 2.0;
-		if(phase < Math.PI) return phase / Math.PI;
-		if(phase > Math.PI) return -1.0 + (phase - Math.PI) / Math.PI;
-		return Math.random() * 2.0 - 1.0; // phase == Math.PI
+		if(phase <= Math.PI) return phase / Math.PI;
+		return -1.0 + (phase - Math.PI) / Math.PI;
 	}
 
 	public double squarewave(double phase) {
