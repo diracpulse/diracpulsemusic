@@ -27,7 +27,7 @@ public class SequencerView extends JPanel {
 		int x = parent.scrollPane.getVisibleRect().x;
 		Color white = new Color(0.0f, 0.0f, 0.0f);
 		Color black = new Color(1.0f, 1.0f, 1.0f);
-		for (int note = Sequencer.noteBase - 1; note >= -3; note--) {
+		for (int note = (Sequencer.noteBase * Sequencer.octaves) - 1; note >= -Sequencer.numPercussion; note--) {
 			if(note >= 0) {
 				int freq = (int) Math.round(Math.pow(2.0, 1.0 * note / Sequencer.noteBase) * Sequencer.minFreq);
 				SequencerUtils.DrawIntegerHorizontal(g, white, black, x, y, 4,
@@ -73,8 +73,8 @@ public class SequencerView extends JPanel {
 			for(int time = 0; time < Sequencer.totalPixels; time++) {
 				if(freqRatio[time] >= 0.0) {
 					int note = (int) Math.round(Math.log(freqRatio[time]) / Math.log(2.0) * Sequencer.noteBase);
-					int y0 = (Sequencer.noteBase - note - 1) * Sequencer.noteHeight;
-					int y1 = (Sequencer.noteBase - note) * Sequencer.noteHeight - yOffset;
+					int y0 = (Sequencer.noteBase * Sequencer.octaves - note - 1) * Sequencer.noteHeight;
+					int y1 = (Sequencer.noteBase * Sequencer.octaves - note) * Sequencer.noteHeight - yOffset;
 					int x = time + Sequencer.leftDigits * SequencerUtils.digitWidth;
 					g.drawLine(x, y0, x, y1);
 				}
@@ -84,7 +84,7 @@ public class SequencerView extends JPanel {
 	}
 	
 	public int getNote(int y) {
-		int note = Sequencer.noteBase - 1 - y / Sequencer.noteHeight;
+		int note = (Sequencer.noteBase * Sequencer.octaves) - 1 - y / Sequencer.noteHeight;
 		return note;
 	}
 
