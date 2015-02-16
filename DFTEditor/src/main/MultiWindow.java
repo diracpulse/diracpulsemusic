@@ -73,7 +73,7 @@ public class MultiWindow extends WindowAdapter {
 		moduleEditorInfo.add(new ModuleEditorInfo("Percussion 3", Color.MAGENTA, new ModuleEditor(this, moduleEditorInfo.size())));
 		pane.add("Playable", (JComponent) new PlayableWaveformEditor(this));
 		pane.add("Sequencer", (JComponent) new Sequencer(this));
-		int index = 1;
+		int index = 2;
 		for(ModuleEditorInfo info: moduleEditorInfo) {
 			pane.add(info.getName(), (JComponent) info.getModuleEditor());
 			pane.setBackgroundAt(index, info.color);
