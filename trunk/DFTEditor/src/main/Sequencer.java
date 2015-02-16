@@ -158,23 +158,27 @@ public class Sequencer extends JPanel {
 	}
 	
 	public void scale() {
-		Scale autoScale = new Scale(this, Scale.Type.MINOR_JUST_INTONATION_53, 8, 8);
+		Scale autoScale = new Scale(this, 8, 8);
 		boolean rating = false;
 		boolean loopAgain = true;
 		while(loopAgain) {
 			clearData();
-			ArrayList<Integer> notes = autoScale.getNextSequence(rating);
-			int index = 0;
-			double freqRatio = 0.0;
-			for(int note: notes) {
-				freqRatio = Math.pow(2.0, note / 53.0);
-				for(int innerIndex = index; innerIndex < index + pixelsPerBeat - 1; innerIndex++) {
-					freqRatiosAtTimeInPixels.get(0)[innerIndex] = freqRatio;
+			ArrayList<ArrayList<Integer>> chords = autoScale.getNextChord(rating);
+			int voice = 0;
+			for(ArrayList<Integer> notes: chords) {
+				int index = 0;
+				double freqRatio = 0.0;
+				for(int note: notes) {
+					freqRatio = Scale.noteToFreqRatio(note);
+					for(int innerIndex = index; innerIndex < index + pixelsPerBeat - 1; innerIndex++) {
+						freqRatiosAtTimeInPixels.get(voice)[innerIndex] = freqRatio;
+					}
+					index += pixelsPerBeat;
 				}
-				index += pixelsPerBeat;
+				// having space before final beat causes rhythm to slowly add time to beats
+				freqRatiosAtTimeInPixels.get(voice)[index - 1] = freqRatio;
+				voice++;
 			}
-			// having space before final beat causes rhythm to slowly add time to beats
-			freqRatiosAtTimeInPixels.get(0)[index - 1] = freqRatio;
 			view.repaint();
 			play();
 			Object[] options = {"Yes", "No", "Quit"};
@@ -185,7 +189,7 @@ public class Sequencer extends JPanel {
 				if(result == 0) rating = true;
 				if(result == 1) rating = false;
 				if(result == 2) {
-					autoScale.getNextSequence(true);
+					autoScale.getNextChord(rating);
 					loopAgain = false;
 				}
 			}

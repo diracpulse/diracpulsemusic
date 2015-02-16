@@ -12,8 +12,6 @@ import java.util.TreeMap;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-import main.Scale.Type;
-
 public class Neuron {
 	
 	TreeMap<Integer, Neuron> branches;
