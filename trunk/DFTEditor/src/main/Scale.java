@@ -121,4 +121,5 @@ public class Scale {
 		prevSequence = returnVal;
 		return returnVal;
 	}
+
 }
