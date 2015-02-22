@@ -86,6 +86,15 @@ public class Scale {
 
 	public ArrayList<ArrayList<Integer>> getNextChord(boolean prevRating) {
 		if(prevSequence != null) writeToLogFile(prevSequence, prevRating);
+		ArrayList<ArrayList<Integer>> returnVal;
+		int length = minLength + (int) Math.round(Math.random() * (maxLength - minLength));
+		returnVal = Minor.Progressions.getNextSequence(length);
+		prevSequence = returnVal;
+		return returnVal;
+	}
+	/*
+	public ArrayList<ArrayList<Integer>> getNextChord(boolean prevRating) {
+		if(prevSequence != null) writeToLogFile(prevSequence, prevRating);
 		ArrayList<ArrayList<Integer>> returnVal = new ArrayList<ArrayList<Integer>>();
 		ArrayList<Integer> baseNotes = new ArrayList<Integer>();
 		int length = minLength + (int) Math.round(Math.random() * (maxLength - minLength));
@@ -121,5 +130,6 @@ public class Scale {
 		prevSequence = returnVal;
 		return returnVal;
 	}
+	*/
 
 }
