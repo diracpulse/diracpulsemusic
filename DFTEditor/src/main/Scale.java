@@ -46,31 +46,14 @@ public class Scale {
 	private void initLogFile() {
 		try {
 			writer = new BufferedWriter(new FileWriter("CHORDS", true));
-			writer.write("0 NEW SESSION");
-			writer.newLine();
+			//writer.write("0 NEW SESSION");
+			//writer.newLine();
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(parent, "Scale: There was a problem writing to the log file");
 			return;
 		}
 	}
 
-	private void writeToLogFile(ArrayList<ArrayList<Integer>> sequence, boolean rating) {
-		try {
-			writer.write(sequence.size() + " ");
-			for(ArrayList<Integer> voice: sequence) {
-				writer.write(" {");
-				for(int note: voice) writer.write(note + " ");
-				writer.write("} ");
-			}
-			writer.write(new Boolean(rating).toString());
-			writer.newLine();
-		} catch (Exception e) {
-			JOptionPane.showMessageDialog(parent, "Scale: There was a problem writing to the log file");
-			return;
-		}
-		
-	}
-	
 	public void closeLogFile() {
 		try {
 			writer.close();
@@ -85,12 +68,20 @@ public class Scale {
 	}
 
 	public ArrayList<ArrayList<Integer>> getNextChord(boolean prevRating) {
-		if(prevSequence != null) writeToLogFile(prevSequence, prevRating);
+		//if(prevSequence != null) writeToLogFile(prevSequence, prevRating);
 		ArrayList<ArrayList<Integer>> returnVal;
 		int length = minLength + (int) Math.round(Math.random() * (maxLength - minLength));
 		returnVal = Minor.Progressions.getNextSequence(length);
 		prevSequence = returnVal;
-		return returnVal;
+		return clone(returnVal);
+	}
+	
+	public ArrayList<ArrayList<Integer>> clone(ArrayList<ArrayList<Integer>> input) {
+		int inputLength = input.size();
+		for(int index = 0; index < inputLength; index++) {
+			input.add(input.get(index));
+		}
+		return input;
 	}
 	/*
 	public ArrayList<ArrayList<Integer>> getNextChord(boolean prevRating) {

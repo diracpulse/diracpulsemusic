@@ -9,6 +9,7 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.TreeSet;
 
 import javax.swing.JButton;
@@ -38,7 +39,7 @@ public class Sequencer extends JPanel {
 	public static int numPercussion = 3;
 	public static double bpm = 120;
 	public static int maxBeats = 20;
-	public static int pixelsPerBeat = 128;
+	public static int pixelsPerBeat = 16 * 3;
 	public static int totalPixels = maxBeats * pixelsPerBeat;
 	public static int divisionsPerBeat = 8;
 	public static int pixelsPerDivision = pixelsPerBeat / divisionsPerBeat;
@@ -158,7 +159,9 @@ public class Sequencer extends JPanel {
 	}
 	
 	public void scale() {
-		Scale autoScale = new Scale(this, 8, 8);
+		Minor.createProgressionTree(3);
+		int timeStep = pixelsPerBeat;
+		Scale autoScale = new Scale(this, 4, 8);
 		boolean rating = false;
 		boolean loopAgain = true;
 		while(loopAgain) {
@@ -170,12 +173,15 @@ public class Sequencer extends JPanel {
 				int voice = 0;
 				for(int note: notes) {
 					freqRatio = Scale.noteToFreqRatio(note);
-					for(int innerIndex = index; innerIndex < index + pixelsPerBeat - 1; innerIndex++) {
+					for(int innerIndex = index; innerIndex < index + timeStep - 1; innerIndex++) {
 						freqRatiosAtTimeInPixels.get(voice)[innerIndex] = freqRatio;
+						if(voice == 0) {
+							freqRatiosAtTimeInPixels.get(3)[innerIndex] = freqRatio;
+						}
 					}
 					voice++;
 				}
-				index += pixelsPerBeat;
+				index += timeStep;
 			}
 			view.repaint();
 			play();
@@ -203,9 +209,13 @@ public class Sequencer extends JPanel {
 	}
 	
 	public void rhythm() {
-		double[] rhythmVals = ScaleUtils.rhythm(freqRatiosAtTimeInPixels.get(0));
-		freqRatiosAtTimeInPixels.remove(0);
-		freqRatiosAtTimeInPixels.add(0, rhythmVals);
+		Random random = new Random();
+		long randomSeed = random.nextLong();
+		for(int voice = 0; voice < 3; voice++) {
+			double[] rhythmVals = ScaleUtils.rhythm(freqRatiosAtTimeInPixels.get(voice), randomSeed);
+			freqRatiosAtTimeInPixels.remove(voice);
+			freqRatiosAtTimeInPixels.add(voice, rhythmVals);
+		}
 		view.repaint();
 	}
     

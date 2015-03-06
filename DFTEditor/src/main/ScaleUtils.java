@@ -48,7 +48,7 @@ public class ScaleUtils {
 		return returnVal;
 	}
 	
-	public static double[] rhythm(double[] freqRatios) {
+	public static double[] rhythm(double[] freqRatios, long randomSeed) {
 		Random random = new Random();
 		double[] returnVal = new double[freqRatios.length];
 		for(int index = 0; index < returnVal.length; index++) returnVal[index] = -1.0;
@@ -89,6 +89,7 @@ public class ScaleUtils {
 		for(int index = 1; index < numBeats - 1; index++) {
 			beats.add(index);
 		}
+		random.setSeed(randomSeed);
 		for(int index = 0; index < numNotes - 1; index++) {
 			int beatIndex = random.nextInt(beats.size());
 			int noteStart = beats.get(beatIndex);
