@@ -1,10 +1,21 @@
 
 package main;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+
 public class Minor {
+	
+	private JPanel parent = null;
 	
 	private static Random random = new Random();
 	public static final int[] majorScale = {0, 2, 4, 5, 7, 9, 11};
@@ -112,7 +123,7 @@ public class Minor {
 		private static Triad[] viiDim = {Triad.i};
 		private static Triad[] VII = {Triad.i};
 		
-		private static Triad[] getProgression(Triad current) {
+		private static Triad[] getProgressions(Triad current) {
 			switch(current) {
 			case i:
 				return i;
@@ -143,9 +154,9 @@ public class Minor {
 			}
 			return null;
 		}
-		
+
 		private static Triad getNextTriad(Triad current) {
-			Triad[] progressions = getProgression(current);
+			Triad[] progressions = getProgressions(current);
 			return progressions[random.nextInt(progressions.length)];
 		}
 		
@@ -196,6 +207,20 @@ public class Minor {
 			return jumpControl(returnVal);
 		}
 		
+		public static ArrayList<ArrayList<Integer>> centerNotes(ArrayList<ArrayList<Integer>> input) {
+			for(int chordIndex = 0; chordIndex < input.size(); chordIndex++) {
+				int currentNote = input.get(chordIndex).get(0);
+				int adjust = 0;
+				if(currentNote > 12 + 5) adjust = -12;
+				int index = 0;
+				for(int note: input.get(chordIndex)) {
+					input.get(chordIndex).set(index, note + adjust);
+					index++;
+				}
+			}
+			return input;
+		}
+		
 		public static ArrayList<ArrayList<Integer>> jumpControl(ArrayList<ArrayList<Integer>> input) {
 			int startNote = 12;
 			for(int chordIndex = 1; chordIndex < input.size(); chordIndex++) {
@@ -217,6 +242,73 @@ public class Minor {
 				startNote = currentNote + adjust;
 			}
 			return input;
+		}
+	}
+	
+	private void writeToLogFile(ArrayList<ArrayList<Integer>> sequence, boolean rating) {
+		BufferedWriter writer = null;
+		try {
+			writer.write("START:");
+			int numVoices = sequence.size();
+			int numBeats = sequence.get(0).size();
+			for(int currentBeat = 0; currentBeat < numBeats; currentBeat++) {
+				for(int currentVoice = 0; currentVoice < numVoices - 1; currentVoice++) {
+					writer.write(sequence.get(currentVoice).get(currentBeat));
+					writer.write(" ");
+				}
+				writer.write(sequence.get(numVoices - 1).get(currentBeat));
+				writer.newLine();
+			}
+			writer.write(new Boolean(rating).toString());
+			writer.newLine();
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(parent, "Scale: There was a problem writing to the log file");
+			return;
+		}
+		
+	}
+	
+	public static NestedTreeMap createProgressionTree(int length) {
+		NestedTreeMap returnVal = new NestedTreeMap();
+		ArrayList<Triad> root = new ArrayList<Triad>();
+		root.add(Triad.i);
+		createProgressionTree(returnVal, root, length);
+		returnVal.printTree();
+		return returnVal;
+	}
+	
+	private static void createProgressionTree(NestedTreeMap returnVal, ArrayList<Triad> array, int length) {
+		for(Triad triad: Progressions.getProgressions(array.get(array.size() - 1))) {
+			ArrayList<Triad> argVal = new ArrayList<Triad>();
+			argVal.addAll(array);
+			argVal.add(triad);
+			returnVal.updateArray(argVal, null);
+			if(length > 1) createProgressionTree(returnVal, argVal, length - 1);
+		}
+	}
+
+	public static void analyzeLogFile() {
+		BufferedReader reader = null;
+		try {
+			reader = new BufferedReader(new FileReader("CHORDS"));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			while(true) {
+			while(true) {
+				String currentLine = reader.readLine();
+				if(currentLine == "END") break;
+				String[] chord = currentLine.split(" ");
+				int[] notes = new int[chord.length];
+				int index = 0;
+				for(String note: chord) notes[index] = new Integer(note);
+				}
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 

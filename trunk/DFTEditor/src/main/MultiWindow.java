@@ -95,7 +95,7 @@ public class MultiWindow extends WindowAdapter {
 			pane.remove((JComponent) info.getModuleEditor());
 		}
 		moduleEditorInfo = moduleEditorInfoIn;
-		int index = 1;
+		int index = 2;
 		for(ModuleEditorInfo info: moduleEditorInfo) {
 			pane.add(info.getName(), (JComponent) info.getModuleEditor());
 			pane.setBackgroundAt(index, info.color);
