@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 public class Minor {
 	
 	private JPanel parent = null;
+	private static int branchCount;
 	
 	private static Random random = new Random();
 	public static final int[] majorScale = {0, 2, 4, 5, 7, 9, 11};
@@ -56,6 +57,25 @@ public class Minor {
 		static int[] viSharpDimAsc = {10, 10 + 3, 10 + 6};
 		static int[] viiDimAsc = {11, 11 + 3, 11 + 6};
 		static int[] VIIAsc = {11, 11 + 4, 11 + 7};
+		
+		public static Triad getTriadFromNotes(Scale scale, int[] notes) {
+			boolean match = true;
+			for(Triad triad: Triad.values()) {
+				int[] triadNotes = getNotes(scale, triad);
+				if(notes.length != triadNotes.length) continue;
+				match = true;
+				for(int index = 0; index < notes.length; index++) {
+					if((notes[index] % 12) == triadNotes[index]) {
+						continue;
+					} else {
+						match = false;
+						break;
+					}
+				}
+				if(match) return triad;
+			}
+			return null;
+		}
 		
 		public static int[] getNotes(Scale scale, Triad triad) {
 			switch(triad) {
@@ -245,10 +265,41 @@ public class Minor {
 		}
 	}
 	
-	private void writeToLogFile(ArrayList<ArrayList<Integer>> sequence, boolean rating) {
+	public static void createProgressionTrees() {
+		for(int length = 3; length < 7; length++) {
+			branchCount = 0;
+			createProgressionTree(length);
+			System.out.println(length + " " + branchCount);
+		}
+	}
+
+	public static NestedTreeMap createProgressionTree(int length) {
+		NestedTreeMap returnVal = new NestedTreeMap();
+		ArrayList<Triad> root = new ArrayList<Triad>();
+		root.add(Triad.i);
+		returnVal.updateArray(root, null);
+		branchCount++;
+		createProgressionTree(returnVal, root, length - 1);
+		//returnVal.printTree();
+		return returnVal;
+	}
+	
+	private static void createProgressionTree(NestedTreeMap returnVal, ArrayList<Triad> array, int length) {
+		for(Triad triad: Progressions.getProgressions(array.get(array.size() - 1))) {
+			ArrayList<Triad> argVal = new ArrayList<Triad>();
+			argVal.addAll(array);
+			argVal.add(triad);
+			returnVal.updateArray(argVal, null);
+			branchCount++;
+			if(length > 1) createProgressionTree(returnVal, argVal, length - 1);
+		}
+	}
+	
+	
+	public void writeToLogFile(ArrayList<ArrayList<Integer>> sequence, float score) {
 		BufferedWriter writer = null;
 		try {
-			writer.write("START:");
+			writer = new BufferedWriter(new FileWriter("TRIADS", true));
 			int numVoices = sequence.size();
 			int numBeats = sequence.get(0).size();
 			for(int currentBeat = 0; currentBeat < numBeats; currentBeat++) {
@@ -259,8 +310,11 @@ public class Minor {
 				writer.write(sequence.get(numVoices - 1).get(currentBeat));
 				writer.newLine();
 			}
-			writer.write(new Boolean(rating).toString());
+			writer.write("SCORE:");
 			writer.newLine();
+			writer.write(new Float(score).toString());
+			writer.newLine();
+			writer.close();
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(parent, "Scale: There was a problem writing to the log file");
 			return;
@@ -268,48 +322,49 @@ public class Minor {
 		
 	}
 	
-	public static NestedTreeMap createProgressionTree(int length) {
+	public static NestedTreeMap analyzeLogFile() {
 		NestedTreeMap returnVal = new NestedTreeMap();
-		ArrayList<Triad> root = new ArrayList<Triad>();
-		root.add(Triad.i);
-		createProgressionTree(returnVal, root, length);
-		returnVal.printTree();
-		return returnVal;
-	}
-	
-	private static void createProgressionTree(NestedTreeMap returnVal, ArrayList<Triad> array, int length) {
-		for(Triad triad: Progressions.getProgressions(array.get(array.size() - 1))) {
-			ArrayList<Triad> argVal = new ArrayList<Triad>();
-			argVal.addAll(array);
-			argVal.add(triad);
-			returnVal.updateArray(argVal, null);
-			if(length > 1) createProgressionTree(returnVal, argVal, length - 1);
-		}
-	}
-
-	public static void analyzeLogFile() {
+		int maxLength = 0;
 		BufferedReader reader = null;
 		try {
-			reader = new BufferedReader(new FileReader("CHORDS"));
+			reader = new BufferedReader(new FileReader("TRIADS"));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		try {
 			while(true) {
-			while(true) {
-				String currentLine = reader.readLine();
-				if(currentLine == "END") break;
-				String[] chord = currentLine.split(" ");
-				int[] notes = new int[chord.length];
-				int index = 0;
-				for(String note: chord) notes[index] = new Integer(note);
+				Float score = null;
+				ArrayList<Minor.Triad> sequence = new ArrayList<Minor.Triad>();
+				while(true) {
+					String currentLine = reader.readLine();
+					if(currentLine == "SCORE") {
+						score = new Float(reader.readLine());
+						break;
+					}
+					String[] chord = currentLine.split(" ");
+					int[] notes = new int[chord.length];
+					int index = 0;
+					for(String note: chord) {
+						notes[index] = new Integer(note);
+					}
+					sequence.add(TriadNotes.getTriadFromNotes(Scale.minor, notes));
 				}
+				if(sequence.size() > maxLength) maxLength = sequence.size();
+				returnVal.updateArray(sequence, score);
 			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			// e.printStackTrace();
+		}
+		try {
+			reader.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		//createProgressionTree(maxLength);
+		return returnVal;
 	}
 
 }
