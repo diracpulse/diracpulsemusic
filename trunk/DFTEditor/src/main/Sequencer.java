@@ -159,7 +159,7 @@ public class Sequencer extends JPanel {
 	}
 	
 	public void scale() {
-		Minor.createProgressionTree(3);
+		Minor.createProgressionTrees();
 		int timeStep = pixelsPerBeat;
 		Scale autoScale = new Scale(this, 4, 8);
 		boolean rating = false;
