@@ -64,16 +64,18 @@ public class Scale {
 	}
 	
 	public static double noteToFreqRatio(int note) {
-		return justIntonation[note % 12] * Math.pow(2.0, Math.floor(note / 12.0));
+		int index = note;
+		while(index < 0) index += 12;
+		return justIntonation[index % 12] * Math.pow(2.0, Math.floor(note / 12.0));
 	}
 
-	public ArrayList<ArrayList<Integer>> getNextChord(boolean prevRating) {
-		//if(prevSequence != null) writeToLogFile(prevSequence, prevRating);
+	public ArrayList<ArrayList<Integer>> getNextChord(float prevRating) {
+		if(prevSequence != null) Minor.writeToLogFile(prevSequence, prevRating, parent);
 		ArrayList<ArrayList<Integer>> returnVal;
 		int length = minLength + (int) Math.round(Math.random() * (maxLength - minLength));
 		returnVal = Minor.Progressions.getNextSequence(length);
 		prevSequence = returnVal;
-		return clone(returnVal);
+		return returnVal; // clone(returnVal);
 	}
 	
 	public ArrayList<ArrayList<Integer>> clone(ArrayList<ArrayList<Integer>> input) {

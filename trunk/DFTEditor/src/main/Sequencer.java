@@ -32,10 +32,10 @@ public class Sequencer extends JPanel {
 	ArrayList<ModuleEditor> moduleEditors = null;
 	public JScrollPane scrollPane;
 	private JToolBar navigationBar = null;
-	public static int noteBase = 53;
+	public static int noteBase = 12;
 	public static int octaves = 2;
 	public static double minFreq = 256.0;
-	public static int noteHeight = 7;
+	public static int noteHeight = 12;
 	public static int numPercussion = 3;
 	public static double bpm = 120;
 	public static int maxBeats = 20;
@@ -162,11 +162,11 @@ public class Sequencer extends JPanel {
 		Minor.createProgressionTrees();
 		int timeStep = pixelsPerBeat;
 		Scale autoScale = new Scale(this, 4, 8);
-		boolean rating = false;
+		float score = -1.0f;
 		boolean loopAgain = true;
 		while(loopAgain) {
 			clearData();
-			ArrayList<ArrayList<Integer>> chords = autoScale.getNextChord(rating);
+			ArrayList<ArrayList<Integer>> chords = autoScale.getNextChord(score);
 			int index = 0;
 			for(ArrayList<Integer> notes: chords) {
 				double freqRatio = 0.0;
@@ -184,21 +184,17 @@ public class Sequencer extends JPanel {
 				index += timeStep;
 			}
 			view.repaint();
-			play();
-			Object[] options = {"Yes", "No", "Quit"};
-			Integer result = JOptionPane.showOptionDialog(this, "Do you like this sequence", "Rate Sequence", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-			if(result == null) {
-				loopAgain = false;
-			} else {
-				if(result == 0) rating = true;
-				if(result == 1) rating = false;
-				if(result == 2) {
-					autoScale.getNextChord(rating);
-					loopAgain = false;
-				}
+			Object[] options = {"1", "2", "3", "4", "5", "Play Again", "Quit"};
+			Integer iscore = 5;
+			while(iscore == 5) {
+				play();
+				iscore = (Integer) JOptionPane.showOptionDialog(this, "Sequence Rating", "Rate this sequence", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
 			}
+			if(iscore == null) return;
+			if(iscore == 6) return;
+			score = (iscore / 4.0f);
+			loopAgain = true;
 		}
-		autoScale.closeLogFile();
 	}
 
 	public void chord() {

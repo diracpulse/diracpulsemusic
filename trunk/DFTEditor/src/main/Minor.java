@@ -188,7 +188,7 @@ public class Minor {
 			int[] notes = TriadNotes.getNotes(currentScale, Triad.i);
 			for(int note: notes) {
 				System.out.print(note + " ");
-				chord.add(note + 12);
+				chord.add(note);
 			}
 			returnVal.add(chord);
 			System.out.println();
@@ -199,7 +199,7 @@ public class Minor {
 				notes = TriadNotes.getNotes(currentScale, next);
 				for(int note: notes) {
 					System.out.print(note + " ");
-					chord.add(note + 12);
+					chord.add(note);
 				}
 				returnVal.add(chord);
 				System.out.println();
@@ -224,7 +224,35 @@ public class Minor {
 			returnVal.add(chord);
 			System.out.println();
 			*/
-			return jumpControl(returnVal);
+			return closestNotes(returnVal);
+		}
+		
+		public static ArrayList<ArrayList<Integer>> closestNotes(ArrayList<ArrayList<Integer>> input) {
+			int index = 0;
+			for(int chordIndex = 1; chordIndex < input.size(); chordIndex++) {
+				int adjust = 0;
+				int currentNote = input.get(chordIndex - 1).get(0);
+				int nextNote = input.get(chordIndex).get(0);
+				int octaveStart = (int) Math.floor(Math.pow(2.0, (nextNote / 12))) * 12;
+				if(Math.abs(currentNote - (octaveStart - nextNote)) < Math.abs(currentNote - nextNote)) {
+					adjust = -octaveStart;
+				} else {
+					adjust = 0;
+				}
+				index = 0;
+				for(int note: input.get(chordIndex)) {
+					input.get(chordIndex).set(index, note + adjust);
+					index++;
+				}
+			}
+			for(int chordIndex = 0; chordIndex < input.size(); chordIndex++) {
+				index = 0;
+				for(int note: input.get(chordIndex)) {
+					input.get(chordIndex).set(index, note + 12);
+					index++;
+				}
+			}
+			return input;
 		}
 		
 		public static ArrayList<ArrayList<Integer>> centerNotes(ArrayList<ArrayList<Integer>> input) {
@@ -296,18 +324,18 @@ public class Minor {
 	}
 	
 	
-	public void writeToLogFile(ArrayList<ArrayList<Integer>> sequence, float score) {
+	public static void writeToLogFile(ArrayList<ArrayList<Integer>> sequence, float score, JPanel parent) {
 		BufferedWriter writer = null;
 		try {
-			writer = new BufferedWriter(new FileWriter("TRIADS", true));
+			writer = new BufferedWriter(new FileWriter("MINOR TRIADS.txt", true));
 			int numVoices = sequence.size();
 			int numBeats = sequence.get(0).size();
 			for(int currentBeat = 0; currentBeat < numBeats; currentBeat++) {
 				for(int currentVoice = 0; currentVoice < numVoices - 1; currentVoice++) {
-					writer.write(sequence.get(currentVoice).get(currentBeat));
+					writer.write(sequence.get(currentVoice).get(currentBeat).intValue() + "");
 					writer.write(" ");
 				}
-				writer.write(sequence.get(numVoices - 1).get(currentBeat));
+				writer.write(sequence.get(numVoices - 1).get(currentBeat).intValue() + "");
 				writer.newLine();
 			}
 			writer.write("SCORE:");
@@ -322,12 +350,12 @@ public class Minor {
 		
 	}
 	
-	public static NestedTreeMap analyzeLogFile() {
+	public static NestedTreeMap loadLogFile() {
 		NestedTreeMap returnVal = new NestedTreeMap();
 		int maxLength = 0;
 		BufferedReader reader = null;
 		try {
-			reader = new BufferedReader(new FileReader("TRIADS"));
+			reader = new BufferedReader(new FileReader("MINOR TRIADS.txt"));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
