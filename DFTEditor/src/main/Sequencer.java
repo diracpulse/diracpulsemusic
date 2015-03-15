@@ -169,10 +169,9 @@ public class Sequencer extends JPanel {
 			ArrayList<ArrayList<Integer>> chords = autoScale.getNextChord(score);
 			int index = 0;
 			for(ArrayList<Integer> notes: chords) {
-				double freqRatio = 0.0;
 				int voice = 0;
-				for(int note: notes) {
-					freqRatio = Scale.noteToFreqRatio(note);
+				ArrayList<Double> freqRatios = Scale.chordToFreqRatios(notes);
+				for(double freqRatio: freqRatios) {
 					for(int innerIndex = index; innerIndex < index + timeStep - 1; innerIndex++) {
 						freqRatiosAtTimeInPixels.get(voice)[innerIndex] = freqRatio;
 						if(voice == 0) {

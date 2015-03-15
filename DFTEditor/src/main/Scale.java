@@ -26,7 +26,7 @@ public class Scale {
 	public static final int[] minorTriad = {3, 7};
 	public static final int[] diminsihedTriad = {3, 6};
 	public static final int[] augmentedTriad = {4, 8};
-	public static final double[] allJustIntonation = {1.0, 9.0 / 8.0, 6.0 / 5.0, 5.0 / 4.0, 4.0 / 3.0, 3.0 / 2.0, 5.0 / 3.0, 8.0 / 5.0, 9.0 / 5.0, 15.0 / 8.0};
+	//public static final double[] allJustIntonation = {1.0, 9.0 / 8.0, 6.0 / 5.0, 5.0 / 4.0, 4.0 / 3.0, 3.0 / 2.0, 5.0 / 3.0, 8.0 / 5.0, 9.0 / 5.0, 15.0 / 8.0};
 
 	private JPanel parent = null;
 	private Random random = null;
@@ -67,6 +67,23 @@ public class Scale {
 		int index = note;
 		while(index < 0) index += 12;
 		return justIntonation[index % 12] * Math.pow(2.0, Math.floor(note / 12.0));
+	}
+	
+	public static double getInterval(int deltaNote) {
+		return justIntonation[deltaNote % 12] * Math.pow(2.0, Math.floor(deltaNote / 12.0));
+	}
+	
+	public static ArrayList<Double> chordToFreqRatios(ArrayList<Integer> notes) {
+		ArrayList<Double> returnVal = new ArrayList<Double>();
+		double ratio0 = noteToFreqRatio(notes.get(0));
+		returnVal.add(ratio0);
+		int interval0 = notes.get(1) - notes.get(0);
+		double ratio1 = ratio0 * getInterval(interval0);
+		returnVal.add(ratio1);
+		int interval2 = notes.get(2) - notes.get(1);
+		double ratio2 = ratio1 * getInterval(interval2);
+		returnVal.add(ratio2);
+		return returnVal;
 	}
 
 	public ArrayList<ArrayList<Integer>> getNextChord(float prevRating) {
