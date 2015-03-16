@@ -17,6 +17,7 @@ public class Minor {
 	
 	private JPanel parent = null;
 	private static int branchCount;
+	private NestedTreeMap sequenceTree = null;
 	
 	private static Random random = new Random();
 	public static final int[] majorScale = {0, 2, 4, 5, 7, 9, 11};
@@ -129,21 +130,26 @@ public class Minor {
 	public static class Progressions {	
 		
 		private static Scale currentScale = Scale.minor;
-		private static Triad[] i = {Triad.i, Triad.ii, Triad.iiDim, Triad.III, Triad.IIIAug, Triad.iv, Triad.IV, Triad.V, Triad.v, Triad.VI, Triad.viSharpDim, Triad.viiDim, Triad.VII};
-		private static Triad[] ii = {Triad.i, Triad.III, Triad.V, Triad.v, Triad.viiDim, Triad.VII};
-		private static Triad[] iiDim = {Triad.i, Triad.III, Triad.V, Triad.v, Triad.viiDim, Triad.VII};
-		private static Triad[] III = {Triad.i, Triad.iv, Triad.IV, Triad.VI, Triad.viSharpDim, Triad.viiDim, Triad.VI};
-		private static Triad[] IIIAug = {Triad.i, Triad.iv, Triad.IV, Triad.VI, Triad.viSharpDim, Triad.viiDim, Triad.VI};;
-		private static Triad[] iv = {Triad.i, Triad.V, Triad.v, Triad.viiDim, Triad.VII};
-		private static Triad[] IV = {Triad.i, Triad.V, Triad.v, Triad.viiDim, Triad.VII};
-		private static Triad[] v = {Triad.i, Triad.VI, Triad.viSharpDim};
-		private static Triad[] V = {Triad.i, Triad.VI, Triad.viSharpDim};
-		private static Triad[] VI = {Triad.i, Triad.III, Triad.IIIAug, Triad.iv, Triad.IV, Triad.V, Triad.v, Triad.viiDim, Triad.VII};
-		private static Triad[] viSharpDim = {Triad.i, Triad.III, Triad.IIIAug, Triad.iv, Triad.IV, Triad.V, Triad.v, Triad.viiDim, Triad.VII};
+		private static Triad[] i = {Triad.ii, Triad.iiDim, Triad.III, Triad.IIIAug, Triad.iv, Triad.IV, Triad.V, Triad.v, Triad.VI, Triad.viSharpDim, Triad.viiDim, Triad.VII};
+		private static Triad[] ii = {Triad.III, Triad.V, Triad.v, Triad.viiDim, Triad.VII};
+		private static Triad[] iiDim = {Triad.III, Triad.V, Triad.v, Triad.viiDim, Triad.VII};
+		private static Triad[] III = {Triad.iv, Triad.IV, Triad.VI, Triad.viSharpDim, Triad.viiDim, Triad.VI};
+		private static Triad[] IIIAug = {Triad.iv, Triad.IV, Triad.VI, Triad.viSharpDim, Triad.viiDim, Triad.VI};;
+		private static Triad[] iv = {Triad.V, Triad.v, Triad.viiDim, Triad.VII};
+		private static Triad[] IV = {Triad.V, Triad.v, Triad.viiDim, Triad.VII};
+		private static Triad[] v = {Triad.VI, Triad.viSharpDim};
+		private static Triad[] V = {Triad.VI, Triad.viSharpDim};
+		private static Triad[] VI = {Triad.III, Triad.IIIAug, Triad.iv, Triad.IV, Triad.V, Triad.v, Triad.viiDim, Triad.VII};
+		private static Triad[] viSharpDim = {Triad.III, Triad.IIIAug, Triad.iv, Triad.IV, Triad.V, Triad.v, Triad.viiDim, Triad.VII};
 		private static Triad[] viiDim = {Triad.i};
 		private static Triad[] VII = {Triad.i};
+		private static Triad[] allNoTonic = {Triad.ii, Triad.iiDim, Triad.III, Triad.IIIAug, Triad.iv, Triad.IV, Triad.V, Triad.v, Triad.VI, Triad.viSharpDim, Triad.viiDim, Triad.VII};
 		
-		private static Triad[] getProgressions(Triad current) {
+		public static Triad[] getProgressions() {
+			return allNoTonic;
+		}
+		
+		public static Triad[] getProgressions(Triad current) {
 			switch(current) {
 			case i:
 				return i;
@@ -174,10 +180,14 @@ public class Minor {
 			}
 			return null;
 		}
-
+		
 		private static Triad getNextTriad(Triad current) {
 			Triad[] progressions = getProgressions(current);
-			return progressions[random.nextInt(progressions.length)];
+			Triad returnVal = progressions[random.nextInt(progressions.length)];
+			while(returnVal == current) {
+				returnVal = progressions[random.nextInt(progressions.length)];
+			}
+			return returnVal;
 		}
 		
 		public static ArrayList<ArrayList<Integer>> getNextSequence(int length) {
@@ -192,7 +202,7 @@ public class Minor {
 			}
 			returnVal.add(chord);
 			System.out.println();
-			for(int chordIndex = 1; chordIndex < length; chordIndex++) {
+			for(int chordIndex = 1; chordIndex < length - 1; chordIndex++) {
 				chord = new ArrayList<Integer>();
 				Triad next = getNextTriad(triads.get(triads.size() - 1));
 				triads.add(next);
@@ -204,6 +214,17 @@ public class Minor {
 				returnVal.add(chord);
 				System.out.println();
 			}
+			// Add tail
+			triads.add(Triad.i);
+			chord = new ArrayList<Integer>();
+			notes = TriadNotes.getNotes(currentScale, Triad.i);
+			for(int note: notes) {
+				System.out.print(note + " ");
+				chord.add(note);
+			}
+			returnVal.add(chord);
+			System.out.println();
+			
 			/*
 			chord = new ArrayList<Integer>();
 			triads.add(Triad.v);
@@ -292,38 +313,7 @@ public class Minor {
 			return input;
 		}
 	}
-	
-	public static void createProgressionTrees() {
-		for(int length = 3; length < 7; length++) {
-			branchCount = 0;
-			createProgressionTree(length);
-			System.out.println(length + " " + branchCount);
-		}
-	}
 
-	public static NestedTreeMap createProgressionTree(int length) {
-		NestedTreeMap returnVal = new NestedTreeMap();
-		ArrayList<Triad> root = new ArrayList<Triad>();
-		root.add(Triad.i);
-		returnVal.updateArray(root, null);
-		branchCount++;
-		createProgressionTree(returnVal, root, length - 1);
-		//returnVal.printTree();
-		return returnVal;
-	}
-	
-	private static void createProgressionTree(NestedTreeMap returnVal, ArrayList<Triad> array, int length) {
-		for(Triad triad: Progressions.getProgressions(array.get(array.size() - 1))) {
-			ArrayList<Triad> argVal = new ArrayList<Triad>();
-			argVal.addAll(array);
-			argVal.add(triad);
-			returnVal.updateArray(argVal, null);
-			branchCount++;
-			if(length > 1) createProgressionTree(returnVal, argVal, length - 1);
-		}
-	}
-	
-	
 	public static void writeToLogFile(ArrayList<ArrayList<Integer>> sequence, float score, JPanel parent) {
 		BufferedWriter writer = null;
 		try {
@@ -350,8 +340,7 @@ public class Minor {
 		
 	}
 	
-	public static NestedTreeMap loadLogFile() {
-		NestedTreeMap returnVal = new NestedTreeMap();
+	public static void loadLogFile(NestedTreeMap scored) {
 		int maxLength = 0;
 		BufferedReader reader = null;
 		try {
@@ -359,6 +348,7 @@ public class Minor {
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			return;
 		}
 		try {
 			while(true) {
@@ -366,7 +356,7 @@ public class Minor {
 				ArrayList<Minor.Triad> sequence = new ArrayList<Minor.Triad>();
 				while(true) {
 					String currentLine = reader.readLine();
-					if(currentLine == "SCORE") {
+					if(currentLine == "SCORE:") {
 						score = new Float(reader.readLine());
 						break;
 					}
@@ -379,7 +369,7 @@ public class Minor {
 					sequence.add(TriadNotes.getTriadFromNotes(Scale.minor, notes));
 				}
 				if(sequence.size() > maxLength) maxLength = sequence.size();
-				returnVal.updateArray(sequence, score);
+				scored.updateArray(sequence, score);
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -391,8 +381,6 @@ public class Minor {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		//createProgressionTree(maxLength);
-		return returnVal;
 	}
 
 }

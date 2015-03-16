@@ -56,6 +56,7 @@ public class Sequencer extends JPanel {
 	public int currentModuleIndex = 0;
 	double[] leftSamples = null;
 	double[] rightSamples = null;
+	public Scale scale = null;
 	
 	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);
@@ -159,14 +160,13 @@ public class Sequencer extends JPanel {
 	}
 	
 	public void scale() {
-		Minor.createProgressionTrees();
 		int timeStep = pixelsPerBeat;
-		Scale autoScale = new Scale(this, 4, 8);
+		if(scale == null) scale = new Scale(this, 4);
 		float score = -1.0f;
 		boolean loopAgain = true;
 		while(loopAgain) {
 			clearData();
-			ArrayList<ArrayList<Integer>> chords = autoScale.getNextChord(score);
+			ArrayList<ArrayList<Integer>> chords = scale.getNextChord(score);
 			int index = 0;
 			for(ArrayList<Integer> notes: chords) {
 				int voice = 0;

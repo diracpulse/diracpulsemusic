@@ -30,17 +30,17 @@ public class Scale {
 
 	private JPanel parent = null;
 	private Random random = null;
-	private int minLength = 8;
-	private int maxLength = 8;
+	private int length;
 	private ArrayList<ArrayList<Integer>> prevSequence = null;
 	private BufferedWriter writer = null;
-
-	public Scale(JPanel parent, int minLength, int maxLength) {
+	private NestedTreeMap scoring;
+	
+	public Scale(JPanel parent, int length) {
 		this.parent = parent;
-		this.minLength = minLength;
-		this.maxLength = maxLength;
+		this.length = length;
 		this.random = new Random();
-		initLogFile();
+		scoring = NestedTreeMap.createProgressionTree(length);
+		Minor.loadLogFile(scoring);
 	}
 	
 	private void initLogFile() {
@@ -89,8 +89,7 @@ public class Scale {
 	public ArrayList<ArrayList<Integer>> getNextChord(float prevRating) {
 		if(prevSequence != null) Minor.writeToLogFile(prevSequence, prevRating, parent);
 		ArrayList<ArrayList<Integer>> returnVal;
-		int length = minLength + (int) Math.round(Math.random() * (maxLength - minLength));
-		returnVal = Minor.Progressions.getNextSequence(length);
+		returnVal = scoring.getUnscoredSequence();
 		prevSequence = returnVal;
 		return returnVal; // clone(returnVal);
 	}
