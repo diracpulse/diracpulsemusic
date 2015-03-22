@@ -22,7 +22,7 @@ public class Slider {
 		} else {
 			vertical = false;
 		}
-		this.currentValue = minValue;
+		this.currentValue = maxValue / 2.0;
 	}
 	
 	public double getCurrentValue() {

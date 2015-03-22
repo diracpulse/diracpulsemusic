@@ -24,7 +24,7 @@ public class PlayableWaveformView extends JPanel {
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		Graphics2D g2 = (Graphics2D) g;
-		parent.snare.draw(g2);
+		parent.osc1.draw(g2);
 	}
 
 }

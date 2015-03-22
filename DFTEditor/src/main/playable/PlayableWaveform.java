@@ -24,8 +24,10 @@ public class PlayableWaveform {
 	PlayableWaveformEditor parent;
 	double minLogFreq = 5.0;
 	double maxLogFreq = 14.0;
-	double minLogAmp = 0.0;
-	double maxLogAmp = Math.log(Short.MAX_VALUE) / Math.log(2.0);
+	double minLogAmp = -16.0;
+	double maxLogAmp = 0.0;
+	double prevAmp = 0.0;
+	double prevFreq = 7;
 	private Slider freqControl;
 	private Slider ampControl;
 	
@@ -45,54 +47,55 @@ public class PlayableWaveform {
 		ampControl = new Slider(minLogAmp, maxLogAmp, new Rectangle(24, 4, 16, 800));
 	}
 	
-	public void reset() {
+	public synchronized void reset() {
 		currentPhase = 0.0;
 	}
+	
 
-	public double[] masterGetSamples(double[] control) {
-		double[] returnVal = new double[control.length];
+	public double[] masterGetSamples(int numSamples) {
+		double currentAmp = prevAmp;
+		double currentFreq = prevFreq;
+		double endAmp;
+		double endFreq;
+		synchronized(this) {
+			endAmp =  ampControl.getCurrentValuePow2();
+			endFreq = freqControl.getCurrentValuePow2();
+		}
+		double deltaAmp = (endAmp - prevAmp) / numSamples;
+		double deltaFreq = (endFreq - prevFreq) / numSamples;
+		double[] returnVal = new double[numSamples];
 		switch(type) {
 			case SINE:
 				for(int index = 0; index < returnVal.length; index++) {
-					if(control[index] == -1) {
-						currentPhase = 0.0;
-						continue;
-					}
-					returnVal[index] += Math.sin(currentPhase) * ampControl.getCurrentValuePow2();
-					currentPhase += freqControl.getCurrentValuePow2() / SynthTools.sampleRate * Math.PI * 2.0;
+					returnVal[index] += Math.sin(currentPhase) * currentAmp;
+					currentPhase += currentFreq / SynthTools.sampleRate * Math.PI * 2.0;
+					currentAmp += deltaAmp;
+					currentFreq += deltaFreq;
 				}
 				break;
 			case SQUAREWAVE:
 				for(int index = 0; index < returnVal.length; index++) {
-					if(control[index] == -1) {
-						currentPhase = 0.0;
-						continue;
-					}
 					returnVal[index] += squarewave(currentPhase) * ampControl.getCurrentValuePow2();
 					currentPhase += freqControl.getCurrentValuePow2() / SynthTools.sampleRate * Math.PI * 2.0;
 				}
 				break;
 			case TRIANGLE:
 				for(int index = 0; index < returnVal.length; index++) {
-					if(control[index] == -1) {
-						currentPhase = 0.0;
-						continue;
-					}
 					returnVal[index] += triangle(currentPhase) * ampControl.getCurrentValuePow2();
 					currentPhase += freqControl.getCurrentValuePow2() / SynthTools.sampleRate * Math.PI * 2.0;
 				}
 				break;
 			case SAWTOOTH:
 				for(int index = 0; index < returnVal.length; index++) {
-					if(control[index] == -1) {
-						currentPhase = 0.0;
-						continue;
-					}
 					returnVal[index] += sawtooth(currentPhase) * ampControl.getCurrentValuePow2();
 					currentPhase += freqControl.getCurrentValuePow2() / SynthTools.sampleRate * Math.PI * 2.0;
 				}
 				break;
 			}
+		synchronized(this) {
+			prevAmp = endAmp;
+			prevFreq = endFreq;
+		}
 		return returnVal;
 	}
 

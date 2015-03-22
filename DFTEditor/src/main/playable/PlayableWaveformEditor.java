@@ -29,12 +29,14 @@ import main.MultiWindow;
 import main.Scale;
 import main.SynthTools;
 
-public class PlayableWaveformEditor extends JPanel implements ActionListener {
+public class PlayableWaveformEditor extends JPanel implements ActionListener, AudioSource {
 
 	private static final long serialVersionUID = 3138005743637187863L;
 	
+	private static AudioFetcher af;
+	
 	MultiWindow parent;
-	PlayableSnare snare;
+	PlayableWaveform osc1;
 	PlayableWaveformView view;
 	PlayableWaveformController controller;
 	JToolBar navigationBar = null;
@@ -74,11 +76,13 @@ public class PlayableWaveformEditor extends JPanel implements ActionListener {
         JScrollPane scrollPane = new JScrollPane(view);
         scrollPane.setSize(800, 600);
         add(scrollPane, BorderLayout.CENTER);
-        snare = new PlayableSnare(this);
+        osc1 = new PlayableWaveform(this);
+        af = new AudioFetcher(this);
+        af.start();
     }
     
     public void mousePressed(int x, int y) {
-    	snare.pointSelected(x, y);
+    	osc1.pointSelected(x, y);
     }
     
     public void mouseReleased(int x, int y) {
@@ -86,55 +90,18 @@ public class PlayableWaveformEditor extends JPanel implements ActionListener {
     }
     
     public void mouseDragged(int x, int y) {
-
-    }
-    
-    
-    public void record() {
-    	int latency = 0;
-    	// let JIT Compiler Optimize
-    	for(int index = 0; index < 10; index++) {
-    		//latency += getLatency();
-    	}
-    	latency = 0;
-    	for(int index = 0; index < 10; index++) {
-    		//latency += getLatency();
-    	}
-    	latency = (int) Math.round(latency / 10.0);
-    	if(latency == 0) latency = 1;
-    	System.out.println(latency);
-		timer = new Timer(frameLengthInMillis - latencyInMillis, this);
-        timer.setInitialDelay(0);
-		playAudioData();
-        timer.start();
-    }
-    
-    public void stop() {
-    	timer.stop();
+    	osc1.pointSelected(x, y);
     }
 
 	@Override
-	public synchronized void actionPerformed(ActionEvent arg0) {
-		if(loopPosition + frameLengthInSamples * 2 > loopData.length) {
-			loopPosition = 0;
-		} else {
-			loopPosition += frameLengthInSamples;
-		}
-		playAudioData();
+	public double[] getNextSamples(int numSamples) {
+		return osc1.masterGetSamples(numSamples);
 	}
-	
-	public void playAudioData() {
-		double[] mono = new double[frameLengthInSamples];
-		double maxAmplitude = 0.0;
-		for(int index = 0; index < loopData.length; index++) {
-			if(Math.abs(loopData[index]) > maxAmplitude) maxAmplitude = Math.abs(loopData[index]);
-		}
-		if(maxAmplitude == 0.0) return;
-		double scale = AudioPlayer.fullScale / maxAmplitude;
-		for(int index = loopPosition; index < loopPosition + frameLengthInSamples; index++) {
-			mono[index - loopPosition] = loopData[index] * scale;
-		}
-		AudioPlayer.addToLine(mono);
+
+	@Override
+	public void actionPerformed(ActionEvent arg0) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
