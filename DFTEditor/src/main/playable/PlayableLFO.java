@@ -31,6 +31,7 @@ public class PlayableLFO {
 	double prevFreq = 7;
 	private Slider freqControl;
 	private Slider ampControl;
+	private int maxScreenX;
 	
 	public enum WaveformType {
 		SINE,
@@ -42,13 +43,18 @@ public class PlayableLFO {
 	private WaveformType type = WaveformType.SINE;
 	private double currentPhase = 0.0;
 	
-	public PlayableLFO(PlayableEditor parent) {
+	public PlayableLFO(PlayableEditor parent, int screenX, int screenY) {
 		this.parent = parent;
-		int y = 24;
-		int x = 10;
+		int x = screenX;
+		int y = screenY;
 		freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 32.0, 1024.0, 256.0, "F");
 		x = freqControl.getMaxX();
 		ampControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 1.0 / Short.MAX_VALUE, 1.0, 0.5, "AMP");
+		maxScreenX = ampControl.getMaxX();
+	}
+	
+	public int getMaxScreenX() {
+		return maxScreenX;
 	}
 	
 	public synchronized void reset() {

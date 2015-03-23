@@ -25,6 +25,8 @@ public class PlayableView extends JPanel {
 		super.paintComponent(g);
 		Graphics2D g2 = (Graphics2D) g;
 		parent.osc1.draw(g2);
+		parent.sequencer.draw(g2);
+		parent.envelope.draw(g2);
 	}
 
 }
