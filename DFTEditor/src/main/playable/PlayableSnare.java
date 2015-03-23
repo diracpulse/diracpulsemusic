@@ -5,10 +5,11 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
 import main.SynthTools;
+import main.playable.Slider.Type;
 
 public class PlayableSnare implements Playable {
 	
-	PlayableWaveformEditor parent;
+	PlayableEditor parent;
 	double minLogFreq = 5.0;
 	double maxLogFreq = 14.0;
 	double minLogAmp = 0.0;
@@ -29,12 +30,12 @@ public class PlayableSnare implements Playable {
 		SAWTOOTH,
 	}
 
-	public PlayableSnare(PlayableWaveformEditor parent) {
+	public PlayableSnare(PlayableEditor parent) {
 		this.parent = parent;
-		freqControl = new Slider(minLogFreq, maxLogFreq, new Rectangle(4, 4, 16, 700));
-		ampControl = new Slider(minLogAmp, maxLogAmp, new Rectangle(24, 4, 16, 700));
-		bControl = new Slider(0.0, 1.0, new Rectangle(44, 4, 16, 700));
-		button = new Button(parent, this, new Rectangle(4, 704, 40, 20));
+		//freqControl = new Slider(Slider.Type.LOGARITHMIC, 10, 10, 400, 32, 4096.0, 256.0, "Freq");
+		//ampControl = new Slider(Slider.Type.LOGARITHMIC, 1.0 / maxLogAmp, 1.0, 0.5, 400,);
+		//bControl = new Slider(0.0, 1.0, new Rectangle(44, 4, 16, 700));
+		//button = new Button(parent, this, new Rectangle(4, 704, 40, 20));
 	}
 
 	public void triggered(double[] loopData, int loopIndex) {

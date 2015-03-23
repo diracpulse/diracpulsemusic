@@ -29,16 +29,16 @@ import main.MultiWindow;
 import main.Scale;
 import main.SynthTools;
 
-public class PlayableWaveformEditor extends JPanel implements ActionListener, AudioSource {
+public class PlayableEditor extends JPanel implements ActionListener, AudioSource {
 
 	private static final long serialVersionUID = 3138005743637187863L;
 	
 	private static AudioFetcher af;
 	
 	MultiWindow parent;
-	PlayableWaveform osc1;
-	PlayableWaveformView view;
-	PlayableWaveformController controller;
+	PlayableLFO osc1;
+	PlayableView view;
+	PlayableController controller;
 	JToolBar navigationBar = null;
 	Timer timer = null;
 	long timerCalls = 0;
@@ -62,12 +62,12 @@ public class PlayableWaveformEditor extends JPanel implements ActionListener, Au
     	return navigationBar;
 	}
 	
-    public PlayableWaveformEditor(MultiWindow parent) {
+    public PlayableEditor(MultiWindow parent) {
 		super(new BorderLayout());
 		this.parent = parent;
-        view = new PlayableWaveformView(this);
+        view = new PlayableView(this);
         view.setBackground(Color.black);
-        controller = new PlayableWaveformController(this);
+        controller = new PlayableController(this);
         navigationBar = new JToolBar();
         add(createNavigationBar(), BorderLayout.PAGE_START);
         view.addMouseListener(controller);
@@ -76,7 +76,7 @@ public class PlayableWaveformEditor extends JPanel implements ActionListener, Au
         JScrollPane scrollPane = new JScrollPane(view);
         scrollPane.setSize(800, 600);
         add(scrollPane, BorderLayout.CENTER);
-        osc1 = new PlayableWaveform(this);
+        osc1 = new PlayableLFO(this);
         af = new AudioFetcher(this);
         af.start();
     }

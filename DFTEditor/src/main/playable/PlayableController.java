@@ -8,11 +8,11 @@ import java.awt.event.MouseMotionListener;
 
 import main.ScaleUtils;
 
-public class PlayableWaveformController implements MouseListener, MouseMotionListener, ActionListener {
+public class PlayableController implements MouseListener, MouseMotionListener, ActionListener {
 
-	PlayableWaveformEditor parent;
+	PlayableEditor parent;
 
-	public PlayableWaveformController(PlayableWaveformEditor parent) {
+	public PlayableController(PlayableEditor parent) {
 		this.parent = parent;
 	}
 

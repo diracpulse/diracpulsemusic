@@ -18,10 +18,11 @@ import main.Module.ModuleType;
 import main.ModuleEditor;
 import main.MultiWindow;
 import main.SynthTools;
+import main.playable.Slider.Type;
 
-public class PlayableWaveform {
+public class PlayableLFO {
 	
-	PlayableWaveformEditor parent;
+	PlayableEditor parent;
 	double minLogFreq = 5.0;
 	double maxLogFreq = 14.0;
 	double minLogAmp = -16.0;
@@ -41,10 +42,13 @@ public class PlayableWaveform {
 	private WaveformType type = WaveformType.SINE;
 	private double currentPhase = 0.0;
 	
-	public PlayableWaveform(PlayableWaveformEditor parent) {
+	public PlayableLFO(PlayableEditor parent) {
 		this.parent = parent;
-		freqControl = new Slider(minLogFreq, maxLogFreq, new Rectangle(4, 4, 16, 800));
-		ampControl = new Slider(minLogAmp, maxLogAmp, new Rectangle(24, 4, 16, 800));
+		int y = 24;
+		int x = 10;
+		freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 32.0, 1024.0, 256.0, "F");
+		x = freqControl.getMaxX();
+		ampControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 1.0 / Short.MAX_VALUE, 1.0, 0.5, "AMP");
 	}
 	
 	public synchronized void reset() {
@@ -58,8 +62,8 @@ public class PlayableWaveform {
 		double endAmp;
 		double endFreq;
 		synchronized(this) {
-			endAmp =  ampControl.getCurrentValuePow2();
-			endFreq = freqControl.getCurrentValuePow2();
+			endAmp =  ampControl.getCurrentValue();
+			endFreq = freqControl.getCurrentValue();
 		}
 		double deltaAmp = (endAmp - prevAmp) / numSamples;
 		double deltaFreq = (endFreq - prevFreq) / numSamples;
@@ -75,20 +79,20 @@ public class PlayableWaveform {
 				break;
 			case SQUAREWAVE:
 				for(int index = 0; index < returnVal.length; index++) {
-					returnVal[index] += squarewave(currentPhase) * ampControl.getCurrentValuePow2();
-					currentPhase += freqControl.getCurrentValuePow2() / SynthTools.sampleRate * Math.PI * 2.0;
+					returnVal[index] += squarewave(currentPhase) * ampControl.getCurrentValue();
+					currentPhase += freqControl.getCurrentValue() / SynthTools.sampleRate * Math.PI * 2.0;
 				}
 				break;
 			case TRIANGLE:
 				for(int index = 0; index < returnVal.length; index++) {
-					returnVal[index] += triangle(currentPhase) * ampControl.getCurrentValuePow2();
-					currentPhase += freqControl.getCurrentValuePow2() / SynthTools.sampleRate * Math.PI * 2.0;
+					returnVal[index] += triangle(currentPhase) * ampControl.getCurrentValue();
+					currentPhase += freqControl.getCurrentValue() / SynthTools.sampleRate * Math.PI * 2.0;
 				}
 				break;
 			case SAWTOOTH:
 				for(int index = 0; index < returnVal.length; index++) {
-					returnVal[index] += sawtooth(currentPhase) * ampControl.getCurrentValuePow2();
-					currentPhase += freqControl.getCurrentValuePow2() / SynthTools.sampleRate * Math.PI * 2.0;
+					returnVal[index] += sawtooth(currentPhase) * ampControl.getCurrentValue();
+					currentPhase += freqControl.getCurrentValue() / SynthTools.sampleRate * Math.PI * 2.0;
 				}
 				break;
 			}

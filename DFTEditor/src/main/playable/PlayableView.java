@@ -9,15 +9,15 @@ import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
-public class PlayableWaveformView extends JPanel {
+public class PlayableView extends JPanel {
 
 	private static final long serialVersionUID = -3597657941937913124L;
-	private PlayableWaveformEditor parent;
+	private PlayableEditor parent;
 	public static final int xPadding = 8;
 	private int fontSize = 12;
 	private int yStep = fontSize + 6;
 	
-	PlayableWaveformView(PlayableWaveformEditor parent) {
+	PlayableView(PlayableEditor parent) {
 		this.parent = parent;
 	}
 

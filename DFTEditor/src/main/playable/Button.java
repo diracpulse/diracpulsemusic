@@ -6,11 +6,11 @@ import java.awt.Rectangle;
 
 public class Button {
 	
-	private PlayableWaveformEditor parent;
+	private PlayableEditor parent;
 	private Rectangle bounds;
 	private Playable handler;
 	
-	public Button(PlayableWaveformEditor parent, Playable handler, Rectangle bounds) {
+	public Button(PlayableEditor parent, Playable handler, Rectangle bounds) {
 		this.parent = parent;
 		this.bounds = bounds;
 		this.handler = handler;
