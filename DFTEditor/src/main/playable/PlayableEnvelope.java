@@ -28,14 +28,18 @@ public class PlayableEnvelope {
 		this.parent = parent;
 		int x = screenX;
 		int y = screenY;
-		attack = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.00005, 0.5, .01, "Attack");
+		attack = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.00005, 0.1, .01, "Attack");
 		x = attack.getMaxX();
-		decay = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.00005, 0.5, .01, "Decay");
+		decay = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.00005, 0.1, .01, "Decay");
 		x = decay.getMaxX();
 		sustain = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, Math.exp(-1.0 * tau), 1.0, .5, "Sustain");
 		x = sustain.getMaxX();
-		release = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.00005, 0.5, .1, "Release");
+		release = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.00005, 0.1, .1, "Release");
 		maxScreenX = release.getMaxX();
+	}
+	
+	public int getMaxScreenX() {
+		return maxScreenX;
 	}
 	
 	public synchronized void noteOn(long currentTimeInSamples) {
@@ -55,12 +59,10 @@ public class PlayableEnvelope {
 	public double getSample(long absoluteTimeInSamples) {
 		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
 		if(!off) {
-			if(currentTimeInSamples == 0) return 0.0;
 			if(currentTimeInSamples < attackInSamples) {
 				saveAttackValue = 1.0 - Math.exp(-1.0 * currentTimeInSamples * tau / attackInSamples);
 				return saveAttackValue;
 			}
-			if(currentTimeInSamples == attackInSamples) return saveAttackValue;
 			if(currentTimeInSamples < attackInSamples + decayInSamples) {
 				double decayVal = Math.exp(-1.0 * tau * (currentTimeInSamples - attackInSamples) / (double) decayInSamples);
 				saveDecayValue = (saveAttackValue - sustainValue) * decayVal + sustainValue;
@@ -68,7 +70,6 @@ public class PlayableEnvelope {
 			}
 			return saveDecayValue;
 		}
-		if(absoluteTimeInSamples - stopTimeInSamples == 0) return saveDecayValue;
 		return Math.exp(-1.0 * tau * (absoluteTimeInSamples - stopTimeInSamples) / (double) releaseInSamples) * saveDecayValue;
 	} 
 	

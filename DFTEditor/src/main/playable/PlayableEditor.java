@@ -39,6 +39,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 	PlayableLFO osc1;
 	PlayableSequencer sequencer;
 	PlayableEnvelope envelope;
+	PlayableFilter filter;
 	PlayableView view;
 	PlayableController controller;
 	JToolBar navigationBar = null;
@@ -80,6 +81,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
         add(scrollPane, BorderLayout.CENTER);
         osc1 = new PlayableLFO(this, 10, 10);
         envelope = new PlayableEnvelope(this, osc1.getMaxScreenX(), 10);
+        filter = new PlayableFilter(this, envelope.getMaxScreenX(), 10);
         sequencer = new PlayableSequencer(this, 10, 500);
         af = new AudioFetcher(this);
         af.start();
@@ -88,6 +90,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     public void mousePressed(int x, int y) {
     	osc1.pointSelected(x, y);
     	envelope.pointSelected(x, y);
+    	filter.pointSelected(x, y);
     }
     
     public void mouseReleased(int x, int y) {
@@ -97,11 +100,12 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     public void mouseDragged(int x, int y) {
     	osc1.pointSelected(x, y);
     	envelope.pointSelected(x, y);
+    	filter.pointSelected(x, y);
     }
 
 	@Override
 	public double[] getNextSamples(int numSamples) {
-		return sequencer.masterGetSamples(numSamples, envelope);
+		return sequencer.masterGetSamples(numSamples, envelope, filter);
 	}
 
 	@Override

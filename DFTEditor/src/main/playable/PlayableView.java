@@ -27,6 +27,7 @@ public class PlayableView extends JPanel {
 		parent.osc1.draw(g2);
 		parent.sequencer.draw(g2);
 		parent.envelope.draw(g2);
+		parent.filter.draw(g2);
 	}
 
 }

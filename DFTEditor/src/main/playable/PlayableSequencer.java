@@ -43,7 +43,7 @@ public class PlayableSequencer {
 		}
 	}
 
-	public synchronized double[] masterGetSamples(int numSamples, PlayableEnvelope env) {
+	public double[] masterGetSamples(int numSamples, PlayableEnvelope env, PlayableFilter filter) {
 		double[] returnVal = new double[numSamples];
 		for(int index = 0; index < numSamples; index++) {
 			if(currentTimeInSamples % noteLengthInSamples == 0) {
@@ -57,9 +57,10 @@ public class PlayableSequencer {
 			int noteIndex = (int) currentTime % notes.length;
 			double currentFreq = Math.pow(2.0, notes[noteIndex] / 12.0) * baseFreq;
 			returnVal[index] = sawtooth(currentPhase) * env.getSample(currentTimeInSamples);
+			returnVal[index] = filter.masterGetSample(returnVal[index]);
 			currentPhase += currentFreq / AudioFetcher.sampleRate * Math.PI * 2.0;
+			currentTimeInSamples++;
 		}
-		currentTimeInSamples += numSamples;
 		return returnVal;
 	}
 	
