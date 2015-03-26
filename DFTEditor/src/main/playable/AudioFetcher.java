@@ -19,7 +19,7 @@ public class AudioFetcher extends Thread implements LineListener {
 	final static boolean signed = true;
 	final static boolean bigEndian = false;
 	final static double fullScale = Short.MAX_VALUE;
-	final static int frameSize = 441 * 5;
+	final static int frameSize = 4096;
 	private AudioSource audioSource;
 	private static AtomicLong framePosition = new AtomicLong(0);
 	private static SourceDataLine line;

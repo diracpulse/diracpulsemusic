@@ -19,7 +19,7 @@ public class PlayableEnvelope {
 	int decayInSamples;
 	double sustainValue;
 	int releaseInSamples;
-	double tau = 4.0;
+	double tau = 2.0;
 	double currentValue = 0.0;
 	double saveAttackValue;
 	double saveDecayValue;
@@ -59,13 +59,12 @@ public class PlayableEnvelope {
 	public double getSample(long absoluteTimeInSamples) {
 		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
 		if(!off) {
-			if(currentTimeInSamples < attackInSamples) {
-				saveAttackValue = 1.0 - Math.exp(-1.0 * currentTimeInSamples * tau / attackInSamples);
-				return saveAttackValue;
+			if(currentTimeInSamples <= attackInSamples) {
+				return 1.0 - Math.exp(-1.0 * currentTimeInSamples * tau / attackInSamples);
 			}
 			if(currentTimeInSamples < attackInSamples + decayInSamples) {
 				double decayVal = Math.exp(-1.0 * tau * (currentTimeInSamples - attackInSamples) / (double) decayInSamples);
-				saveDecayValue = (saveAttackValue - sustainValue) * decayVal + sustainValue;
+				saveDecayValue = (1.0 - sustainValue) * decayVal + sustainValue;
 				return saveDecayValue;
 			}
 			return saveDecayValue;

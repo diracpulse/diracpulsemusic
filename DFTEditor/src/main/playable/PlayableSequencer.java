@@ -11,6 +11,7 @@ import main.playable.PlayableLFO.WaveformType;
 
 public class PlayableSequencer {
 	
+	private Waveforms waveforms;
 	private int screenX;
 	private int screenY;
 	private static final int numKeys = 24;
@@ -27,6 +28,7 @@ public class PlayableSequencer {
 	double currentPhase = 0.0;
 	
 	public PlayableSequencer(PlayableEditor parent, int screenX, int screenY) {
+		waveforms = new Waveforms();
 		Random random = new Random();
 		this.parent = parent;
 		this.screenX = screenX;
@@ -56,7 +58,7 @@ public class PlayableSequencer {
 			long currentTime = currentTimeInSamples / noteLengthInSamples;
 			int noteIndex = (int) currentTime % notes.length;
 			double currentFreq = Math.pow(2.0, notes[noteIndex] / 12.0) * baseFreq;
-			returnVal[index] = sawtooth(currentPhase) * env.getSample(currentTimeInSamples);
+			returnVal[index] = waveforms.sawtooth(currentPhase) * env.getSample(currentTimeInSamples);
 			returnVal[index] = filter.masterGetSample(returnVal[index]);
 			currentPhase += currentFreq / AudioFetcher.sampleRate * Math.PI * 2.0;
 			currentTimeInSamples++;

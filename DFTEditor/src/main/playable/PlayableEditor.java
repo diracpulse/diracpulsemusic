@@ -42,6 +42,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 	PlayableFilter filter;
 	PlayableView view;
 	PlayableController controller;
+	public Waveforms waveforms = new Waveforms();
 	JToolBar navigationBar = null;
 	Timer timer = null;
 	long timerCalls = 0;

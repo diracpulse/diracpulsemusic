@@ -54,7 +54,7 @@ public class PlayableFilter {
 		int y = screenY;
 		cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 256.0, 8096.0, 1024.0, "Cutoff");
 		x = cutoffControl.getMaxX();
-		resControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.25, 4.0, Math.sqrt(2.0) / 2.0, "Resonance");
+		resControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.25, 2.0, Math.sqrt(2.0) / 2.0, "Resonance");
 		maxScreenX = resControl.getMaxX();
 	}
 	
