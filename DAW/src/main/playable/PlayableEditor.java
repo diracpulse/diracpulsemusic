@@ -51,6 +51,8 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 	public final int frameLengthInSamples = (int) Math.round(SynthTools.sampleRate / framesPerSecond);
 	double[] loopData = new double[frameLengthInSamples * framesPerSecond * 4];
 	int loopPosition = 0;
+	public static final int moduleSpacing = 10;
+	public static final int moduleYPadding = 30;
 	
 	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);
@@ -75,13 +77,13 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
         add(createNavigationBar(), BorderLayout.PAGE_START);
         view.addMouseListener(controller);
         view.addMouseMotionListener(controller);
-        view.setPreferredSize(new Dimension(800, 600));
+        view.setPreferredSize(new Dimension(1600, 900));
         JScrollPane scrollPane = new JScrollPane(view);
         scrollPane.setSize(800, 600);
         add(scrollPane, BorderLayout.CENTER);
-        osc1 = new PlayableLFO(this, 10, 10);
-        envelope = new PlayableEnvelope(this, osc1.getMaxScreenX(), 10);
-        filter = new PlayableFilter(this, envelope.getMaxScreenX(), 10);
+        osc1 = new PlayableLFO(this, 10, 10, "AMP LFO");
+        envelope = new PlayableEnvelope(this, osc1.getMaxScreenX() + moduleSpacing, 10, "AMP ENV");
+        filter = new PlayableFilter(this, envelope.getMaxScreenX() + moduleSpacing, 10, "LPF");
         sequencer = new PlayableSequencer(this, 10, 500);
         af = new AudioFetcher(this);
         af.start();

@@ -25,10 +25,12 @@ public class Slider {
 	private int sliderPosition = 0;
 	private int sliderWidth = 10;
 	private int xPadding = 16;
-	private int yPadding = 24;
+	private int yPadding = 16;
 	private String descriptor;
+	private String upperLable;
+	private String lowerLable;
 	
-	public Slider(Type type, int screenX, int screenY, int range, double minValue, double maxValue, double initialValue, String descriptor) {
+	public Slider(Type type, int screenX, int screenY, int range, double minValue, double maxValue, double initialValue, String[] text) {
 		this.type = type;
 		this.screenX = screenX;
 		this.screenY = screenY;
@@ -36,12 +38,14 @@ public class Slider {
 		this.minValue = minValue;
 		this.maxValue = maxValue;
 		int x = screenX + xPadding;
-		int y = screenY + yPadding;
+		int y = screenY + yPadding * 2;
 		int w = sliderWidth;
 		int l = range;
 		this.sliderBounds = new Rectangle(x, y, w, l);
 		setCurrentValue(initialValue);
-		this.descriptor = descriptor;
+		this.descriptor = text[0];
+		this.upperLable = text[1];
+		this.lowerLable = text[2];
 	}
 	
 	public Rectangle getBounds() {
@@ -50,6 +54,10 @@ public class Slider {
 	
 	public int getMaxX() {
 		return screenX + sliderWidth + xPadding * 2;
+	}
+	
+	public int getMaxY() {
+		return screenY + range + yPadding * 3;
 	}
 	
 	public double getCurrentValue() {
@@ -90,27 +98,41 @@ public class Slider {
 		g2.setColor(Color.BLACK);
 		g2.fill(sliderBounds);
 		g2.setColor(Color.WHITE);
-		g2.draw(sliderBounds);
+		g2.fillRect(sliderBounds.x + sliderBounds.width / 2 - 1, sliderBounds.y, 2, range);
+		g2.setColor(Color.GRAY);
+		int numMarkings = 10;
+		for(int index = 0; index <= numMarkings; index++) {
+			int markingY = (int) Math.round(sliderBounds.y + ((float) range / numMarkings) * index);
+			g2.drawLine(sliderBounds.x, markingY, sliderBounds.x + sliderBounds.width, markingY); 
+		}
 		g2.setColor(Color.RED);
 		int currentPosition = sliderPosition + sliderBounds.y;
-		g2.drawLine(sliderBounds.x, currentPosition, sliderBounds.x + sliderBounds.width, currentPosition);
-		g2.setColor(Color.GRAY);
-		//g2.drawRect(sliderBounds.x - 2, currentPosition - 2, range + xPad, 4);
-		// get metrics from the graphics
+		g2.fillRect(sliderBounds.x - 2, currentPosition - 3, sliderBounds.width + 4, 6);
+		g2.setColor(Color.WHITE);
+		g2.drawRect(sliderBounds.x - 2, currentPosition - 3, sliderBounds.width + 4, 6);
+		// Draw Parameter String
+		g2.setFont(new Font("TRUETYPE_FONT", Font.BOLD, 12));
 		Font font = g2.getFont();
 		FontMetrics metrics = g2.getFontMetrics(font);
-		// get the height of a line of text in this
-		// font and render context
 		int hgt = metrics.getHeight();
-		// get the advance of my text in this font
-		// and render context
 		int adv = metrics.stringWidth(descriptor);
-		// calculate the size of a box to hold the
-		// text with some padding.
 		g2.setColor(Color.WHITE);
-		int textYOffset = (yPadding - hgt) / 2;
+		int textYOffset = (yPadding - hgt) / 2 + yPadding / 2;
 		int textXOffset = ((xPadding * 2 + sliderWidth) - adv) / 2;
 		g2.drawString(descriptor, screenX + textXOffset, screenY + textYOffset);
+		// Draw Parameter Values
+		g2.setFont(new Font("TRUETYPE_FONT", Font.PLAIN, 12));
+		font = g2.getFont();
+		metrics = g2.getFontMetrics(font);
+		hgt = metrics.getHeight();
+		adv = metrics.stringWidth(upperLable);
+		textYOffset += yPadding;
+		textXOffset = ((xPadding * 2 + sliderWidth) - adv) / 2;
+		g2.drawString(upperLable, screenX + textXOffset, screenY + textYOffset);
+		adv = metrics.stringWidth(lowerLable);
+		textYOffset += range + yPadding * 1.5;
+		textXOffset = ((xPadding * 2 + sliderWidth) - adv) / 2;
+		g2.drawString(lowerLable, screenX + textXOffset, screenY + textYOffset);
 	}
 	
 }

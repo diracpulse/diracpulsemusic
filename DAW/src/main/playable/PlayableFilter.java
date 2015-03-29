@@ -3,6 +3,7 @@ package main.playable;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -33,6 +34,10 @@ public class PlayableFilter implements PlayableModule {
 	private Slider cutoffControl;
 	private Slider resControl;
 	private int maxScreenX;
+	String moduleName;
+	private int screenX;
+	private int screenY;
+	private int yPadding = PlayableEditor.moduleYPadding;
 	
 	// Filter State
 	double[] y2 = {0.0, 0.0, 0.0}; 
@@ -48,13 +53,16 @@ public class PlayableFilter implements PlayableModule {
 	private WaveformType type = WaveformType.SINE;
 	private double currentPhase = 0.0;
 	
-	public PlayableFilter(PlayableEditor parent, int screenX, int screenY) {
+	public PlayableFilter(PlayableEditor parent, int screenX, int screenY, String moduleName) {
 		this.parent = parent;
 		int x = screenX;
-		int y = screenY;
-		cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 256.0, 8096.0, 1024.0, "Cutoff");
+		int y = screenY + PlayableEditor.moduleYPadding;
+		this.screenX = x;
+		this.screenY = screenY;
+		this.moduleName = moduleName;
+		cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 256.0, 8096.0, 1024.0, new String[] {"Cutoff", " ", " "});
 		x = cutoffControl.getMaxX();
-		resControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.25, 2.0, Math.sqrt(2.0) / 2.0, "Resonance");
+		resControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.25, 2.0, Math.sqrt(2.0) / 2.0, new String[] {"Resonance", " ", " "});
 		maxScreenX = resControl.getMaxX();
 	}
 	
@@ -92,6 +100,20 @@ public class PlayableFilter implements PlayableModule {
 
 	public void draw(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g; 
+		g2.setFont(new Font("TRUETYPE_FONT", Font.BOLD, 16));
+		Font font = g2.getFont();
+		FontMetrics metrics = g2.getFontMetrics(font);
+		int hgt = metrics.getHeight();
+		int adv = metrics.stringWidth(moduleName);
+		g2.setColor(Color.WHITE);
+		int textYOffset = (yPadding - hgt) / 2 + yPadding / 2;
+		int textXOffset = (maxScreenX - screenX - adv) / 2;
+		g2.setColor(new Color(0.5f, 0.0f, 0.0f));
+		g2.fillRect(screenX + textXOffset - 4, screenY, maxScreenX - screenX - textXOffset * 2 + 8, yPadding - 4);
+		g2.setColor(Color.WHITE);
+		g2.drawString(moduleName, screenX + textXOffset, screenY + textYOffset);
+		g2.setColor(Color.BLUE);
+		g2.drawRect(screenX, screenY, maxScreenX - screenX, cutoffControl.getMaxY());
 		cutoffControl.draw(g2);
 		resControl.draw(g2);
 	}
