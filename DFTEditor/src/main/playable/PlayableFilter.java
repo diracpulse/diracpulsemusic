@@ -21,7 +21,7 @@ import main.MultiWindow;
 import main.SynthTools;
 import main.playable.Slider.Type;
 
-public class PlayableFilter {
+public class PlayableFilter implements PlayableModule {
 	
 	PlayableEditor parent;
 	double minLogFreq = 5.0;

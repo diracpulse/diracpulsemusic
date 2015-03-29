@@ -328,7 +328,7 @@ public class Minor {
 				writer.write(sequence.get(numVoices - 1).get(currentBeat).intValue() + "");
 				writer.newLine();
 			}
-			writer.write("SCORE:");
+			writer.write("SCORE");
 			writer.newLine();
 			writer.write(new Float(score).toString());
 			writer.newLine();
@@ -356,10 +356,12 @@ public class Minor {
 				ArrayList<Minor.Triad> sequence = new ArrayList<Minor.Triad>();
 				while(true) {
 					String currentLine = reader.readLine();
-					if(currentLine == "SCORE:") {
+					if(currentLine.contains("SCORE")) {
 						score = new Float(reader.readLine());
+						currentLine = reader.readLine();
 						break;
 					}
+					
 					String[] chord = currentLine.split(" ");
 					int[] notes = new int[chord.length];
 					int index = 0;

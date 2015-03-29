@@ -46,7 +46,6 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 	JToolBar navigationBar = null;
 	Timer timer = null;
 	long timerCalls = 0;
-	private int latencyInMillis = 1;
 	public final int framesPerSecond = 50;
 	public final int frameLengthInMillis = 1000 / framesPerSecond;
 	public final int frameLengthInSamples = (int) Math.round(SynthTools.sampleRate / framesPerSecond);

@@ -4,7 +4,7 @@ package main.playable;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
-public class PlayableEnvelope {
+public class PlayableEnvelope implements PlayableModule {
 
 	PlayableEditor parent;
 	Slider attack;

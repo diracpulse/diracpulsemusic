@@ -18,25 +18,26 @@ public class Waveforms {
 		squarewaveTable = new double[lookupTableLength];
 		triangleTable = new double[lookupTableLength];
 		int interpolate = 32;
-		double bins = 8.0;
+		double bins = 4.0;
 		double alpha = 5.0;
 		double freqInHz = AudioFetcher.sampleRate / (interpolate * 2.0);
 		double samplesPerCycle = AudioFetcher.sampleRate / freqInHz;
 		int filterLength = (int) Math.round(bins * samplesPerCycle);
 		filterLength += filterLength % 2;
 		double[] filter = Filter.getLPFilter(freqInHz, filterLength, alpha);
-		for(int index = 0; index < lookupTableLength; index++) {
-			sawtoothTable[index] = 0.0;
-			squarewaveTable[index] = 0.0;
-			triangleTable[index] = 0.0;
+		for(int index = 0; index < lookupTableLength * interpolate; index += interpolate) {
+			int indexOut = index / interpolate;
+			sawtoothTable[indexOut] = 0.0;
+			squarewaveTable[indexOut] = 0.0;
+			triangleTable[indexOut] = 0.0;
 			for(int filterIndex = 0; filterIndex < filter.length; filterIndex++) {
 				int innerIndex = index + filterIndex - filter.length / 2;
 				if(innerIndex < 0) continue;
 				if(innerIndex == lookupTableLength) break;
-				double currentPhase = innerIndex * deltaPhase;
-				sawtoothTable[index] += calcSawtooth(currentPhase) * filter[filterIndex];
-				squarewaveTable[index] += calcSquarewave(currentPhase) * filter[filterIndex];
-				triangleTable[index] += calcTriangle(currentPhase) * filter[filterIndex];
+				double currentPhase = innerIndex * deltaPhase / interpolate;
+				sawtoothTable[indexOut] += calcSawtooth(currentPhase) * filter[filterIndex];
+				squarewaveTable[indexOut] += calcSquarewave(currentPhase) * filter[filterIndex];
+				triangleTable[indexOut] += calcTriangle(currentPhase) * filter[filterIndex];
 			}
 		}
 		tablesCalculated = true;
@@ -67,13 +68,17 @@ public class Waveforms {
 	}
 	
 	public double squarewave(double phase) {
+		return squarewave(phase, 0.5);
+	}
+	
+	public double squarewave(double phase, double pwm) {
 		phase /= Math.PI * 2.0;
 		phase -= Math.floor(phase);
 		double dIndex = phase * lookupTableLength;
 		int index = (int) Math.floor(dIndex);
 		if(index == dIndex) return squarewaveTable[index];
 		double fraction = (phase * lookupTableLength) - index;
-		double returnVal = squarewaveTable[index];
+		double returnVal = squarewaveTable[index % lookupTableLength];
 		double delta = squarewaveTable[(index + 1) % lookupTableLength] - returnVal;
 		return returnVal + fraction * delta;
 	}

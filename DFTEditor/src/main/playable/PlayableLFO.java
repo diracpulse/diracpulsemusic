@@ -20,7 +20,7 @@ import main.MultiWindow;
 import main.SynthTools;
 import main.playable.Slider.Type;
 
-public class PlayableLFO {
+public class PlayableLFO implements PlayableModule {
 	
 	PlayableEditor parent;
 	double minLogFreq = 5.0;

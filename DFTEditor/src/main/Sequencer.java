@@ -156,7 +156,7 @@ public class Sequencer extends JPanel {
     
 	public void dft() {
 		initLeftRight();
-		parent.dftEditorFrame.ModuleDFT(leftSamples, rightSamples);
+		//parent.dftEditorFrame.ModuleDFT(leftSamples, rightSamples);
 	}
 	
 	public void scale() {

@@ -252,7 +252,7 @@ public class ModuleEditor extends JPanel {
 	
 	public void dft() {
 		initLeftRight(null);
-		parent.dftEditorFrame.ModuleDFT(left, right);
+		//parent.dftEditorFrame.ModuleDFT(left, right);
 	}
 	
 	public void save() {

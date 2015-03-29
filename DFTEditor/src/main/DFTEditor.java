@@ -342,10 +342,10 @@ public class DFTEditor extends JFrame implements AbstractEditor {
     
 	private static void createAndShowGUI() {
 		// Create and set up the window.
-		parent = new MultiWindow();
-		parent.dftEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		parent.dftEditorFrame.pack();
-		parent.dftEditorFrame.setVisible(true);
+		//parent = new MultiWindow();
+		//parent.dftEditorFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		//parent.dftEditorFrame.pack();
+		//parent.dftEditorFrame.setVisible(true);
 	}
 
 	public static void main(String[] args) {
@@ -353,7 +353,8 @@ public class DFTEditor extends JFrame implements AbstractEditor {
 		// creating and showing this application's GUI.
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				createAndShowGUI();
+				//createAndShowGUI();
+				parent = new MultiWindow();
 			}
 		});
 	}

@@ -203,8 +203,8 @@ public class Spectrum extends JPanel implements WindowListener, ActionListener {
 	
 	public void initDFTData(double[] left, double[] right) {
 		this.type = SpectrumType.DFT;
-        multiWindow.dftEditorFrame.ModuleDFT(left, right);
-        initDFTData();
+        //multiWindow.dftEditorFrame.ModuleDFT(left, right);
+        //initDFTData();
         view.repaint();
 	}
 	

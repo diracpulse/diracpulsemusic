@@ -9,7 +9,7 @@ import java.util.Random;
 import main.SynthTools;
 import main.playable.PlayableLFO.WaveformType;
 
-public class PlayableSequencer {
+public class PlayableSequencer implements PlayableModule {
 	
 	private Waveforms waveforms;
 	private int screenX;
