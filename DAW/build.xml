@@ -1,0 +1,48 @@
+<project name="DAW" basedir="." default="main">
+	<property name="build.dir" value="${basedir}/bin" />
+	<property name="src.dir" value="${basedir}/src" />
+	<property name="lib.dir" value="${basedir}/lib" />
+	<property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="jar.dir"     value="${build.dir}/jar"/>
+    <property name="main-class"  value="main.DAW"/>
+
+	<path id="project.classpath">
+		<!-- for database connectivity -->
+		<fileset dir="${lib.dir}" includes="*.jar" />
+	</path>
+		
+	<manifestclasspath property="lib.list"  jarfile="*.jar"> 
+		<classpath refid="project.classpath"/> 
+	</manifestclasspath> 
+
+	
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <target name="compile" depends="clean">
+    	<mkdir dir="${build.dir}" />
+    	<javac srcdir="${src.dir}" destdir="${build.dir}" bootclasspath="C:\Program Files\Java\jdk1.6.0_14\jre\lib\rt.jar"
+    		debug="on">
+ 			<exclude name="DAW.java"/>
+    		<classpath refid="project.classpath" />
+ 		</javac>
+    </target>
+	
+    <target name="jarfile" depends="compile">
+        <jar destfile="${basedir}/${ant.project.name}.jar" basedir="${build.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${main-class}"/>
+            	<attribute name="Class-Path" value="${lib.list}"/>
+            </manifest>	
+        </jar>
+    </target>
+
+    <target name="clean-build" depends="clean,jarfile"/>
+
+    <target name="main" depends="clean,jarfile"/>
+
+	<target name="run">
+		<java jar="DAW.jar" fork="true"/>
+	</target>
+</project>

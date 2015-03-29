@@ -1,0 +1,2 @@
+del DAW.jar
+ant
