@@ -24,7 +24,7 @@ public class PlayableView extends JPanel {
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		Graphics2D g2 = (Graphics2D) g;
-    	for(PlayableModule module: PlayableEditor.nameToModule.values()) {
+    	for(PlayableModule module: parent.nameToModule.values()) {
     		module.draw(g2);
     	}
     	parent.sequencer.draw(g2);

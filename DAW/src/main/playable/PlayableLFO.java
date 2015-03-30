@@ -24,6 +24,7 @@ import main.playable.Slider.Type;
 public class PlayableLFO implements PlayableModule {
 	
 	PlayableEditor parent;
+	Waveforms waveforms = new Waveforms();
 	double minLogFreq = 5.0;
 	double maxLogFreq = 14.0;
 	double minLogAmp = -16.0;
@@ -44,20 +45,20 @@ public class PlayableLFO implements PlayableModule {
 		SQUAREWAVE,
 		SAWTOOTH,
 	}
-
-	private WaveformType type = WaveformType.SINE;
+	
 	private double currentPhase = 0.0;
 	
 	public PlayableLFO(PlayableEditor parent, int screenX, int screenY, String moduleName) {
+		
 		this.parent = parent;
 		this.moduleName = moduleName;
 		int x = screenX;
 		int y = screenY + PlayableEditor.moduleYPadding;
 		this.screenX = x;
 		this.screenY = screenY;
-		freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 32.0, 1024.0, 256.0, new String[] {"F", " ", " "});
+		freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 1.0, 1024.0, 4.0, new String[] {"RATE", " ", " "});
 		x = freqControl.getMaxX();
-		ampControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 1.0 / Short.MAX_VALUE, 1.0, 0.5, new String[] {"AMP", " ", " "});
+		ampControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 1.0 / Short.MAX_VALUE, 1.0, 0.5, new String[] {"DEPTH", " ", " "});
 		maxScreenX = ampControl.getMaxX();
 	}
 	
@@ -69,75 +70,34 @@ public class PlayableLFO implements PlayableModule {
 		currentPhase = 0.0;
 	}
 	
-
-	public double[] masterGetSamples(int numSamples) {
-		double currentAmp = prevAmp;
-		double currentFreq = prevFreq;
-		double endAmp;
-		double endFreq;
-		synchronized(this) {
-			endAmp =  ampControl.getCurrentValue();
-			endFreq = freqControl.getCurrentValue();
-		}
-		double deltaAmp = (endAmp - prevAmp) / numSamples;
-		double deltaFreq = (endFreq - prevFreq) / numSamples;
-		double[] returnVal = new double[numSamples];
-		switch(type) {
-			case SINE:
-				for(int index = 0; index < returnVal.length; index++) {
-					returnVal[index] += Math.sin(currentPhase) * currentAmp;
-					currentPhase += currentFreq / SynthTools.sampleRate * Math.PI * 2.0;
-					currentAmp += deltaAmp;
-					currentFreq += deltaFreq;
-				}
-				break;
-			case SQUAREWAVE:
-				for(int index = 0; index < returnVal.length; index++) {
-					returnVal[index] += squarewave(currentPhase) * ampControl.getCurrentValue();
-					currentPhase += freqControl.getCurrentValue() / SynthTools.sampleRate * Math.PI * 2.0;
-				}
-				break;
-			case TRIANGLE:
-				for(int index = 0; index < returnVal.length; index++) {
-					returnVal[index] += triangle(currentPhase) * ampControl.getCurrentValue();
-					currentPhase += freqControl.getCurrentValue() / SynthTools.sampleRate * Math.PI * 2.0;
-				}
-				break;
-			case SAWTOOTH:
-				for(int index = 0; index < returnVal.length; index++) {
-					returnVal[index] += sawtooth(currentPhase) * ampControl.getCurrentValue();
-					currentPhase += freqControl.getCurrentValue() / SynthTools.sampleRate * Math.PI * 2.0;
-				}
-				break;
-			}
-		synchronized(this) {
-			prevAmp = endAmp;
-			prevFreq = endFreq;
-		}
-		return returnVal;
-	}
-
-	public double sawtooth(double phase) {
-		phase -= Math.floor(phase / (Math.PI * 2.0)) * Math.PI * 2.0;
-		if(phase < Math.PI) return phase / Math.PI;
-		if(phase > Math.PI) return -1.0 + (phase - Math.PI) / Math.PI;
-		return Math.random() * 2.0 - 1.0; // phase == Math.PI
-	}
-
-	public double squarewave(double phase) {
-		phase -= Math.floor(phase / (Math.PI * 2.0)) * Math.PI * 2.0;
-		if(phase < Math.PI) return 1.0;
-		if(phase > Math.PI) return -1.0;
-		return Math.random() * 2.0 - 1.0; // phase == Math.PI
+	public void newSample(double freqRatio) {
+		currentPhase += (freqControl.getCurrentValue() * freqRatio / AudioFetcher.sampleRate) * 2.0 * Math.PI;
 	}
 	
-	public double triangle(double phase) {
-		phase -= Math.floor(phase / (Math.PI * 2.0)) * Math.PI * 2.0;
-		if(phase < Math.PI / 2.0) return phase / (Math.PI / 2.0);
-		if(phase < Math.PI * 1.5) return 1.0 - (phase - Math.PI / 2.0) / (Math.PI / 2.0);
-		return -1.0 + (phase - Math.PI * 1.5) / (Math.PI / 2.0);
+	public double triangle() {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal = (waveforms.triangle(currentPhase) / 2.0 + 0.5) * ampVal + 1.0 - ampVal;
+		return returnVal;
 	}
-
+	
+	public double squarewave() {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal = (waveforms.squarewave(currentPhase) / 2.0 + 0.5) * ampVal + 1.0 - ampVal;
+		return returnVal;
+	}
+	
+	public double sawtooth() {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal = (waveforms.sawtooth(currentPhase) / 2.0 + 0.5) * ampVal + 1.0 - ampVal;
+		return returnVal;
+	}
+	
+	public double sine() {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal = (Math.sin(currentPhase) / 2.0 + 0.5) * ampVal + 1.0 - ampVal;
+		return returnVal;
+	}
+	
 	public void draw(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g; 
 		g2.setFont(new Font("TRUETYPE_FONT", Font.BOLD, 12));

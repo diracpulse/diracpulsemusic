@@ -25,12 +25,10 @@ import main.playable.Slider.Type;
 public class PlayableFilter implements PlayableModule {
 	
 	PlayableEditor parent;
-	double minLogFreq = 5.0;
-	double maxLogFreq = 14.0;
-	double minLogAmp = -16.0;
-	double maxLogAmp = 0.0;
 	double prevCutoff = 0.0;
-	double prevRes = 7;
+	double maxCutoff = 20000;
+	double minCutoff = 20;
+	double cutoffMod = 8.0;
 	private Slider cutoffControl;
 	private Slider resControl;
 	private int maxScreenX;
@@ -60,7 +58,7 @@ public class PlayableFilter implements PlayableModule {
 		this.screenX = x;
 		this.screenY = screenY;
 		this.moduleName = moduleName;
-		cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 256.0, 8096.0, 1024.0, new String[] {"Cutoff", " ", " "});
+		cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minCutoff, maxCutoff, 256.0, new String[] {"Cutoff", " ", " "});
 		x = cutoffControl.getMaxX();
 		resControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.25, 2.0, Math.sqrt(2.0) / 2.0, new String[] {"Resonance", " ", " "});
 		maxScreenX = resControl.getMaxX();
@@ -75,17 +73,20 @@ public class PlayableFilter implements PlayableModule {
 	}
 	
 
-	public double masterGetSample(double sample) {
-		return variableQLowpass2(sample, 0.0, 0.0);
+	public double getSample(double sample, double freqRatio, double input) {
+		double returnVal = variableQLowpass2(sample, freqRatio, input, 0.0);
+		return variableQLowpass2(returnVal, freqRatio, input, 0.0);
 	}
 	
-	public double variableQLowpass2(double sample, double fControl, double qControl) {
+	public double variableQLowpass2(double sample, double freqRatio, double fControl, double qControl) {
 		input2[0] = input2[1];
 		input2[1] = input2[2];
 		input2[2] = sample;
 		y2[0] = y2[1];
 		y2[1] = y2[2];
-		double f = cutoffControl.getCurrentValue() * (1.0 + fControl);
+		double f = cutoffControl.getCurrentValue() * freqRatio * ((1.0 + fControl * cutoffMod));
+		if(f > maxCutoff) f = maxCutoff;
+		if(f < minCutoff) f = minCutoff;
 		double q = resControl.getCurrentValue() * (1.0 + qControl);
 		double g = Math.tan((Math.PI * f) / AudioFetcher.sampleRate);
 		double D = q * g * g + g + q;

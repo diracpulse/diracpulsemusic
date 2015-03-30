@@ -21,11 +21,13 @@ public class PlayableSequencer implements PlayableModule {
 	private static final int[] minorScale = {0, 2, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19, 20, 22};
 	PlayableEditor parent;
 	long currentTimeInSamples = 0;
-	double baseFreq = 256.0;
+	public static final double baseFreq = 256.0;
+	private static double currentFreq = 256;
 	int[] notes;
 	int noteRestInSamples = 44100 / 2;
 	int noteLengthInSamples = 44100; 
 	double currentPhase = 0.0;
+	double currentRingPhase = 0.0;
 	
 	public PlayableSequencer(PlayableEditor parent, int screenX, int screenY) {
 		waveforms = new Waveforms();
@@ -45,22 +47,63 @@ public class PlayableSequencer implements PlayableModule {
 		}
 	}
 
+	public static double getFreqRatio() {
+		return currentFreq / baseFreq;
+	}
+	
 	public double[] masterGetSamples(int numSamples) {
+    	PlayableControl mainOSC = (PlayableControl) parent.nameToModule.get("MAIN OSC");
+    	PlayableControl sqrPWM = (PlayableControl) parent.nameToModule.get("SQR PWM");
+    	PlayableControl ampOSC = (PlayableControl) parent.nameToModule.get("AMP OSC");
+    	PlayableLFO ampLFO = (PlayableLFO) parent.nameToModule.get("AMP LFO");
+    	PlayableEnvelope ampENV = (PlayableEnvelope) parent.nameToModule.get("AMP ENV");
+    	PlayableControl filterOSC = (PlayableControl) parent.nameToModule.get("FILTER OSC");
+    	PlayableLFO filterLFO = (PlayableLFO) parent.nameToModule.get("FILTER LFO");
+    	PlayableEnvelope filterENV = (PlayableEnvelope) parent.nameToModule.get("FILTER ENV");
+    	PlayableControl ringOSC = (PlayableControl) parent.nameToModule.get("RING OSC");
+    	PlayableControl ringFREQ = (PlayableControl) parent.nameToModule.get("RING FREQ");
+    	PlayableEnvelope ringENV =  (PlayableEnvelope) parent.nameToModule.get("RING ENV");
+    	PlayableControl mixer = (PlayableControl) parent.nameToModule.get("MIXER");
+    	PlayableFilter lpFilter = (PlayableFilter) parent.nameToModule.get("LP FILTER");
 		double[] returnVal = new double[numSamples];
 		for(int index = 0; index < numSamples; index++) {
 			if(currentTimeInSamples % noteLengthInSamples == 0) {
 				currentPhase = 0.0;
-				//env.noteOn(currentTimeInSamples);
+				currentRingPhase = 0.0;
+				ampENV.noteOn(currentTimeInSamples);
+				filterENV.noteOn(currentTimeInSamples);
+				ringENV.noteOn(currentTimeInSamples);
+				ampLFO.reset();
+				filterLFO.reset();
 			}
 			if(currentTimeInSamples % noteLengthInSamples == noteLengthInSamples - noteRestInSamples) {
-				//env.noteOff(currentTimeInSamples);
+				ampENV.noteOff(currentTimeInSamples);
+				filterENV.noteOff(currentTimeInSamples);
+				ringENV.noteOff(currentTimeInSamples);
 			}
 			long currentTime = currentTimeInSamples / noteLengthInSamples;
 			int noteIndex = (int) currentTime % notes.length;
-			double currentFreq = Math.pow(2.0, notes[noteIndex] / 12.0) * baseFreq;
-			returnVal[index] = 0.0; // waveforms.sawtooth(currentPhase) * env.getSample(currentTimeInSamples);
-			//returnVal[index] = filter.masterGetSample(returnVal[index]);
+			currentFreq = Math.pow(2.0, notes[noteIndex] / 12.0) * baseFreq;
+			double freqRatio = currentFreq / baseFreq;
+			double sawtoothLevel = mainOSC.getSample();
+			double pwm = sqrPWM.getSample();
+			double main = waveforms.sawtooth(currentPhase) * sawtoothLevel + waveforms.squarewave(currentPhase, pwm) * (1.0 - sawtoothLevel);
+			double ampLFOSineLevel = ampOSC.getSample();
+			double ampLFOVal = ampLFO.sine() * ampLFOSineLevel + ampLFO.triangle() * (1.0 - ampLFOSineLevel);
+			ampLFO.newSample(freqRatio);
+			main *= (ampENV.getSample(currentTimeInSamples) + ampLFOVal) / 2.0;
+			double ringSineLevel = ringOSC.getSample();
+			double ring = Math.sin(currentRingPhase) * ringSineLevel + waveforms.triangle(currentRingPhase) * (1.0 - ringSineLevel);
+			ring *= ringENV.getSample(currentTimeInSamples);
+			double mixerVal = mixer.getSample();
+			returnVal[index] = ring * main * mixerVal + main * (1.0 - mixerVal);
+			double filterLFOSineLevel = filterOSC.getSample();
+			double filterLFOVal = filterLFO.sine() * filterLFOSineLevel + filterLFO.triangle() * (1.0 - filterLFOSineLevel);
+			filterLFO.newSample(freqRatio);
+			double filterInput = (filterENV.getSample(currentTimeInSamples) + filterLFOVal) / 2.0;
+			returnVal[index] = lpFilter.getSample(returnVal[index], freqRatio, filterInput);
 			currentPhase += currentFreq / AudioFetcher.sampleRate * Math.PI * 2.0;
+			currentRingPhase += freqRatio * ringFREQ.getSample() / AudioFetcher.sampleRate * Math.PI * 2.0;
 			currentTimeInSamples++;
 		}
 		return returnVal;

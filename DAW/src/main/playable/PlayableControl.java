@@ -28,6 +28,17 @@ public class PlayableControl implements PlayableModule {
 		maxScreenX = slider.getMaxX();
 	}
 	
+	public PlayableControl(PlayableEditor parent, int screenX, int screenY, double minVal, double maxVal, double initialVal, String moduleName) {
+		this.parent = parent;
+		int x = screenX;
+		int y = screenY + PlayableEditor.moduleYPadding;
+		this.screenX = x;
+		this.screenY = screenY;
+		this.moduleName = moduleName;
+		slider  = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minVal, maxVal, initialVal, new String[] {" ", new Float(maxVal).toString(), new Float(minVal).toString()});
+		maxScreenX = slider.getMaxX();
+	}
+	
 	public int getMaxScreenX() {
 		return maxScreenX;
 	}

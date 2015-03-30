@@ -35,7 +35,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 	
 	private static AudioFetcher af;
 	
-	public static TreeMap<String, PlayableModule> nameToModule;
+	public TreeMap<String, PlayableModule> nameToModule;
 	public static int currentX = 0;
 	public static int currentY = 0;
 	
@@ -43,7 +43,6 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 	PlayableSequencer sequencer;
 	PlayableView view;
 	PlayableController controller;
-	public Waveforms waveforms = new Waveforms();
 	JToolBar navigationBar = null;
 	Timer timer = null;
 	long timerCalls = 0;
@@ -94,14 +93,14 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     	nameToModule = new TreeMap<String, PlayableModule>();
     	addModule("MAIN OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SQR"});
     	addModule("SQR PWM", PlayableModule.Type.CONTROL, new String[]{"10%", "90%"});
-    	addModule("AMP OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
+    	addModule("AMP OSC", PlayableModule.Type.CONTROL, new String[]{"SINE", "TRI"});
     	addModule("AMP LFO", PlayableModule.Type.LFO);
     	addModule("AMP ENV", PlayableModule.Type.ENVELOPE);
-    	addModule("FILTER OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
+    	addModule("FILTER OSC", PlayableModule.Type.CONTROL, new String[]{"SINE", "TRI"});
     	addModule("FILTER LFO", PlayableModule.Type.LFO);
     	addModule("FILTER ENV", PlayableModule.Type.ENVELOPE);
-    	addModule("RING OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
-    	addModule("RING LFO", PlayableModule.Type.LFO);
+    	addModule("RING OSC", PlayableModule.Type.CONTROL, new String[]{"SINE", "TRI"});
+    	addRingModule("RING FREQ", 32.0, 1024.0, 256.0);
     	addModule("RING ENV", PlayableModule.Type.ENVELOPE);
     	addModule("MIXER", PlayableModule.Type.CONTROL, new String[]{"RING", "MAIN OSC"});
     	addModule("LP FILTER", PlayableModule.Type.FILTER);
@@ -130,6 +129,11 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     		currentX = nameToModule.get(moduleName).getMaxScreenX();
     		return;	
     	}
+    }
+    
+    public void addRingModule(String moduleName, double minVal, double maxVal, double initial) {
+    	nameToModule.put(moduleName, new PlayableControl(this, currentX, currentY, minVal, maxVal, initial, moduleName));
+    	currentX = nameToModule.get(moduleName).getMaxScreenX();
     }
     
     public void mousePressed(int x, int y) {

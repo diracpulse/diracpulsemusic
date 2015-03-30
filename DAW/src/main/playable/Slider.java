@@ -77,7 +77,7 @@ public class Slider {
 		switch(type) {
 			case LINEAR:
 				double ratio = (value - minValue) / (maxValue - minValue);
-				sliderPosition = (int) (Math.round(1.0 - ratio) * range);
+				sliderPosition = (int) (Math.round((1.0 - ratio) * range));
 				return;
 			case LOGARITHMIC:
 				double logValue = Math.log(value) - Math.log(minValue);
