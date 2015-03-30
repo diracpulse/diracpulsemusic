@@ -100,7 +100,7 @@ public class PlayableFilter implements PlayableModule {
 
 	public void draw(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g; 
-		g2.setFont(new Font("TRUETYPE_FONT", Font.BOLD, 16));
+		g2.setFont(new Font("TRUETYPE_FONT", Font.BOLD, 12));
 		Font font = g2.getFont();
 		FontMetrics metrics = g2.getFontMetrics(font);
 		int hgt = metrics.getHeight();

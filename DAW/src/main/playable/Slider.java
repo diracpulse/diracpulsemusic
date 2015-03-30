@@ -24,7 +24,7 @@ public class Slider {
 	private Rectangle sliderBounds;
 	private int sliderPosition = 0;
 	private int sliderWidth = 10;
-	private int xPadding = 16;
+	private int xPadding = 24;
 	private int yPadding = 16;
 	private String descriptor;
 	private String upperLable;

@@ -45,21 +45,21 @@ public class PlayableSequencer implements PlayableModule {
 		}
 	}
 
-	public double[] masterGetSamples(int numSamples, PlayableEnvelope env, PlayableFilter filter) {
+	public double[] masterGetSamples(int numSamples) {
 		double[] returnVal = new double[numSamples];
 		for(int index = 0; index < numSamples; index++) {
 			if(currentTimeInSamples % noteLengthInSamples == 0) {
 				currentPhase = 0.0;
-				env.noteOn(currentTimeInSamples);
+				//env.noteOn(currentTimeInSamples);
 			}
 			if(currentTimeInSamples % noteLengthInSamples == noteLengthInSamples - noteRestInSamples) {
-				env.noteOff(currentTimeInSamples);
+				//env.noteOff(currentTimeInSamples);
 			}
 			long currentTime = currentTimeInSamples / noteLengthInSamples;
 			int noteIndex = (int) currentTime % notes.length;
 			double currentFreq = Math.pow(2.0, notes[noteIndex] / 12.0) * baseFreq;
-			returnVal[index] = waveforms.sawtooth(currentPhase) * env.getSample(currentTimeInSamples);
-			returnVal[index] = filter.masterGetSample(returnVal[index]);
+			returnVal[index] = 0.0; // waveforms.sawtooth(currentPhase) * env.getSample(currentTimeInSamples);
+			//returnVal[index] = filter.masterGetSample(returnVal[index]);
 			currentPhase += currentFreq / AudioFetcher.sampleRate * Math.PI * 2.0;
 			currentTimeInSamples++;
 		}
@@ -93,6 +93,12 @@ public class PlayableSequencer implements PlayableModule {
 
 	public void pointSelected(int x, int y) {
 		parent.view.repaint();
+	}
+
+	@Override
+	public int getMaxScreenX() {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 	
 }

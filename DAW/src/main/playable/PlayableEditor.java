@@ -35,11 +35,12 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 	
 	private static AudioFetcher af;
 	
+	public static TreeMap<String, PlayableModule> nameToModule;
+	public static int currentX = 0;
+	public static int currentY = 0;
+	
 	MultiWindow parent;
-	PlayableLFO osc1;
 	PlayableSequencer sequencer;
-	PlayableEnvelope envelope;
-	PlayableFilter filter;
 	PlayableView view;
 	PlayableController controller;
 	public Waveforms waveforms = new Waveforms();
@@ -52,7 +53,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 	double[] loopData = new double[frameLengthInSamples * framesPerSecond * 4];
 	int loopPosition = 0;
 	public static final int moduleSpacing = 10;
-	public static final int moduleYPadding = 30;
+	public static final int moduleYPadding = 20;
 	
 	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);
@@ -81,33 +82,74 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
         JScrollPane scrollPane = new JScrollPane(view);
         scrollPane.setSize(800, 600);
         add(scrollPane, BorderLayout.CENTER);
-        osc1 = new PlayableLFO(this, 10, 10, "AMP LFO");
-        envelope = new PlayableEnvelope(this, osc1.getMaxScreenX() + moduleSpacing, 10, "AMP ENV");
-        filter = new PlayableFilter(this, envelope.getMaxScreenX() + moduleSpacing, 10, "LPF");
+        createModules();
         sequencer = new PlayableSequencer(this, 10, 500);
         af = new AudioFetcher(this);
         af.start();
     }
     
+    public void createModules() {
+    	currentY = 10;
+    	currentX = 10;
+    	nameToModule = new TreeMap<String, PlayableModule>();
+    	addModule("MAIN OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SQR"});
+    	addModule("SQR PWM", PlayableModule.Type.CONTROL, new String[]{"10%", "90%"});
+    	addModule("AMP OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
+    	addModule("AMP LFO", PlayableModule.Type.LFO);
+    	addModule("AMP ENV", PlayableModule.Type.ENVELOPE);
+    	addModule("FILTER OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
+    	addModule("FILTER LFO", PlayableModule.Type.LFO);
+    	addModule("FILTER ENV", PlayableModule.Type.ENVELOPE);
+    	addModule("RING OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
+    	addModule("RING LFO", PlayableModule.Type.LFO);
+    	addModule("RING ENV", PlayableModule.Type.ENVELOPE);
+    	addModule("MIXER", PlayableModule.Type.CONTROL, new String[]{"RING", "MAIN OSC"});
+    	addModule("LP FILTER", PlayableModule.Type.FILTER);
+    }
+    
+    public void addModule(String moduleName, PlayableModule.Type type) {
+    	addModule(moduleName, type, null);
+    }
+    
+    public void addModule(String moduleName, PlayableModule.Type type, String[] controlValues) {
+    	switch(type) {
+    	case LFO:
+    		nameToModule.put(moduleName, new PlayableLFO(this, currentX, currentY, moduleName));
+    		currentX = nameToModule.get(moduleName).getMaxScreenX();
+    		return;
+    	case ENVELOPE:
+    		nameToModule.put(moduleName, new PlayableEnvelope(this, currentX, currentY, moduleName));
+    		currentX = nameToModule.get(moduleName).getMaxScreenX();
+    		return;
+       	case CONTROL:
+    		nameToModule.put(moduleName, new PlayableControl(this, currentX, currentY, new String[] {moduleName, controlValues[0], controlValues[1]}));
+    		currentX = nameToModule.get(moduleName).getMaxScreenX();
+    		return;	
+      	case FILTER:
+    		nameToModule.put(moduleName, new PlayableFilter(this, currentX, currentY, moduleName));
+    		currentX = nameToModule.get(moduleName).getMaxScreenX();
+    		return;	
+    	}
+    }
+    
     public void mousePressed(int x, int y) {
-    	osc1.pointSelected(x, y);
-    	envelope.pointSelected(x, y);
-    	filter.pointSelected(x, y);
+    	for(PlayableModule module: nameToModule.values()) {
+    		module.pointSelected(x, y);
+    	}
     }
     
     public void mouseReleased(int x, int y) {
-    	
     }
     
     public void mouseDragged(int x, int y) {
-    	osc1.pointSelected(x, y);
-    	envelope.pointSelected(x, y);
-    	filter.pointSelected(x, y);
+      	for(PlayableModule module: nameToModule.values()) {
+    		module.pointSelected(x, y);
+    	}
     }
 
 	@Override
 	public double[] getNextSamples(int numSamples) {
-		return sequencer.masterGetSamples(numSamples, envelope, filter);
+		return sequencer.masterGetSamples(numSamples);
 	}
 
 	@Override
