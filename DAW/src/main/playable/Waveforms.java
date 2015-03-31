@@ -17,8 +17,8 @@ public class Waveforms {
 		sawtoothTable = new double[lookupTableLength];
 		squarewaveTable = new double[lookupTableLength];
 		triangleTable = new double[lookupTableLength];
-		int interpolate = 256;
-		double bins = 2.0;
+		int interpolate = 1024;
+		double bins = 8.0;
 		double alpha = 10.0;
 		double samplesPerCycle = 4.0;
 		int filterLength = (int) Math.round(bins * samplesPerCycle * interpolate);

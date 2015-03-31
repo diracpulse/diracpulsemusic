@@ -11,6 +11,7 @@ public class PlayableControl implements PlayableModule {
 
 	private PlayableEditor parent;
 	private Slider slider;
+	private Slider fineSlider = null;
 	private int maxScreenX;
 	String moduleName;
 	private int screenX;
@@ -36,14 +37,19 @@ public class PlayableControl implements PlayableModule {
 		this.screenY = screenY;
 		this.moduleName = moduleName;
 		slider  = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minVal, maxVal, initialVal, new String[] {" ", new Float(maxVal).toString(), new Float(minVal).toString()});
-		maxScreenX = slider.getMaxX();
+		x = slider.getMaxX();
+		fineSlider = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 1.0, 2.0, 1.0, new String[] {" ", " ", " "});
+		maxScreenX = fineSlider.getMaxX();
 	}
 	
 	public int getMaxScreenX() {
 		return maxScreenX;
 	}
 	
-	public double getSample() {
+	public synchronized double getSample() {
+		if(fineSlider != null) {
+			return slider.getCurrentValue() * fineSlider.getCurrentValue();
+		}
 		return slider.getCurrentValue();
 	}
 	
@@ -69,10 +75,12 @@ public class PlayableControl implements PlayableModule {
 		g2.setColor(Color.BLUE);
 		g2.drawRect(screenX, screenY, maxScreenX - screenX, slider.getMaxY());
 		slider.draw(g2);
+		if(fineSlider != null) fineSlider.draw(g2);
 	}
 
 	public void pointSelected(int x, int y) {
 		slider.pointSelected(x, y);
+		if(fineSlider != null) fineSlider.pointSelected(x, y);
 		parent.view.repaint();
 	}
 	

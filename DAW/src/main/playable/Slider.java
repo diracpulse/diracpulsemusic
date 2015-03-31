@@ -24,7 +24,7 @@ public class Slider {
 	private Rectangle sliderBounds;
 	private int sliderPosition = 0;
 	private int sliderWidth = 10;
-	private int xPadding = 24;
+	private int xPadding = 16;
 	private int yPadding = 16;
 	private String descriptor;
 	private String upperLable;
@@ -90,6 +90,14 @@ public class Slider {
 	public void pointSelected(int x, int y) {
 		if(sliderBounds.contains(x, y)) {
 			sliderPosition = y - sliderBounds.y;
+			return;
+		}
+		if(sliderBounds.contains(x, y - 8)) {
+			sliderPosition = range;
+			return;
+		}
+		if(sliderBounds.contains(x, y + 8)) {
+			sliderPosition = 0;
 			return;
 		}
 	}

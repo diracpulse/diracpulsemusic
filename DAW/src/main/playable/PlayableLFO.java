@@ -32,6 +32,7 @@ public class PlayableLFO implements PlayableModule {
 	double prevAmp = 0.0;
 	double prevFreq = 7;
 	private Slider freqControl;
+	private Slider fineFreqControl;
 	private Slider ampControl;
 	private int maxScreenX;
 	String moduleName;
@@ -56,8 +57,10 @@ public class PlayableLFO implements PlayableModule {
 		int y = screenY + PlayableEditor.moduleYPadding;
 		this.screenX = x;
 		this.screenY = screenY;
-		freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 1.0, 1024.0, 4.0, new String[] {"RATE", " ", " "});
+		freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.25, 1024.0, 4.0, new String[] {"RATE", " ", " "});
 		x = freqControl.getMaxX();
+		fineFreqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
+		x = fineFreqControl.getMaxX();
 		ampControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 1.0 / Short.MAX_VALUE, 1.0, 0.5, new String[] {"DEPTH", " ", " "});
 		maxScreenX = ampControl.getMaxX();
 	}
@@ -70,31 +73,59 @@ public class PlayableLFO implements PlayableModule {
 		currentPhase = 0.0;
 	}
 	
-	public void newSample(double freqRatio) {
-		currentPhase += (freqControl.getCurrentValue() * freqRatio / AudioFetcher.sampleRate) * 2.0 * Math.PI;
+	public synchronized void newSample(double freqRatio) {
+		currentPhase += (freqControl.getCurrentValue() * fineFreqControl.getCurrentValue() * freqRatio / AudioFetcher.sampleRate) * 2.0 * Math.PI;
 	}
 	
-	public double triangle() {
+	public synchronized void newSampleFilter(double freqRatio) {
+		currentPhase += (freqControl.getCurrentValue() * fineFreqControl.getCurrentValue() * freqRatio / AudioFetcher.sampleRate) * 2.0 * Math.PI;
+	}
+	
+	public synchronized double triangle() {
 		double ampVal = ampControl.getCurrentValue();
 		double returnVal = (waveforms.triangle(currentPhase) / 2.0 + 0.5) * ampVal + 1.0 - ampVal;
 		return returnVal;
 	}
 	
-	public double squarewave() {
+	public synchronized double squarewave() {
 		double ampVal = ampControl.getCurrentValue();
 		double returnVal = (waveforms.squarewave(currentPhase) / 2.0 + 0.5) * ampVal + 1.0 - ampVal;
 		return returnVal;
 	}
 	
-	public double sawtooth() {
+	public synchronized double sawtooth() {
 		double ampVal = ampControl.getCurrentValue();
 		double returnVal = (waveforms.sawtooth(currentPhase) / 2.0 + 0.5) * ampVal + 1.0 - ampVal;
 		return returnVal;
 	}
 	
-	public double sine() {
+	public synchronized double sine() {
 		double ampVal = ampControl.getCurrentValue();
 		double returnVal = (Math.sin(currentPhase) / 2.0 + 0.5) * ampVal + 1.0 - ampVal;
+		return returnVal;
+	}
+	
+	public synchronized double triangleFilter() {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal = (waveforms.triangle(currentPhase) / 2.0 + 0.5) * ampVal;
+		return returnVal;
+	}
+	
+	public synchronized double squarewaveFilter() {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal = (waveforms.squarewave(currentPhase) / 2.0 + 0.5) * ampVal;
+		return returnVal;
+	}
+	
+	public synchronized double sawtoothFilter() {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal = (waveforms.sawtooth(currentPhase) / 2.0 + 0.5) * ampVal;
+		return returnVal;
+	}
+	
+	public synchronized double sineFilter() {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal = (Math.sin(currentPhase) / 2.0 + 0.5) * ampVal;
 		return returnVal;
 	}
 	
@@ -115,11 +146,13 @@ public class PlayableLFO implements PlayableModule {
 		g2.setColor(Color.BLUE);
 		g2.drawRect(screenX, screenY, maxScreenX - screenX, freqControl.getMaxY());
 		freqControl.draw(g2);
+		fineFreqControl.draw(g2);
 		ampControl.draw(g2);
 	}
 
 	public void pointSelected(int x, int y) {
 		freqControl.pointSelected(x, y);
+		fineFreqControl.pointSelected(x, y);
 		ampControl.pointSelected(x, y);
 		parent.view.repaint();
 	}

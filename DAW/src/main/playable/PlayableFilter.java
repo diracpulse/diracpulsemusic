@@ -78,13 +78,13 @@ public class PlayableFilter implements PlayableModule {
 		return variableQLowpass2(returnVal, freqRatio, input, 0.0);
 	}
 	
-	public double variableQLowpass2(double sample, double freqRatio, double fControl, double qControl) {
+	public synchronized double variableQLowpass2(double sample, double freqRatio, double fControl, double qControl) {
 		input2[0] = input2[1];
 		input2[1] = input2[2];
 		input2[2] = sample;
 		y2[0] = y2[1];
 		y2[1] = y2[2];
-		double f = cutoffControl.getCurrentValue() * freqRatio * ((1.0 + fControl * cutoffMod));
+		double f = cutoffControl.getCurrentValue() * ((1.0 + fControl * cutoffMod));
 		if(f > maxCutoff) f = maxCutoff;
 		if(f < minCutoff) f = minCutoff;
 		double q = resControl.getCurrentValue() * (1.0 + qControl);

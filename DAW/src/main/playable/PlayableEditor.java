@@ -100,7 +100,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     	addModule("FILTER LFO", PlayableModule.Type.LFO);
     	addModule("FILTER ENV", PlayableModule.Type.ENVELOPE);
     	addModule("RING OSC", PlayableModule.Type.CONTROL, new String[]{"SINE", "TRI"});
-    	addRingModule("RING FREQ", 32.0, 1024.0, 256.0);
+    	addRingModule("RING FREQ", 8.0, 1024.0, 32.0);
     	addModule("RING ENV", PlayableModule.Type.ENVELOPE);
     	addModule("MIXER", PlayableModule.Type.CONTROL, new String[]{"RING", "MAIN OSC"});
     	addModule("LP FILTER", PlayableModule.Type.FILTER);
@@ -152,7 +152,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     }
 
 	@Override
-	public double[] getNextSamples(int numSamples) {
+	public synchronized double[] getNextSamples(int numSamples) {
 		return sequencer.masterGetSamples(numSamples);
 	}
 

@@ -14,6 +14,7 @@ public class PlayableEnvelope implements PlayableModule {
 	Slider decay;
 	Slider sustain;
 	Slider release;
+	Slider depth;
 	String moduleName;
 	private int screenX;
 	private int screenY;
@@ -41,8 +42,8 @@ public class PlayableEnvelope implements PlayableModule {
 		this.screenY = screenY;
 		double defaultAD = 0.01;
 		double defaultR = 0.1;
-		double minValADR = 0.00005;
-		double maxValADR = 0.1;
+		double minValADR = 0.0005;
+		double maxValADR = 1.0;
 		String ADRTop = new String(new Float(minValADR).toString());
 		String ADRBottom = new String(new Float(minValADR).toString());
 		String STop = "1.0";
@@ -54,7 +55,9 @@ public class PlayableEnvelope implements PlayableModule {
 		sustain = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, Math.exp(-1.0 * tau), 1.0, .5, new String[] {"S", STop, SBottom});
 		x = sustain.getMaxX();
 		release = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultR, new String[]{"R", ADRTop, ADRBottom});
-		maxScreenX = release.getMaxX();
+		x = release.getMaxX();
+		depth = new Slider(Slider.Type.LINEAR, x, y, 400, 0.0, 1.0, 0.5, new String[]{"AMT", ADRTop, ADRBottom});
+		maxScreenX = depth.getMaxX();
 	}
 	
 	public int getMaxScreenX() {
@@ -76,19 +79,37 @@ public class PlayableEnvelope implements PlayableModule {
 	}
 	
 	public double getSample(long absoluteTimeInSamples) {
+		double depthVal = depth.getCurrentValue();
 		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
 		if(!off) {
 			if(currentTimeInSamples <= attackInSamples) {
-				return 1.0 - Math.exp(-1.0 * currentTimeInSamples * tau / attackInSamples);
+				return (1.0 - Math.exp(-1.0 * currentTimeInSamples * tau / attackInSamples)) * depthVal + (1.0 - depthVal);
 			}
 			if(currentTimeInSamples < attackInSamples + decayInSamples) {
 				double decayVal = Math.exp(-1.0 * tau * (currentTimeInSamples - attackInSamples) / (double) decayInSamples);
-				saveDecayValue = (1.0 - sustainValue) * decayVal + sustainValue;
+				saveDecayValue = ((1.0 - sustainValue) * decayVal + sustainValue) * depthVal + (1.0 - depthVal);
 				return saveDecayValue;
 			}
 			return saveDecayValue;
 		}
-		return Math.exp(-1.0 * tau * (absoluteTimeInSamples - stopTimeInSamples) / (double) releaseInSamples) * saveDecayValue;
+		return Math.exp(-1.0 * tau * (absoluteTimeInSamples - stopTimeInSamples) / (double) releaseInSamples) * saveDecayValue * depthVal + (1.0 - depthVal);
+	} 
+	
+	public double getFilterSample(long absoluteTimeInSamples) {
+		double depthVal = depth.getCurrentValue();
+		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
+		if(!off) {
+			if(currentTimeInSamples <= attackInSamples) {
+				return (1.0 - Math.exp(-1.0 * currentTimeInSamples * tau / attackInSamples)) * depthVal;
+			}
+			if(currentTimeInSamples < attackInSamples + decayInSamples) {
+				double decayVal = Math.exp(-1.0 * tau * (currentTimeInSamples - attackInSamples) / (double) decayInSamples);
+				saveDecayValue = ((1.0 - sustainValue) * decayVal + sustainValue) * depthVal;
+				return saveDecayValue;
+			}
+			return saveDecayValue;
+		}
+		return Math.exp(-1.0 * tau * (absoluteTimeInSamples - stopTimeInSamples) / (double) releaseInSamples) * saveDecayValue * depthVal;
 	} 
 	
 	public double getSampleLinear(long absoluteTimeInSamples) {
@@ -128,6 +149,7 @@ public class PlayableEnvelope implements PlayableModule {
 		decay.draw(g2);
 		sustain.draw(g2);
 		release.draw(g2);
+		depth.draw(g2);
 		parent.view.repaint();
 	}
 
@@ -136,6 +158,7 @@ public class PlayableEnvelope implements PlayableModule {
 		decay.pointSelected(x, y);
 		sustain.pointSelected(x, y);
 		release.pointSelected(x, y);
+		depth.pointSelected(x, y);
 		parent.view.repaint();
 	}
 	
