@@ -27,7 +27,7 @@ public class PlayableEnvelope implements PlayableModule {
 	int decayInSamples;
 	double sustainValue;
 	int releaseInSamples;
-	double tau = 2.0;
+	double tau = 4.0;
 	double currentValue = 0.0;
 	double saveAttackValue;
 	double saveDecayValue;

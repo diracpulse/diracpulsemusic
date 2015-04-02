@@ -60,7 +60,7 @@ public class PlayableFilter implements PlayableModule {
 		this.moduleName = moduleName;
 		cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minCutoff, maxCutoff, 256.0, new String[] {"Cutoff", " ", " "});
 		x = cutoffControl.getMaxX();
-		resControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.25, 2.0, Math.sqrt(2.0) / 2.0, new String[] {"Resonance", " ", " "});
+		resControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.25, 4.0, Math.sqrt(2.0) / 2.0, new String[] {"Resonance", " ", " "});
 		maxScreenX = resControl.getMaxX();
 	}
 	

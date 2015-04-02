@@ -57,11 +57,11 @@ public class PlayableLFO implements PlayableModule {
 		int y = screenY + PlayableEditor.moduleYPadding;
 		this.screenX = x;
 		this.screenY = screenY;
-		freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.25, 1024.0, 4.0, new String[] {"RATE", " ", " "});
+		freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.25, 64.0, 4.0, new String[] {"RATE", " ", " "});
 		x = freqControl.getMaxX();
 		fineFreqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
 		x = fineFreqControl.getMaxX();
-		ampControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 1.0 / Short.MAX_VALUE, 1.0, 0.5, new String[] {"DEPTH", " ", " "});
+		ampControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 1.0 / 256.0, 1.0, 0.5, new String[] {"DEPTH", " ", " "});
 		maxScreenX = ampControl.getMaxX();
 	}
 	

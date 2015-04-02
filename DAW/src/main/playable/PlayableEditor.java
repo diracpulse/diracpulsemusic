@@ -92,17 +92,20 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     	currentX = 10;
     	nameToModule = new TreeMap<String, PlayableModule>();
     	addModule("MAIN OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SQR"});
+    	addModule("NOISE COLOR", PlayableModule.Type.CONTROL, new String[]{"WHITE", "PINK"});
+    	addModule("NOISE LEVEL", PlayableModule.Type.CONTROL, new String[]{"MAX", "MIN"});
     	addModule("SQR PWM", PlayableModule.Type.CONTROL, new String[]{"10%", "90%"});
-    	addModule("AMP OSC", PlayableModule.Type.CONTROL, new String[]{"SINE", "TRI"});
+    	addModule("PWM OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
+    	addModule("PWM LFO", PlayableModule.Type.LFO);
+    	addModule("AMP OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
     	addModule("AMP LFO", PlayableModule.Type.LFO);
     	addModule("AMP ENV", PlayableModule.Type.ENVELOPE);
-    	addModule("FILTER OSC", PlayableModule.Type.CONTROL, new String[]{"SINE", "TRI"});
+    	addModule("FILTER OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
     	addModule("FILTER LFO", PlayableModule.Type.LFO);
     	addModule("FILTER ENV", PlayableModule.Type.ENVELOPE);
-    	addModule("RING OSC", PlayableModule.Type.CONTROL, new String[]{"SINE", "TRI"});
-    	addRingModule("RING FREQ", 8.0, 1024.0, 32.0);
-    	addModule("RING ENV", PlayableModule.Type.ENVELOPE);
-    	addModule("MIXER", PlayableModule.Type.CONTROL, new String[]{"RING", "MAIN OSC"});
+    	addModule("RING OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
+    	addRingModule("RING FREQ", 0.5, 64.0, 32.0);
+    	addModule("RING LEVEL", PlayableModule.Type.CONTROL, new String[]{"MAX", "MIN"});
     	addModule("LP FILTER", PlayableModule.Type.FILTER);
     }
     
