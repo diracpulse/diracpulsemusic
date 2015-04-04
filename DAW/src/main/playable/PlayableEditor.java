@@ -53,6 +53,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 	int loopPosition = 0;
 	public static final int moduleSpacing = 10;
 	public static final int moduleYPadding = 20;
+	public volatile boolean noAudio = false;
 	
 	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);
@@ -61,9 +62,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 	}
 	
 	public JToolBar createNavigationBar() {
-        addNavigationButton("Record");
-        addNavigationButton("Stop");
-        addNavigationButton("Arduino");
+        addNavigationButton("New Sequence");
     	return navigationBar;
 	}
 	
@@ -87,6 +86,13 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
         af.start();
     }
     
+    public synchronized void newSequence() {
+    	 noAudio = true;
+    	 sequencer = new PlayableSequencer(this, 10, 500);
+    	 sequencer.newSequence();
+    	 noAudio = false;
+    }
+    
     public void createModules() {
     	currentY = 10;
     	currentX = 10;
@@ -103,10 +109,12 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     	addModule("FILTER OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
     	addModule("FILTER LFO", PlayableModule.Type.LFO);
     	addModule("FILTER ENV", PlayableModule.Type.ENVELOPE);
-    	addModule("RING OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
-    	addRingModule("RING FREQ", 0.5, 64.0, 32.0);
+    	addModule("RING PWM", PlayableModule.Type.CONTROL, new String[]{"10%", "90%"});
+    	addModule("RING OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SQR"});
+    	addFreqModule("RING FREQ", 8.0, 1024.0, 256.0);
     	addModule("RING LEVEL", PlayableModule.Type.CONTROL, new String[]{"MAX", "MIN"});
-    	addModule("LP FILTER", PlayableModule.Type.FILTER);
+    	addFilterModule("LP FILTER", PlayableFilter.FilterType.LOWPASS);
+    	addFilterModule("HP FILTER", PlayableFilter.FilterType.HIGHPASS);
     }
     
     public void addModule(String moduleName, PlayableModule.Type type) {
@@ -127,14 +135,22 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     		nameToModule.put(moduleName, new PlayableControl(this, currentX, currentY, new String[] {moduleName, controlValues[0], controlValues[1]}));
     		currentX = nameToModule.get(moduleName).getMaxScreenX();
     		return;	
-      	case FILTER:
-    		nameToModule.put(moduleName, new PlayableFilter(this, currentX, currentY, moduleName));
-    		currentX = nameToModule.get(moduleName).getMaxScreenX();
-    		return;	
+       	case FILTER:
+       		System.out.println("PlayableEditor.Module.addModule: Filter not suppported");
     	}
     }
     
-    public void addRingModule(String moduleName, double minVal, double maxVal, double initial) {
+    public void addExtendedLFO(String moduleName, double minFreq, double maxFreq) {
+   		nameToModule.put(moduleName, new PlayableLFO(this, currentX, currentY, minFreq, maxFreq, moduleName));
+		currentX = nameToModule.get(moduleName).getMaxScreenX();
+    }
+    
+    public void addFilterModule(String moduleName, PlayableFilter.FilterType filterType) {
+   		nameToModule.put(moduleName, new PlayableFilter(this, filterType, currentX, currentY, moduleName));
+		currentX = nameToModule.get(moduleName).getMaxScreenX();
+    }
+    
+    public void addFreqModule(String moduleName, double minVal, double maxVal, double initial) {
     	nameToModule.put(moduleName, new PlayableControl(this, currentX, currentY, minVal, maxVal, initial, moduleName));
     	currentX = nameToModule.get(moduleName).getMaxScreenX();
     }
@@ -156,7 +172,12 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 
 	@Override
 	public synchronized double[] getNextSamples(int numSamples) {
-		return sequencer.masterGetSamples(numSamples);
+		if(!noAudio) return sequencer.masterGetSamples(numSamples);
+		double[] returnVal = new double[numSamples];
+		for(int index = 0; index < numSamples; index++) {
+			returnVal[index] = 0.0;
+		}
+		return returnVal;
 	}
 
 	@Override

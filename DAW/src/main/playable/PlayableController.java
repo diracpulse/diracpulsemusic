@@ -18,9 +18,7 @@ public class PlayableController implements MouseListener, MouseMotionListener, A
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-        //if ("Record".equals(e.getActionCommand())) parent.record();
-        //if ("Stop".equals(e.getActionCommand())) parent.stop();
-        if ("Arduino".equals(e.getActionCommand())) ScaleUtils.arduinoROMArray(8, 32);
+        if ("New Sequence".equals(e.getActionCommand())) parent.newSequence();
 	}
 
 	@Override

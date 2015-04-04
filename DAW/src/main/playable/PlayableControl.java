@@ -38,7 +38,7 @@ public class PlayableControl implements PlayableModule {
 		this.moduleName = moduleName;
 		slider  = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minVal, maxVal, initialVal, new String[] {" ", new Float(maxVal).toString(), new Float(minVal).toString()});
 		x = slider.getMaxX();
-		fineSlider = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 1.0, 2.0, 1.0, new String[] {" ", " ", " "});
+		fineSlider = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0, 2.0, 1.0, new String[] {" ", " ", " "});
 		maxScreenX = fineSlider.getMaxX();
 	}
 	

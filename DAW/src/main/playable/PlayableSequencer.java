@@ -7,7 +7,6 @@ import java.awt.Graphics2D;
 import java.util.Random;
 
 import main.SynthTools;
-import main.playable.PlayableLFO.WaveformType;
 
 public class PlayableSequencer implements PlayableModule {
 	
@@ -30,6 +29,7 @@ public class PlayableSequencer implements PlayableModule {
 	int noteLengthInSamples = 44100; 
 	double currentPhase = 0.0;
 	double currentRingPhase = 0.0;
+	public volatile boolean newSequence = false;
 	
 	public PlayableSequencer(PlayableEditor parent, int screenX, int screenY) {
 		waveforms = new Waveforms();
@@ -49,6 +49,14 @@ public class PlayableSequencer implements PlayableModule {
 			 if(currentNote < 0) currentNote -= noteStep * 2;
 		}
 	}
+	
+	public synchronized void newSequence() {
+    	PlayableFilter lpFilter = (PlayableFilter) parent.nameToModule.get("LP FILTER");
+    	lpFilter.reset();
+    	PlayableFilter hpFilter = (PlayableFilter) parent.nameToModule.get("HP FILTER");
+    	hpFilter.reset();
+		currentTimeInSamples = 0;
+	}
 
 	public static double getFreqRatio() {
 		return currentFreq / baseFreq;
@@ -61,17 +69,23 @@ public class PlayableSequencer implements PlayableModule {
     	PlayableControl sqrPWM = (PlayableControl) parent.nameToModule.get("SQR PWM");
     	PlayableControl pwmOSC = (PlayableControl) parent.nameToModule.get("PWM OSC");
     	PlayableLFO pwmLFO = (PlayableLFO) parent.nameToModule.get("PWM LFO");
-    	PlayableLFO ampLFO = (PlayableLFO) parent.nameToModule.get("AMP LFO");
     	PlayableControl ampOSC = (PlayableControl) parent.nameToModule.get("AMP OSC");
+    	PlayableLFO ampLFO = (PlayableLFO) parent.nameToModule.get("AMP LFO");
     	PlayableEnvelope ampENV = (PlayableEnvelope) parent.nameToModule.get("AMP ENV");
-    	PlayableControl filterOSC = (PlayableControl) parent.nameToModule.get("FILTER OSC");
+    	PlayableControl filterOSC = (PlayableControl) parent.nameToModule.get("AMP OSC");
     	PlayableLFO filterLFO = (PlayableLFO) parent.nameToModule.get("FILTER LFO");
     	PlayableEnvelope filterENV = (PlayableEnvelope) parent.nameToModule.get("FILTER ENV");
     	PlayableControl ringOSC = (PlayableControl) parent.nameToModule.get("RING OSC");
+    	PlayableControl ringPWM = (PlayableControl) parent.nameToModule.get("RING PWM");
     	PlayableControl ringFREQ = (PlayableControl) parent.nameToModule.get("RING FREQ");
     	PlayableControl ringLevel = (PlayableControl) parent.nameToModule.get("RING LEVEL");
+    	PlayableControl subOSC = (PlayableControl) parent.nameToModule.get("SUB OSC");
     	PlayableFilter lpFilter = (PlayableFilter) parent.nameToModule.get("LP FILTER");
+    	PlayableFilter hpFilter = (PlayableFilter) parent.nameToModule.get("HP FILTER");
 		double[] returnVal = new double[numSamples];
+		for(int index = 0; index < numSamples; index++) {
+			returnVal[index] = 0.0;
+		}
 		for(int index = 0; index < numSamples; index++) {
 			if(currentTimeInSamples % noteLengthInSamples == 0) {
 				currentPhase = 0.0;
@@ -90,28 +104,26 @@ public class PlayableSequencer implements PlayableModule {
 			int noteIndex = (int) currentTime % notes.length;
 			currentFreq = Math.pow(2.0, notes[noteIndex] / 12.0) * baseFreq;
 			double freqRatio = currentFreq / baseFreq;
-			double pwmLFOSquareLevel = pwmOSC.getSample();
-			double pwmVal = pwmLFO.sineFilter() * pwmLFOSquareLevel + pwmLFO.triangleFilter() * (1.0 - pwmLFOSquareLevel);
-			pwmVal -= 0.5;
+			double pwmSquareVal = pwmOSC.getSample();
+			double pwm = sqrPWM.getSample() - (pwmLFO.squarewaveFilter() * pwmSquareVal + pwmLFO.triangleFilter() * (1.0 - pwmSquareVal));
 			pwmLFO.newSample(freqRatio);
-			double pwm = sqrPWM.getSample() + pwmVal;
 			double sawtoothLevel = mainOSC.getSample();
 			double main = waveforms.sawtooth(currentPhase) * sawtoothLevel + waveforms.squarewave(currentPhase, pwm) * (1.0 - sawtoothLevel);
 			double noiseVal = noiseLevel.getSample();
 			double noiseType = noiseColor.getSample();
 			main = noise.getSample(noiseType) * noiseVal + main * (1.0 - noiseVal);
-			double ringSquareLevel = ringOSC.getSample();
-			double ring = Math.sin(currentRingPhase) * ringSquareLevel + waveforms.triangle(currentRingPhase) * (1.0 - ringSquareLevel);
+			double ringSawValue = ringOSC.getSample();
+			double ring = waveforms.sawtooth(currentRingPhase) * ringSawValue + waveforms.squarewave(currentRingPhase, ringPWM.getSample()) * (1.0 - ringSawValue);
 			ring *= main;
-			double ampLFOSquareLevel = ampOSC.getSample();
-			double ampLFOVal = ampLFO.sine() * ampLFOSquareLevel + ampLFO.triangle() * (1.0 - ampLFOSquareLevel);
+			double ampSquareVal = ampOSC.getSample();
+			double ampLFOVal = ampLFO.squarewave() * ampSquareVal + ampLFO.triangle() * (1.0 - ampSquareVal);			
 			ampLFO.newSample(freqRatio);
 			double ringVal = ringLevel.getSample();
 			returnVal[index] = (ring * ringVal + main * (1.0 - ringVal)) * ampENV.getSample(currentTimeInSamples) * ampLFOVal;
-			double filterLFOSquareLevel = filterOSC.getSample();
-			double filterLFOVal = filterLFO.sineFilter() * filterLFOSquareLevel + filterLFO.triangleFilter() * (1.0 - filterLFOSquareLevel);
-			filterLFO.newSampleFilter(freqRatio);
-			double filterInput = (filterENV.getFilterSample(currentTimeInSamples) + filterLFOVal) / 2.0;
+			double filterSquareVal = filterOSC.getSample();
+			double filterLFOVal = filterLFO.squarewaveFilter() * filterSquareVal + filterLFO.triangleFilter() * (1.0 - filterSquareVal);		
+			filterLFO.newSample(freqRatio);
+			double filterInput = (filterENV.getSample(currentTimeInSamples) + filterLFOVal) / 2.0;
 			returnVal[index] = lpFilter.getSample(returnVal[index], freqRatio, filterInput);
 			currentPhase += currentFreq / AudioFetcher.sampleRate * Math.PI * 2.0;
 			currentRingPhase += freqRatio * ringFREQ.getSample() / AudioFetcher.sampleRate * Math.PI * 2.0;

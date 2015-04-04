@@ -39,29 +39,36 @@ public class PlayableLFO implements PlayableModule {
 	private int screenX;
 	private int screenY;
 	private int yPadding = PlayableEditor.moduleYPadding;
-	
-	public enum WaveformType {
-		SINE,
-		TRIANGLE,
-		SQUAREWAVE,
-		SAWTOOTH,
-	}
-	
+
 	private double currentPhase = 0.0;
 	
 	public PlayableLFO(PlayableEditor parent, int screenX, int screenY, String moduleName) {
-		
 		this.parent = parent;
 		this.moduleName = moduleName;
 		int x = screenX;
 		int y = screenY + PlayableEditor.moduleYPadding;
 		this.screenX = x;
 		this.screenY = screenY;
-		freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.25, 64.0, 4.0, new String[] {"RATE", " ", " "});
+		freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.5, 1024.0, 8.0, new String[] {"RATE", " ", " "});
 		x = freqControl.getMaxX();
-		fineFreqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
+		fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
 		x = fineFreqControl.getMaxX();
-		ampControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 1.0 / 256.0, 1.0, 0.5, new String[] {"DEPTH", " ", " "});
+		ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0 / 256.0, 1.0, 0.5, new String[] {"DEPTH", " ", " "});
+		maxScreenX = ampControl.getMaxX();
+	}
+	
+	public PlayableLFO(PlayableEditor parent, int screenX, int screenY, double minFreq, double maxFreq, String moduleName) {	
+		this.parent = parent;
+		this.moduleName = moduleName;
+		int x = screenX;
+		int y = screenY + PlayableEditor.moduleYPadding;
+		this.screenX = x;
+		this.screenY = screenY;
+		freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minFreq, maxFreq, minFreq, new String[] {"RATE", " ", " "});
+		x = freqControl.getMaxX();
+		fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
+		x = fineFreqControl.getMaxX();
+		ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0 / 256.0, 1.0, 0.5, new String[] {"DEPTH", " ", " "});
 		maxScreenX = ampControl.getMaxX();
 	}
 	
@@ -73,12 +80,16 @@ public class PlayableLFO implements PlayableModule {
 		currentPhase = 0.0;
 	}
 	
+	public synchronized void newSample() {
+		currentPhase += (freqControl.getCurrentValue() * fineFreqControl.getCurrentValue() / AudioFetcher.sampleRate) * 2.0 * Math.PI;
+	}
+	
 	public synchronized void newSample(double freqRatio) {
 		currentPhase += (freqControl.getCurrentValue() * fineFreqControl.getCurrentValue() * freqRatio / AudioFetcher.sampleRate) * 2.0 * Math.PI;
 	}
 	
-	public synchronized void newSampleFilter(double freqRatio) {
-		currentPhase += (freqControl.getCurrentValue() * fineFreqControl.getCurrentValue() * freqRatio / AudioFetcher.sampleRate) * 2.0 * Math.PI;
+	public synchronized void newSample(double freqRatio, double vibrato) {
+		currentPhase += (freqControl.getCurrentValue() * fineFreqControl.getCurrentValue() * freqRatio / AudioFetcher.sampleRate * vibrato) * 2.0 * Math.PI;
 	}
 	
 	public synchronized double triangle() {

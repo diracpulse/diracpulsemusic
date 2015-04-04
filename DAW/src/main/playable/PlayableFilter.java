@@ -29,6 +29,10 @@ public class PlayableFilter implements PlayableModule {
 	double maxCutoff = 20000;
 	double minCutoff = 20;
 	double cutoffMod = 8.0;
+	double maxCutoffHP = 1000;
+	double minCutoffHP = 20;
+	double cutoffModHP = 8.0;
+	private FilterType type;
 	private Slider cutoffControl;
 	private Slider resControl;
 	private int maxScreenX;
@@ -38,44 +42,59 @@ public class PlayableFilter implements PlayableModule {
 	private int yPadding = PlayableEditor.moduleYPadding;
 	
 	// Filter State
+	double[] y = {0.0, 0.0, 0.0}; 
+	double[] input = {0.0, 0.0, 0.0};
 	double[] y2 = {0.0, 0.0, 0.0}; 
 	double[] input2 = {0.0, 0.0, 0.0};
-	
-	public enum WaveformType {
-		SINE,
-		TRIANGLE,
-		SQUAREWAVE,
-		SAWTOOTH,
-	}
 
-	private WaveformType type = WaveformType.SINE;
-	private double currentPhase = 0.0;
+	public enum FilterType {
+		LOWPASS,
+		HIGHPASS;
+	}
 	
-	public PlayableFilter(PlayableEditor parent, int screenX, int screenY, String moduleName) {
+	public PlayableFilter(PlayableEditor parent, FilterType type, int screenX, int screenY, String moduleName) {
 		this.parent = parent;
 		int x = screenX;
 		int y = screenY + PlayableEditor.moduleYPadding;
 		this.screenX = x;
 		this.screenY = screenY;
 		this.moduleName = moduleName;
-		cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minCutoff, maxCutoff, 256.0, new String[] {"Cutoff", " ", " "});
-		x = cutoffControl.getMaxX();
-		resControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.25, 4.0, Math.sqrt(2.0) / 2.0, new String[] {"Resonance", " ", " "});
-		maxScreenX = resControl.getMaxX();
+		this.type = type;
+		switch(type) {
+		case LOWPASS:
+			cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minCutoff, maxCutoff, 256.0, new String[] {"Cutoff", " ", " "});
+			x = cutoffControl.getMaxX();
+			resControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.25, 4.0, Math.sqrt(2.0) / 2.0, new String[] {"Resonance", " ", " "});
+			maxScreenX = resControl.getMaxX();
+			return;
+		case HIGHPASS:
+			cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minCutoffHP, maxCutoffHP, minCutoffHP, new String[] {"Cutoff", " ", " "});
+			maxScreenX = cutoffControl.getMaxX();
+		}
 	}
 	
+	public void reset() {
+		for(int index = 0; index < 3; index++) {
+			y[index] = 0.0;
+			input[index] = 0.0;
+			y2[index] = 0.0; 
+			input2[index] = 0.0;
+		}
+	}
+
 	public int getMaxScreenX() {
 		return maxScreenX;
 	}
-	
-	public synchronized void reset() {
-		currentPhase = 0.0;
-	}
-	
 
 	public double getSample(double sample, double freqRatio, double input) {
-		double returnVal = variableQLowpass2(sample, freqRatio, input, 0.0);
-		return variableQLowpass2(returnVal, freqRatio, input, 0.0);
+		switch(type) {
+		case LOWPASS:
+			double returnVal = variableQLowpass2(sample, freqRatio, input, 0.0);
+			return variableQLowpass2(returnVal, freqRatio, input, 0.0);
+		case HIGHPASS:
+			return butterworthHighpass2(sample, freqRatio, input, 0.0);
+		}
+		return 0.0;
 	}
 	
 	public synchronized double variableQLowpass2(double sample, double freqRatio, double fControl, double qControl) {
@@ -84,7 +103,7 @@ public class PlayableFilter implements PlayableModule {
 		input2[2] = sample;
 		y2[0] = y2[1];
 		y2[1] = y2[2];
-		double f = cutoffControl.getCurrentValue() * ((1.0 + fControl * cutoffMod));
+		double f = cutoffControl.getCurrentValue() * ((1.0 + fControl * cutoffMod)) * freqRatio;
 		if(f > maxCutoff) f = maxCutoff;
 		if(f < minCutoff) f = minCutoff;
 		double q = resControl.getCurrentValue() * (1.0 + qControl);
@@ -97,6 +116,26 @@ public class PlayableFilter implements PlayableModule {
 		double a1 = (q * g * g - g + q) / D;
 		y2[2] = b0 * input2[2] + b1 * input2[1] + b2 * input2[0] - a0 * y2[1] - a1 * y2[0];
 		return y2[2];
+	}
+	
+	private double butterworthHighpass2(double sample, double freqRatio, double fControl, double qControl) {
+		input[0] = input[1];
+		input[1] = input[2];
+		input[2] = sample;
+		y[0] = y[1];
+		y[1] = y[2];
+		double f = cutoffControl.getCurrentValue() * ((1.0 + fControl * cutoffMod));
+		if(f > maxCutoff) f = maxCutoff;
+		if(f < minCutoff) f = minCutoff;
+		double gamma = Math.tan((Math.PI * f) / SynthTools.sampleRate);
+		double D = gamma * gamma + Math.sqrt(2.0) * gamma + 1.0;
+		double b0 = 1.0 / D;
+		double b1 = -2.0 / D;
+		double b2 = 1.0 / D;
+		double a0 = 2.0 * (gamma * gamma - 1.0) / D;
+		double a1 = (gamma * gamma - Math.sqrt(2.0) * gamma + 1.0) / D;
+		y[2] = b0 * input[2] + b1 * input[1] + b2 * input[0] - a0 * y[1] - a1 * y[0];
+		return y[2];
 	}
 
 	public void draw(Graphics g) {
@@ -116,12 +155,12 @@ public class PlayableFilter implements PlayableModule {
 		g2.setColor(Color.BLUE);
 		g2.drawRect(screenX, screenY, maxScreenX - screenX, cutoffControl.getMaxY());
 		cutoffControl.draw(g2);
-		resControl.draw(g2);
+		if(type == FilterType.LOWPASS) resControl.draw(g2);
 	}
 
 	public void pointSelected(int x, int y) {
 		cutoffControl.pointSelected(x, y);
-		resControl.pointSelected(x, y);
+		if(type == FilterType.LOWPASS) resControl.pointSelected(x, y);
 		parent.view.repaint();
 	}
 }

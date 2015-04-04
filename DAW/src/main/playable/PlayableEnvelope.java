@@ -40,23 +40,19 @@ public class PlayableEnvelope implements PlayableModule {
 		int y = screenY + PlayableEditor.moduleYPadding;
 		this.screenX = x;
 		this.screenY = screenY;
-		double defaultAD = 0.01;
+		double defaultAD = 0.1;
 		double defaultR = 0.1;
-		double minValADR = 0.0005;
-		double maxValADR = 1.0;
-		String ADRTop = new String(new Float(minValADR).toString());
-		String ADRBottom = new String(new Float(minValADR).toString());
-		String STop = "1.0";
-		String SBottom = new String(new Float(tau).toString());
-		attack = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultAD, new String[]{"A", ADRTop, ADRBottom});
+		double minValADR = 0.001;
+		double maxValADR = 2.0;
+		attack = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultAD, new String[]{"A", " ", " "});
 		x = attack.getMaxX();
-		decay = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultAD, new String[]{"D", ADRTop, ADRBottom});
+		decay = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultAD, new String[]{"D", " ", " "});
 		x = decay.getMaxX();
-		sustain = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, Math.exp(-1.0 * tau), 1.0, .5, new String[] {"S", STop, SBottom});
+		sustain = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, Math.exp(-1.0 * tau), 1.0, .5, new String[] {"S", " ", " "});
 		x = sustain.getMaxX();
-		release = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultR, new String[]{"R", ADRTop, ADRBottom});
+		release = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultR, new String[]{"R", " ", " "});
 		x = release.getMaxX();
-		depth = new Slider(Slider.Type.LINEAR, x, y, 400, 0.0, 1.0, 0.5, new String[]{"AMT", ADRTop, ADRBottom});
+		depth = new Slider(Slider.Type.LINEAR, x, y, 400, 0.0, 1.0, 0.5, new String[]{"DEPTH", " ", " "});
 		maxScreenX = depth.getMaxX();
 	}
 	
