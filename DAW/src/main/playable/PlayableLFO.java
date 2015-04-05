@@ -34,27 +34,50 @@ public class PlayableLFO implements PlayableModule {
 	private Slider freqControl;
 	private Slider fineFreqControl;
 	private Slider ampControl;
+	private Slider attackControl;
+	private Slider releaseControl;
+	private double currentAmplitude;
 	private int maxScreenX;
 	String moduleName;
 	private int screenX;
 	private int screenY;
 	private int yPadding = PlayableEditor.moduleYPadding;
+	private WaveType type = WaveType.STANDARD;
 
 	private double currentPhase = 0.0;
 	
-	public PlayableLFO(PlayableEditor parent, int screenX, int screenY, String moduleName) {
+	public enum WaveType {
+		STANDARD,
+		VARIABLE;
+	}	
+	
+	public PlayableLFO(PlayableEditor parent, int screenX, int screenY, String moduleName, WaveType type) {
 		this.parent = parent;
 		this.moduleName = moduleName;
+		this.type = type;
 		int x = screenX;
 		int y = screenY + PlayableEditor.moduleYPadding;
 		this.screenX = x;
 		this.screenY = screenY;
-		freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.5, 1024.0, 8.0, new String[] {"RATE", " ", " "});
-		x = freqControl.getMaxX();
-		fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
-		x = fineFreqControl.getMaxX();
-		ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0 / 256.0, 1.0, 0.5, new String[] {"DEPTH", " ", " "});
-		maxScreenX = ampControl.getMaxX();
+		if(type == WaveType.STANDARD) {
+			freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.5, 1024.0, 8.0, new String[] {"RATE", " ", " "});
+			x = freqControl.getMaxX();
+			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
+			x = fineFreqControl.getMaxX();
+			ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0 / 256.0, 1.0, 0.5, new String[] {"DEPTH", " ", " "});
+			maxScreenX = ampControl.getMaxX();
+		} else {
+			freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.5, 1024.0, 32.0, new String[] {"RATE", " ", " "});
+			x = freqControl.getMaxX();
+			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
+			x = fineFreqControl.getMaxX();
+			attackControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.001, 0.5, 0.5, new String[] {"A", " ", " "});
+			x = attackControl.getMaxX();
+			releaseControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.001, 0.5, 0.5, new String[] {"R", " ", " "});
+			x = releaseControl.getMaxX();
+			ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0 / 256.0, 1.0, 0.5, new String[] {"DEPTH", " ", " "});
+			maxScreenX = ampControl.getMaxX();
+		}
 	}
 	
 	public PlayableLFO(PlayableEditor parent, int screenX, int screenY, double minFreq, double maxFreq, String moduleName) {	
@@ -116,6 +139,25 @@ public class PlayableLFO implements PlayableModule {
 		return returnVal;
 	}
 	
+	public synchronized double ar() {
+		double phase = currentPhase / (Math.PI * 2.0);
+		phase -= Math.floor(phase);
+		double ampVal = ampControl.getCurrentValue();
+		if(phase <= 0.5) {
+			return (1.0 - Math.exp(-1.0 * phase / attackControl.getCurrentValue())) * ampVal + (1.0 - ampVal);
+		}
+		return Math.exp(-1.0 * (phase - 0.5) / releaseControl.getCurrentValue())* ampVal + (1.0 - ampVal);
+	}
+	
+	public synchronized double arFilter() {
+		double phase = currentPhase / (Math.PI * 2.0);
+		phase -= Math.floor(phase);
+		if(phase <= 0.5) {
+			return (1.0 - Math.exp(-1.0 * phase / attackControl.getCurrentValue()));
+		}
+		return Math.exp(-1.0 * (phase - 0.5) / releaseControl.getCurrentValue());
+	}
+	
 	public synchronized double triangleFilter() {
 		double ampVal = ampControl.getCurrentValue();
 		double returnVal = (waveforms.triangle(currentPhase) / 2.0 + 0.5) * ampVal;
@@ -158,12 +200,20 @@ public class PlayableLFO implements PlayableModule {
 		g2.drawRect(screenX, screenY, maxScreenX - screenX, freqControl.getMaxY());
 		freqControl.draw(g2);
 		fineFreqControl.draw(g2);
+		if(type == WaveType.VARIABLE) {
+			attackControl.draw(g2);
+			releaseControl.draw(g2);
+		}
 		ampControl.draw(g2);
 	}
 
 	public void pointSelected(int x, int y) {
 		freqControl.pointSelected(x, y);
 		fineFreqControl.pointSelected(x, y);
+		if(type == WaveType.VARIABLE) {
+			attackControl.pointSelected(x, y);
+			releaseControl.pointSelected(x, y);
+		}
 		ampControl.pointSelected(x, y);
 		parent.view.repaint();
 	}

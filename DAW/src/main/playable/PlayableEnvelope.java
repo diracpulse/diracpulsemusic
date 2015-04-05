@@ -32,9 +32,18 @@ public class PlayableEnvelope implements PlayableModule {
 	double saveAttackValue;
 	double saveDecayValue;
 	private int yPadding = PlayableEditor.moduleYPadding;
+	private EnvelopeType type;
+	private double saveValue = 0.0;
 	
-	public PlayableEnvelope(PlayableEditor parent, int screenX, int screenY, String moduleName) {
+	public enum EnvelopeType {
+		AR,
+		ASR,
+		ADSR;
+	}
+	
+	public PlayableEnvelope(PlayableEditor parent, EnvelopeType type, int screenX, int screenY, String moduleName) {
 		this.parent = parent;
+		this.type = type;
 		this.moduleName = moduleName;
 		int x = screenX;
 		int y = screenY + PlayableEditor.moduleYPadding;
@@ -44,16 +53,38 @@ public class PlayableEnvelope implements PlayableModule {
 		double defaultR = 0.1;
 		double minValADR = 0.001;
 		double maxValADR = 2.0;
-		attack = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultAD, new String[]{"A", " ", " "});
-		x = attack.getMaxX();
-		decay = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultAD, new String[]{"D", " ", " "});
-		x = decay.getMaxX();
-		sustain = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, Math.exp(-1.0 * tau), 1.0, .5, new String[] {"S", " ", " "});
-		x = sustain.getMaxX();
-		release = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultR, new String[]{"R", " ", " "});
-		x = release.getMaxX();
-		depth = new Slider(Slider.Type.LINEAR, x, y, 400, 0.0, 1.0, 0.5, new String[]{"DEPTH", " ", " "});
-		maxScreenX = depth.getMaxX();
+		switch(type) {
+		case ADSR:
+			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultAD, new String[]{"A", " ", " "});
+			x = attack.getMaxX();
+			decay = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultAD, new String[]{"D", " ", " "});
+			x = decay.getMaxX();
+			sustain = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, Math.exp(-1.0 * tau), 1.0, .5, new String[] {"S", " ", " "});
+			x = sustain.getMaxX();
+			release = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultR, new String[]{"R", " ", " "});
+			x = release.getMaxX();
+			depth = new Slider(Slider.Type.LINEAR, x, y, 400, 0.0, 1.0, 0.5, new String[]{"DEPTH", " ", " "});
+			maxScreenX = depth.getMaxX();
+			return;
+		case ASR:
+			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultAD, new String[]{"A", " ", " "});
+			x = attack.getMaxX();
+			sustain = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, Math.exp(-1.0 * tau), 1.0, .5, new String[] {"S", " ", " "});
+			x = sustain.getMaxX();
+			release = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultR, new String[]{"R", " ", " "});
+			x = release.getMaxX();
+			maxScreenX = release.getMaxX();
+			return;
+		case AR:
+			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultAD, new String[]{"A", " ", " "});
+			x = attack.getMaxX();
+			release = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultR, new String[]{"R", " ", " "});
+			x = release.getMaxX();
+			depth = new Slider(Slider.Type.LINEAR, x, y, 400, 0.0, 1.0, 0.5, new String[]{"D", " ", " "});
+			x = depth.getMaxX();
+			maxScreenX = depth.getMaxX();
+			return;
+		}
 	}
 	
 	public int getMaxScreenX() {
@@ -64,8 +95,13 @@ public class PlayableEnvelope implements PlayableModule {
 		off = false;
 		startTimeInSamples = currentTimeInSamples;
 		attackInSamples = (int) Math.round(attack.getCurrentValue() * AudioFetcher.sampleRate);
-		decayInSamples = (int) Math.round(decay.getCurrentValue() * AudioFetcher.sampleRate);
-		sustainValue = sustain.getCurrentValue();
+		if(type == EnvelopeType.ADSR) {
+			decayInSamples = (int) Math.round(decay.getCurrentValue() * AudioFetcher.sampleRate);
+			sustainValue = sustain.getCurrentValue();
+		}
+		if(type == EnvelopeType.ASR) {
+			sustainValue = sustain.getCurrentValue();
+		}
 		releaseInSamples = (int) Math.round(release.getCurrentValue() * AudioFetcher.sampleRate);
 	}
 	
@@ -75,6 +111,40 @@ public class PlayableEnvelope implements PlayableModule {
 	}
 	
 	public double getSample(long absoluteTimeInSamples) {
+		switch(type) {
+		case AR:
+			return getSampleAR(absoluteTimeInSamples);
+		case ASR:
+			return getSampleASR(absoluteTimeInSamples);
+		case ADSR:
+			return getSampleADSR(absoluteTimeInSamples);
+		}
+		return 0.0;
+	}
+	
+	private double getSampleAR(long absoluteTimeInSamples) {
+		double depthVal = depth.getCurrentValue();
+		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
+		if(currentTimeInSamples <= attackInSamples) {
+			return (1.0 - Math.exp(-1.0 * currentTimeInSamples * tau / attackInSamples)); // * depthVal;
+		}
+		return Math.exp(-1.0 * tau * (currentTimeInSamples - attackInSamples) / (double) releaseInSamples); // * depthVal;
+	} 
+	
+	private double getSampleASR(long absoluteTimeInSamples) {
+		double sustainVal = sustain.getCurrentValue();
+		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
+		if(!off) {
+			if(currentTimeInSamples <= attackInSamples) {
+				saveValue = sustainVal - Math.exp(-1.0 * currentTimeInSamples * tau / attackInSamples) * sustainVal;
+				return saveValue;
+			}
+			return saveValue;
+		}
+		return Math.exp(-1.0 * tau * (absoluteTimeInSamples - stopTimeInSamples) / (double) releaseInSamples) * saveValue;
+	} 
+	
+	private double getSampleADSR(long absoluteTimeInSamples) {
 		double depthVal = depth.getCurrentValue();
 		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
 		if(!off) {
@@ -142,19 +212,35 @@ public class PlayableEnvelope implements PlayableModule {
 		g2.setColor(Color.BLUE);
 		g2.drawRect(screenX, screenY, maxScreenX - screenX, attack.getMaxY());
 		attack.draw(g2);
-		decay.draw(g2);
-		sustain.draw(g2);
+		if(type == EnvelopeType.ADSR) {
+			depth.draw(g2);
+			decay.draw(g2);
+			sustain.draw(g2);
+		}
+		if(type == EnvelopeType.ASR) {
+			sustain.draw(g2);
+		}
+		if(type == EnvelopeType.AR) {
+			depth.draw(g2);
+		}
 		release.draw(g2);
-		depth.draw(g2);
 		parent.view.repaint();
 	}
 
 	public void pointSelected(int x, int y) {
 		attack.pointSelected(x, y);
-		decay.pointSelected(x, y);
-		sustain.pointSelected(x, y);
+		if(type == EnvelopeType.ADSR) {
+			depth.pointSelected(x, y);
+			decay.pointSelected(x, y);
+			sustain.pointSelected(x, y);
+		}
+		if(type == EnvelopeType.ASR) {
+			sustain.pointSelected(x, y);
+		}
+		if(type == EnvelopeType.AR) {
+			depth.pointSelected(x, y);
+		}
 		release.pointSelected(x, y);
-		depth.pointSelected(x, y);
 		parent.view.repaint();
 	}
 	

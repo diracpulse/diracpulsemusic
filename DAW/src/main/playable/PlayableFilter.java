@@ -103,7 +103,7 @@ public class PlayableFilter implements PlayableModule {
 		input2[2] = sample;
 		y2[0] = y2[1];
 		y2[1] = y2[2];
-		double f = cutoffControl.getCurrentValue() * ((1.0 + fControl * cutoffMod)) * freqRatio;
+		double f = cutoffControl.getCurrentValue() * (freqRatio + fControl * cutoffMod);
 		if(f > maxCutoff) f = maxCutoff;
 		if(f < minCutoff) f = minCutoff;
 		double q = resControl.getCurrentValue() * (1.0 + qControl);

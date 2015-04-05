@@ -101,14 +101,15 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     	addModule("NOISE COLOR", PlayableModule.Type.CONTROL, new String[]{"WHITE", "PINK"});
     	addModule("NOISE LEVEL", PlayableModule.Type.CONTROL, new String[]{"MAX", "MIN"});
     	addModule("SQR PWM", PlayableModule.Type.CONTROL, new String[]{"10%", "90%"});
-    	addModule("PWM OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
+    	addEnvelope("PWM AR", PlayableEnvelope.EnvelopeType.AR);
+    	addEnvelope("PWM ASR", PlayableEnvelope.EnvelopeType.ASR);
     	addModule("PWM LFO", PlayableModule.Type.LFO);
-    	addModule("AMP OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
+    	addEnvelope("AMP AR", PlayableEnvelope.EnvelopeType.AR);
+    	addEnvelope("AMP ASR", PlayableEnvelope.EnvelopeType.ASR);
     	addModule("AMP LFO", PlayableModule.Type.LFO);
-    	addModule("AMP ENV", PlayableModule.Type.ENVELOPE);
-    	addModule("FILTER OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
+    	addEnvelope("FILTER AR", PlayableEnvelope.EnvelopeType.AR);
+    	addEnvelope("FILTER ASR", PlayableEnvelope.EnvelopeType.ASR);
     	addModule("FILTER LFO", PlayableModule.Type.LFO);
-    	addModule("FILTER ENV", PlayableModule.Type.ENVELOPE);
     	addModule("RING PWM", PlayableModule.Type.CONTROL, new String[]{"10%", "90%"});
     	addModule("RING OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SQR"});
     	addFreqModule("RING FREQ", 8.0, 1024.0, 256.0);
@@ -124,12 +125,11 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     public void addModule(String moduleName, PlayableModule.Type type, String[] controlValues) {
     	switch(type) {
     	case LFO:
-    		nameToModule.put(moduleName, new PlayableLFO(this, currentX, currentY, moduleName));
+    		nameToModule.put(moduleName, new PlayableLFO(this, currentX, currentY, moduleName, PlayableLFO.WaveType.VARIABLE));
     		currentX = nameToModule.get(moduleName).getMaxScreenX();
     		return;
     	case ENVELOPE:
-    		nameToModule.put(moduleName, new PlayableEnvelope(this, currentX, currentY, moduleName));
-    		currentX = nameToModule.get(moduleName).getMaxScreenX();
+    		System.out.println("PlayableEditor.Module.addModule: Envelope not suppported");
     		return;
        	case CONTROL:
     		nameToModule.put(moduleName, new PlayableControl(this, currentX, currentY, new String[] {moduleName, controlValues[0], controlValues[1]}));
@@ -138,6 +138,11 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
        	case FILTER:
        		System.out.println("PlayableEditor.Module.addModule: Filter not suppported");
     	}
+    }
+    
+    public void addEnvelope(String moduleName, PlayableEnvelope.EnvelopeType type) {
+		nameToModule.put(moduleName, new PlayableEnvelope(this, type, currentX, currentY, moduleName));
+		currentX = nameToModule.get(moduleName).getMaxScreenX();
     }
     
     public void addExtendedLFO(String moduleName, double minFreq, double maxFreq) {
