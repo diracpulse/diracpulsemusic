@@ -59,7 +59,18 @@ public class AudioFetcher extends Thread implements LineListener {
 		while(true) {
 			if(line.getLongFramePosition() + frameSize > framePosition.get()) {
 				framePosition.set(framePosition.get() + frameSize);
-				audioByteData = getAudioBytes(audioSource.getNextSamples(frameSize));
+				double[] samples = audioSource.getNextSamples(frameSize);
+				boolean clippingReported = false;
+				for(int index = 0; index < samples.length; index++) {
+					if(Math.abs(samples[index]) > 1.0) {
+						if(!clippingReported) {
+							System.out.println("Clipping");
+							clippingReported = true;
+						}
+						samples[index] = 1.0;
+					}
+				}
+				audioByteData = getAudioBytes(samples);
 				line.write(audioByteData, 0, audioByteData.length);
 			}
 		}

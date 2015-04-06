@@ -126,9 +126,9 @@ public class PlayableEnvelope implements PlayableModule {
 		double depthVal = depth.getCurrentValue();
 		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
 		if(currentTimeInSamples <= attackInSamples) {
-			return (1.0 - Math.exp(-1.0 * currentTimeInSamples * tau / attackInSamples)); // * depthVal;
+			return (1.0 - Math.exp(-1.0 * currentTimeInSamples * tau / attackInSamples)) * depthVal;
 		}
-		return Math.exp(-1.0 * tau * (currentTimeInSamples - attackInSamples) / (double) releaseInSamples); // * depthVal;
+		return Math.exp(-1.0 * tau * (currentTimeInSamples - attackInSamples) / (double) releaseInSamples) * depthVal;
 	} 
 	
 	private double getSampleASR(long absoluteTimeInSamples) {

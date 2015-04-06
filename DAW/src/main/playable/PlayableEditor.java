@@ -103,13 +103,19 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     	addModule("SQR PWM", PlayableModule.Type.CONTROL, new String[]{"10%", "90%"});
     	addEnvelope("PWM AR", PlayableEnvelope.EnvelopeType.AR);
     	addEnvelope("PWM ASR", PlayableEnvelope.EnvelopeType.ASR);
-    	addModule("PWM LFO", PlayableModule.Type.LFO);
+    	addModule("PWM OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
+    	addSpecifiedLFO("PWM LFO", 0.5, 16.0, false);
+    	addSpecifiedLFO("PWM FAST LFO", 16.0, 1024.0, true);
     	addEnvelope("AMP AR", PlayableEnvelope.EnvelopeType.AR);
     	addEnvelope("AMP ASR", PlayableEnvelope.EnvelopeType.ASR);
-    	addModule("AMP LFO", PlayableModule.Type.LFO);
+    	addModule("AMP OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
+    	addSpecifiedLFO("AMP LFO", 0.5, 16.0, false);
+    	addSpecifiedLFO("AMP FAST LFO", 16.0, 1024.0, false);
     	addEnvelope("FILTER AR", PlayableEnvelope.EnvelopeType.AR);
     	addEnvelope("FILTER ASR", PlayableEnvelope.EnvelopeType.ASR);
-    	addModule("FILTER LFO", PlayableModule.Type.LFO);
+    	addModule("FILTER OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
+    	addSpecifiedLFO("FILTER LFO", 0.5, 16.0, false);
+    	addSpecifiedLFO("FILTER FAST LFO", 16.0, 1024.0, false);
     	addModule("RING PWM", PlayableModule.Type.CONTROL, new String[]{"10%", "90%"});
     	addModule("RING OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SQR"});
     	addFreqModule("RING FREQ", 8.0, 1024.0, 256.0);
@@ -145,8 +151,8 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 		currentX = nameToModule.get(moduleName).getMaxScreenX();
     }
     
-    public void addExtendedLFO(String moduleName, double minFreq, double maxFreq) {
-   		nameToModule.put(moduleName, new PlayableLFO(this, currentX, currentY, minFreq, maxFreq, moduleName));
+    public void addSpecifiedLFO(String moduleName, double minFreq, double maxFreq, boolean fineFreq) {
+   		nameToModule.put(moduleName, new PlayableLFO(this, currentX, currentY, minFreq, maxFreq, moduleName, fineFreq));
 		currentX = nameToModule.get(moduleName).getMaxScreenX();
     }
     

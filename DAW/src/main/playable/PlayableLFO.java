@@ -43,6 +43,7 @@ public class PlayableLFO implements PlayableModule {
 	private int screenY;
 	private int yPadding = PlayableEditor.moduleYPadding;
 	private WaveType type = WaveType.STANDARD;
+	private boolean fineFreq = false;
 
 	private double currentPhase = 0.0;
 	
@@ -64,23 +65,25 @@ public class PlayableLFO implements PlayableModule {
 			x = freqControl.getMaxX();
 			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
 			x = fineFreqControl.getMaxX();
-			ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0 / 256.0, 1.0, 0.5, new String[] {"DEPTH", " ", " "});
+			ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0 / 256.0, 1.0, 1.0 / 256.0, new String[] {"DEPTH", " ", " "});
 			maxScreenX = ampControl.getMaxX();
 		} else {
 			freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.5, 1024.0, 32.0, new String[] {"RATE", " ", " "});
 			x = freqControl.getMaxX();
-			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
+			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0, 1.25, 1.0, new String[] {"FINE", " ", " "});
 			x = fineFreqControl.getMaxX();
 			attackControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.001, 0.5, 0.5, new String[] {"A", " ", " "});
 			x = attackControl.getMaxX();
 			releaseControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.001, 0.5, 0.5, new String[] {"R", " ", " "});
 			x = releaseControl.getMaxX();
-			ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0 / 256.0, 1.0, 0.5, new String[] {"DEPTH", " ", " "});
+			ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0 / 256.0, 1.0, 1.0 / 256.0, new String[] {"DEPTH", " ", " "});
 			maxScreenX = ampControl.getMaxX();
 		}
 	}
 	
-	public PlayableLFO(PlayableEditor parent, int screenX, int screenY, double minFreq, double maxFreq, String moduleName) {	
+	public PlayableLFO(PlayableEditor parent, int screenX, int screenY, double minFreq, double maxFreq, String moduleName, boolean fineFreq) {
+		this.fineFreq = fineFreq;
+		this.type = WaveType.STANDARD;
 		this.parent = parent;
 		this.moduleName = moduleName;
 		int x = screenX;
@@ -89,9 +92,11 @@ public class PlayableLFO implements PlayableModule {
 		this.screenY = screenY;
 		freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minFreq, maxFreq, minFreq, new String[] {"RATE", " ", " "});
 		x = freqControl.getMaxX();
-		fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
-		x = fineFreqControl.getMaxX();
-		ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0 / 256.0, 1.0, 0.5, new String[] {"DEPTH", " ", " "});
+		if(fineFreq) {
+			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
+			x = fineFreqControl.getMaxX();
+		}
+		ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0 / 256.0, 1.0, 1.0 / 256.0, new String[] {"DEPTH", " ", " "});
 		maxScreenX = ampControl.getMaxX();
 	}
 	
@@ -104,15 +109,21 @@ public class PlayableLFO implements PlayableModule {
 	}
 	
 	public synchronized void newSample() {
-		currentPhase += (freqControl.getCurrentValue() * fineFreqControl.getCurrentValue() / AudioFetcher.sampleRate) * 2.0 * Math.PI;
+		double fineFreqVal = 1.0;
+		if(fineFreq) fineFreqVal = fineFreqControl.getCurrentValue();
+		currentPhase += (freqControl.getCurrentValue() * fineFreqVal / AudioFetcher.sampleRate) * 2.0 * Math.PI;
 	}
 	
 	public synchronized void newSample(double freqRatio) {
-		currentPhase += (freqControl.getCurrentValue() * fineFreqControl.getCurrentValue() * freqRatio / AudioFetcher.sampleRate) * 2.0 * Math.PI;
+		double fineFreqVal = 1.0;
+		if(fineFreq) fineFreqVal = fineFreqControl.getCurrentValue();
+		currentPhase += (freqControl.getCurrentValue() * fineFreqVal * freqRatio / AudioFetcher.sampleRate) * 2.0 * Math.PI;
 	}
 	
 	public synchronized void newSample(double freqRatio, double vibrato) {
-		currentPhase += (freqControl.getCurrentValue() * fineFreqControl.getCurrentValue() * freqRatio / AudioFetcher.sampleRate * vibrato) * 2.0 * Math.PI;
+		double fineFreqVal = 1.0;
+		if(fineFreq) fineFreqVal = fineFreqControl.getCurrentValue();
+		currentPhase += (freqControl.getCurrentValue() * fineFreqVal * freqRatio / AudioFetcher.sampleRate * vibrato) * 2.0 * Math.PI;
 	}
 	
 	public synchronized double triangle() {
@@ -199,7 +210,7 @@ public class PlayableLFO implements PlayableModule {
 		g2.setColor(Color.BLUE);
 		g2.drawRect(screenX, screenY, maxScreenX - screenX, freqControl.getMaxY());
 		freqControl.draw(g2);
-		fineFreqControl.draw(g2);
+		if(fineFreq) fineFreqControl.draw(g2);
 		if(type == WaveType.VARIABLE) {
 			attackControl.draw(g2);
 			releaseControl.draw(g2);
@@ -209,7 +220,7 @@ public class PlayableLFO implements PlayableModule {
 
 	public void pointSelected(int x, int y) {
 		freqControl.pointSelected(x, y);
-		fineFreqControl.pointSelected(x, y);
+		if(fineFreq) fineFreqControl.pointSelected(x, y);
 		if(type == WaveType.VARIABLE) {
 			attackControl.pointSelected(x, y);
 			releaseControl.pointSelected(x, y);
