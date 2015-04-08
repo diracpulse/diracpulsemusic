@@ -126,7 +126,7 @@ public class PlayableEnvelope implements PlayableModule {
 		double depthVal = depth.getCurrentValue();
 		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
 		if(currentTimeInSamples <= attackInSamples) {
-			return (1.0 - Math.exp(-1.0 * currentTimeInSamples * tau / attackInSamples)) * depthVal;
+			return 1.0 * currentTimeInSamples / attackInSamples * depthVal;
 		}
 		return Math.exp(-1.0 * tau * (currentTimeInSamples - attackInSamples) / (double) releaseInSamples) * depthVal;
 	} 
@@ -136,10 +136,9 @@ public class PlayableEnvelope implements PlayableModule {
 		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
 		if(!off) {
 			if(currentTimeInSamples <= attackInSamples) {
-				saveValue = sustainVal - Math.exp(-1.0 * currentTimeInSamples * tau / attackInSamples) * sustainVal;
-				return saveValue;
+				return 1.0 * currentTimeInSamples / attackInSamples * sustainVal;
 			}
-			return saveValue;
+			return sustainVal;
 		}
 		return Math.exp(-1.0 * tau * (absoluteTimeInSamples - stopTimeInSamples) / (double) releaseInSamples) * saveValue;
 	} 

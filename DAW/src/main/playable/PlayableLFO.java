@@ -65,7 +65,7 @@ public class PlayableLFO implements PlayableModule {
 			x = freqControl.getMaxX();
 			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
 			x = fineFreqControl.getMaxX();
-			ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0 / 256.0, 1.0, 1.0 / 256.0, new String[] {"DEPTH", " ", " "});
+			ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 0, 1.0, 0, new String[] {"DEPTH", " ", " "});
 			maxScreenX = ampControl.getMaxX();
 		} else {
 			freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.5, 1024.0, 32.0, new String[] {"RATE", " ", " "});
@@ -76,7 +76,7 @@ public class PlayableLFO implements PlayableModule {
 			x = attackControl.getMaxX();
 			releaseControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.001, 0.5, 0.5, new String[] {"R", " ", " "});
 			x = releaseControl.getMaxX();
-			ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0 / 256.0, 1.0, 1.0 / 256.0, new String[] {"DEPTH", " ", " "});
+			ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 0, 1.0, 0, new String[] {"DEPTH", " ", " "});
 			maxScreenX = ampControl.getMaxX();
 		}
 	}
@@ -96,7 +96,7 @@ public class PlayableLFO implements PlayableModule {
 			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
 			x = fineFreqControl.getMaxX();
 		}
-		ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0 / 256.0, 1.0, 1.0 / 256.0, new String[] {"DEPTH", " ", " "});
+		ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 0, 1.0, 0, new String[] {"DEPTH", " ", " "});
 		maxScreenX = ampControl.getMaxX();
 	}
 	

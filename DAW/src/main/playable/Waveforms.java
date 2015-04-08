@@ -13,6 +13,7 @@ public class Waveforms {
 	private static double[] triangleTable = null;
 	
 	public Waveforms() {
+		/*
 		if(tablesCalculated) return;
 		sawtoothTable = new double[lookupTableLength];
 		squarewaveTable = new double[lookupTableLength];
@@ -40,12 +41,13 @@ public class Waveforms {
 			}
 		}
 		tablesCalculated = true;
+		*/
 	}
 
 	public double sawtooth(double phase) {
+		phase /= Math.PI * 2.0;
 		phase -= Math.floor(phase);
-		if(phase <= 0.5) return phase * 2.0;
-		return (-1.0 + phase) * 2.0;
+		return -1.0 + phase * 2.0;
 		/*
 		double dIndex = phase * lookupTableLength;
 		int index = (int) Math.floor(dIndex);
@@ -58,10 +60,10 @@ public class Waveforms {
 	}
 	
 	public double triangle(double phase) {
+		phase /= Math.PI * 2.0;
 		phase -= Math.floor(phase);
-		if(phase < 0.25) return phase / 0.25;
-		if(phase < 0.75) return 1.0 - (phase - 0.25) / 0.25;
-		return -1.0 + (phase - 0.75) / 0.25;
+		if(phase < 0.5) return -1.0 + phase * 2.0;
+		return 1.0 - (phase - 0.5) * 2.0;
 		/*
 		double dIndex = phase * lookupTableLength;
 		int index = (int) Math.floor(dIndex);
@@ -76,8 +78,8 @@ public class Waveforms {
 	public double squarewave(double phase) {
 		phase /= Math.PI * 2.0;
 		phase -= Math.floor(phase);
-		if(phase < 0.5) return 1.0;
-		return -1.0;
+		if(phase < 0.5) return -1.0;
+		return 1.0;
 	}
 
 	public double squarewave(double phase, double pwm) {
@@ -86,9 +88,9 @@ public class Waveforms {
 		phase /= Math.PI * 2.0;
 		phase -= Math.floor(phase);
 		if(phase < pwm) {
-			return 1.0;
-		} else {
 			return -1.0;
+		} else {
+			return 1.0;
 		}
 		/*
 		if(pwm < 0.05) pwm = 0.05;
@@ -117,27 +119,6 @@ public class Waveforms {
 		if(phase < pwm) return 0.0;
 		return 1.0;
 		*/
-	}
-
-	private static double calcSawtooth(double phase) {
-		phase -= Math.floor(phase);
-		if(phase <= 0.5) return phase * 2.0;
-		return (-1.0 + phase) * 2.0;
-	}
-	
-	private static double calcSquarewave(double phase) {
-		phase -= Math.floor(phase);
-		if(phase < 0.5) return 0.5;
-		return -0.5;
-	}
-
-	private static double calcTriangle(double phase) {
-		phase -= Math.floor(phase);
-		double returnVal;
-		if(phase < 0.25) returnVal = phase / 0.25;
-		if(phase < 0.75) returnVal = 1.0 - (phase - 0.25) / 0.25;
-		returnVal = -1.0 + (phase - 0.75) / 0.25;
-		return returnVal * 0.5;
 	}
 
 }
