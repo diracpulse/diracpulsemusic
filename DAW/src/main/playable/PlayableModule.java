@@ -9,7 +9,8 @@ public interface PlayableModule {
 		LFO,
 		CONTROL,
 		FILTER,
-		ENVELOPE;
+		ENVELOPE,
+		CONTROLBANK;
 	}
 	
 	public int getMaxScreenX();

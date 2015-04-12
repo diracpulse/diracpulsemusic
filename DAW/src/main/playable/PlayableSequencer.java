@@ -13,6 +13,10 @@ public class PlayableSequencer implements PlayableModule {
 	private Random random;
 	private Waveforms waveforms;
 	private Noise noise;
+	private FrequencyToAmplitude fToA1;
+	private FrequencyToAmplitude fToA2;
+	private FrequencyToAmplitude fToA3;
+	private FrequencyToAmplitude fToA4;
 	private int screenX;
 	private int screenY;
 	private static final int numKeys = 24;
@@ -22,29 +26,41 @@ public class PlayableSequencer implements PlayableModule {
 	private static final int[] minorScale = {0, 2, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19, 20, 22};
 	PlayableEditor parent;
 	long currentTimeInSamples = 0;
-	public static final double baseFreq = 256.0;
-	private static double currentFreq = 256.0;
+	public static final double baseFreq = 64.0;
 	int[] notes;
 	int noteRestInSamples = 44100 / 2;
 	int noteLengthInSamples = 44100; 
-	double currentPhase = 0.0;
-	double currentRingPhase = 0.0;
+	double currentPhaseOsc1 = 0.0;
+	double currentPhaseOsc2 = 0.0;
+	double currentSawtoothVal1 = 0.0;
+	double currentSawtoothVal1B = 0.0;
+	double currentSawtoothVal2 = 0.0;
+	double currentSawtoothVal2B = 0.0;
+	double fm6 = 0.0;
+	double fm7 = 0.0;
 	public volatile boolean newSequence = false;
+	double prevOsc2NoteFreq = baseFreq;
+	double osc2NoteFreq = baseFreq;
+	double glideVal = 0.0;
 	
 	// Arduino simulation
 	double timePerCycle = 1.0 / AudioFetcher.sampleRate;
 	double currentTimeElapsed = 0.0;
-	double deltaSawtooth = currentFreq * timePerCycle;
+	double deltaSawtooth = baseFreq * timePerCycle;
 	double sawtoothVal = -1.0;
 	double sawtoothClippingVal = 1.0;
 	double maxSawtoothClippingVal = 1.0;
-	double saveCurrentFreq = currentFreq;
+	double saveCurrentFreq = baseFreq;
 	double freqUpdateTime = 0;
 	
 	public PlayableSequencer(PlayableEditor parent, int screenX, int screenY) {
 		waveforms = new Waveforms();
 		random = new Random();
 		noise = new Noise();
+		fToA1 = new FrequencyToAmplitude();
+		fToA2 = new FrequencyToAmplitude();
+		fToA3 = new FrequencyToAmplitude();
+		fToA4 = new FrequencyToAmplitude();
 		this.parent = parent;
 		this.screenX = screenX;
 		this.screenY = screenY;
@@ -54,7 +70,7 @@ public class PlayableSequencer implements PlayableModule {
 		for(int index = 0; index < notes.length; index++) {
 			 notes[index] = minorScale[currentNote];
 			 int noteStep = random.nextInt(5) - 2;
-			 currentNote += noteStep;
+			 currentNote = random.nextInt(minorScale.length);
 			 if(currentNote >= minorScale.length) currentNote -= noteStep * 2;
 			 if(currentNote < 0) currentNote -= noteStep * 2;
 		}
@@ -68,35 +84,26 @@ public class PlayableSequencer implements PlayableModule {
 		currentTimeInSamples = 0;
 	}
 
-	public static double getFreqRatio() {
-		return currentFreq / baseFreq;
-	}
-	
 	public double[] masterGetSamples(int numSamples) {
-    	PlayableControl mainOSC = (PlayableControl) parent.nameToModule.get("MAIN OSC");
-    	PlayableControl subOSC = (PlayableControl) parent.nameToModule.get("SUB OSC");
-    	PlayableControl noiseColor = (PlayableControl) parent.nameToModule.get("NOISE COLOR");
-    	PlayableControl noiseLevel = (PlayableControl) parent.nameToModule.get("NOISE LEVEL");
-    	PlayableControl sqrPWM = (PlayableControl) parent.nameToModule.get("SQR PWM");
-    	PlayableEnvelope vibratoENV1 = (PlayableEnvelope) parent.nameToModule.get("VIBRATO AR");
-    	PlayableControl vibratoOSC = (PlayableControl) parent.nameToModule.get("VIBRATO OSC");
-    	PlayableLFO vibratoLFO = (PlayableLFO) parent.nameToModule.get("VIBRATO LFO");
-    	PlayableLFO vibratoFastLFO = (PlayableLFO) parent.nameToModule.get("VIBRATO FAST LFO");
+		ControlBank osc1CONTROLS = (ControlBank) parent.nameToModule.get("OSCILLATOR_1");
+		ControlBank osc2CONTROLS = (ControlBank) parent.nameToModule.get("OSCILLATOR_2");
+    	PlayableEnvelope fmADSR = (PlayableEnvelope) parent.nameToModule.get("FM ADSR");
+    	PlayableEnvelope fmAR1 = (PlayableEnvelope) parent.nameToModule.get("FM AR1");
+    	PlayableEnvelope fmAR2 = (PlayableEnvelope) parent.nameToModule.get("FM AR2");
+    	PlayableLFO fmLFO = (PlayableLFO) parent.nameToModule.get("FM LFO");
+    	ControlBank fmCONTROLS = (ControlBank) parent.nameToModule.get("FM_OPERATOR_VALUES");
+    	PlayableEnvelope pwmENV = (PlayableEnvelope) parent.nameToModule.get("PWM ADSR");
     	PlayableControl pwmOSC = (PlayableControl) parent.nameToModule.get("PWM OSC");
+    	PlayableLFO pwmLFO = (PlayableLFO) parent.nameToModule.get("PWM LFO");
     	PlayableLFO pwmFastLFO = (PlayableLFO) parent.nameToModule.get("PWM FAST LFO");
-    	PlayableEnvelope ampENV1 = (PlayableEnvelope) parent.nameToModule.get("AMP AR");
-    	PlayableEnvelope ampENV2 = (PlayableEnvelope) parent.nameToModule.get("AMP ASR");
+    	PlayableEnvelope ampENV = (PlayableEnvelope) parent.nameToModule.get("PWM ADSR");
     	PlayableControl ampOSC = (PlayableControl) parent.nameToModule.get("AMP OSC");
     	PlayableLFO ampLFO = (PlayableLFO) parent.nameToModule.get("AMP LFO");
     	PlayableLFO ampFastLFO = (PlayableLFO) parent.nameToModule.get("AMP FAST LFO");
     	PlayableControl filterOSC = (PlayableControl) parent.nameToModule.get("FILTER OSC");
-    	PlayableEnvelope filterENV1 = (PlayableEnvelope) parent.nameToModule.get("FILTER AR");
-    	PlayableEnvelope filterENV2 = (PlayableEnvelope) parent.nameToModule.get("FILTER ASR");
+    	PlayableEnvelope filterENV = (PlayableEnvelope) parent.nameToModule.get("FILTER ADSR");
     	PlayableLFO filterLFO = (PlayableLFO) parent.nameToModule.get("FILTER LFO");
-    	PlayableControl ringOSC = (PlayableControl) parent.nameToModule.get("RING OSC");
-    	PlayableControl ringPWM = (PlayableControl) parent.nameToModule.get("RING PWM");
-    	PlayableControl ringFREQ = (PlayableControl) parent.nameToModule.get("RING FREQ");
-    	PlayableControl ringLevel = (PlayableControl) parent.nameToModule.get("RING LEVEL");
+    	PlayableLFO filterFastLFO = (PlayableLFO) parent.nameToModule.get("FILTER FAST LFO");
     	PlayableFilter lpFilter = (PlayableFilter) parent.nameToModule.get("LP FILTER");
     	PlayableFilter hpFilter = (PlayableFilter) parent.nameToModule.get("HP FILTER");
 		double[] returnVal = new double[numSamples];
@@ -105,75 +112,111 @@ public class PlayableSequencer implements PlayableModule {
 		}
 		for(int index = 0; index < numSamples; index++) {
 			if(currentTimeInSamples % noteLengthInSamples == 0) {
-				currentPhase = 0.0;
-				currentRingPhase = 0.0;
-				vibratoENV1.noteOn(currentTimeInSamples);
-				ampENV1.noteOn(currentTimeInSamples);
-				ampENV2.noteOn(currentTimeInSamples);
-				filterENV1.noteOn(currentTimeInSamples);
-				filterENV2.noteOn(currentTimeInSamples);
-				vibratoLFO.reset();
+				prevOsc2NoteFreq = osc2NoteFreq;
+				glideVal = 0.0;
+				currentPhaseOsc1 = 0.0;
+				currentPhaseOsc2 = 0.0;
+				fm6 = 0.0;
+				fm7 = 0.0;
+				fmADSR.noteOn(currentTimeInSamples);
+				fmAR1.noteOn(currentTimeInSamples);
+				fmAR2.noteOn(currentTimeInSamples);
+				ampENV.noteOn(currentTimeInSamples);
+				filterENV.noteOn(currentTimeInSamples);
+				pwmENV.noteOn(currentTimeInSamples);
 				ampLFO.reset();
-				filterLFO.reset();
-				vibratoLFO.reset();
 				ampFastLFO.reset();
-				vibratoFastLFO.reset();
+				filterLFO.reset();
+				filterFastLFO.reset();
+				pwmLFO.reset();
 				pwmFastLFO.reset();
+				fmLFO.reset();
 			}
 			if(currentTimeInSamples % noteLengthInSamples == noteLengthInSamples - noteRestInSamples) {
-				vibratoENV1.noteOff(currentTimeInSamples);
-				ampENV1.noteOff(currentTimeInSamples);
-				ampENV2.noteOff(currentTimeInSamples);
-				filterENV1.noteOff(currentTimeInSamples);
-				filterENV2.noteOff(currentTimeInSamples);
+				fmADSR.noteOff(currentTimeInSamples);
+				fmAR1.noteOff(currentTimeInSamples);
+				fmAR2.noteOff(currentTimeInSamples);
+				ampENV.noteOff(currentTimeInSamples);
+				filterENV.noteOff(currentTimeInSamples);
+				pwmENV.noteOff(currentTimeInSamples);
 			}
 			long currentTime = currentTimeInSamples / noteLengthInSamples;
 			int noteIndex = (int) currentTime % notes.length;
 			double noteFreq = Math.pow(2.0, notes[noteIndex] / 12.0) * baseFreq;
-			double vibratoSquareVal = vibratoOSC.getSample();
-			double vibratoLFOVal = vibratoLFO.squarewaveFilter() * vibratoSquareVal + vibratoLFO.triangleFilter() * (1.0 - vibratoSquareVal); 
-			double vibratoFastLFOVal = vibratoFastLFO.sineFilter();
-			double vibrato = (vibratoLFOVal + vibratoFastLFOVal + vibratoENV1.getSample(currentTimeInSamples)) / 3.0;
-			vibratoLFO.newSample();
-			vibratoFastLFO.newSample();
-			currentFreq = noteFreq;
-			double freqRatio = currentFreq / baseFreq;
-			double noteFreqRatio = noteFreq / baseFreq;
-			double sawtoothLevel = mainOSC.getSample();
+			noteFreq *= Math.pow(2.0, fmLFO.sineSigned() / 12.0);
+			fmLFO.newSample();
+			double freqRatio = noteFreq / baseFreq;
+			double fm = 0.0;
+			double fmAR1Val = fmAR1.getSample(currentTimeInSamples);
+			double innerFMVal = currentTimeInSamples / 44100.0 * Math.PI * 2.0 * noteFreq;
+			fm7 = fmAR1Val * fmCONTROLS.getValue(ControlBank.Name.FM7Mod) * Math.sin(innerFMVal * fmCONTROLS.getValue(ControlBank.Name.FM7Ratio));
+			fm6 = fmAR2.getSample(currentTimeInSamples) * fmCONTROLS.getValue(ControlBank.Name.FM6Mod) * Math.sin(innerFMVal * fmCONTROLS.getValue(ControlBank.Name.FM6Ratio));
+			double fm5 = fmAR1Val * fmCONTROLS.getValue(ControlBank.Name.FM5Mod) * Math.sin(innerFMVal * fmCONTROLS.getValue(ControlBank.Name.FM5Ratio) + fm6);
+			double fm4 = fmAR1Val * fmCONTROLS.getValue(ControlBank.Name.FM4Mod) *  Math.sin(innerFMVal * fmCONTROLS.getValue(ControlBank.Name.FM4Ratio));
+			fm += fmCONTROLS.getValue(ControlBank.Name.FM3Mod) * Math.sin(innerFMVal * fmCONTROLS.getValue(ControlBank.Name.FM3Ratio) + fm5);
+			fm += fmCONTROLS.getValue(ControlBank.Name.FM2Mod) * Math.sin(innerFMVal * fmCONTROLS.getValue(ControlBank.Name.FM2Ratio) + fm4 + fm7);
+			fm += fmCONTROLS.getValue(ControlBank.Name.FM1Mod) * Math.sin(innerFMVal * fmCONTROLS.getValue(ControlBank.Name.FM1Ratio) + fm7);
+			fm *= fmADSR.getSample(currentTimeInSamples);
+			double osc1 = waveforms.squarewave(currentPhaseOsc1 + fm);
+			double osc2 = waveforms.squarewave(currentPhaseOsc2);
+			double scalar = 20000.0;
+			if(osc1 < 0.0) {
+				currentSawtoothVal1 = 0.0;
+				currentSawtoothVal1B += scalar * fToA1.getAmplitude(osc1) / AudioFetcher.sampleRate;
+			} else {
+				currentSawtoothVal1 += scalar * fToA1.getAmplitude(osc1) / AudioFetcher.sampleRate;
+				currentSawtoothVal1B = 0.0;
+			}
+			if(osc2 < 0.0) {
+				currentSawtoothVal2 = 0.0;
+				currentSawtoothVal2B += scalar * fToA2.getAmplitude(osc2) / AudioFetcher.sampleRate;;
+			} else {
+				currentSawtoothVal2 += scalar * fToA2.getAmplitude(osc2) / AudioFetcher.sampleRate;
+				currentSawtoothVal2B = 0.0;
+			}
+			//osc1 = fToA3.butterworthHighpass16(currentSawtoothVal1 + currentSawtoothVal1B);
+			//osc2 = fToA4.butterworthHighpass16(currentSawtoothVal2 + currentSawtoothVal2B);
 			double pwmSquareVal = pwmOSC.getSample();
-			double pwm = pwmFastLFO.squarewaveFilter() * pwmSquareVal + pwmFastLFO.triangleFilter() * (1.0 - pwmSquareVal);
-			pwmFastLFO.newSample(noteFreqRatio);
-			pwm += sqrPWM.getSample();
-			double main = waveforms.sawtooth(currentPhase) * sawtoothLevel + waveforms.squarewave(currentPhase, pwm) * (1.0 - sawtoothLevel);
-			//double sawtooth = arduinoSawtooth(currentFreq);
-			//double main = sawtooth * sawtoothLevel + arduinoSquarewave(sawtoothVal, sqrPWM.getSample()) * (1.0 - sawtoothLevel);
-			double noiseVal = noiseLevel.getSample();
-			double noiseType = noiseColor.getSample();
-			main = noise.getSample(noiseType) * noiseVal + main * (1.0 - noiseVal);
+			double pwmLFOVal = pwmLFO.squarewaveSigned() * pwmSquareVal + pwmLFO.triangleSigned() * (1.0 - pwmSquareVal); 
+			double pwmFastLFOVal = pwmFastLFO.squarewaveSigned() * pwmSquareVal + pwmFastLFO.triangleSigned() * (1.0 - pwmSquareVal); 
+			double pwm = osc1CONTROLS.getValue(ControlBank.Name.OSC1PWM);
+			pwm += (pwmLFOVal + pwmFastLFOVal) / 2.0;
+			pwm += filterENV.getSample(currentTimeInSamples) - 0.5;
+			pwmLFO.newSample();
+			pwmFastLFO.newSample(freqRatio);
+			double osc1Sawtooth = osc1CONTROLS.getValue(ControlBank.Name.OSC1Shape);
+			osc1 = osc1 * osc1Sawtooth + waveforms.squarewave(currentPhaseOsc1 + fm, pwm) * (1.0 - osc1Sawtooth);
+			double osc2Sawtooth = osc2CONTROLS.getValue(ControlBank.Name.OSC2Shape);
+			double osc2PWM = osc2CONTROLS.getValue(ControlBank.Name.OSC2PWM);
+			osc2 = osc2 * osc2Sawtooth + waveforms.squarewave(currentPhaseOsc2, osc2PWM) * (1.0 - osc2Sawtooth);
+			double noiseVal = osc1CONTROLS.getValue(ControlBank.Name.NOISE_LEVEL);
+			double noiseColor = osc1CONTROLS.getValue(ControlBank.Name.NOISE_COLOR);
+			osc1 = noise.getSample(noiseColor) * noiseVal + osc1 * (1.0 - noiseVal);
+			double subOscVal = osc1CONTROLS.getValue(ControlBank.Name.SUBOSCLevel);
+			osc1 = osc1 * (1.0 - subOscVal) + waveforms.squarewave(currentPhaseOsc1 / 2.0) * subOscVal;
 			double ampSquareVal = ampOSC.getSample();
 			double ampLFOVal = ampLFO.squarewave() * ampSquareVal + ampLFO.triangle() * (1.0 - ampSquareVal); 
 			double ampFastLFOVal = ampFastLFO.squarewave() * ampSquareVal + ampFastLFO.triangle() * (1.0 - ampSquareVal); 
-			double amp = (ampLFOVal * ampFastLFOVal);
+			double amp = (ampLFOVal + ampFastLFOVal) / 2.0;
+			amp *= ampENV.getSample(currentTimeInSamples);
 			ampLFO.newSample();
-			ampFastLFO.newSample(noteFreqRatio);
-			main *= amp;
-			double subOscVal = subOSC.getSample();
-			main = main * (1.0 - subOscVal * 0.5) + waveforms.squarewave(currentPhase / 2.0) * subOscVal * 0.5;
-			double ringpwm = ringPWM.getSample();
-			double ringSawValue = ringOSC.getSample();
-			double ring = waveforms.sawtooth(currentRingPhase) * ringSawValue - waveforms.squarewave(currentRingPhase, ringpwm) * (1.0 - ringSawValue);
-			double ringLevelVal = ringLevel.getSample();
-			returnVal[index] = (ring * ringLevelVal + main * (1.0 - ringLevelVal)) * (ampENV1.getSample(currentTimeInSamples) + ampENV2.getSample(currentTimeInSamples)) / 2.0;		
+			ampFastLFO.newSample(freqRatio);
+			osc1 *= amp;
 			double filterSquareVal = filterOSC.getSample();
 			double filterLFOVal = filterLFO.squarewaveFilter() * filterSquareVal + filterLFO.triangleFilter() * (1.0 - filterSquareVal); 
-			double filter = (filterENV1.getSample(currentTimeInSamples) + filterENV2.getSample(currentTimeInSamples));
+			double filterFastLFOVal = filterFastLFO.squarewaveFilter() * filterSquareVal + filterFastLFO.triangleFilter() * (1.0 - filterSquareVal); 
+			double filter = filterENV.getSample(currentTimeInSamples);
 			filter += filterLFOVal;
+			filter += filterFastLFOVal;
 			filterLFO.newSample();
-			returnVal[index] = lpFilter.getSample(returnVal[index] * 0.5, freqRatio, filter);
+			filterFastLFO.newSample();
+			double ringVal = osc2CONTROLS.getValue(ControlBank.Name.OSC2RING);
+			returnVal[index] = osc1 * (1.0 - ringVal) + osc1 * osc2 * ringVal;
+			//returnVal[index] = Math.sin(currentPhaseOsc1 + fm);
+			returnVal[index] = lpFilter.getSample(returnVal[index], 1.0, filter);
 			returnVal[index] = hpFilter.getSample(returnVal[index], 1.0, 1.0);
-			double prevCurrentPhase = currentPhase;
-			currentPhase += 2.0 * Math.PI * (currentFreq + vibrato * currentFreq / 8.0) / AudioFetcher.sampleRate;
-			currentRingPhase += 2.0 * Math.PI * (ringFREQ.getSample() + vibrato * currentFreq / 8.0) / AudioFetcher.sampleRate;
+			currentPhaseOsc1 += (2.0 * Math.PI * noteFreq) / AudioFetcher.sampleRate;
+			currentPhaseOsc2 += (2.0 * Math.PI * noteFreq * osc2CONTROLS.getValue(ControlBank.Name.OSC2FREQ) * osc2CONTROLS.getValue(ControlBank.Name.OSC2DETUNE)) / AudioFetcher.sampleRate;
 			currentTimeInSamples++;
 		}
 		if(sawtoothClippingVal > maxSawtoothClippingVal) {

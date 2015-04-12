@@ -24,11 +24,12 @@ public class Slider {
 	private Rectangle sliderBounds;
 	private int sliderPosition = 0;
 	private int sliderWidth = 10;
-	private int xPadding = 10;
+	private int xPadding = 20;
 	private int yPadding = 16;
 	private String descriptor;
 	private String upperLable;
 	private String lowerLable;
+	private double[] positionToValue;
 	
 	public Slider(Type type, int screenX, int screenY, int range, double minValue, double maxValue, double initialValue, String[] text) {
 		this.type = type;
@@ -46,6 +47,10 @@ public class Slider {
 		this.descriptor = text[0];
 		this.upperLable = text[1];
 		this.lowerLable = text[2];
+		positionToValue = new double[range + 1];
+		for(int position = 0; position <= range; position++) {
+			positionToValue[position] = getCurrentValue(position);
+		}
 	}
 	
 	public Rectangle getBounds() {
@@ -61,7 +66,11 @@ public class Slider {
 	}
 	
 	public double getCurrentValue() {
-		double ratio = (1.0 - (double) sliderPosition / (double) range);
+		return positionToValue[sliderPosition];
+	}
+	
+	private double getCurrentValue(int sliderPositionVal) {
+		double ratio = (1.0 - (double) sliderPositionVal / (double) range);
 		switch(type) {
 			case LINEAR:
 				return ratio * (maxValue - minValue) + minValue;

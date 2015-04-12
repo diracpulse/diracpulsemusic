@@ -60,10 +60,11 @@ public class Waveforms {
 	}
 	
 	public double triangle(double phase) {
-		phase /= Math.PI * 2.0;
+		phase /= 2.0 * Math.PI;
 		phase -= Math.floor(phase);
-		if(phase < 0.5) return -1.0 + phase * 2.0;
-		return 1.0 - (phase - 0.5) * 2.0;
+		if(phase < 0.25) return phase / 0.25;
+		if(phase < 0.75) return 1.0 - (phase - 0.25) * 4.0;
+		return -1.0 + (phase - 0.75) * 4.0;
 		/*
 		double dIndex = phase * lookupTableLength;
 		int index = (int) Math.floor(dIndex);
@@ -73,6 +74,30 @@ public class Waveforms {
 		double delta = triangleTable[(index + 1) % lookupTableLength] - returnVal;
 		return returnVal + fraction * delta;
 		*/
+	}
+	
+	
+	public double negativeTriangle(double phase) {
+		phase /= 2.0 * Math.PI;
+		phase -= Math.floor(phase);
+		if(phase < 0.5) return -1.0 + phase * 4.0;
+		return 1.0 - (phase - 0.5) * 4.0;
+		/*
+		double dIndex = phase * lookupTableLength;
+		int index = (int) Math.floor(dIndex);
+		if(index == dIndex) return triangleTable[index];
+		double fraction = (phase * lookupTableLength) - index;
+		double returnVal = triangleTable[index];
+		double delta = triangleTable[(index + 1) % lookupTableLength] - returnVal;
+		return returnVal + fraction * delta;
+		*/
+	}
+	
+	public double reverseSquarewave(double phase) {
+		phase /= Math.PI * 2.0;
+		phase -= Math.floor(phase);
+		if(phase < 0.5) return -1.0;
+		return 1.0;
 	}
 	
 	public double squarewave(double phase) {

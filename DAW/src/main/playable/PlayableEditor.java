@@ -28,6 +28,8 @@ import main.ModuleEditor;
 import main.MultiWindow;
 import main.Scale;
 import main.SynthTools;
+import main.playable.ControlBank.Name;
+import main.playable.ControlBank.Spec;
 
 public class PlayableEditor extends JPanel implements ActionListener, AudioSource {
 
@@ -76,7 +78,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
         add(createNavigationBar(), BorderLayout.PAGE_START);
         view.addMouseListener(controller);
         view.addMouseMotionListener(controller);
-        view.setPreferredSize(new Dimension(1600, 900));
+        view.setPreferredSize(new Dimension(5000, 900));
         JScrollPane scrollPane = new JScrollPane(view);
         scrollPane.setSize(800, 600);
         add(scrollPane, BorderLayout.CENTER);
@@ -97,30 +99,52 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     	currentY = 10;
     	currentX = 10;
     	nameToModule = new TreeMap<String, PlayableModule>();
-    	addModule("MAIN OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SQR"});
-    	addModule("SQR PWM", PlayableModule.Type.CONTROL, new String[]{"10%", "90%"});
-    	addModule("SUB OSC", PlayableModule.Type.CONTROL, new String[]{"MAX", "MIN"});
-       	addModule("NOISE COLOR", PlayableModule.Type.CONTROL, new String[]{"WHITE", "PINK"});
-    	addModule("NOISE LEVEL", PlayableModule.Type.CONTROL, new String[]{"MAX", "MIN"});
-    	addEnvelope("VIBRATO AR", PlayableEnvelope.EnvelopeType.AR);
-    	addModule("VIBRATO OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
-    	addSpecifiedLFO("VIBRATO LFO", 0.5, 16.0, false);
-    	addSpecifiedLFO("VIBRATO FAST LFO", 16.0, 1024.0, true);
+       	ArrayList<ControlBank.Spec> osc1Controls = new ArrayList<ControlBank.Spec>();
+    	osc1Controls.add(new ControlBank.Spec(ControlBank.Name.OSC1Shape, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
+    	osc1Controls.add(new ControlBank.Spec(ControlBank.Name.OSC1PWM, Slider.Type.LINEAR, 0.1, 0.9, 0.5));
+    	osc1Controls.add(new ControlBank.Spec(ControlBank.Name.SUBOSCLevel, Slider.Type.LINEAR, 0.0, 0.5, 0.0));
+       	osc1Controls.add(new ControlBank.Spec(ControlBank.Name.NOISE_COLOR, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
+    	osc1Controls.add(new ControlBank.Spec(ControlBank.Name.NOISE_LEVEL, Slider.Type.LINEAR, 0.0, 1.0, 0.0));
+    	addControlBank("OSCILLATOR_1", osc1Controls);
+       	ArrayList<ControlBank.Spec> osc2Controls = new ArrayList<ControlBank.Spec>();
+    	osc2Controls.add(new ControlBank.Spec(ControlBank.Name.OSC2Shape, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
+    	osc2Controls.add(new ControlBank.Spec(ControlBank.Name.OSC2PWM, Slider.Type.LINEAR, 0.1, 0.9, 0.5));
+    	osc2Controls.add(new ControlBank.Spec(ControlBank.Name.OSC2FREQ, Slider.Type.LOGARITHMIC, 1.0 / 16.0, 16.0, 1.0));
+       	osc2Controls.add(new ControlBank.Spec(ControlBank.Name.OSC2DETUNE, Slider.Type.LOGARITHMIC, 1.0, 1.5, 1.0));
+    	osc2Controls.add(new ControlBank.Spec(ControlBank.Name.OSC2RING, Slider.Type.LINEAR, 0.0, 1.0, 0.0));
+    	addControlBank("OSCILLATOR_2", osc2Controls);
+    	addEnvelope("FM ADSR", PlayableEnvelope.EnvelopeType.ADSR);
+       	addEnvelope("FM AR1", PlayableEnvelope.EnvelopeType.AR);
+       	addEnvelope("FM AR2", PlayableEnvelope.EnvelopeType.AR);
+    	addSpecifiedLFO("FM LFO", 0.5, 16.0, false);
+    	ArrayList<ControlBank.Spec> fmControls = new ArrayList<ControlBank.Spec>();
+    	fmControls.add(new ControlBank.Spec(ControlBank.Name.FM1Mod, Slider.Type.LOGARITHMIC, 1.0 / 256.0, 16, 1.0 / 256.0));
+    	fmControls.add(new ControlBank.Spec(ControlBank.Name.FM1Ratio, Slider.Type.LOGARITHMIC, 0.25, 16.0, 1.0));
+    	fmControls.add(new ControlBank.Spec(ControlBank.Name.FM2Mod, Slider.Type.LOGARITHMIC, 1.0 / 256.0, 16, 1.0 / 256.0));
+    	fmControls.add(new ControlBank.Spec(ControlBank.Name.FM2Ratio, Slider.Type.LOGARITHMIC, 0.25, 16.0, 1.0));
+    	fmControls.add(new ControlBank.Spec(ControlBank.Name.FM3Mod, Slider.Type.LOGARITHMIC, 1.0 / 256.0, 16, 1.0 / 256.0));
+    	fmControls.add(new ControlBank.Spec(ControlBank.Name.FM3Ratio, Slider.Type.LOGARITHMIC, 0.25, 16.0, 1.0));
+    	fmControls.add(new ControlBank.Spec(ControlBank.Name.FM4Mod, Slider.Type.LOGARITHMIC, 1.0 / 256.0, 16, 1.0 / 256.0));
+    	fmControls.add(new ControlBank.Spec(ControlBank.Name.FM4Ratio, Slider.Type.LOGARITHMIC, 0.25, 16.0, 1.0));
+    	fmControls.add(new ControlBank.Spec(ControlBank.Name.FM5Mod, Slider.Type.LOGARITHMIC, 1.0 / 256.0, 16, 1.0 / 256.0));
+    	fmControls.add(new ControlBank.Spec(ControlBank.Name.FM5Ratio, Slider.Type.LOGARITHMIC, 0.25, 16.0, 1.0));
+    	fmControls.add(new ControlBank.Spec(ControlBank.Name.FM6Mod, Slider.Type.LOGARITHMIC, 1.0 / 256.0, 16, 1.0 / 256.0));
+    	fmControls.add(new ControlBank.Spec(ControlBank.Name.FM6Ratio, Slider.Type.LOGARITHMIC, 0.25, 16.0, 1.0));
+    	fmControls.add(new ControlBank.Spec(ControlBank.Name.FM7Mod, Slider.Type.LOGARITHMIC, 1.0 / 256.0, 16, 1.0 / 256.0));
+    	fmControls.add(new ControlBank.Spec(ControlBank.Name.FM7Ratio, Slider.Type.LOGARITHMIC, 0.25, 16.0, 1.0));
+    	addControlBank("FM_OPERATOR_VALUES", fmControls);
+    	addEnvelope("PWM ADSR", PlayableEnvelope.EnvelopeType.ADSR);
     	addModule("PWM OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
+    	addSpecifiedLFO("PWM LFO", 0.5, 16.0, false);
     	addSpecifiedLFO("PWM FAST LFO", 16.0, 1024.0, false);
-    	addEnvelope("AMP AR", PlayableEnvelope.EnvelopeType.AR);
-    	addEnvelope("AMP ASR", PlayableEnvelope.EnvelopeType.ASR);
+    	addEnvelope("AMP ADSR", PlayableEnvelope.EnvelopeType.ASR);
     	addModule("AMP OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
     	addSpecifiedLFO("AMP LFO", 0.5, 16.0, false);
     	addSpecifiedLFO("AMP FAST LFO", 16.0, 1024.0, false);
-    	addEnvelope("FILTER AR", PlayableEnvelope.EnvelopeType.AR);
-    	addEnvelope("FILTER ASR", PlayableEnvelope.EnvelopeType.ASR);
+    	addEnvelope("FILTER ADSR", PlayableEnvelope.EnvelopeType.AR);
     	addModule("FILTER OSC", PlayableModule.Type.CONTROL, new String[]{"SQR", "TRI"});
     	addSpecifiedLFO("FILTER LFO", 0.5, 64.0, false);
-    	addModule("RING PWM", PlayableModule.Type.CONTROL, new String[]{"10%", "90%"});
-    	addModule("RING OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SQR"});
-    	addFreqModule("RING FREQ", 8.0, 1024.0, 256.0);
-    	addModule("RING LEVEL", PlayableModule.Type.CONTROL, new String[]{"MAX", "MIN"});
+    	addSpecifiedLFO("FILTER FAST LFO", 0.5, 64.0, false);
     	addFilterModule("LP FILTER", PlayableFilter.FilterType.LOWPASS);
     	addFilterModule("HP FILTER", PlayableFilter.FilterType.HIGHPASS);
     }
@@ -142,10 +166,19 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     		nameToModule.put(moduleName, new PlayableControl(this, currentX, currentY, new String[] {moduleName, controlValues[0], controlValues[1]}));
     		currentX = nameToModule.get(moduleName).getMaxScreenX();
     		return;	
+       	case CONTROLBANK:
+    		nameToModule.put(moduleName, new PlayableControl(this, currentX, currentY, new String[] {moduleName, controlValues[0], controlValues[1]}));
+    		currentX = nameToModule.get(moduleName).getMaxScreenX();
+    		return;	
        	case FILTER:
        		System.out.println("PlayableEditor.Module.addModule: Filter not suppported");
     	}
     }
+    
+    public void addControlBank(String moduleName, ArrayList<ControlBank.Spec> specs) {
+ 		nameToModule.put(moduleName, new ControlBank(this, moduleName, currentX, currentY, specs));
+ 		currentX = nameToModule.get(moduleName).getMaxScreenX();
+     }
     
     public void addEnvelope(String moduleName, PlayableEnvelope.EnvelopeType type) {
 		nameToModule.put(moduleName, new PlayableEnvelope(this, type, currentX, currentY, moduleName));

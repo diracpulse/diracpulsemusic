@@ -138,6 +138,12 @@ public class PlayableLFO implements PlayableModule {
 		return returnVal;
 	}
 	
+	public synchronized double squarewave(double pwm) {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal = (waveforms.squarewave(currentPhase, pwm) / 2.0 + 0.5) * ampVal + 1.0 - ampVal;
+		return returnVal;
+	}
+	
 	public synchronized double sawtooth() {
 		double ampVal = ampControl.getCurrentValue();
 		double returnVal = (waveforms.sawtooth(currentPhase) / 2.0 + 0.5) * ampVal + 1.0 - ampVal;
@@ -147,6 +153,37 @@ public class PlayableLFO implements PlayableModule {
 	public synchronized double sine() {
 		double ampVal = ampControl.getCurrentValue();
 		double returnVal = (Math.sin(currentPhase) / 2.0 + 0.5) * ampVal + 1.0 - ampVal;
+		return returnVal;
+	}
+	
+	public synchronized double triangleSigned() {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal = waveforms.triangle(currentPhase) * ampVal;
+		return returnVal;
+	}
+	
+	public synchronized double squarewaveSigned() {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal = waveforms.squarewave(currentPhase) * ampVal;
+		return returnVal;
+	}
+	
+	public synchronized double squarewaveSigned(double pwm) {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal = waveforms.squarewave(currentPhase, pwm) * ampVal;
+		return returnVal;
+	}
+	
+	public synchronized double sawtoothSigned() {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal = waveforms.sawtooth(currentPhase) * ampVal;
+		return returnVal;
+	}
+	
+	
+	public synchronized double sineSigned() {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal = Math.sin(currentPhase) * ampVal;
 		return returnVal;
 	}
 	
@@ -178,6 +215,12 @@ public class PlayableLFO implements PlayableModule {
 	public synchronized double squarewaveFilter() {
 		double ampVal = ampControl.getCurrentValue();
 		double returnVal = (waveforms.squarewave(currentPhase) / 2.0 + 0.5) * ampVal;
+		return returnVal;
+	}
+	
+	public synchronized double squarewaveFilter(double pwm) {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal = (waveforms.squarewave(currentPhase, pwm) / 2.0 + 0.5) * ampVal;
 		return returnVal;
 	}
 	
