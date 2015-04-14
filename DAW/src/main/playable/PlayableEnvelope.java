@@ -27,7 +27,7 @@ public class PlayableEnvelope implements PlayableModule {
 	int decayInSamples;
 	double sustainValue;
 	int releaseInSamples;
-	double tau = 4.0;
+	double tau = 2.0;
 	double currentValue = 0.0;
 	double saveAttackValue;
 	double saveDecayValue;
@@ -52,35 +52,35 @@ public class PlayableEnvelope implements PlayableModule {
 		double defaultAD = 0.1;
 		double defaultR = 0.1;
 		double minValADR = 0.001;
-		double maxValADR = 2.0;
+		double maxValADR = 8.0;
 		switch(type) {
 		case ADSR:
-			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultAD, new String[]{"A", " ", " "});
+			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultAD, new String[]{"A", " ", " "});
 			x = attack.getMaxX();
-			decay = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultAD, new String[]{"D", " ", " "});
+			decay = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultAD, new String[]{"D", " ", " "});
 			x = decay.getMaxX();
-			sustain = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, Math.exp(-1.0 * tau), 1.0, .5, new String[] {"S", " ", " "});
+			sustain = new Slider(Slider.Type.LOGARITHMIC, x, y, Math.exp(-1.0 * tau), 1.0, .5, new String[] {"S", " ", " "});
 			x = sustain.getMaxX();
-			release = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultR, new String[]{"R", " ", " "});
+			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultR, new String[]{"R", " ", " "});
 			x = release.getMaxX();
-			depth = new Slider(Slider.Type.LINEAR, x, y, 400, 0.0, 1.0, 0.5, new String[]{"DEPTH", " ", " "});
+			depth = new Slider(Slider.Type.LINEAR, x, y, 0.0, 1.0, 0.5, new String[]{"DEPTH", " ", " "});
 			maxScreenX = depth.getMaxX();
 			return;
 		case ASR:
-			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultAD, new String[]{"A", " ", " "});
+			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultAD, new String[]{"A", " ", " "});
 			x = attack.getMaxX();
-			sustain = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, Math.exp(-1.0 * tau), 1.0, .5, new String[] {"S", " ", " "});
+			sustain = new Slider(Slider.Type.LOGARITHMIC, x, y, Math.exp(-1.0 * tau), 1.0, .5, new String[] {"S", " ", " "});
 			x = sustain.getMaxX();
-			release = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultR, new String[]{"R", " ", " "});
+			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultR, new String[]{"R", " ", " "});
 			x = release.getMaxX();
 			maxScreenX = release.getMaxX();
 			return;
 		case AR:
-			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultAD, new String[]{"A", " ", " "});
+			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultAD, new String[]{"A", " ", " "});
 			x = attack.getMaxX();
-			release = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minValADR, maxValADR, defaultR, new String[]{"R", " ", " "});
+			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultR, new String[]{"R", " ", " "});
 			x = release.getMaxX();
-			depth = new Slider(Slider.Type.LINEAR, x, y, 400, 0.0, 1.0, 0.5, new String[]{"D", " ", " "});
+			depth = new Slider(Slider.Type.LINEAR, x, y, 0.0, 1.0, 0.5, new String[]{"D", " ", " "});
 			x = depth.getMaxX();
 			maxScreenX = depth.getMaxX();
 			return;
@@ -148,16 +148,14 @@ public class PlayableEnvelope implements PlayableModule {
 		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
 		if(!off) {
 			if(currentTimeInSamples <= attackInSamples) {
-				return (1.0 - Math.exp(-1.0 * currentTimeInSamples * tau / attackInSamples)) * depthVal + (1.0 - depthVal);
+				saveAttackValue = (1.0 - Math.exp(-1.0 * tau * currentTimeInSamples / attackInSamples) * depthVal) + (1.0 - depthVal);
+				return saveAttackValue;
 			}
-			if(currentTimeInSamples < attackInSamples + decayInSamples) {
-				double decayVal = Math.exp(-1.0 * tau * (currentTimeInSamples - attackInSamples) / (double) decayInSamples);
-				saveDecayValue = ((1.0 - sustainValue) * decayVal + sustainValue) * depthVal + (1.0 - depthVal);
-				return saveDecayValue;
-			}
-			return saveDecayValue;
+			saveDecayValue = saveAttackValue * Math.exp(-1.0 * tau * (currentTimeInSamples - attackInSamples) / (double) decayInSamples);
+			if(saveDecayValue > sustainValue) return saveDecayValue;
+			return sustainValue;
 		}
-		return Math.exp(-1.0 * tau * (absoluteTimeInSamples - stopTimeInSamples) / (double) releaseInSamples) * saveDecayValue * depthVal + (1.0 - depthVal);
+		return Math.exp(-1.0 * tau * (absoluteTimeInSamples - stopTimeInSamples) / (double) releaseInSamples) * sustainValue * depthVal + (1.0 - depthVal);
 	} 
 	
 	public double getFilterSample(long absoluteTimeInSamples) {

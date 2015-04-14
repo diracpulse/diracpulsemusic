@@ -25,7 +25,7 @@ public class PlayableControl implements PlayableModule {
 		this.screenX = x;
 		this.screenY = screenY;
 		this.moduleName = descriptors[0];
-		slider  = new Slider(Slider.Type.LINEAR, x, y, 400, 0, 1.0, 0.5, new String[] {" ", descriptors[1], descriptors[2]});
+		slider  = new Slider(Slider.Type.LINEAR, x, y, 0, 1.0, 0.5, new String[] {" ", descriptors[1], descriptors[2]});
 		maxScreenX = slider.getMaxX();
 	}
 	
@@ -36,9 +36,9 @@ public class PlayableControl implements PlayableModule {
 		this.screenX = x;
 		this.screenY = screenY;
 		this.moduleName = moduleName;
-		slider  = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minVal, maxVal, initialVal, new String[] {" ", new Float(maxVal).toString(), new Float(minVal).toString()});
+		slider  = new Slider(Slider.Type.LOGARITHMIC, x, y, minVal, maxVal, initialVal, new String[] {" ", new Float(maxVal).toString(), new Float(minVal).toString()});
 		x = slider.getMaxX();
-		fineSlider = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0, 2.0, 1.0, new String[] {" ", " ", " "});
+		fineSlider = new Slider(Slider.Type.LINEAR, x, y, 1.0, 2.0, 1.0, new String[] {" ", " ", " "});
 		maxScreenX = fineSlider.getMaxX();
 	}
 	

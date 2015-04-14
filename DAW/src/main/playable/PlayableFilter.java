@@ -27,7 +27,7 @@ public class PlayableFilter implements PlayableModule {
 	PlayableEditor parent;
 	double prevCutoff = 0.0;
 	double maxCutoff = 20000;
-	double minCutoff = 20;
+	double minCutoff = 64;
 	double cutoffMod = 8.0;
 	double maxCutoffHP = 1000;
 	double minCutoffHP = 20;
@@ -40,6 +40,10 @@ public class PlayableFilter implements PlayableModule {
 	private int screenX;
 	private int screenY;
 	private int yPadding = PlayableEditor.moduleYPadding;
+	
+	// FIR FilterState
+	double[] samples;
+	double[] filter;
 	
 	// Filter State
 	double[] y = {0.0, 0.0, 0.0}; 
@@ -62,15 +66,17 @@ public class PlayableFilter implements PlayableModule {
 		this.type = type;
 		switch(type) {
 		case LOWPASS:
-			cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minCutoff, maxCutoff, 256.0, new String[] {"Cutoff", " ", " "});
+			cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, minCutoff, maxCutoff, 256.0, new String[] {"Cutoff", " ", " "});
 			x = cutoffControl.getMaxX();
-			resControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.25, 4.0, Math.sqrt(2.0) / 2.0, new String[] {"Resonance", " ", " "});
+			resControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 0.25, 4.0, Math.sqrt(2.0) / 2.0, new String[] {"Resonance", " ", " "});
 			maxScreenX = resControl.getMaxX();
+			initLowpassFIR();
 			return;
 		case HIGHPASS:
-			cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minCutoffHP, maxCutoffHP, minCutoffHP, new String[] {"Cutoff", " ", " "});
+			cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, minCutoffHP, maxCutoffHP, minCutoffHP, new String[] {"Cutoff", " ", " "});
 			maxScreenX = cutoffControl.getMaxX();
 		}
+		initLowpassFIR();
 	}
 	
 	public void reset() {
@@ -89,8 +95,11 @@ public class PlayableFilter implements PlayableModule {
 	public double getSample(double sample, double freqRatio, double input) {
 		switch(type) {
 		case LOWPASS:
+			if(sample > 1.0) sample = 1.0;
+			if(sample < -1.0) sample = -1.0;
 			double returnVal = variableQLowpass2(sample, freqRatio, input, 0.0);
 			return variableQLowpass2(returnVal, freqRatio, input, 0.0);
+			//return lowpassFIR(sample);
 		case HIGHPASS:
 			return butterworthHighpass2(sample, freqRatio, input, 0.0);
 		}
@@ -98,12 +107,14 @@ public class PlayableFilter implements PlayableModule {
 	}
 	
 	public synchronized double variableQLowpass2(double sample, double freqRatio, double fControl, double qControl) {
+		if(sample > 1.0) sample = 1.0;
+		if(sample < -1.0) sample = -1.0;
 		input2[0] = input2[1];
 		input2[1] = input2[2];
 		input2[2] = sample;
 		y2[0] = y2[1];
 		y2[1] = y2[2];
-		double f = cutoffControl.getCurrentValue() * (freqRatio + fControl * cutoffMod);
+		double f = cutoffControl.getCurrentValue() * fControl * cutoffMod;
 		if(f > maxCutoff) f = maxCutoff;
 		if(f < minCutoff) f = minCutoff;
 		double q = resControl.getCurrentValue() * (1.0 + qControl);
@@ -115,10 +126,14 @@ public class PlayableFilter implements PlayableModule {
 		double a0 = 2.0 * q * (g * g - 1.0) / D;
 		double a1 = (q * g * g - g + q) / D;
 		y2[2] = b0 * input2[2] + b1 * input2[1] + b2 * input2[0] - a0 * y2[1] - a1 * y2[0];
+		if(y2[1] > 1.0) y2[1] = 1.0;
+		if(y2[1] < -1.0) y2[1] = -1.0;
 		return y2[2];
 	}
 	
 	private double butterworthHighpass2(double sample, double freqRatio, double fControl, double qControl) {
+		if(sample > 1.0) sample = 1.0;
+		if(sample < -1.0) sample = -1.0;
 		input[0] = input[1];
 		input[1] = input[2];
 		input[2] = sample;
@@ -135,7 +150,38 @@ public class PlayableFilter implements PlayableModule {
 		double a0 = 2.0 * (gamma * gamma - 1.0) / D;
 		double a1 = (gamma * gamma - Math.sqrt(2.0) * gamma + 1.0) / D;
 		y[2] = b0 * input[2] + b1 * input[1] + b2 * input[0] - a0 * y[1] - a1 * y[0];
+		if(y2[1] > 1.0) y2[1] = 1.0;
+		if(y2[1] < -1.0) y2[1] = -1.0;
 		return y[2];
+	}
+
+	public double lowpassFIR(double sample) {
+	   	double bins = 1.0;
+		double alpha = 5.0;
+		double samplesPerCycle = SynthTools.sampleRate / cutoffControl.getCurrentValue();
+		int filterLength = (int) Math.round(bins * samplesPerCycle);
+		filterLength += filterLength % 2;
+		filter = Filter.getLPFilter(cutoffControl.getCurrentValue(), filterLength, alpha);
+		double returnVal = 0.0;
+		for(int index = 1; index < samples.length; index++) {
+			samples[index - 1] = samples[index];
+		}
+		samples[samples.length - 1] = sample;
+		int startIndex = (samples.length - filter.length) / 2;
+		for(int filterIndex = 0; filterIndex < filter.length - 1; filterIndex++) {
+			returnVal += samples[startIndex + filterIndex] * filter[filterIndex];
+		}
+		return returnVal;
+	}
+	
+	private void initLowpassFIR() {
+		double freqInHz = cutoffControl.getCurrentValue();
+	   	double bins = 1.0;
+		double alpha = 5.0;
+		double samplesPerCycle = SynthTools.sampleRate / freqInHz;
+		int filterLength = (int) Math.round(bins * samplesPerCycle);
+		filterLength += filterLength % 2;
+		samples = new double[filterLength];
 	}
 
 	public void draw(Graphics g) {

@@ -30,19 +30,23 @@ public class ControlBank implements PlayableModule {
 		// Start Oscillator 1
 		OSC1Shape,
 		OSC1PWM,
+		OSC1FM,
 		SUBOSCLevel,
 		NOISE_COLOR,
 		NOISE_LEVEL,
+		OSC1LEVEL,
 		// Start Oscillator 2
 		OSC2Shape,
 		OSC2PWM,
+		OSC2FM,
 		OSC2FREQ,
 		OSC2DETUNE,
 		OSC2RING,
-		OSC2MIX;
+		OSC2MIX,
+		OSC2LEVEL;
 	}
 	
-	public static class Spec {
+	public class Spec {
 		
 		public final Name name;
 		public final double maxVal;
@@ -69,22 +73,24 @@ public class ControlBank implements PlayableModule {
 	private int maxScreenY;
 	private int yPadding = PlayableEditor.moduleYPadding;
 	
-	public ControlBank(PlayableEditor parent, String moduleName, int screenX, int screenY, ArrayList<Spec> controls) {
+	public ControlBank(PlayableEditor parent, String moduleName, int screenX, int screenY) {
 		this.parent = parent;
-		int x = screenX;
-		int y = screenY + PlayableEditor.moduleYPadding;
-		this.screenX = x;
+		this.screenX = screenX;
+		this.maxScreenX = screenX;
 		this.screenY = screenY;
 		this.moduleName = moduleName;
 		nameToSlider = new TreeMap<Name, Slider>();
-		for(Spec control: controls) { 
-			nameToSlider.put(control.name , new Slider(control.taper, x, y, 400, control.minVal, control.maxVal, control.initialVal, 
-							 new String[] {control.name.toString(), 
-							 new Float(control.maxVal).toString(), 
-							 new Float(control.minVal).toString()}));
-			x = nameToSlider.get(control.name).getMaxX();
-			maxScreenY = nameToSlider.get(control.name).getMaxY();
-		}
+	}
+	
+	public void add(Spec control) {
+		int x = maxScreenX;
+		int y = screenY + PlayableEditor.moduleYPadding;
+		nameToSlider.put(control.name , new Slider(control.taper, x, y, control.minVal, control.maxVal, control.initialVal, 
+						 new String[] {control.name.toString(), 
+						 new Float(control.maxVal).toString(), 
+						 new Float(control.minVal).toString()}));
+		x = nameToSlider.get(control.name).getMaxX();
+		maxScreenY = nameToSlider.get(control.name).getMaxY();
 		maxScreenX = x;
 	}
 

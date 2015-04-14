@@ -61,22 +61,22 @@ public class PlayableLFO implements PlayableModule {
 		this.screenX = x;
 		this.screenY = screenY;
 		if(type == WaveType.STANDARD) {
-			freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.5, 1024.0, 8.0, new String[] {"RATE", " ", " "});
+			freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 0.5, 1024.0, 8.0, new String[] {"RATE", " ", " "});
 			x = freqControl.getMaxX();
-			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
+			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
 			x = fineFreqControl.getMaxX();
-			ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 0, 1.0, 0, new String[] {"DEPTH", " ", " "});
+			ampControl = new Slider(Slider.Type.LINEAR, x, y, 0, 1.0, 0, new String[] {"DEPTH", " ", " "});
 			maxScreenX = ampControl.getMaxX();
 		} else {
-			freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.5, 1024.0, 32.0, new String[] {"RATE", " ", " "});
+			freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 0.5, 1024.0, 32.0, new String[] {"RATE", " ", " "});
 			x = freqControl.getMaxX();
-			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0, 1.25, 1.0, new String[] {"FINE", " ", " "});
+			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 1.0, 1.25, 1.0, new String[] {"FINE", " ", " "});
 			x = fineFreqControl.getMaxX();
-			attackControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.001, 0.5, 0.5, new String[] {"A", " ", " "});
+			attackControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 0.001, 0.5, 0.5, new String[] {"A", " ", " "});
 			x = attackControl.getMaxX();
-			releaseControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, 0.001, 0.5, 0.5, new String[] {"R", " ", " "});
+			releaseControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 0.001, 0.5, 0.5, new String[] {"R", " ", " "});
 			x = releaseControl.getMaxX();
-			ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 0, 1.0, 0, new String[] {"DEPTH", " ", " "});
+			ampControl = new Slider(Slider.Type.LINEAR, x, y, 0, 1.0, 0, new String[] {"DEPTH", " ", " "});
 			maxScreenX = ampControl.getMaxX();
 		}
 	}
@@ -90,13 +90,13 @@ public class PlayableLFO implements PlayableModule {
 		int y = screenY + PlayableEditor.moduleYPadding;
 		this.screenX = x;
 		this.screenY = screenY;
-		freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 400, minFreq, maxFreq, minFreq, new String[] {"RATE", " ", " "});
+		freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, minFreq, maxFreq, minFreq, new String[] {"RATE", " ", " "});
 		x = freqControl.getMaxX();
 		if(fineFreq) {
-			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 400, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
+			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
 			x = fineFreqControl.getMaxX();
 		}
-		ampControl = new Slider(Slider.Type.LINEAR, x, y, 400, 0, 1.0, 0, new String[] {"DEPTH", " ", " "});
+		ampControl = new Slider(Slider.Type.LINEAR, x, y, 0, 1.0, 0, new String[] {"DEPTH", " ", " "});
 		maxScreenX = ampControl.getMaxX();
 	}
 	

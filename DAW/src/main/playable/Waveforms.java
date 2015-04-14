@@ -59,6 +59,42 @@ public class Waveforms {
 		*/
 	}
 	
+	public double sawtooth4bit(double phase) {
+		phase /= Math.PI * 2.0;
+		phase -= Math.floor(phase);
+		return Math.round((-1.0 + phase * 2.0) * 15.0) / 15.0;
+		/*
+		double dIndex = phase * lookupTableLength;
+		int index = (int) Math.floor(dIndex);
+		if(index == dIndex) return sawtoothTable[index];
+		double fraction = (phase * lookupTableLength) - index;
+		double returnVal = sawtoothTable[index];
+		double delta = sawtoothTable[(index + 1) % lookupTableLength] - returnVal;
+		return returnVal + fraction * delta;
+		*/
+	}
+	
+	public double sawtooth4bit(double phase, double pwm) {
+		phase /= Math.PI * 2.0;
+		phase -= Math.floor(phase);
+		double val = 0.0;
+		if(phase < pwm) {
+			val = -1.0 + (phase / pwm);
+		} else {
+			val = (phase - pwm) / pwm; 
+		}
+		return Math.round((-1.0 + phase * 2.0) * 15.0) / 15.0;
+		/*
+		double dIndex = phase * lookupTableLength;
+		int index = (int) Math.floor(dIndex);
+		if(index == dIndex) return sawtoothTable[index];
+		double fraction = (phase * lookupTableLength) - index;
+		double returnVal = sawtoothTable[index];
+		double delta = sawtoothTable[(index + 1) % lookupTableLength] - returnVal;
+		return returnVal + fraction * delta;
+		*/
+	}
+	
 	public double triangle(double phase) {
 		phase /= 2.0 * Math.PI;
 		phase -= Math.floor(phase);
