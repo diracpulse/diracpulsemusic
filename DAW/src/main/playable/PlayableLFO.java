@@ -43,7 +43,7 @@ public class PlayableLFO implements PlayableModule {
 	private int screenY;
 	private int yPadding = PlayableEditor.moduleYPadding;
 	private WaveType type = WaveType.STANDARD;
-	private boolean fineFreq = false;
+	private boolean fineFreq = true;
 
 	private double currentPhase = 0.0;
 	
