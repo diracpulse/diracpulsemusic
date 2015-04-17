@@ -19,6 +19,7 @@ public class Slider {
 	public enum Type {
 		LINEAR,
 		LOGARITHMIC,
+		LOGARITHMIC_ZERO,
 		LOG12;
 	}
 	
@@ -31,7 +32,7 @@ public class Slider {
 	private Rectangle sliderBounds;
 	private int sliderPosition = 0;
 	private int sliderWidth = 10;
-	private int xPadding = 20;
+	private int xPadding = 10;
 	private int yPadding = 16;
 	private String descriptor;
 	private String upperLable;
@@ -49,7 +50,7 @@ public class Slider {
 		this.minValue = minValue;
 		this.maxValue = maxValue;
 		int x = screenX + xPadding;
-		int y = screenY + yPadding * 2;
+		int y = screenY + yPadding * 3;
 		int w = sliderWidth;
 		int l = range;
 		this.sliderBounds = new Rectangle(x, y, w, l);
@@ -72,7 +73,7 @@ public class Slider {
 	}
 	
 	public int getMaxY() {
-		return screenY + range + yPadding * 3;
+		return screenY + range + yPadding * 4;
 	}
 	
 	public double getCurrentValue() {
@@ -81,14 +82,22 @@ public class Slider {
 	
 	private double getCurrentValue(int sliderPositionVal) {
 		double ratio = (1.0 - (double) sliderPositionVal / (double) range);
+		double range = 0.0;
+		double logValue = 0.0;
 		switch(type) {
 			case LINEAR:
 				return ratio * (maxValue - minValue) + minValue;
 			case LOGARITHMIC:
-				double range = Math.log(maxValue) - Math.log(minValue);
-				double logValue = ratio * range;
+				range = Math.log(maxValue) - Math.log(minValue);
+				logValue = ratio * range;
+				return Math.exp(logValue + Math.log(minValue));
+			case LOGARITHMIC_ZERO:
+				if(ratio == 0.0) return 0.0;
+				range = Math.log(maxValue) - Math.log(minValue);
+				logValue = ratio * range;
 				return Math.exp(logValue + Math.log(minValue));
 			case LOG12:
+				if(ratio == 0.0) return 0.0;
 				range = Math.log(maxValue) - Math.log(minValue);
 				logValue = ratio * range;
 				double val = Math.exp(logValue + Math.log(minValue));
@@ -106,14 +115,25 @@ public class Slider {
 	}
 	
 	public void setCurrentValue(double value) {
+		double logValue = 0.0;
+		double logRange = 0.0;
 		switch(type) {
 			case LINEAR:
 				double ratio = (value - minValue) / (maxValue - minValue);
 				sliderPosition = (int) (Math.round((1.0 - ratio) * range));
 				return;
 			case LOGARITHMIC:
-				double logValue = Math.log(value) - Math.log(minValue);
-				double logRange =  Math.log(maxValue) - Math.log(minValue);
+				logValue = Math.log(value) - Math.log(minValue);
+				logRange =  Math.log(maxValue) - Math.log(minValue);
+				sliderPosition = (int) Math.round((1.0 - (logValue / logRange)) * range);
+				return;
+			case LOGARITHMIC_ZERO:
+				if(value == 0.0) {
+					sliderPosition = range;
+					return;
+				}
+				logValue = Math.log(value) - Math.log(minValue);
+				logRange =  Math.log(maxValue) - Math.log(minValue);
 				sliderPosition = (int) Math.round((1.0 - (logValue / logRange)) * range);
 				return;
 			case LOG12:
@@ -156,7 +176,7 @@ public class Slider {
 		g2.setColor(Color.WHITE);
 		g2.drawRect(sliderBounds.x - 2, currentPosition - 3, sliderBounds.width + 4, 6);
 		// Draw Parameter String
-		g2.setFont(new Font("TRUETYPE_FONT", Font.BOLD, 12));
+		g2.setFont(new Font("TRUETYPE_FONT", Font.BOLD, 10));
 		Font font = g2.getFont();
 		FontMetrics metrics = g2.getFontMetrics(font);
 		int hgt = metrics.getHeight();
@@ -166,10 +186,15 @@ public class Slider {
 		int textXOffset = ((xPadding * 2 + sliderWidth) - adv) / 2;
 		g2.drawString(descriptor, screenX + textXOffset, screenY + textYOffset);
 		// Draw Parameter Values
-		g2.setFont(new Font("TRUETYPE_FONT", Font.PLAIN, 12));
+		g2.setFont(new Font("TRUETYPE_FONT", Font.PLAIN, 10));
 		font = g2.getFont();
 		metrics = g2.getFontMetrics(font);
 		hgt = metrics.getHeight();
+		String currentValueString = displayCurrentValue();
+		adv = metrics.stringWidth(currentValueString);
+		textYOffset += yPadding;
+		textXOffset = ((xPadding * 2 + sliderWidth) - adv) / 2;
+		g2.drawString(currentValueString, screenX + textXOffset, screenY + textYOffset);
 		adv = metrics.stringWidth(upperLable);
 		textYOffset += yPadding;
 		textXOffset = ((xPadding * 2 + sliderWidth) - adv) / 2;
@@ -178,6 +203,22 @@ public class Slider {
 		textYOffset += range + yPadding * 1.5;
 		textXOffset = ((xPadding * 2 + sliderWidth) - adv) / 2;
 		g2.drawString(lowerLable, screenX + textXOffset, screenY + textYOffset);
+	}
+	
+	private String displayCurrentValue() {
+		float currentValue = (float) getCurrentValue();
+		if(currentValue >= 1000.0) return new Integer((int) Math.round(currentValue)).toString();
+		if(currentValue >= 100.0) {
+			int intVal = (int) Math.floor(currentValue);
+			float floatVal = Math.round((currentValue - intVal) * 10.0f) / 10.0f;
+			return new Float(intVal + floatVal).toString();
+		}
+		if(currentValue >= 10.0) {
+			int intVal = (int) Math.floor(currentValue);
+			float floatVal = Math.round((currentValue - intVal) * 100.0f) / 100.0f;
+			return new Float(intVal + floatVal).toString();
+		}
+		return new Float(Math.round(currentValue * 1000.0) / 1000.0).toString();
 	}
 	
 }

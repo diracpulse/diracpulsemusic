@@ -8,6 +8,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
@@ -22,12 +26,16 @@ import javax.swing.JToolBar;
 import javax.swing.Timer;
 
 import main.AudioPlayer;
+import main.Module.Connector;
 import main.Module.ModuleType;
 import main.PlayDataInWindow.SynthType;
+import main.Module;
 import main.ModuleEditor;
+import main.ModuleFileTools;
 import main.MultiWindow;
 import main.Scale;
 import main.SynthTools;
+import main.modules.MasterInput;
 import main.playable.ControlBank.Name;
 import main.playable.ControlBank.Spec;
 
@@ -64,7 +72,12 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 	}
 	
 	public JToolBar createNavigationBar() {
-        addNavigationButton("New Sequence");
+		addNavigationButton("Open");
+		addNavigationButton("Save");
+		addNavigationButton("Play");
+		addNavigationButton("Pause");
+		addNavigationButton("Stop");
+        addNavigationButton("Random Sequence");
     	return navigationBar;
 	}
 	
@@ -78,55 +91,70 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
         add(createNavigationBar(), BorderLayout.PAGE_START);
         view.addMouseListener(controller);
         view.addMouseMotionListener(controller);
-        view.setPreferredSize(new Dimension(5000, 900));
+        view.setPreferredSize(new Dimension(1600, 750));
         JScrollPane scrollPane = new JScrollPane(view);
         scrollPane.setSize(800, 600);
         add(scrollPane, BorderLayout.CENTER);
         createModules();
-        sequencer = new PlayableSequencer(this, 10, 500);
+        sequencer = new PlayableSequencer(this, 10, 10 + 53 * 8 + 16 * 6);
         af = new AudioFetcher(this);
         af.start();
     }
     
-    public synchronized void newSequence() {
+    public synchronized void randomSequence() {
     	 noAudio = true;
-    	 sequencer = new PlayableSequencer(this, 10, 500);
-    	 sequencer.newSequence();
+    	 sequencer = new PlayableSequencer(this, 10, 10 + 53 * 8 + 16 * 6);
+    	 sequencer.reset();
     	 noAudio = false;
     }
     
+    public synchronized void pause() {
+    	noAudio = true;
+    }
+    
+    public synchronized void stop() {
+    	sequencer.reset();
+    	noAudio = true;
+    }
+    
+    public synchronized void play() {
+    	noAudio = false;
+    } 
+
     public void createModules() {
     	currentY = 10;
     	currentX = 10;
     	nameToModule = new TreeMap<String, PlayableModule>();
-    	ControlBank osc1Controls = new ControlBank(this, "OSCILLATOR_1", currentX, currentY);
-    	osc1Controls.add(osc1Controls.new Spec(ControlBank.Name.OSC1F2, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
-    	osc1Controls.add(osc1Controls.new Spec(ControlBank.Name.OSC1F4, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
+    	addControl("BPM", 30.0, 300.0, 120.0);
+    	ControlBank osc1Controls = new ControlBank(this, "OSC 1", currentX, currentY);
+    	osc1Controls.add(osc1Controls.new Spec(ControlBank.Name.OSC1Shape, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
     	osc1Controls.add(osc1Controls.new Spec(ControlBank.Name.OSC1PWM, Slider.Type.LINEAR, 0.1, 0.9, 0.5));
-    	osc1Controls.add(osc1Controls.new Spec(ControlBank.Name.SUBOSCLevel, Slider.Type.LINEAR, 0.0, 0.5, 0.0));
     	addControlBank(osc1Controls);
-    	ControlBank osc2Controls = new ControlBank(this, "OSCILLATOR_2", currentX, currentY);
-    	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2F2, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
-    	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2F4, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
+    	ControlBank osc2Controls = new ControlBank(this, "OSC 2", currentX, currentY);
+    	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2Shape, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
     	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2PWM, Slider.Type.LINEAR, 0.1, 0.9, 0.5));
+    	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2FMAmt, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
+    	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2PWMAmt, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
+    	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2AMPAmt, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
     	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2FREQ, Slider.Type.LOGARITHMIC, 1.0 / 16.0, 16.0, 1.0));
        	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2DETUNE, Slider.Type.LOGARITHMIC, 1.0, 1.5, 1.0));
     	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2RING, Slider.Type.LINEAR, 0.0, 1.0, 0.0));
     	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2LEVEL, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
     	addControlBank(osc2Controls);
-       	addEnvelope("FM AR1", PlayableEnvelope.EnvelopeType.AR);
+       	addEnvelope("FM ADSR", PlayableEnvelope.EnvelopeType.ADSR);
+       	addModule("FM OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SIN"});
+       	addSpecifiedLFO("FM LFO", 0.5, 1024.0, true);
     	addEnvelope("PWM ADSR", PlayableEnvelope.EnvelopeType.ADSR);
-    	addSpecifiedLFO("PWM LFO", 16.0, 1024.0, false);
-    	addEnvelope("AMP AR", PlayableEnvelope.EnvelopeType.AR);
-    	addEnvelope("AMP ASR", PlayableEnvelope.EnvelopeType.ASR);
-    	addModule("AMP LFO RATE", PlayableModule.Type.CONTROL, new String[]{" ", " "});
-    	addEnvelope("AMP LFO", PlayableEnvelope.EnvelopeType.ASR);
-    	addEnvelope("FILTER AR", PlayableEnvelope.EnvelopeType.AR);
-    	addEnvelope("FILTER ASR", PlayableEnvelope.EnvelopeType.ASR);
-    	addModule("FILTER LFO RATE", PlayableModule.Type.CONTROL, new String[]{" ", " "});
-    	addEnvelope("FILTER LFO", PlayableEnvelope.EnvelopeType.ASR);
-    	addFilterModule("LP FILTER", PlayableFilter.FilterType.LOWPASS);
-    	addFilterModule("HP FILTER", PlayableFilter.FilterType.HIGHPASS);
+    	addModule("PWM OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SIN"});
+    	addSpecifiedLFO("PWM LFO", 0.5, 1024.0, true);
+    	addEnvelope("AMP ADSR", PlayableEnvelope.EnvelopeType.ADSR);
+    	addModule("AMP OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SIN"});
+    	addSpecifiedLFO("AMP LFO", 0.5, 1024, true);
+    	addEnvelope("FILTER ADSR", PlayableEnvelope.EnvelopeType.ADSR);
+    	addModule("FILTER OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SIN"});
+    	addSpecifiedLFO("FILTER LFO", 0.5, 1024, true);
+    	addFilterModule("LP", PlayableFilter.FilterType.LOWPASS);
+    	addFilterModule("HP", PlayableFilter.FilterType.HIGHPASS);
     }
     
     public void addModule(String moduleName, PlayableModule.Type type) {
@@ -153,6 +181,11 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
        	case FILTER:
        		System.out.println("PlayableEditor.Module.addModule: Filter not suppported");
     	}
+    }
+    
+    public void addControl(String moduleName, double minValue, double maxValue, double initialValue) {
+    	nameToModule.put(moduleName, new PlayableControl(this, currentX, currentY, minValue, maxValue, initialValue, moduleName));
+    	currentX = nameToModule.get(moduleName).getMaxScreenX();
     }
     
     public void addControlBank(ControlBank controlBank) {
@@ -184,6 +217,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     	for(PlayableModule module: nameToModule.values()) {
     		module.pointSelected(x, y);
     	}
+    	sequencer.pointSelected(x, y);
     }
     
     public void mouseReleased(int x, int y) {
@@ -210,5 +244,46 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 		// TODO Auto-generated method stub
 		
 	}
+	
+	public void save() {
+		String filename = FileUtils.PromptForFileSave(view);
+		if(filename == null) return;
+		saveToFile(filename);
+	}
+	
+	public void open() {
+		String filename = FileUtils.PromptForFileOpen(view);
+		if(filename == null) return;
+		loadFromFile(filename);
+		view.repaint();
+	}
+	
+	public void saveToFile(String filename) {
+		try {
+			BufferedWriter out = new BufferedWriter(new FileWriter(filename));
+			sequencer.saveModuleInfo(out);
+			for(PlayableModule module: nameToModule.values()) module.saveModuleInfo(out);
+			out.close();
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, "There was a problem saving the file");
+			return;
+		}
+		JOptionPane.showMessageDialog(this, "Finished Saving File");
+	}
+	
+	public void loadFromFile(String filename) {
+		try {
+			BufferedReader in = new BufferedReader(new FileReader(filename));
+			sequencer.loadModuleInfo(in);
+			for(PlayableModule module: nameToModule.values()) module.loadModuleInfo(in);
+			in.close();
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, e.toString());
+			return;
+		}
+		JOptionPane.showMessageDialog(this, "Finished Loading File");
+	}
+	
+	
 
 }

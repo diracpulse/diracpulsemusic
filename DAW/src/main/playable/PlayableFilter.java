@@ -66,14 +66,14 @@ public class PlayableFilter implements PlayableModule {
 		this.type = type;
 		switch(type) {
 		case LOWPASS:
-			cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, minCutoff, maxCutoff, 256.0, new String[] {"Cutoff", " ", " "});
+			cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, minCutoff, maxCutoff, 256.0, new String[] {"FREQ", "Hz", " "});
 			x = cutoffControl.getMaxX();
-			resControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 0.25, 4.0, Math.sqrt(2.0) / 2.0, new String[] {"Resonance", " ", " "});
+			resControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 0.25, 4.0, Math.sqrt(2.0) / 2.0, new String[] {"RES", " ", " "});
 			maxScreenX = resControl.getMaxX();
 			initLowpassFIR();
 			return;
 		case HIGHPASS:
-			cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, minCutoffHP, maxCutoffHP, minCutoffHP, new String[] {"Cutoff", " ", " "});
+			cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, minCutoffHP, maxCutoffHP, minCutoffHP, new String[] {"FREQ", " ", " "});
 			maxScreenX = cutoffControl.getMaxX();
 		}
 		initLowpassFIR();
@@ -186,7 +186,7 @@ public class PlayableFilter implements PlayableModule {
 
 	public void draw(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g; 
-		g2.setFont(new Font("TRUETYPE_FONT", Font.BOLD, 12));
+		g2.setFont(new Font("TRUETYPE_FONT", Font.BOLD, 10));
 		Font font = g2.getFont();
 		FontMetrics metrics = g2.getFontMetrics(font);
 		int hgt = metrics.getHeight();
@@ -209,4 +209,30 @@ public class PlayableFilter implements PlayableModule {
 		if(type == FilterType.LOWPASS) resControl.pointSelected(x, y);
 		parent.view.repaint();
 	}
+	
+	public void loadModuleInfo(BufferedReader in) {
+		try {
+			cutoffControl.setCurrentValue(new Double(in.readLine()));
+			if(type == FilterType.LOWPASS) resControl.setCurrentValue(new Double(in.readLine()));
+		} catch (Exception e) {
+			System.out.println("PlayableFilter.loadModuleInfo: Error reading from file");
+		}
+	}
+
+	@Override
+	public void saveModuleInfo(BufferedWriter out) {
+		try {
+			out.write(new Double(cutoffControl.getCurrentValue()).toString());
+			out.newLine();
+			if(type == FilterType.LOWPASS) {
+				out.write(new Double(resControl.getCurrentValue()).toString());
+				out.newLine();
+			}
+		} catch (Exception e) {
+			System.out.println("PlayableFilter.saveModuleInfo: Error reading from file");
+		}
+	}
+	
+	
+	
 }

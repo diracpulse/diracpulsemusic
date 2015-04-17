@@ -3,10 +3,8 @@ package main.playable;
 
 import main.Filter;
 import main.SynthTools;
-import main.modules.FIRFilter.FilterType;
-import main.modules.FIRFilter.FilterWithGain;
 
-public class FrequencyToAmplitude {
+public class Filters {
 	
 	private double[] inputHP = {0, 0};
 	private double[] yHP = {0, 0};
@@ -32,7 +30,7 @@ public class FrequencyToAmplitude {
 	double b1_16 = -1.0 / (gamma_16 + 1);
 	double a0_16 = (gamma_16 - 1) / (gamma_16 + 1); 
 	
-	public FrequencyToAmplitude() {
+	public Filters() {
 		createFilter();
 	}
 	

@@ -6,6 +6,8 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -13,41 +15,44 @@ import java.util.TreeMap;
 public class ControlBank implements PlayableModule {
 
 	public enum Name {
-		FM1Mod,
-		FM1Ratio,
-		FM2Mod,
-		FM2Ratio,
-		FM3Mod,
-		FM3Ratio,
-		FM4Mod,
-		FM4Ratio,
-		FM5Mod,
-		FM5Ratio,
-		FM6Mod,
-		FM6Ratio,
-		FM7Mod,
-		FM7Ratio,
-		// Start Oscillator 1
-		OSC1Shape,
-		OSC1PWM,
-		OSC1FM,
-		OSC1F2,
-		OSC1F4,
-		SUBOSCLevel,
-		NOISE_COLOR,
-		NOISE_LEVEL,
-		OSC1LEVEL,
-		// Start Oscillator 2
-		OSC2Shape,
-		OSC2PWM,
-		OSC2FM,
-		OSC2F2,
-		OSC2F4,
-		OSC2FREQ,
-		OSC2DETUNE,
-		OSC2RING,
-		OSC2MIX,
-		OSC2LEVEL;
+
+		OSC1Shape ("SHP", "SAW", "SQR"),
+		OSC1PWM ("PWM", "", ""),
+		SUBOSCLevel ("SUB", "", ""),
+		NOISE_COLOR ("NOISE", "WHITE", "PINK"),
+		NOISE_LEVEL ("LEVEL", "", ""),
+		OSC2Shape ("SHP", "SAW", "SQR"),
+		OSC2PWM ("PWM", "", ""),
+		OSC2FMAmt ("FML", "", ""),
+		OSC2PWMAmt ("PWL", "", ""),
+		OSC2AMPAmt ("AML", "", ""),
+		OSC2FREQ ("FREQ", "", ""),
+		OSC2DETUNE ("FINE", "", ""),
+		OSC2RING ("RING", "", ""),
+		OSC2LEVEL ("LEVEL", "", "");
+		
+		private final String displayName;
+		private final String upperLable;
+		private final String lowerLable;
+		
+		Name(String displayName, String upperLable, String lowerLable) {
+			this.displayName = displayName;
+			this.upperLable = upperLable;
+			this.lowerLable = lowerLable;
+		}
+		
+		public String getDisplayName() {
+			return displayName;
+		}
+		
+		public String getUpperLable() {
+			return upperLable;
+		}
+		
+		public String getLowerLable() {
+			return lowerLable;
+		}
+		
 	}
 	
 	public class Spec {
@@ -90,9 +95,9 @@ public class ControlBank implements PlayableModule {
 		int x = maxScreenX;
 		int y = screenY + PlayableEditor.moduleYPadding;
 		nameToSlider.put(control.name , new Slider(control.taper, x, y, control.minVal, control.maxVal, control.initialVal, 
-						 new String[] {control.name.toString(), 
-						 new Float(control.maxVal).toString(), 
-						 new Float(control.minVal).toString()}));
+						 new String[] {control.name.getDisplayName(), 
+						 control.name.getUpperLable(), 
+						 control.name.getLowerLable(), }));
 		x = nameToSlider.get(control.name).getMaxX();
 		maxScreenY = nameToSlider.get(control.name).getMaxY();
 		maxScreenX = x;
@@ -108,23 +113,21 @@ public class ControlBank implements PlayableModule {
 	
 	public void draw(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g;
-		g2.setFont(new Font("TRUETYPE_FONT", Font.BOLD, 12));
+		g2.setFont(new Font("TRUETYPE_FONT", Font.BOLD, 10));
 		Font font = g2.getFont();
 		FontMetrics metrics = g2.getFontMetrics(font);
 		int hgt = metrics.getHeight();
 		int yPaddingVal = 0;
 		int textYOffset = (yPadding - hgt) / 2 + yPadding / 2;
-		for(String name: moduleName.split(" ")) {
-			g2.setColor(Color.WHITE);
-			int adv = metrics.stringWidth(name);
-			int textXOffset = (maxScreenX - screenX - adv) / 2;
-			g2.setColor(new Color(0.5f, 0.0f, 0.0f));
-			g2.fillRect(screenX + textXOffset - 4, screenY + yPaddingVal, maxScreenX - screenX - textXOffset * 2 + 8, yPadding - 4);
-			g2.setColor(Color.WHITE);
-			g2.drawString(name, screenX + textXOffset, screenY + textYOffset);
-			textYOffset += yPadding - 4;
-			yPaddingVal += yPadding - 4;
-		}
+		g2.setColor(Color.WHITE);
+		int adv = metrics.stringWidth(moduleName);
+		int textXOffset = (maxScreenX - screenX - adv) / 2;
+		g2.setColor(new Color(0.5f, 0.0f, 0.0f));
+		g2.fillRect(screenX + textXOffset - 4, screenY + yPaddingVal, maxScreenX - screenX - textXOffset * 2 + 8, yPadding - 4);
+		g2.setColor(Color.WHITE);
+		g2.drawString(moduleName, screenX + textXOffset, screenY + textYOffset);
+		textYOffset += yPadding - 4;
+		yPaddingVal += yPadding - 4;
 		g2.setColor(Color.BLUE);
 		g2.drawRect(screenX, screenY, maxScreenX - screenX, maxScreenY);
 		for(Slider slider: nameToSlider.values()) slider.draw(g2);
@@ -135,6 +138,28 @@ public class ControlBank implements PlayableModule {
 			slider.pointSelected(x, y);
 		}
 		parent.view.repaint();
+	}
+	
+	public void loadModuleInfo(BufferedReader in) {
+		try {
+			for(Slider slider: nameToSlider.values()) {
+				slider.setCurrentValue(new Double(in.readLine()));
+			}
+		} catch (Exception e) {
+			System.out.println("ControlBank.loadModuleInfo: Error reading from file");
+		}
+	}
+
+	@Override
+	public void saveModuleInfo(BufferedWriter out) {
+		try {
+			for(Slider slider: nameToSlider.values()) {
+				out.write(new Double(slider.getCurrentValue()).toString());
+				out.newLine();
+			}
+		} catch (Exception e) {
+			System.out.println("ControlBank.saveModuleInfo: Error reading from file");
+		}
 	}
 	
 }

@@ -64,7 +64,7 @@ public class AudioFetcher extends Thread implements LineListener {
 				for(int index = 0; index < samples.length; index++) {
 					if(Math.abs(samples[index]) > 1.0) {
 						if(!clippingReported) {
-							System.out.println("Clipping");
+							//System.out.println("Clipping");
 							clippingReported = true;
 						}
 						if(samples[index] > 1.0) { 

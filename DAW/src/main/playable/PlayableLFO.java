@@ -19,6 +19,7 @@ import main.Module.ModuleType;
 import main.ModuleEditor;
 import main.MultiWindow;
 import main.SynthTools;
+import main.playable.PlayableFilter.FilterType;
 import main.playable.Slider.Type;
 
 public class PlayableLFO implements PlayableModule {
@@ -61,14 +62,14 @@ public class PlayableLFO implements PlayableModule {
 		this.screenX = x;
 		this.screenY = screenY;
 		if(type == WaveType.STANDARD) {
-			freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 0.5, 1024.0, 8.0, new String[] {"RATE", " ", " "});
+			freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 0.5, 1024.0, 8.0, new String[] {"RATE", "HZ", " "});
 			x = freqControl.getMaxX();
 			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
 			x = fineFreqControl.getMaxX();
-			ampControl = new Slider(Slider.Type.LINEAR, x, y, 0, 1.0, 0, new String[] {"DEPTH", " ", " "});
+			ampControl = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 64.0, 1.0, 0.5, new String[] {"AMT", " ", " "});
 			maxScreenX = ampControl.getMaxX();
 		} else {
-			freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 0.5, 1024.0, 32.0, new String[] {"RATE", " ", " "});
+			freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 0.5, 1024.0, 32.0, new String[] {"RATE", "HZ", " "});
 			x = freqControl.getMaxX();
 			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 1.0, 1.25, 1.0, new String[] {"FINE", " ", " "});
 			x = fineFreqControl.getMaxX();
@@ -76,7 +77,7 @@ public class PlayableLFO implements PlayableModule {
 			x = attackControl.getMaxX();
 			releaseControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 0.001, 0.5, 0.5, new String[] {"R", " ", " "});
 			x = releaseControl.getMaxX();
-			ampControl = new Slider(Slider.Type.LINEAR, x, y, 0, 1.0, 0, new String[] {"DEPTH", " ", " "});
+			ampControl = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 64.0, 1.0, 0.5, new String[] {"AMT", " ", " "});
 			maxScreenX = ampControl.getMaxX();
 		}
 	}
@@ -96,8 +97,13 @@ public class PlayableLFO implements PlayableModule {
 			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
 			x = fineFreqControl.getMaxX();
 		}
-		ampControl = new Slider(Slider.Type.LINEAR, x, y, 0, 1.0, 0, new String[] {"DEPTH", " ", " "});
+		ampControl = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 64.0, 1.0, 0.5, new String[] {"AMT", " ", " "});
 		maxScreenX = ampControl.getMaxX();
+	}
+	
+	public double getFreq() {
+		if(fineFreq) return freqControl.getCurrentValue() * fineFreqControl.getCurrentValue();
+		return freqControl.getCurrentValue();
 	}
 	
 	public int getMaxScreenX() {
@@ -124,6 +130,72 @@ public class PlayableLFO implements PlayableModule {
 		double fineFreqVal = 1.0;
 		if(fineFreq) fineFreqVal = fineFreqControl.getCurrentValue();
 		currentPhase += (freqControl.getCurrentValue() * fineFreqVal * freqRatio / AudioFetcher.sampleRate * vibrato) * 2.0 * Math.PI;
+	}
+	
+	public synchronized double all(double waveformVal, double freqRatio) {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal;
+		double lowerVal = 0.0;
+		if(waveformVal < 1.0 / 3.0) {
+			lowerVal = (1.0 / 3.0 - waveformVal) * 3.0;
+			returnVal = (Math.sin(currentPhase * freqRatio) / 2.0 + 0.5) * lowerVal;
+			returnVal += (waveforms.triangle(currentPhase * freqRatio) / 2.0 + 0.5) * (1.0 - lowerVal);
+			return returnVal * ampVal + 1.0 - ampVal;
+		}
+		if(waveformVal < 2.0 / 3.0) {
+			lowerVal = (2.0 / 3.0 - waveformVal) * 3.0;
+			returnVal = (waveforms.triangle(currentPhase * freqRatio) / 2.0 + 0.5) * lowerVal;
+			returnVal += (waveforms.squarewave(currentPhase * freqRatio) / 2.0 + 0.5) * (1.0 - lowerVal);
+			return returnVal * ampVal + 1.0 - ampVal;
+		}
+		lowerVal = (1.0 - waveformVal) * 3.0;
+		returnVal = (waveforms.squarewave(currentPhase * freqRatio) / 2.0 + 0.5) * lowerVal;
+		returnVal += (waveforms.sawtooth(currentPhase * freqRatio) / 2.0 + 0.5) * (1.0 - lowerVal);
+		return returnVal * ampVal + 1.0 - ampVal;
+	}
+	
+	public synchronized double allFilter(double waveformVal, double freqRatio) {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal;
+		double lowerVal = 0.0;
+		if(waveformVal < 1.0 / 3.0) {
+			lowerVal = (1.0 / 3.0 - waveformVal) * 3.0;
+			returnVal = (Math.sin(currentPhase * freqRatio) / 2.0 + 0.5) * lowerVal;
+			returnVal += (waveforms.triangle(currentPhase * freqRatio) / 2.0 + 0.5) * (1.0 - lowerVal);
+			return returnVal * ampVal;
+		}
+		if(waveformVal < 2.0 / 3.0) {
+			lowerVal = (2.0 / 3.0 - waveformVal) * 3.0;
+			returnVal = (waveforms.triangle(currentPhase * freqRatio) / 2.0 + 0.5) * lowerVal;
+			returnVal += (waveforms.squarewave(currentPhase * freqRatio) / 2.0 + 0.5) * (1.0 - lowerVal);
+			return returnVal * ampVal;
+		}
+		lowerVal = (1.0 - waveformVal) * 3.0;
+		returnVal = (waveforms.squarewave(currentPhase * freqRatio) / 2.0 + 0.5) * lowerVal;
+		returnVal += (waveforms.sawtooth(currentPhase * freqRatio) / 2.0 + 0.5) * (1.0 - lowerVal);
+		return returnVal * ampVal;
+	}
+	
+	public synchronized double allSigned(double waveformVal, double freqRatio) {
+		double ampVal = ampControl.getCurrentValue();
+		double returnVal;
+		double lowerVal = 0.0;
+		if(waveformVal < 1.0 / 3.0) {
+			lowerVal = (1.0 / 3.0 - waveformVal) * 3.0;
+			returnVal = (Math.sin(currentPhase * freqRatio)) * lowerVal;
+			returnVal += (waveforms.triangle(currentPhase * freqRatio)) * (1.0 - lowerVal);
+			return returnVal * ampVal + 1.0 - ampVal;
+		}
+		if(waveformVal < 2.0 / 3.0) {
+			lowerVal = (2.0 / 3.0 - waveformVal) * 3.0;
+			returnVal = (waveforms.triangle(currentPhase * freqRatio)) * lowerVal;
+			returnVal += (waveforms.squarewave(currentPhase * freqRatio)) * (1.0 - lowerVal);
+			return returnVal * ampVal + 1.0 - ampVal;
+		}
+		lowerVal = (1.0 - waveformVal) * 3.0;
+		returnVal = (waveforms.squarewave(currentPhase * freqRatio)) * lowerVal;
+		returnVal += (waveforms.sawtooth(currentPhase * freqRatio)) * (1.0 - lowerVal);
+		return returnVal * ampVal + 1.0 - ampVal;
 	}
 	
 	public synchronized double triangle() {
@@ -238,7 +310,7 @@ public class PlayableLFO implements PlayableModule {
 	
 	public void draw(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g; 
-		g2.setFont(new Font("TRUETYPE_FONT", Font.BOLD, 12));
+		g2.setFont(new Font("TRUETYPE_FONT", Font.BOLD, 10));
 		Font font = g2.getFont();
 		FontMetrics metrics = g2.getFontMetrics(font);
 		int hgt = metrics.getHeight();
@@ -247,7 +319,7 @@ public class PlayableLFO implements PlayableModule {
 		int textYOffset = (yPadding - hgt) / 2 + yPadding / 2;
 		int textXOffset = (maxScreenX - screenX - adv) / 2;
 		g2.setColor(new Color(0.5f, 0.0f, 0.0f));
-		g2.fillRect(screenX + 4, screenY, maxScreenX - screenX - 8, yPadding - 4);
+		g2.fillRect(screenX + 8, screenY, maxScreenX - screenX - 16, yPadding - 4);
 		g2.setColor(Color.WHITE);
 		g2.drawString(moduleName, screenX + textXOffset, screenY + textYOffset);
 		g2.setColor(Color.BLUE);
@@ -271,4 +343,31 @@ public class PlayableLFO implements PlayableModule {
 		ampControl.pointSelected(x, y);
 		parent.view.repaint();
 	}
+	
+	public void loadModuleInfo(BufferedReader in) {
+		try {
+			freqControl.setCurrentValue(new Double(in.readLine()));
+			if(fineFreq) fineFreqControl.setCurrentValue(new Double(in.readLine()));
+			ampControl.setCurrentValue(new Double(in.readLine()));
+		} catch (Exception e) {
+			System.out.println("PlayableLFO.loadModuleInfo: Error reading from file");
+		}
+	}
+
+	@Override
+	public void saveModuleInfo(BufferedWriter out) {
+		try {
+			out.write(new Double(freqControl.getCurrentValue()).toString());
+			out.newLine();
+			if(fineFreq) {
+				out.write(new Double(fineFreqControl.getCurrentValue()).toString());
+				out.newLine();
+			}
+			out.write(new Double(ampControl.getCurrentValue()).toString());
+			out.newLine();
+		} catch (Exception e) {
+			System.out.println("PlayableLFO.saveModuleInfo: Error reading from file");
+		}
+	}
+	
 }

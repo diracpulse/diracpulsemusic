@@ -6,6 +6,8 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 
 public class PlayableEnvelope implements PlayableModule {
 
@@ -55,31 +57,31 @@ public class PlayableEnvelope implements PlayableModule {
 		double maxValADR = 8.0;
 		switch(type) {
 		case ADSR:
-			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultAD, new String[]{"A", " ", " "});
+			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultAD, new String[]{"A", "s", " "});
 			x = attack.getMaxX();
-			decay = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultAD, new String[]{"D", " ", " "});
+			decay = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultAD, new String[]{"D", "s", " "});
 			x = decay.getMaxX();
-			sustain = new Slider(Slider.Type.LOGARITHMIC, x, y, Math.exp(-1.0 * tau), 1.0, .5, new String[] {"S", " ", " "});
+			sustain = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 8.0, 1.0, .5, new String[] {"S", "", " "});
 			x = sustain.getMaxX();
-			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultR, new String[]{"R", " ", " "});
+			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultR, new String[]{"R", "s", " "});
 			x = release.getMaxX();
-			depth = new Slider(Slider.Type.LINEAR, x, y, 0.0, 1.0, 0.5, new String[]{"AMT", " ", " "});
+			depth = new Slider(Slider.Type.LOGARITHMIC, x, y, 1.0 / 256.0, 1.0, 0.5, new String[]{"AMT", "", ""});
 			maxScreenX = depth.getMaxX();
 			return;
 		case ASR:
-			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultAD, new String[]{"A", " ", " "});
+			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultAD, new String[]{"A", "s", " "});
 			x = attack.getMaxX();
-			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultR, new String[]{"R", " ", " "});
+			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultR, new String[]{"R", "s", " "});
 			x = release.getMaxX();
-			depth = new Slider(Slider.Type.LINEAR, x, y, 0.0, 1.0, 0.5, new String[]{"AMT", " ", " "});
+			depth = new Slider(Slider.Type.LOGARITHMIC, x, y, 1.0 / 256.0, 1.0, 0.5, new String[]{"AMT", "", ""});
 			maxScreenX = depth.getMaxX();
 			return;
 		case AR:
-			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultAD, new String[]{"A", " ", " "});
+			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultAD, new String[]{"A", "s", " "});
 			x = attack.getMaxX();
-			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultR, new String[]{"R", " ", " "});
+			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultR, new String[]{"R", "s", " "});
 			x = release.getMaxX();
-			depth = new Slider(Slider.Type.LINEAR, x, y, 0.0, 1.0, 0.5, new String[]{"AMT", " ", " "});
+			depth = new Slider(Slider.Type.LOGARITHMIC, x, y, 1.0 / 256.0, 1.0, 0.5, new String[]{"AMT",  "", ""});
 			x = depth.getMaxX();
 			maxScreenX = depth.getMaxX();
 			return;
@@ -107,54 +109,71 @@ public class PlayableEnvelope implements PlayableModule {
 		stopTimeInSamples = currentTimeInSamples;
 	}
 	
-	public double getSample(long absoluteTimeInSamples) {
+	public double getSample(long absoluteTimeInSamples, boolean absolute) {
 		switch(type) {
 		case AR:
-			return getSampleAR(absoluteTimeInSamples);
+			return getSampleAR(absoluteTimeInSamples, absolute);
 		case ASR:
-			return getSampleASR(absoluteTimeInSamples);
+			return getSampleASR(absoluteTimeInSamples, absolute);
 		case ADSR:
-			return getSampleADSR(absoluteTimeInSamples);
+			return getSampleADSR(absoluteTimeInSamples, absolute);
 		}
 		return 0.0;
 	}
 	
-	private double getSampleAR(long absoluteTimeInSamples) {
+	private double getSampleAR(long absoluteTimeInSamples, boolean absolute) {
 		double depthVal = depth.getCurrentValue();
 		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
 		if(currentTimeInSamples <= attackInSamples) {
 			saveAttackValue = 1.0 - Math.exp(-1.0 * tau * currentTimeInSamples / attackInSamples);
+			if(absolute) return saveAttackValue * depthVal;
 			return saveAttackValue * depthVal + (1.0 - depthVal);
 		}
-		return Math.exp(-1.0 * tau * (currentTimeInSamples - attackInSamples) / releaseInSamples) * saveAttackValue * depthVal + (1.0 - depthVal);
+		double returnVal = Math.exp(-1.0 * tau * (currentTimeInSamples - attackInSamples) / releaseInSamples) * saveAttackValue * depthVal;
+		if(absolute) return returnVal;
+		return returnVal + (1.0 - depthVal);
 	} 
 	
-	private double getSampleASR(long absoluteTimeInSamples) {
+	private double getSampleASR(long absoluteTimeInSamples, boolean absolute) {
 		double depthVal = depth.getCurrentValue();
 		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
 		if(!off) { 
 			saveAttackValue = (1.0 - Math.exp(-1.0 * tau * currentTimeInSamples / attackInSamples));
+			if(absolute) return saveAttackValue * depthVal;
 			return saveAttackValue * depthVal + (1.0 - depthVal);
 		}
-		return Math.exp(-1.0 * tau * (absoluteTimeInSamples - stopTimeInSamples) / releaseInSamples) * saveAttackValue * depthVal + (1.0 - depthVal);
+		double returnVal = Math.exp(-1.0 * tau * (absoluteTimeInSamples - stopTimeInSamples) / releaseInSamples) * saveAttackValue * depthVal;
+		if(absolute) return returnVal;
+		return returnVal + (1.0 - depthVal);
 	} 
 	
-	private double getSampleADSR(long absoluteTimeInSamples) {
+	private double getSampleADSR(long absoluteTimeInSamples, boolean absolute) {
 		double depthVal = depth.getCurrentValue();
+		saveDecayValue = 0;
 		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
 		if(!off) {
 			if(currentTimeInSamples <= attackInSamples) {
-				saveAttackValue = (1.0 - Math.exp(-1.0 * tau * currentTimeInSamples / attackInSamples) * depthVal) + (1.0 - depthVal);
-				return saveAttackValue;
+				saveAttackValue = (1.0 - Math.exp(-1.0 * tau * currentTimeInSamples / attackInSamples));
+				if(absolute) return saveAttackValue * depthVal;
+				return saveAttackValue * depthVal + (1.0 - depthVal);
 			}
 			saveDecayValue = saveAttackValue * Math.exp(-1.0 * tau * (currentTimeInSamples - attackInSamples) / (double) decayInSamples);
-			if(saveDecayValue > sustainValue) return saveDecayValue;
-			return sustainValue;
+			if(saveDecayValue > sustainValue) { 
+				if(absolute) return saveDecayValue * depthVal;
+				return saveDecayValue * depthVal + (1.0 - depthVal);
+			} else {
+				saveDecayValue = sustainValue;
+			}
+			if(absolute) return saveDecayValue * depthVal;
+			return saveDecayValue * depthVal + (1.0 - depthVal);
 		}
-		return Math.exp(-1.0 * tau * (absoluteTimeInSamples - stopTimeInSamples) / (double) releaseInSamples) * sustainValue * depthVal + (1.0 - depthVal);
-	} 
+		if(saveDecayValue == 0) saveDecayValue = saveAttackValue;
+		double returnVal = Math.exp(-1.0 * tau * (absoluteTimeInSamples - stopTimeInSamples) / (double) releaseInSamples) * saveDecayValue * depthVal;
+		if(absolute) return returnVal;
+		return returnVal + (1.0 - depthVal);
+	}
 	
-	public double getFilterSample(long absoluteTimeInSamples) {
+	private double getFilterSample(long absoluteTimeInSamples) {
 		double depthVal = depth.getCurrentValue();
 		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
 		if(!off) {
@@ -171,7 +190,7 @@ public class PlayableEnvelope implements PlayableModule {
 		return Math.exp(-1.0 * tau * (absoluteTimeInSamples - stopTimeInSamples) / (double) releaseInSamples) * saveDecayValue * depthVal;
 	} 
 	
-	public double getSampleLinear(long absoluteTimeInSamples) {
+	private double getSampleLinear(long absoluteTimeInSamples) {
 		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
 		if(!off) {
 			if(currentTimeInSamples < attackInSamples) {
@@ -190,7 +209,7 @@ public class PlayableEnvelope implements PlayableModule {
 	
 	public void draw(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g;
-		g2.setFont(new Font("TRUETYPE_FONT", Font.BOLD, 12));
+		g2.setFont(new Font("TRUETYPE_FONT", Font.BOLD, 10));
 		Font font = g2.getFont();
 		FontMetrics metrics = g2.getFontMetrics(font);
 		int hgt = metrics.getHeight();
@@ -226,4 +245,36 @@ public class PlayableEnvelope implements PlayableModule {
 		parent.view.repaint();
 	}
 	
+	public void loadModuleInfo(BufferedReader in) {
+		if(type != EnvelopeType.ADSR) return;
+		try {
+			attack.setCurrentValue(new Double(in.readLine()));
+			decay.setCurrentValue(new Double(in.readLine()));
+			sustain.setCurrentValue(new Double(in.readLine()));
+			release.setCurrentValue(new Double(in.readLine()));
+			depth.setCurrentValue(new Double(in.readLine()));
+		} catch (Exception e) {
+			System.out.println("PlayableEnvelope.loadModuleInfo: Error reading from file");
+		}
+	}
+
+	@Override
+	public void saveModuleInfo(BufferedWriter out) {
+		if(type != EnvelopeType.ADSR) return;
+		try {
+			out.write(new Double(attack.getCurrentValue()).toString());
+			out.newLine();
+			out.write(new Double(decay.getCurrentValue()).toString());
+			out.newLine();
+			out.write(new Double(sustain.getCurrentValue()).toString());
+			out.newLine();
+			out.write(new Double(release.getCurrentValue()).toString());
+			out.newLine();
+			out.write(new Double(depth.getCurrentValue()).toString());
+			out.newLine();
+		} catch (Exception e) {
+			System.out.println("PlayableEnvelope.saveModuleInfo: Error reading from file");
+		}
+	}
+		
 }

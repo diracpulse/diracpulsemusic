@@ -6,6 +6,8 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 
 public class PlayableControl implements PlayableModule {
 
@@ -37,9 +39,9 @@ public class PlayableControl implements PlayableModule {
 		this.screenY = screenY;
 		this.moduleName = moduleName;
 		slider  = new Slider(Slider.Type.LOGARITHMIC, x, y, minVal, maxVal, initialVal, new String[] {" ", new Float(maxVal).toString(), new Float(minVal).toString()});
-		x = slider.getMaxX();
-		fineSlider = new Slider(Slider.Type.LINEAR, x, y, 1.0, 2.0, 1.0, new String[] {" ", " ", " "});
-		maxScreenX = fineSlider.getMaxX();
+		//x = slider.getMaxX();
+		//fineSlider = new Slider(Slider.Type.LINEAR, x, y, 1.0, 2.0, 1.0, new String[] {" ", " ", " "});
+		maxScreenX = slider.getMaxX();
 	}
 	
 	public int getMaxScreenX() {
@@ -55,7 +57,9 @@ public class PlayableControl implements PlayableModule {
 	
 	public void draw(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g;
-		g2.setFont(new Font("TRUETYPE_FONT", Font.BOLD, 12));
+		g2.setColor(Color.BLUE);
+		g2.drawRect(screenX, screenY, maxScreenX - screenX, slider.getMaxY());
+		g2.setFont(new Font("TRUETYPE_FONT", Font.BOLD, 10));
 		Font font = g2.getFont();
 		FontMetrics metrics = g2.getFontMetrics(font);
 		int hgt = metrics.getHeight();
@@ -72,8 +76,6 @@ public class PlayableControl implements PlayableModule {
 			textYOffset += yPadding - 4;
 			yPaddingVal += yPadding - 4;
 		}
-		g2.setColor(Color.BLUE);
-		g2.drawRect(screenX, screenY, maxScreenX - screenX, slider.getMaxY());
 		slider.draw(g2);
 		if(fineSlider != null) fineSlider.draw(g2);
 	}
@@ -82,6 +84,29 @@ public class PlayableControl implements PlayableModule {
 		slider.pointSelected(x, y);
 		if(fineSlider != null) fineSlider.pointSelected(x, y);
 		parent.view.repaint();
+	}
+	
+	public void loadModuleInfo(BufferedReader in) {
+		try {
+			slider.setCurrentValue(new Double(in.readLine()));
+			if(fineSlider != null) fineSlider.setCurrentValue(new Double(in.readLine()));
+		} catch (Exception e) {
+			System.out.println("PlayableControl.loadModuleInfo: Error reading from file");
+		}
+	}
+
+	@Override
+	public void saveModuleInfo(BufferedWriter out) {
+		try {
+			out.write(new Double(slider.getCurrentValue()).toString());
+			out.newLine();
+			if(fineSlider != null) {
+				out.write(new Double(fineSlider.getCurrentValue()).toString());
+				out.newLine();
+			}
+		} catch (Exception e) {
+			System.out.println("PlayableControl.saveModuleInfo: Error reading from file");
+		}
 	}
 	
 }
