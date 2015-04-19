@@ -8,6 +8,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.TreeSet;
 
 public class Slider {
@@ -20,7 +21,7 @@ public class Slider {
 		LINEAR,
 		LOGARITHMIC,
 		LOGARITHMIC_ZERO,
-		LOG12;
+		LOGDIV2;
 	}
 	
 	private Type type;
@@ -38,6 +39,7 @@ public class Slider {
 	private String upperLable;
 	private String lowerLable;
 	private double[] positionToValue;
+	private Random random;
 	
 	public Slider(Type type, int screenX, int screenY, double minValue, double maxValue, double initialValue, String[] text) {
 		for(Double ratio: ratios) {
@@ -62,6 +64,7 @@ public class Slider {
 		for(int position = 0; position <= range; position++) {
 			positionToValue[position] = getCurrentValue(position);
 		}
+		random = new Random();
 	}
 	
 	public Rectangle getBounds() {
@@ -81,35 +84,27 @@ public class Slider {
 	}
 	
 	private double getCurrentValue(int sliderPositionVal) {
-		double ratio = (1.0 - (double) sliderPositionVal / (double) range);
-		double range = 0.0;
+		double dRange = (double) range;
+		double ratio = (1.0 - (double) sliderPositionVal / (double) dRange);
 		double logValue = 0.0;
 		switch(type) {
 			case LINEAR:
 				return ratio * (maxValue - minValue) + minValue;
 			case LOGARITHMIC:
-				range = Math.log(maxValue) - Math.log(minValue);
-				logValue = ratio * range;
+				dRange = Math.log(maxValue) - Math.log(minValue);
+				logValue = ratio * dRange;
 				return Math.exp(logValue + Math.log(minValue));
 			case LOGARITHMIC_ZERO:
 				if(ratio == 0.0) return 0.0;
-				range = Math.log(maxValue) - Math.log(minValue);
-				logValue = ratio * range;
+				dRange = Math.log(maxValue) - Math.log(minValue);
+				logValue = ratio * dRange;
 				return Math.exp(logValue + Math.log(minValue));
-			case LOG12:
-				if(ratio == 0.0) return 0.0;
-				range = Math.log(maxValue) - Math.log(minValue);
-				logValue = ratio * range;
-				double val = Math.exp(logValue + Math.log(minValue));
-				return val;
-				/*
-				double val2 = Math.log(val) / Math.log(2.0);
-				double expVal = Math.floor(val2);
-				int noteVal = (int) Math.round(val2 * sortedArray.size());
-				noteVal %= sortedArray.size();
-				if(noteVal < 0) noteVal += sortedArray.size();
-				return Math.pow(2.0, expVal) * Math.pow(2.0, sortedArray.get(noteVal));
-				*/
+			case LOGDIV2:
+				double sliderVal = Math.floor(sliderPositionVal / 2.0) * 2.0;
+				ratio = (1.0 - (double) sliderVal / dRange);
+				dRange = Math.log(maxValue) - Math.log(minValue);
+				logValue = ratio * dRange;
+				return Math.exp(logValue + Math.log(minValue));
 			}
 		return 0.0;
 	}
@@ -136,12 +131,16 @@ public class Slider {
 				logRange =  Math.log(maxValue) - Math.log(minValue);
 				sliderPosition = (int) Math.round((1.0 - (logValue / logRange)) * range);
 				return;
-			case LOG12:
+			case LOGDIV2:
 				logValue = Math.log(value) - Math.log(minValue);
 				logRange =  Math.log(maxValue) - Math.log(minValue);
 				sliderPosition = (int) Math.round((1.0 - (logValue / logRange)) * range);
 				return;
 		}
+	}
+	
+	public void setRandomValue() {
+		sliderPosition = random.nextInt(range);
 	}
 	
 	public void pointSelected(int x, int y) {

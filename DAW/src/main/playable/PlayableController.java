@@ -24,6 +24,9 @@ public class PlayableController implements MouseListener, MouseMotionListener, A
 		if ("Pause".equals(e.getActionCommand())) parent.pause();
 		if ("Stop".equals(e.getActionCommand())) parent.stop();
         if ("Random Sequence".equals(e.getActionCommand())) parent.randomSequence();
+        if ("Random Patch".equals(e.getActionCommand())) parent.randomPatch();
+        if ("Bass".equals(e.getActionCommand())) parent.sequencer.bass();
+        if ("Treble".equals(e.getActionCommand())) parent.sequencer.treble();
 	}
 
 	@Override

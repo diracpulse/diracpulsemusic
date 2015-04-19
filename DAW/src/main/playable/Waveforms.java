@@ -43,11 +43,53 @@ public class Waveforms {
 		tablesCalculated = true;
 		*/
 	}
+	
+	public double all(double currentPhase, double waveformVal, double pwm) {
+		double returnVal;
+		double lowerVal = 0.0;
+		if(waveformVal < 1.0 / 3.0) {
+			lowerVal = (1.0 / 3.0 - waveformVal) * 3.0;
+			returnVal = (Math.sin(currentPhase) / 2.0 + 0.5) * lowerVal;
+			returnVal += (triangle(currentPhase) / 2.0 + 0.5) * (1.0 - lowerVal);
+			return returnVal;
+		}
+		if(waveformVal < 2.0 / 3.0) {
+			lowerVal = (2.0 / 3.0 - waveformVal) * 3.0;
+			returnVal = (triangle(currentPhase) / 2.0 + 0.5) * lowerVal;
+			returnVal += (squarewave(currentPhase, pwm) / 2.0 + 0.5) * (1.0 - lowerVal);
+			return returnVal;
+		}
+		lowerVal = (1.0 - waveformVal) * 3.0;
+		returnVal = (squarewave(currentPhase, pwm) / 2.0 + 0.5) * lowerVal;
+		returnVal += (sawtooth(currentPhase) / 2.0 + 0.5) * (1.0 - lowerVal);
+		return returnVal;
+	}
 
+	public double allSigned(double currentPhase, double waveformVal, double pwm) {
+		double returnVal;
+		double lowerVal = 0.0;
+		if(waveformVal < 1.0 / 3.0) {
+			lowerVal = (1.0 / 3.0 - waveformVal) * 3.0;
+			returnVal = (Math.sin(currentPhase)) * lowerVal;
+			returnVal += (triangle(currentPhase)) * (1.0 - lowerVal);
+			return returnVal;
+		}
+		if(waveformVal < 2.0 / 3.0) {
+			lowerVal = (2.0 / 3.0 - waveformVal) * 3.0;
+			returnVal = (triangle(currentPhase)) * lowerVal;
+			returnVal += (squarewave(currentPhase, pwm)) * (1.0 - lowerVal);
+			return returnVal;
+		}
+		lowerVal = (1.0 - waveformVal) * 3.0;
+		returnVal = (squarewave(currentPhase, pwm)) * lowerVal;
+		returnVal += (sawtooth(currentPhase)) * (1.0 - lowerVal);
+		return returnVal;
+	}
+	
 	public double sawtooth(double phase) {
 		phase /= Math.PI * 2.0;
 		phase -= Math.floor(phase);
-		return -1.0 + phase * 2.0;
+		return -2.0 + phase * 4.0;
 		/*
 		double dIndex = phase * lookupTableLength;
 		int index = (int) Math.floor(dIndex);

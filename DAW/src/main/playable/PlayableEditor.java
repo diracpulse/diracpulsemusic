@@ -65,6 +65,13 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 	public static final int moduleYPadding = 20;
 	public volatile boolean noAudio = false;
 	
+	ControlBank osc1Controls = new ControlBank(this, "OSC1", currentX, currentY);
+	ControlBank osc2Controls = new ControlBank(this, "OSC2", currentX, currentY);
+	ControlBank osc3Controls = new ControlBank(this, "OSC3", currentX, currentY);
+   	ControlBank osc1RingControls = new ControlBank(this, "RING1", currentX, currentY);
+  	ControlBank osc2RingControls = new ControlBank(this, "RING2", currentX, currentY);
+  	ControlBank osc3RingControls = new ControlBank(this, "RING3", currentX, currentY);
+	
 	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);
 		button.addActionListener((ActionListener) controller);
@@ -78,6 +85,10 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 		addNavigationButton("Pause");
 		addNavigationButton("Stop");
         addNavigationButton("Random Sequence");
+        addNavigationButton("Random Patch");
+        addNavigationButton("Bass");
+        addNavigationButton("Treble");
+        
     	return navigationBar;
 	}
 	
@@ -119,42 +130,74 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     
     public synchronized void play() {
     	noAudio = false;
-    } 
+    }
+    
+    public void randomPatch() {
+    	osc1Controls.setRandomValues();
+    	osc2Controls.setRandomValues();
+    	osc3Controls.setRandomValues();
+       	osc1RingControls.setRandomValues();
+      	osc2RingControls.setRandomValues();
+      	osc3RingControls.setRandomValues();
+      	view.repaint();
+    }
 
     public void createModules() {
     	currentY = 10;
     	currentX = 10;
     	nameToModule = new TreeMap<String, PlayableModule>();
     	addControl("BPM", 30.0, 300.0, 120.0);
-    	ControlBank osc1Controls = new ControlBank(this, "OSC 1", currentX, currentY);
+    	osc1Controls = new ControlBank(this, "OSC1", currentX, currentY);
     	osc1Controls.add(osc1Controls.new Spec(ControlBank.Name.OSC1Shape, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
     	osc1Controls.add(osc1Controls.new Spec(ControlBank.Name.OSC1PWM, Slider.Type.LINEAR, 0.1, 0.9, 0.5));
     	addControlBank(osc1Controls);
-    	ControlBank osc2Controls = new ControlBank(this, "OSC 2", currentX, currentY);
+    	osc2Controls = new ControlBank(this, "OSC2", currentX, currentY);
     	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2Shape, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
     	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2PWM, Slider.Type.LINEAR, 0.1, 0.9, 0.5));
-    	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2FMAmt, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
-    	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2PWMAmt, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
-    	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2AMPAmt, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
-    	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2FREQ, Slider.Type.LOGARITHMIC, 1.0 / 16.0, 16.0, 1.0));
+    	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2FREQ, Slider.Type.LOGDIV2, 1.0 / 4.0, 4.0, 1.0));
        	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2DETUNE, Slider.Type.LOGARITHMIC, 1.0, 1.5, 1.0));
-    	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2RING, Slider.Type.LINEAR, 0.0, 1.0, 0.0));
-    	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2LEVEL, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
     	addControlBank(osc2Controls);
-       	addEnvelope("FM ADSR", PlayableEnvelope.EnvelopeType.ADSR);
-       	addModule("FM OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SIN"});
-       	addSpecifiedLFO("FM LFO", 0.5, 1024.0, true);
-    	addEnvelope("PWM ADSR", PlayableEnvelope.EnvelopeType.ADSR);
-    	addModule("PWM OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SIN"});
-    	addSpecifiedLFO("PWM LFO", 0.5, 1024.0, true);
+    	osc3Controls = new ControlBank(this, "OSC3", currentX, currentY);
+    	osc3Controls.add(osc3Controls.new Spec(ControlBank.Name.OSC3Shape, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
+    	osc3Controls.add(osc3Controls.new Spec(ControlBank.Name.OSC3PWM, Slider.Type.LINEAR, 0.1, 0.9, 0.5));
+    	osc3Controls.add(osc3Controls.new Spec(ControlBank.Name.OSC3FREQ, Slider.Type.LOGDIV2, 1.0 / 4.0, 4.0, 1.0));
+       	osc3Controls.add(osc3Controls.new Spec(ControlBank.Name.OSC3DETUNE, Slider.Type.LOGARITHMIC, 1.0, 1.5, 1.0));
+    	addControlBank(osc3Controls);
+    	osc1RingControls = new ControlBank(this, "RING1", currentX, currentY);
+    	osc1RingControls.add(osc1RingControls.new Spec(ControlBank.Name.RING1Shape, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
+    	osc1RingControls.add(osc1RingControls.new Spec(ControlBank.Name.RING1PWM, Slider.Type.LINEAR, 0.1, 0.9, 0.5));
+    	osc1RingControls.add(osc1RingControls.new Spec(ControlBank.Name.RING1FREQ, Slider.Type.LOGDIV2, 1.0 / 4.0, 4.0, 1.0));
+    	osc1RingControls.add(osc1RingControls.new Spec(ControlBank.Name.RING1AMT, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
+    	addControlBank(osc1RingControls);
+      	osc2RingControls = new ControlBank(this, "RING2", currentX, currentY);
+    	osc2RingControls.add(osc2RingControls.new Spec(ControlBank.Name.RING2Shape, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
+    	osc2RingControls.add(osc2RingControls.new Spec(ControlBank.Name.RING2PWM, Slider.Type.LINEAR, 0.1, 0.9, 0.5));
+    	osc2RingControls.add(osc2RingControls.new Spec(ControlBank.Name.RING2FREQ, Slider.Type.LOGDIV2, 1.0 / 4.0, 4.0, 1.0));
+    	osc2RingControls.add(osc2RingControls.new Spec(ControlBank.Name.RING2AMT, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
+    	addControlBank(osc2RingControls);
+      	osc3RingControls = new ControlBank(this, "RING3", currentX, currentY);
+    	osc3RingControls.add(osc3RingControls.new Spec(ControlBank.Name.RING3Shape, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
+    	osc3RingControls.add(osc3RingControls.new Spec(ControlBank.Name.RING3PWM, Slider.Type.LINEAR, 0.1, 0.9, 0.5));
+    	osc3RingControls.add(osc3RingControls.new Spec(ControlBank.Name.RING3FREQ, Slider.Type.LOGDIV2, 1.0 / 4.0, 4.0, 1.0));
+    	osc3RingControls.add(osc3RingControls.new Spec(ControlBank.Name.RING3AMT, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
+    	addControlBank(osc3RingControls);
+    	addEnvelope("R1AMP", PlayableEnvelope.EnvelopeType.R0);
+    	addEnvelope("R2AMP", PlayableEnvelope.EnvelopeType.R0);
+    	addEnvelope("R3AMP", PlayableEnvelope.EnvelopeType.R0);
     	addEnvelope("AMP ADSR", PlayableEnvelope.EnvelopeType.ADSR);
     	addModule("AMP OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SIN"});
-    	addSpecifiedLFO("AMP LFO", 0.5, 1024, true);
-    	addEnvelope("FILTER ADSR", PlayableEnvelope.EnvelopeType.ADSR);
-    	addModule("FILTER OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SIN"});
-    	addSpecifiedLFO("FILTER LFO", 0.5, 1024, true);
+    	addSpecifiedLFO("AMP LFO", 0.5, 32, false);
+    	addEnvelope("FLTR ADSR", PlayableEnvelope.EnvelopeType.ADSR);
+    	addModule("FLTR OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SIN"});
+    	addSpecifiedLFO("FLTR LFO", 0.5, 32, false);
     	addFilterModule("LP", PlayableFilter.FilterType.LOWPASS);
     	addFilterModule("HP", PlayableFilter.FilterType.HIGHPASS);
+       	ControlBank mixerControls = new ControlBank(this, "MIXER", currentX, currentY);
+    	mixerControls.add(mixerControls.new Spec(ControlBank.Name.OSC1LEVEL, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
+    	mixerControls.add(mixerControls.new Spec(ControlBank.Name.OSC2LEVEL, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
+    	mixerControls.add(mixerControls.new Spec(ControlBank.Name.OSC3LEVEL, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
+    	mixerControls.add(mixerControls.new Spec(ControlBank.Name.RINGALL, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
+    	addControlBank(mixerControls);
     }
     
     public void addModule(String moduleName, PlayableModule.Type type) {

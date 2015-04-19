@@ -18,18 +18,38 @@ public class ControlBank implements PlayableModule {
 
 		OSC1Shape ("SHP", "SAW", "SQR"),
 		OSC1PWM ("PWM", "", ""),
+		OSC1RING ("RING", "", ""),
 		SUBOSCLevel ("SUB", "", ""),
 		NOISE_COLOR ("NOISE", "WHITE", "PINK"),
 		NOISE_LEVEL ("LEVEL", "", ""),
 		OSC2Shape ("SHP", "SAW", "SQR"),
 		OSC2PWM ("PWM", "", ""),
-		OSC2FMAmt ("FML", "", ""),
-		OSC2PWMAmt ("PWL", "", ""),
-		OSC2AMPAmt ("AML", "", ""),
 		OSC2FREQ ("FREQ", "", ""),
 		OSC2DETUNE ("FINE", "", ""),
 		OSC2RING ("RING", "", ""),
-		OSC2LEVEL ("LEVEL", "", "");
+		OSC3Shape ("SHP", "SAW", "SQR"),
+		OSC3PWM ("PWM", "", ""),
+		OSC3FREQ ("FREQ", "", ""),
+		OSC3DETUNE ("FINE", "", ""),
+		OSC3RING ("RING", "", ""),
+		OSC1LEVEL ("OSC1", "", ""),
+		OSC2LEVEL ("OSC2", "", ""),
+		OSC3LEVEL ("OSC3", "", ""),
+		RING1LEVEL ("RING1", "", ""),
+		RING2LEVEL ("RING2", "", ""),
+		RING1Shape ("SHP", "SAW", "SQR"),
+		RING1PWM ("PWM", "", ""),
+		RING1FREQ ("FREQ", "", ""),
+		RING2Shape ("SHP", "SAW", "SQR"),
+		RING2PWM ("PWM", "", ""),
+		RING2FREQ ("FREQ", "", ""),
+		RING3Shape ("SHP", "SAW", "SQR"),
+		RING3PWM ("PWM", "", ""),
+		RING3FREQ ("FREQ", "", ""),
+		RING1AMT ("AMT", "", ""),
+		RING2AMT ("AMT", "", ""),
+		RING3AMT ("AMT", "", ""),
+		RINGALL ("RING", "", "");
 		
 		private final String displayName;
 		private final String upperLable;
@@ -109,6 +129,12 @@ public class ControlBank implements PlayableModule {
 	
 	public synchronized double getValue(Name name) {
 		return nameToSlider.get(name).getCurrentValue();
+	}
+	
+	public void setRandomValues() {
+		for(Slider slider: nameToSlider.values()) {
+			slider.setRandomValue();
+		}
 	}
 	
 	public void draw(Graphics g) {

@@ -11,6 +11,7 @@ import java.util.Random;
 
 import main.SynthTools;
 import main.modules.BasicWaveform;
+import main.playable.ControlBank.Spec;
 
 public class PlayableSequencer implements PlayableModule {
 	
@@ -25,20 +26,24 @@ public class PlayableSequencer implements PlayableModule {
 	private static final int[] minorScale = {0, 2, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19, 20, 22};
 	PlayableEditor parent;
 	long currentTimeInSamples = 0;
-	public static final double baseFreq = 256.0;
+	public static double baseFreq = 256.0;
 	int numNotes = 16;
 	boolean[] tie;
 	boolean[] accent;
+	boolean accentOn = false;
 	int[] notes;
 	int bpm = 120;
 	int noteLengthInSamples = (int) Math.round(44100.0 / bpm * 60); 
-	int noteRestInSamples = (int) Math.round(noteLengthInSamples / 4.0); 
-	double currentPhaseOsc1 = 0.0;
-	double currentPhaseOsc2 = 0.0;
+	int noteRestInSamples = (int) Math.round(noteLengthInSamples / 4.0);
+	long noteStartInSamples = 0;
+	long accentTimeInSamples = 882;
+	double currentPhase;
+	double[] osc = new double[4];
 	public volatile boolean newSequence = false;
 	double prevOsc2NoteFreq = baseFreq;
 	double osc2NoteFreq = baseFreq;
 	double glideVal = 0.0;
+	double accentVal = 1.0;
 	
 	long ampLFOStartTime = 0;
 	long filterLFOStartTime = 0;
@@ -58,9 +63,9 @@ public class PlayableSequencer implements PlayableModule {
 		accent = new boolean[numNotes];
 		int currentNote = 7;
 		for(int index = 0; index < notes.length; index++) {
+			 accent[index] = false; // random.nextBoolean();
+			 tie[index] = random.nextBoolean();
 			 notes[index] = minorScale[currentNote];
-			 tie[index] = false;
-			 accent[index] = false;
 			 int noteStep = random.nextInt(5) - 2;
 			 currentNote += noteStep;
 			 if(currentNote >= minorScale.length) currentNote -= noteStep * 2;
@@ -75,23 +80,33 @@ public class PlayableSequencer implements PlayableModule {
     	hpFilter.reset();
 		currentTimeInSamples = 0;
 	}
+	
+	public synchronized void bass() {
+		baseFreq = 64;
+	}
+	
+	public synchronized void treble() {
+		baseFreq = 256;
+	}
 
 	public double[] masterGetSamples(int numSamples) {
 		PlayableControl BPM = (PlayableControl) parent.nameToModule.get("BPM");
-		ControlBank osc1CONTROLS = (ControlBank) parent.nameToModule.get("OSC 1");
-		ControlBank osc2CONTROLS = (ControlBank) parent.nameToModule.get("OSC 2");
-    	PlayableEnvelope fmENV = (PlayableEnvelope) parent.nameToModule.get("FM ADSR");
-    	PlayableControl fmOSC = (PlayableControl) parent.nameToModule.get("FM OSC");
-    	PlayableLFO fmLFO = (PlayableLFO) parent.nameToModule.get("FM LFO");
-    	PlayableEnvelope pwmENV = (PlayableEnvelope) parent.nameToModule.get("PWM ADSR");
-    	PlayableControl pwmOSC = (PlayableControl) parent.nameToModule.get("PWM OSC");
-    	PlayableLFO pwmLFO = (PlayableLFO) parent.nameToModule.get("PWM LFO");
+		ControlBank osc1CONTROLS = (ControlBank) parent.nameToModule.get("OSC1");
+		ControlBank osc2CONTROLS = (ControlBank) parent.nameToModule.get("OSC2");
+		ControlBank osc3CONTROLS = (ControlBank) parent.nameToModule.get("OSC3");
+		ControlBank ringOsc1CONTROLS = (ControlBank) parent.nameToModule.get("RING1");
+		ControlBank ringOsc2CONTROLS = (ControlBank) parent.nameToModule.get("RING2");
+		ControlBank ringOsc3CONTROLS = (ControlBank) parent.nameToModule.get("RING3");
+		PlayableEnvelope ringAmp1ENV = (PlayableEnvelope) parent.nameToModule.get("R1AMP");
+		PlayableEnvelope ringAmp2ENV = (PlayableEnvelope) parent.nameToModule.get("R2AMP");
+		PlayableEnvelope ringAmp3ENV = (PlayableEnvelope) parent.nameToModule.get("R3AMP");
     	PlayableEnvelope ampENV = (PlayableEnvelope) parent.nameToModule.get("AMP ADSR");
     	PlayableControl ampOSC = (PlayableControl) parent.nameToModule.get("AMP OSC");
     	PlayableLFO ampLFO = (PlayableLFO) parent.nameToModule.get("AMP LFO");
-    	PlayableEnvelope filterENV = (PlayableEnvelope) parent.nameToModule.get("FILTER ADSR");
-    	PlayableControl filterOSC = (PlayableControl) parent.nameToModule.get("FILTER OSC");
-    	PlayableLFO filterLFO = (PlayableLFO) parent.nameToModule.get("FILTER LFO");
+    	PlayableEnvelope filterENV = (PlayableEnvelope) parent.nameToModule.get("FLTR ADSR");
+    	PlayableControl filterOSC = (PlayableControl) parent.nameToModule.get("FLTR OSC");
+    	PlayableLFO filterLFO = (PlayableLFO) parent.nameToModule.get("FLTR LFO");
+    	ControlBank MIXER = (ControlBank) parent.nameToModule.get("MIXER");
     	PlayableFilter lpFilter = (PlayableFilter) parent.nameToModule.get("LP");
     	PlayableFilter hpFilter = (PlayableFilter) parent.nameToModule.get("HP");
     	int currentBPM = (int) Math.round(BPM.getSample());
@@ -109,83 +124,100 @@ public class PlayableSequencer implements PlayableModule {
 		}
 		for(int index = 0; index < numSamples; index++) {
 			if(currentTimeInSamples % noteLengthInSamples == 0) {
+				noteStartInSamples = currentTimeInSamples;
 				lpFilter.reset();
 				hpFilter.reset();
-				currentPhaseOsc1 = 0.0;
-				currentPhaseOsc2 = 0.0;
+				currentPhase = 0.0;
 				ampENV.noteOn(currentTimeInSamples);
 				ampLFO.reset();
 				filterENV.noteOn(currentTimeInSamples);
 				filterLFO.reset();
-				pwmENV.noteOn(currentTimeInSamples);
-				pwmLFO.reset();
-				fmENV.noteOn(currentTimeInSamples);
-				fmLFO.reset();
+				ringAmp1ENV.noteOn(currentTimeInSamples);
+				ringAmp2ENV.noteOn(currentTimeInSamples);
+				ringAmp3ENV.noteOn(currentTimeInSamples);
 			}
 			if(currentTimeInSamples % noteLengthInSamples == noteLengthInSamples - noteRestInSamples) {
 				ampENV.noteOff(currentTimeInSamples);
 				filterENV.noteOff(currentTimeInSamples);
-				pwmENV.noteOff(currentTimeInSamples);
-				fmENV.noteOff(currentTimeInSamples);
+				ringAmp1ENV.noteOff(currentTimeInSamples);
+				ringAmp2ENV.noteOff(currentTimeInSamples);
+				ringAmp3ENV.noteOff(currentTimeInSamples);
 			}
 			long currentTime = currentTimeInSamples / noteLengthInSamples;
 			int noteIndex = (int) currentTime % notes.length;
 			double noteFreq = Math.pow(2.0, notes[noteIndex] / 12.0) * baseFreq;
 			double freqRatio = noteFreq / baseFreq;
-			double osc2Ratio = osc2CONTROLS.getValue(ControlBank.Name.OSC2FREQ) * osc2CONTROLS.getValue(ControlBank.Name.OSC2DETUNE) / noteFreq;
-			double fmOscVal = fmOSC.getSample();
-			double fmVal1 = fmLFO.allSigned(fmOscVal, 1.0) * fmENV.getSample(currentTimeInSamples, true);
-			double fmVal2 = fmLFO.allSigned(fmOscVal, osc2Ratio) * fmENV.getSample(currentTimeInSamples, true);
-			fmVal2 *= osc2CONTROLS.getValue(ControlBank.Name.OSC2FMAmt);
-			if(fmLFO.getFreq() < 16.0) {
-				fmLFO.newSample();
-			} else {
-				fmLFO.newSample(freqRatio);
+			double[] pwm = new double[6];
+			pwm[0] = osc1CONTROLS.getValue(ControlBank.Name.OSC1PWM);
+			pwm[1] = osc2CONTROLS.getValue(ControlBank.Name.OSC2PWM);
+			pwm[2] = osc3CONTROLS.getValue(ControlBank.Name.OSC3PWM);
+			pwm[3] = ringOsc1CONTROLS.getValue(ControlBank.Name.RING1PWM);
+			pwm[4] = ringOsc2CONTROLS.getValue(ControlBank.Name.RING2PWM);
+			pwm[5] = ringOsc3CONTROLS.getValue(ControlBank.Name.RING3PWM);
+			double[] saw = new double[6];
+			saw[0] = osc1CONTROLS.getValue(ControlBank.Name.OSC1Shape);
+			saw[1] = osc2CONTROLS.getValue(ControlBank.Name.OSC2Shape);
+			saw[2] = osc3CONTROLS.getValue(ControlBank.Name.OSC3Shape);
+			saw[3] = ringOsc1CONTROLS.getValue(ControlBank.Name.RING1Shape);
+			saw[4] = ringOsc2CONTROLS.getValue(ControlBank.Name.RING2Shape);
+			saw[5] = ringOsc3CONTROLS.getValue(ControlBank.Name.RING3Shape);
+			double[] ampMod = new double[6];
+			ampMod[0] = 1;
+			ampMod[1] = 1;
+			ampMod[2] = 1;
+			ampMod[3] = ringAmp1ENV.getSample(currentTimeInSamples, true);
+			ampMod[4] = ringAmp2ENV.getSample(currentTimeInSamples, true);
+			ampMod[5] = ringAmp3ENV.getSample(currentTimeInSamples, true);
+			double[] freqMod = new double[6];
+			freqMod[0] = 1;
+			freqMod[1] = osc2CONTROLS.getValue(ControlBank.Name.OSC2FREQ) * osc2CONTROLS.getValue(ControlBank.Name.OSC2DETUNE);
+			freqMod[2] = osc3CONTROLS.getValue(ControlBank.Name.OSC3FREQ) * osc3CONTROLS.getValue(ControlBank.Name.OSC3DETUNE);
+			freqMod[3] = ringOsc1CONTROLS.getValue(ControlBank.Name.RING1FREQ);
+			freqMod[4] = ringOsc2CONTROLS.getValue(ControlBank.Name.RING2FREQ) * freqMod[1];
+			freqMod[5] = ringOsc3CONTROLS.getValue(ControlBank.Name.RING3FREQ) * freqMod[2];
+			double[] depth = new double[6];
+			depth[0] = 1;
+			depth[1] = 1;
+			depth[2] = 1;
+			depth[3] = ringOsc1CONTROLS.getValue(ControlBank.Name.RING1AMT);
+			depth[4] = ringOsc2CONTROLS.getValue(ControlBank.Name.RING2AMT);
+			depth[5] = ringOsc3CONTROLS.getValue(ControlBank.Name.RING3AMT);
+			double[] osc = new double[6];
+			for(int i = 0; i < osc.length; i++) {
+				osc[i] = waveforms.allSigned(currentPhase * freqMod[i], saw[i], pwm[i]) * depth[i] + (1.0 - depth[i]);
+				//osc[i] = waveforms.sawtooth(currentPhase * freqMod[i]) * saw[i] * depth[i] + (1.0 - depth[i]);
+				//osc[i] += waveforms.squarewave(currentPhase * freqMod[i], pwm[i]) * (1.0 - saw[i]) * depth[i] + (1.0 - depth[i]);
+				osc[i] *= ampMod[i] * depth[i] + (1.0 - depth[i]);
 			}
-			double pwmOscVal = pwmOSC.getSample();
-			double pwm1 = pwmLFO.allSigned(pwmOscVal, 1.0) * pwmENV.getSample(currentTimeInSamples, false);
-			double pwm2 = pwmLFO.allSigned(pwmOscVal, osc2Ratio) * pwmENV.getSample(currentTimeInSamples, false);
-			pwm2 *= osc2CONTROLS.getValue(ControlBank.Name.OSC2PWMAmt);
-			if(pwmLFO.getFreq() < 16.0) {
-				pwmLFO.newSample();
-			} else {
-				pwmLFO.newSample(freqRatio);
+			double[] ring = new double[3];
+			for(int i = 3; i < 6; i++) {
+				ring[i - 3] = waveforms.sawtooth(currentPhase * freqMod[i]) * saw[i];
+				ring[i - 3] += waveforms.squarewave(currentPhase * freqMod[i], pwm[i]) * (1.0 - saw[i]);
 			}
-			double osc1pwm = osc1CONTROLS.getValue(ControlBank.Name.OSC1PWM);
-			double osc2pwm = osc2CONTROLS.getValue(ControlBank.Name.OSC2PWM);
-			double osc1saw = osc1CONTROLS.getValue(ControlBank.Name.OSC1Shape);
-			double osc2saw = osc2CONTROLS.getValue(ControlBank.Name.OSC2Shape);
-			double osc2 = waveforms.sawtooth(currentPhaseOsc2 + fmVal2) * osc2saw;
-			osc2 += waveforms.squarewave(currentPhaseOsc2 + fmVal2, osc2pwm + pwm2) * (1.0 - osc2saw);
-			double osc1 = waveforms.sawtooth(currentPhaseOsc1 + fmVal1) * osc1saw;
-			osc1 += waveforms.squarewave(currentPhaseOsc1 + fmVal1, osc1pwm + pwm1) * (1.0 - osc1saw);
+	    	double osc1Level = MIXER.getValue(ControlBank.Name.OSC1LEVEL);
+	    	double osc2Level = MIXER.getValue(ControlBank.Name.OSC2LEVEL);
+	    	double osc3Level = MIXER.getValue(ControlBank.Name.OSC3LEVEL);
+	    	double ringAllLevel = MIXER.getValue(ControlBank.Name.RINGALL);
+	    	osc[0] = osc[0] * osc[3];
+	    	osc[1] = osc[1] * osc[4];
+	    	osc[2] = osc[2] * osc[5];
+	    	double ringAll = (osc[0] * osc[1] + osc[1] * osc[2] + osc[1] * osc[3]) / 3.0;
 			double ampEnv = ampENV.getSample(currentTimeInSamples, false);
 			double ampOscVal = ampOSC.getSample();
-			double amp1 = ampLFO.all(ampOscVal, 1.0);
-			double amp2 = ampLFO.all(ampOscVal, osc2Ratio);
-			amp2 *= osc2CONTROLS.getValue(ControlBank.Name.OSC2AMPAmt);
-			if(ampLFO.getFreq() < 16.0) {
-				ampLFO.newSample();
-			} else {
-				ampLFO.newSample(freqRatio);
+			for(int i = 0; i < 3; i++) {
+				osc[i] *= ampLFO.all(ampOscVal, 1.0);
+				osc[i] *= ampEnv;
 			}
-			double ring = osc1 * osc2 * ampEnv;
-			osc1 *= amp1 * ampEnv;
-			osc2 *= amp2 * ampEnv;
-			double filterOscVal = filterOSC.getSample();
-			double filter = filterENV.getSample(currentTimeInSamples, false) + filterLFO.allFilter(filterOscVal, 1.0);
-			if(filterLFO.getFreq() < 16.0) {
-				filterLFO.newSample();
-			} else {
-				filterLFO.newSample(freqRatio);
-			}
-			double ringVal = osc2CONTROLS.getValue(ControlBank.Name.OSC2RING);
-			double osc2Val = osc2CONTROLS.getValue(ControlBank.Name.OSC2LEVEL);
-			returnVal[index] = (osc1 + osc2 * osc2Val + ring * ringVal) / 3.0;
+			ringAll *= ampEnv;
+			ampLFO.newSample();
+	    	returnVal[index] = osc[0] * osc1Level + osc[1] * osc2Level + osc[2] * osc3Level + ringAll * ringAllLevel;
+	    	returnVal[index] /= 4.0;
+	    	double filterOscVal = filterOSC.getSample();
+			double filter = filterENV.getSample(currentTimeInSamples, true) + filterLFO.allFilter(filterOscVal, 1.0);
+			filterLFO.newSample();
 			returnVal[index] = lpFilter.getSample(returnVal[index], freqRatio, filter);
 			returnVal[index] = hpFilter.getSample(returnVal[index], 1.0, 1.0);
-			currentPhaseOsc1 += (2.0 * Math.PI * noteFreq) / AudioFetcher.sampleRate;
-			currentPhaseOsc2 += (2.0 * Math.PI * noteFreq * osc2CONTROLS.getValue(ControlBank.Name.OSC2FREQ) * osc2CONTROLS.getValue(ControlBank.Name.OSC2DETUNE)) / AudioFetcher.sampleRate;
+			currentPhase += (2.0 * Math.PI * noteFreq) / AudioFetcher.sampleRate;
 			currentTimeInSamples++;
 		}
 		return returnVal;
