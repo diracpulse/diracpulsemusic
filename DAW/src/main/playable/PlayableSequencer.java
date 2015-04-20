@@ -27,7 +27,8 @@ public class PlayableSequencer implements PlayableModule {
 	PlayableEditor parent;
 	long currentTimeInSamples = 0;
 	public static double baseFreq = 256.0;
-	int numNotes = 16;
+	int maxNotes = 16;
+	int sequenceLength = 16;
 	boolean[] tie;
 	boolean[] accent;
 	boolean accentOn = false;
@@ -35,7 +36,7 @@ public class PlayableSequencer implements PlayableModule {
 	int bpm = 120;
 	int noteLengthInSamples = (int) Math.round(44100.0 / bpm * 60); 
 	int noteRestInSamples = (int) Math.round(noteLengthInSamples / 4.0);
-	long noteStartInSamples = 0;
+	//long noteStartInSamples = 0;
 	long accentTimeInSamples = 882;
 	double currentPhase;
 	double[] osc = new double[4];
@@ -43,7 +44,11 @@ public class PlayableSequencer implements PlayableModule {
 	double prevOsc2NoteFreq = baseFreq;
 	double osc2NoteFreq = baseFreq;
 	double glideVal = 0.0;
+	double deltaGlideVal = 0.0;
 	double accentVal = 1.0;
+	double deltaAccentVal = 1.0;
+	double noteFreq = baseFreq;
+	double restVal = 0.0;
 	
 	long ampLFOStartTime = 0;
 	long filterLFOStartTime = 0;
@@ -58,9 +63,9 @@ public class PlayableSequencer implements PlayableModule {
 		this.screenX = screenX;
 		this.screenY = screenY;
 		currentTimeInSamples = 0;
-		notes = new int[numNotes];
-		tie = new boolean[numNotes];
-		accent = new boolean[numNotes];
+		notes = new int[maxNotes];
+		tie = new boolean[maxNotes];
+		accent = new boolean[maxNotes];
 		int currentNote = 7;
 		for(int index = 0; index < notes.length; index++) {
 			 accent[index] = false; // random.nextBoolean();
@@ -97,9 +102,9 @@ public class PlayableSequencer implements PlayableModule {
 		ControlBank ringOsc1CONTROLS = (ControlBank) parent.nameToModule.get("RING1");
 		ControlBank ringOsc2CONTROLS = (ControlBank) parent.nameToModule.get("RING2");
 		ControlBank ringOsc3CONTROLS = (ControlBank) parent.nameToModule.get("RING3");
-		PlayableEnvelope ringAmp1ENV = (PlayableEnvelope) parent.nameToModule.get("R1AMP");
-		PlayableEnvelope ringAmp2ENV = (PlayableEnvelope) parent.nameToModule.get("R2AMP");
-		PlayableEnvelope ringAmp3ENV = (PlayableEnvelope) parent.nameToModule.get("R3AMP");
+		PlayableEnvelope ringAmp1ENV = (PlayableEnvelope) parent.nameToModule.get("RE1");
+		PlayableEnvelope ringAmp2ENV = (PlayableEnvelope) parent.nameToModule.get("RE2");
+		PlayableEnvelope ringAmp3ENV = (PlayableEnvelope) parent.nameToModule.get("RE3");
     	PlayableEnvelope ampENV = (PlayableEnvelope) parent.nameToModule.get("AMP ADSR");
     	PlayableControl ampOSC = (PlayableControl) parent.nameToModule.get("AMP OSC");
     	PlayableLFO ampLFO = (PlayableLFO) parent.nameToModule.get("AMP LFO");
@@ -113,7 +118,7 @@ public class PlayableSequencer implements PlayableModule {
     	if(currentBPM != bpm) {
     		bpm = currentBPM;
     		long currentTime = currentTimeInSamples / noteLengthInSamples;
-			int noteIndex = (int) currentTime % notes.length;
+			int noteIndex = (int) currentTime % sequenceLength;
     		noteLengthInSamples = (int) Math.round(44100.0 / bpm * 60); 
     		noteRestInSamples = (int) Math.round(noteLengthInSamples / 4.0);
     		currentTimeInSamples = noteIndex * noteLengthInSamples;
@@ -123,30 +128,54 @@ public class PlayableSequencer implements PlayableModule {
 			returnVal[index] = 0.0;
 		}
 		for(int index = 0; index < numSamples; index++) {
+			long currentTime = currentTimeInSamples / noteLengthInSamples;
+			int noteIndex = (int) currentTime % sequenceLength;
 			if(currentTimeInSamples % noteLengthInSamples == 0) {
-				noteStartInSamples = currentTimeInSamples;
-				lpFilter.reset();
-				hpFilter.reset();
-				currentPhase = 0.0;
-				ampENV.noteOn(currentTimeInSamples);
-				ampLFO.reset();
-				filterENV.noteOn(currentTimeInSamples);
-				filterLFO.reset();
-				ringAmp1ENV.noteOn(currentTimeInSamples);
-				ringAmp2ENV.noteOn(currentTimeInSamples);
-				ringAmp3ENV.noteOn(currentTimeInSamples);
+				if(notes[noteIndex] == -1) {
+					restVal = 0.0;
+				} else {
+					restVal = 1.0;
+				}
+				glideVal = 1.0;
+				deltaGlideVal = 0.0;
+				if(notes[noteIndex] != -1) {
+					noteFreq = Math.pow(2.0, notes[noteIndex] / 12.0) * baseFreq;
+					int prevNoteIndex = (noteIndex - 1) % sequenceLength;
+					if(prevNoteIndex < 0) prevNoteIndex += sequenceLength;
+					if(notes[prevNoteIndex] == -1 || (notes[prevNoteIndex] != notes[noteIndex]) || !tie[prevNoteIndex]) {
+						lpFilter.reset();
+						hpFilter.reset();
+						currentPhase = 0.0;
+						ampENV.noteOn(currentTimeInSamples);
+						ampLFO.reset();
+						filterENV.noteOn(currentTimeInSamples);
+						filterLFO.reset();
+						ringAmp1ENV.noteOn(currentTimeInSamples);
+						ringAmp2ENV.noteOn(currentTimeInSamples);
+						ringAmp3ENV.noteOn(currentTimeInSamples);
+					}
+				}
 			}
 			if(currentTimeInSamples % noteLengthInSamples == noteLengthInSamples - noteRestInSamples) {
-				ampENV.noteOff(currentTimeInSamples);
-				filterENV.noteOff(currentTimeInSamples);
-				ringAmp1ENV.noteOff(currentTimeInSamples);
-				ringAmp2ENV.noteOff(currentTimeInSamples);
-				ringAmp3ENV.noteOff(currentTimeInSamples);
+				if(notes[noteIndex] != -1) {
+					if(!tie[noteIndex]) {
+						ampENV.noteOff(currentTimeInSamples);
+						filterENV.noteOff(currentTimeInSamples);
+						ringAmp1ENV.noteOff(currentTimeInSamples);
+						ringAmp2ENV.noteOff(currentTimeInSamples);
+						ringAmp3ENV.noteOff(currentTimeInSamples);
+					}
+					if(tie[noteIndex] && !(notes[(noteIndex + 1) % sequenceLength] == -1)) {
+						glideVal = 1.0;
+						double startFreq = Math.pow(2.0, notes[noteIndex] / 12.0);
+						double endFreq = Math.pow(2.0, notes[(noteIndex + 1) % sequenceLength] / 12.0); 
+						deltaGlideVal = (Math.pow(2.0, endFreq / startFreq) - 2.0) / noteRestInSamples;
+					}
+				}
 			}
-			long currentTime = currentTimeInSamples / noteLengthInSamples;
-			int noteIndex = (int) currentTime % notes.length;
-			double noteFreq = Math.pow(2.0, notes[noteIndex] / 12.0) * baseFreq;
-			double freqRatio = noteFreq / baseFreq;
+			double currentNoteFreq = noteFreq * glideVal;
+			glideVal += deltaGlideVal;
+			double freqRatio = currentNoteFreq / baseFreq;
 			double[] pwm = new double[6];
 			pwm[0] = osc1CONTROLS.getValue(ControlBank.Name.OSC1PWM);
 			pwm[1] = osc2CONTROLS.getValue(ControlBank.Name.OSC2PWM);
@@ -170,8 +199,8 @@ public class PlayableSequencer implements PlayableModule {
 			ampMod[5] = ringAmp3ENV.getSample(currentTimeInSamples, true);
 			double[] freqMod = new double[6];
 			freqMod[0] = 1;
-			freqMod[1] = osc2CONTROLS.getValue(ControlBank.Name.OSC2FREQ) * osc2CONTROLS.getValue(ControlBank.Name.OSC2DETUNE);
-			freqMod[2] = osc3CONTROLS.getValue(ControlBank.Name.OSC3FREQ) * osc3CONTROLS.getValue(ControlBank.Name.OSC3DETUNE);
+			freqMod[1] = osc2CONTROLS.getValue(ControlBank.Name.OSC2FREQ);
+			freqMod[2] = osc3CONTROLS.getValue(ControlBank.Name.OSC3FREQ);
 			freqMod[3] = ringOsc1CONTROLS.getValue(ControlBank.Name.RING1FREQ);
 			freqMod[4] = ringOsc2CONTROLS.getValue(ControlBank.Name.RING2FREQ) * freqMod[1];
 			freqMod[5] = ringOsc3CONTROLS.getValue(ControlBank.Name.RING3FREQ) * freqMod[2];
@@ -184,40 +213,32 @@ public class PlayableSequencer implements PlayableModule {
 			depth[5] = ringOsc3CONTROLS.getValue(ControlBank.Name.RING3AMT);
 			double[] osc = new double[6];
 			for(int i = 0; i < osc.length; i++) {
-				osc[i] = waveforms.allSigned(currentPhase * freqMod[i], saw[i], pwm[i]) * depth[i] + (1.0 - depth[i]);
+				osc[i] = waveforms.allSigned(currentPhase * freqMod[i], saw[i], pwm[i]) * depth[i] + (1.0 - depth[i]) * restVal;
 				//osc[i] = waveforms.sawtooth(currentPhase * freqMod[i]) * saw[i] * depth[i] + (1.0 - depth[i]);
 				//osc[i] += waveforms.squarewave(currentPhase * freqMod[i], pwm[i]) * (1.0 - saw[i]) * depth[i] + (1.0 - depth[i]);
-				osc[i] *= ampMod[i] * depth[i] + (1.0 - depth[i]);
-			}
-			double[] ring = new double[3];
-			for(int i = 3; i < 6; i++) {
-				ring[i - 3] = waveforms.sawtooth(currentPhase * freqMod[i]) * saw[i];
-				ring[i - 3] += waveforms.squarewave(currentPhase * freqMod[i], pwm[i]) * (1.0 - saw[i]);
+				osc[i] *= ampMod[i] * depth[i] + (1.0 - depth[i]) * restVal;
 			}
 	    	double osc1Level = MIXER.getValue(ControlBank.Name.OSC1LEVEL);
 	    	double osc2Level = MIXER.getValue(ControlBank.Name.OSC2LEVEL);
 	    	double osc3Level = MIXER.getValue(ControlBank.Name.OSC3LEVEL);
-	    	double ringAllLevel = MIXER.getValue(ControlBank.Name.RINGALL);
 	    	osc[0] = osc[0] * osc[3];
 	    	osc[1] = osc[1] * osc[4];
 	    	osc[2] = osc[2] * osc[5];
-	    	double ringAll = (osc[0] * osc[1] + osc[1] * osc[2] + osc[1] * osc[3]) / 3.0;
 			double ampEnv = ampENV.getSample(currentTimeInSamples, false);
 			double ampOscVal = ampOSC.getSample();
 			for(int i = 0; i < 3; i++) {
 				osc[i] *= ampLFO.all(ampOscVal, 1.0);
 				osc[i] *= ampEnv;
 			}
-			ringAll *= ampEnv;
 			ampLFO.newSample();
-	    	returnVal[index] = osc[0] * osc1Level + osc[1] * osc2Level + osc[2] * osc3Level + ringAll * ringAllLevel;
+	    	returnVal[index] = osc[0] * osc1Level + osc[1] * osc2Level + osc[2] * osc3Level;
 	    	returnVal[index] /= 4.0;
 	    	double filterOscVal = filterOSC.getSample();
 			double filter = filterENV.getSample(currentTimeInSamples, true) + filterLFO.allFilter(filterOscVal, 1.0);
 			filterLFO.newSample();
 			returnVal[index] = lpFilter.getSample(returnVal[index], freqRatio, filter);
 			returnVal[index] = hpFilter.getSample(returnVal[index], 1.0, 1.0);
-			currentPhase += (2.0 * Math.PI * noteFreq) / AudioFetcher.sampleRate;
+			currentPhase += (2.0 * Math.PI * currentNoteFreq) / AudioFetcher.sampleRate;
 			currentTimeInSamples++;
 		}
 		return returnVal;
@@ -232,22 +253,61 @@ public class PlayableSequencer implements PlayableModule {
 			g2.setColor(Color.GRAY);
 			g2.drawRect(screenX, lowerY - keyHeight, noteWidth, keyHeight);
 			for(int noteIndex = 0; noteIndex < notes.length; noteIndex++) {
-				g2.setColor(Color.BLACK);
-				if(notes[noteIndex] == keyIndex) g2.setColor(Color.RED);
+				if(noteIndex < sequenceLength) {
+					g2.setColor(Color.BLACK);
+				} else {
+					g2.setColor(Color.GRAY);
+				}
+				if(notes[noteIndex] == keyIndex) {
+					if(tie[noteIndex] && accent[noteIndex]) g2.setColor(new Color(1.0f, 0.0f, 1.0f));
+					if(!tie[noteIndex] && accent[noteIndex]) g2.setColor(Color.BLUE);
+					if(tie[noteIndex] && !accent[noteIndex]) g2.setColor(Color.RED);
+					if(!tie[noteIndex] && !accent[noteIndex]) g2.setColor(Color.WHITE);
+				}
 				g2.fillRect(screenX + (noteIndex + 1) * noteWidth, lowerY - keyHeight, noteWidth, keyHeight);
-				g2.setColor(Color.GRAY);
+				g2.setColor(Color.GREEN);
 				g2.drawRect(screenX + (noteIndex + 1) * noteWidth, lowerY - keyHeight, noteWidth, keyHeight);
+				if((currentTimeInSamples / noteLengthInSamples) % sequenceLength == noteIndex) {
+					g2.setColor(new Color(0.0f, 0.5f, 0.0f, 0.5f));
+					g2.fillRect(screenX + (noteIndex + 1) * noteWidth, lowerY - keyHeight, noteWidth, keyHeight);
+				}
 			}
 		}
 	}
 
-	public void pointSelected(int x, int y) {
+	public void pointSelected(int x, int y, PlayableController.ClickInfo info) {
 		for(int keyIndex = 0; keyIndex < numKeys; keyIndex++) {
 			int lowerY = (numKeys - keyIndex) * keyHeight + screenY;
 			for(int noteIndex = 0; noteIndex < notes.length; noteIndex++) {
 				Rectangle rect = new Rectangle(screenX + (noteIndex + 1) * noteWidth, lowerY - keyHeight, noteWidth, keyHeight);
 				if(rect.contains(x, y)) {
-					notes[noteIndex] = keyIndex;
+					if(info == PlayableController.ClickInfo.SHIFT_DOWN) {
+						sequenceLength = noteIndex + 1;
+						reset();
+						parent.view.repaint();
+						return;
+					}
+					if(info == PlayableController.ClickInfo.CTRL_DOWN) {
+						tie[noteIndex] = !tie[noteIndex];
+						parent.view.repaint();
+						return;
+					}
+					if(info == PlayableController.ClickInfo.ALT_DOWN) {
+						accent[noteIndex] = !accent[noteIndex];
+						parent.view.repaint();
+						return;
+					}
+					if(notes[noteIndex] == keyIndex) {
+						if(info == PlayableController.ClickInfo.NONE) { 
+							notes[noteIndex] = -1;
+							parent.view.repaint();
+							return;
+						}
+					} else {
+						notes[noteIndex] = keyIndex;
+						parent.view.repaint();
+						return;
+					}
 				}
 			}
 		}
@@ -263,8 +323,10 @@ public class PlayableSequencer implements PlayableModule {
 	@Override
 	public void loadModuleInfo(BufferedReader in) {
 		try {
-			notes = new int[numNotes];
-			for(int noteIndex = 0; noteIndex < numNotes; noteIndex++) {
+			baseFreq = new Double(in.readLine());
+			sequenceLength = new Integer(in.readLine());
+			notes = new int[maxNotes];
+			for(int noteIndex = 0; noteIndex < maxNotes; noteIndex++) {
 				notes[noteIndex] = new Integer(in.readLine()).intValue();
 				tie[noteIndex] = new Boolean(in.readLine()).booleanValue();
 				accent[noteIndex] = new Boolean(in.readLine()).booleanValue();
@@ -277,7 +339,11 @@ public class PlayableSequencer implements PlayableModule {
 	@Override
 	public void saveModuleInfo(BufferedWriter out) {
 		try {
-			for(int noteIndex = 0; noteIndex < numNotes; noteIndex++) {
+			out.write(new Double(baseFreq).toString());
+			out.newLine();
+			out.write(new Integer(sequenceLength).toString());
+			out.newLine();
+			for(int noteIndex = 0; noteIndex < maxNotes; noteIndex++) {
 				out.write(new Integer(notes[noteIndex]).toString());
 				out.newLine();
 				out.write(new Boolean(tie[noteIndex]).toString());

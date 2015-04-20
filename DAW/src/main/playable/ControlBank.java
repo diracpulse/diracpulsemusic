@@ -16,18 +16,18 @@ public class ControlBank implements PlayableModule {
 
 	public enum Name {
 
-		OSC1Shape ("SHP", "SAW", "SQR"),
+		OSC1Shape ("SHP", "SAW", "SIN"),
 		OSC1PWM ("PWM", "", ""),
 		OSC1RING ("RING", "", ""),
 		SUBOSCLevel ("SUB", "", ""),
 		NOISE_COLOR ("NOISE", "WHITE", "PINK"),
 		NOISE_LEVEL ("LEVEL", "", ""),
-		OSC2Shape ("SHP", "SAW", "SQR"),
+		OSC2Shape ("SHP", "SAW", "SIN"),
 		OSC2PWM ("PWM", "", ""),
 		OSC2FREQ ("FREQ", "", ""),
 		OSC2DETUNE ("FINE", "", ""),
 		OSC2RING ("RING", "", ""),
-		OSC3Shape ("SHP", "SAW", "SQR"),
+		OSC3Shape ("SHP", "SAW", "SIN"),
 		OSC3PWM ("PWM", "", ""),
 		OSC3FREQ ("FREQ", "", ""),
 		OSC3DETUNE ("FINE", "", ""),
@@ -37,13 +37,13 @@ public class ControlBank implements PlayableModule {
 		OSC3LEVEL ("OSC3", "", ""),
 		RING1LEVEL ("RING1", "", ""),
 		RING2LEVEL ("RING2", "", ""),
-		RING1Shape ("SHP", "SAW", "SQR"),
+		RING1Shape ("SHP", "SAW", "SIN"),
 		RING1PWM ("PWM", "", ""),
 		RING1FREQ ("FREQ", "", ""),
-		RING2Shape ("SHP", "SAW", "SQR"),
+		RING2Shape ("SHP", "SAW", "SIN"),
 		RING2PWM ("PWM", "", ""),
 		RING2FREQ ("FREQ", "", ""),
-		RING3Shape ("SHP", "SAW", "SQR"),
+		RING3Shape ("SHP", "SAW", "SIN"),
 		RING3PWM ("PWM", "", ""),
 		RING3FREQ ("FREQ", "", ""),
 		RING1AMT ("AMT", "", ""),
@@ -159,9 +159,9 @@ public class ControlBank implements PlayableModule {
 		for(Slider slider: nameToSlider.values()) slider.draw(g2);
 	}
 
-	public void pointSelected(int x, int y) {
+	public void pointSelected(int x, int y, PlayableController.ClickInfo info) {
 		for(Slider slider: nameToSlider.values()) {
-			slider.pointSelected(x, y);
+			slider.pointSelected(x, y, info);
 		}
 		parent.view.repaint();
 	}

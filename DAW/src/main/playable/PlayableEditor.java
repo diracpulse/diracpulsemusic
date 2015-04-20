@@ -155,13 +155,11 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2Shape, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
     	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2PWM, Slider.Type.LINEAR, 0.1, 0.9, 0.5));
     	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2FREQ, Slider.Type.LOGDIV2, 1.0 / 4.0, 4.0, 1.0));
-       	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2DETUNE, Slider.Type.LOGARITHMIC, 1.0, 1.5, 1.0));
     	addControlBank(osc2Controls);
     	osc3Controls = new ControlBank(this, "OSC3", currentX, currentY);
     	osc3Controls.add(osc3Controls.new Spec(ControlBank.Name.OSC3Shape, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
     	osc3Controls.add(osc3Controls.new Spec(ControlBank.Name.OSC3PWM, Slider.Type.LINEAR, 0.1, 0.9, 0.5));
     	osc3Controls.add(osc3Controls.new Spec(ControlBank.Name.OSC3FREQ, Slider.Type.LOGDIV2, 1.0 / 4.0, 4.0, 1.0));
-       	osc3Controls.add(osc3Controls.new Spec(ControlBank.Name.OSC3DETUNE, Slider.Type.LOGARITHMIC, 1.0, 1.5, 1.0));
     	addControlBank(osc3Controls);
     	osc1RingControls = new ControlBank(this, "RING1", currentX, currentY);
     	osc1RingControls.add(osc1RingControls.new Spec(ControlBank.Name.RING1Shape, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
@@ -181,9 +179,9 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     	osc3RingControls.add(osc3RingControls.new Spec(ControlBank.Name.RING3FREQ, Slider.Type.LOGDIV2, 1.0 / 4.0, 4.0, 1.0));
     	osc3RingControls.add(osc3RingControls.new Spec(ControlBank.Name.RING3AMT, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
     	addControlBank(osc3RingControls);
-    	addEnvelope("R1AMP", PlayableEnvelope.EnvelopeType.R0);
-    	addEnvelope("R2AMP", PlayableEnvelope.EnvelopeType.R0);
-    	addEnvelope("R3AMP", PlayableEnvelope.EnvelopeType.R0);
+    	addEnvelope("RE1", PlayableEnvelope.EnvelopeType.R0);
+    	addEnvelope("RE2", PlayableEnvelope.EnvelopeType.R0);
+    	addEnvelope("RE3", PlayableEnvelope.EnvelopeType.R0);
     	addEnvelope("AMP ADSR", PlayableEnvelope.EnvelopeType.ADSR);
     	addModule("AMP OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SIN"});
     	addSpecifiedLFO("AMP LFO", 0.5, 32, false);
@@ -194,9 +192,8 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     	addFilterModule("HP", PlayableFilter.FilterType.HIGHPASS);
        	ControlBank mixerControls = new ControlBank(this, "MIXER", currentX, currentY);
     	mixerControls.add(mixerControls.new Spec(ControlBank.Name.OSC1LEVEL, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
-    	mixerControls.add(mixerControls.new Spec(ControlBank.Name.OSC2LEVEL, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
-    	mixerControls.add(mixerControls.new Spec(ControlBank.Name.OSC3LEVEL, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
-    	mixerControls.add(mixerControls.new Spec(ControlBank.Name.RINGALL, Slider.Type.LINEAR, 0.0, 1.0, 0.5));
+    	mixerControls.add(mixerControls.new Spec(ControlBank.Name.OSC2LEVEL, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
+    	mixerControls.add(mixerControls.new Spec(ControlBank.Name.OSC3LEVEL, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
     	addControlBank(mixerControls);
     }
     
@@ -256,11 +253,14 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     	currentX = nameToModule.get(moduleName).getMaxScreenX();
     }
     
-    public void mousePressed(int x, int y) {
+    public void mousePressed(int x, int y, PlayableController.ClickInfo info) {
     	for(PlayableModule module: nameToModule.values()) {
-    		module.pointSelected(x, y);
+    		module.pointSelected(x, y, info);
     	}
-    	sequencer.pointSelected(x, y);
+    }
+    
+    public void mouseClicked(int x, int y, PlayableController.ClickInfo info) {
+    	sequencer.pointSelected(x, y, info);
     }
     
     public void mouseReleased(int x, int y) {
@@ -268,7 +268,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     
     public void mouseDragged(int x, int y) {
       	for(PlayableModule module: nameToModule.values()) {
-    		module.pointSelected(x, y);
+    		module.pointSelected(x, y, PlayableController.ClickInfo.NONE);
     	}
     }
 

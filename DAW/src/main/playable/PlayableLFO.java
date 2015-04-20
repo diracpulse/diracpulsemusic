@@ -333,14 +333,14 @@ public class PlayableLFO implements PlayableModule {
 		ampControl.draw(g2);
 	}
 
-	public void pointSelected(int x, int y) {
-		freqControl.pointSelected(x, y);
-		if(fineFreq) fineFreqControl.pointSelected(x, y);
+	public void pointSelected(int x, int y, PlayableController.ClickInfo info) {
+		freqControl.pointSelected(x, y, info);
+		if(fineFreq) fineFreqControl.pointSelected(x, y, info);
 		if(type == WaveType.VARIABLE) {
-			attackControl.pointSelected(x, y);
-			releaseControl.pointSelected(x, y);
+			attackControl.pointSelected(x, y, info);
+			releaseControl.pointSelected(x, y, info);
 		}
-		ampControl.pointSelected(x, y);
+		ampControl.pointSelected(x, y, info);
 		parent.view.repaint();
 	}
 	

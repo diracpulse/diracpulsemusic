@@ -19,7 +19,7 @@ public interface PlayableModule {
 	
 	public void draw(Graphics g);
 	
-	public void pointSelected(int x, int y);
+	public void pointSelected(int x, int y, PlayableController.ClickInfo key);
 	
 	public void loadModuleInfo(BufferedReader in);
 

@@ -11,6 +11,14 @@ import main.ScaleUtils;
 public class PlayableController implements MouseListener, MouseMotionListener, ActionListener {
 
 	PlayableEditor parent;
+	
+	public enum ClickInfo {
+		NONE,
+		ALT_DOWN,
+		SHIFT_DOWN,
+		CTRL_DOWN,
+		DOUBLE_CLICK;
+	}
 
 	public PlayableController(PlayableEditor parent) {
 		this.parent = parent;
@@ -42,6 +50,24 @@ public class PlayableController implements MouseListener, MouseMotionListener, A
 
 	@Override
 	public void mouseClicked(MouseEvent arg0) {
+		int x = arg0.getX();
+		int y = arg0.getY();
+		if(arg0.getClickCount() == 2) {
+			parent.mouseClicked(x, y, ClickInfo.DOUBLE_CLICK);
+		}
+		if(arg0.isAltDown()) {
+			parent.mouseClicked(x, y, ClickInfo.ALT_DOWN);
+			return;
+		}
+		if(arg0.isControlDown()) {
+			parent.mouseClicked(x, y, ClickInfo.CTRL_DOWN);
+			return;
+		}
+		if(arg0.isShiftDown()) {
+			parent.mouseClicked(x, y, ClickInfo.SHIFT_DOWN);
+			return;
+		}
+		parent.mouseClicked(x, y, ClickInfo.NONE);
 	}
 
 	@Override
@@ -57,7 +83,10 @@ public class PlayableController implements MouseListener, MouseMotionListener, A
 	public void mousePressed(MouseEvent arg0) {
 		int x = arg0.getX();
 		int y = arg0.getY();
-		parent.mousePressed(x, y);
+		if(arg0.isAltDown()) parent.mousePressed(x, y, ClickInfo.ALT_DOWN);
+		if(arg0.isControlDown()) parent.mousePressed(x, y, ClickInfo.CTRL_DOWN);
+		if(arg0.isShiftDown()) parent.mousePressed(x, y, ClickInfo.SHIFT_DOWN);
+		parent.mousePressed(x, y, ClickInfo.NONE);
 	}
 
 	@Override

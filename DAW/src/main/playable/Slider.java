@@ -143,7 +143,7 @@ public class Slider {
 		sliderPosition = random.nextInt(range);
 	}
 	
-	public void pointSelected(int x, int y) {
+	public void pointSelected(int x, int y, PlayableController.ClickInfo info) {
 		if(sliderBounds.contains(x, y)) {
 			sliderPosition = y - sliderBounds.y;
 			return;

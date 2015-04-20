@@ -204,9 +204,9 @@ public class PlayableFilter implements PlayableModule {
 		if(type == FilterType.LOWPASS) resControl.draw(g2);
 	}
 
-	public void pointSelected(int x, int y) {
-		cutoffControl.pointSelected(x, y);
-		if(type == FilterType.LOWPASS) resControl.pointSelected(x, y);
+	public void pointSelected(int x, int y, PlayableController.ClickInfo info) {
+		cutoffControl.pointSelected(x, y, info);
+		if(type == FilterType.LOWPASS) resControl.pointSelected(x, y, info);
 		parent.view.repaint();
 	}
 	

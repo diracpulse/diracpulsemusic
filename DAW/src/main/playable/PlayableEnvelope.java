@@ -53,49 +53,50 @@ public class PlayableEnvelope implements PlayableModule {
 		int y = screenY + PlayableEditor.moduleYPadding;
 		this.screenX = x;
 		this.screenY = screenY;
-		double defaultAD = 0.1;
-		double defaultR = 0.1;
-		double minValADR = 0.00005;
-		double maxValADR = 8.0;
+		double defaultAD = 0.001;
+		double defaultR = 0.5;
+		double maxValR = 8.0;
+		double minValADR = 0.0005;
+		double maxValAD = 1.0;
 		switch(type) {
 		case ADSR:
-			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultAD, new String[]{"A", "s", " "});
+			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValAD, defaultAD, new String[]{"A", "s", " "});
 			x = attack.getMaxX();
-			decay = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultAD, new String[]{"D", "s", " "});
+			decay = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValAD, defaultAD, new String[]{"D", "s", " "});
 			x = decay.getMaxX();
-			sustain = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 8.0, 1.0, .5, new String[] {"S", "", " "});
+			sustain = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 16.0, 1.0, Math.sqrt(2.0) / 2.0, new String[] {"S", "", " "});
 			x = sustain.getMaxX();
-			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultR, new String[]{"R", "s", " "});
+			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValR, defaultR, new String[]{"R", "s", " "});
 			x = release.getMaxX();
-			depth = new Slider(Slider.Type.LOGARITHMIC, x, y, 1.0 / 256.0, 1.0, 0.5, new String[]{"AMT", "", ""});
+			depth = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 16.0, 1.0, Math.sqrt(2.0) / 2.0, new String[]{"AMT", "", ""});
 			maxScreenX = depth.getMaxX();
 			return;
 		case ASR:
-			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultAD, new String[]{"A", "s", " "});
+			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValAD, defaultAD, new String[]{"A", "s", " "});
 			x = attack.getMaxX();
-			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultR, new String[]{"R", "s", " "});
+			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValR, defaultR, new String[]{"R", "s", " "});
 			x = release.getMaxX();
-			depth = new Slider(Slider.Type.LOGARITHMIC, x, y, 1.0 / 256.0, 1.0, 0.5, new String[]{"AMT", "", ""});
+			depth = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 16.0, 1.0, Math.sqrt(2.0) / 2.0, new String[]{"AMT", "", ""});
 			maxScreenX = depth.getMaxX();
 			return;
 		case AR:
-			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultAD, new String[]{"A", "s", " "});
+			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValAD, defaultAD, new String[]{"A", "s", " "});
 			x = attack.getMaxX();
-			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultR, new String[]{"R", "s", " "});
+			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValR, defaultR, new String[]{"R", "s", " "});
 			x = release.getMaxX();
-			depth = new Slider(Slider.Type.LOGARITHMIC, x, y, 1.0 / 256.0, 1.0, 0.5, new String[]{"AMT",  "", ""});
+			depth = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 16.0, 1.0, Math.sqrt(2.0) / 2.0, new String[]{"AMT",  "", ""});
 			x = depth.getMaxX();
 			maxScreenX = depth.getMaxX();
 			return;
 		case R:
-			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultR, new String[]{"R", "s", " "});
+			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValR, defaultR, new String[]{"R", "s", " "});
 			x = release.getMaxX();
-			depth = new Slider(Slider.Type.LOGARITHMIC, x, y, 1.0 / 256.0, 1.0, 0.5, new String[]{"AMT",  "", ""});
+			depth = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 16.0, 1.0, Math.sqrt(2.0) / 2.0, new String[]{"AMT",  "", ""});
 			x = depth.getMaxX();
 			maxScreenX = depth.getMaxX();
 			return;
 		case R0:
-			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValADR, defaultR, new String[]{"R", "s", " "});
+			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValR, defaultR, new String[]{"R", "s", " "});
 			maxScreenX = release.getMaxX();
 			return;
 		}
@@ -269,16 +270,16 @@ public class PlayableEnvelope implements PlayableModule {
 		parent.view.repaint();
 	}
 
-	public void pointSelected(int x, int y) {
+	public void pointSelected(int x, int y, PlayableController.ClickInfo info) {
 		if(type != EnvelopeType.R) {
-			if(type != EnvelopeType.R0) attack.pointSelected(x, y);
+			if(type != EnvelopeType.R0) attack.pointSelected(x, y, info);
 		}
 		if(type == EnvelopeType.ADSR) {
-			decay.pointSelected(x, y);
-			sustain.pointSelected(x, y);
+			decay.pointSelected(x, y, info);
+			sustain.pointSelected(x, y, info);
 		}
-		if(type != EnvelopeType.R0) depth.pointSelected(x, y);
-		release.pointSelected(x, y);
+		if(type != EnvelopeType.R0) depth.pointSelected(x, y, info);
+		release.pointSelected(x, y, info);
 		parent.view.repaint();
 	}
 	

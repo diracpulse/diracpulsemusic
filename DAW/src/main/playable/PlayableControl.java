@@ -80,9 +80,9 @@ public class PlayableControl implements PlayableModule {
 		if(fineSlider != null) fineSlider.draw(g2);
 	}
 
-	public void pointSelected(int x, int y) {
-		slider.pointSelected(x, y);
-		if(fineSlider != null) fineSlider.pointSelected(x, y);
+	public void pointSelected(int x, int y, PlayableController.ClickInfo info) {
+		slider.pointSelected(x, y, info);
+		if(fineSlider != null) fineSlider.pointSelected(x, y, info);
 		parent.view.repaint();
 	}
 	
