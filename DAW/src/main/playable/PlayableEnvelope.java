@@ -42,7 +42,8 @@ public class PlayableEnvelope implements PlayableModule {
 		R,
 		AR,
 		ASR,
-		ADSR;
+		ADSR,
+		INVISIBLE;
 	}
 	
 	public PlayableEnvelope(PlayableEditor parent, EnvelopeType type, int screenX, int screenY, String moduleName) {
@@ -99,7 +100,13 @@ public class PlayableEnvelope implements PlayableModule {
 			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValR, defaultR, new String[]{"R", "s", " "});
 			maxScreenX = release.getMaxX();
 			return;
+		case INVISIBLE:
+			return;
 		}
+	}
+	
+	public PlayableEnvelope(EnvelopeType type) {
+		this.type = type;
 	}
 	
 	public int getMaxScreenX() {
@@ -110,6 +117,7 @@ public class PlayableEnvelope implements PlayableModule {
 		off = false;
 		startTimeInSamples = currentTimeInSamples;
 		saveDecayValue = 0.0;
+		if(this.type == EnvelopeType.INVISIBLE) return;
 		if(type != EnvelopeType.R && type != EnvelopeType.R0) attackInSamples = (int) Math.round(attack.getCurrentValue() * AudioFetcher.sampleRate);
 		if(type == EnvelopeType.ADSR) {
 			decayInSamples = (int) Math.round(decay.getCurrentValue() * AudioFetcher.sampleRate);
@@ -138,12 +146,21 @@ public class PlayableEnvelope implements PlayableModule {
 		}
 		return 0.0;
 	}
-	
+
 	private double getSampleR0(long absoluteTimeInSamples, boolean absolute) {
 		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
-		return Math.exp(-1.0 * tau * currentTimeInSamples / (double) releaseInSamples);
+		return Math.exp(-1.0 * tau * (currentTimeInSamples) / (double) releaseInSamples);
 	} 
 	
+	public double getSampleR0Accent(long absoluteTimeInSamples, double duration) {
+		if(duration < 0.05) duration = 0.05;
+		double accentTime = duration * AudioFetcher.sampleRate;
+		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
+		if(currentTimeInSamples < accentTime) return 1.0 - currentTimeInSamples / accentTime;
+		//if(currentTimeInSamples < accentTime * 2.0) return 2.0 - currentTimeInSamples / accentTime;
+		return 0.0;
+	} 
+
 	private double getSampleR(long absoluteTimeInSamples, boolean absolute) {
 		double depthVal = depth.getCurrentValue();
 		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;

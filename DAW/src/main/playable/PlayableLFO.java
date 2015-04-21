@@ -66,7 +66,7 @@ public class PlayableLFO implements PlayableModule {
 			x = freqControl.getMaxX();
 			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
 			x = fineFreqControl.getMaxX();
-			ampControl = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 64.0, 1.0, 0.5, new String[] {"AMT", " ", " "});
+			ampControl = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 64.0, 1.0, 0.25, new String[] {"AMT", " ", " "});
 			maxScreenX = ampControl.getMaxX();
 		} else {
 			freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 0.5, 1024.0, 32.0, new String[] {"RATE", "HZ", " "});
@@ -77,7 +77,7 @@ public class PlayableLFO implements PlayableModule {
 			x = attackControl.getMaxX();
 			releaseControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 0.001, 0.5, 0.5, new String[] {"R", " ", " "});
 			x = releaseControl.getMaxX();
-			ampControl = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 64.0, 1.0, 0.5, new String[] {"AMT", " ", " "});
+			ampControl = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 64.0, 1.0, 0.25, new String[] {"AMT", " ", " "});
 			maxScreenX = ampControl.getMaxX();
 		}
 	}
@@ -91,13 +91,13 @@ public class PlayableLFO implements PlayableModule {
 		int y = screenY + PlayableEditor.moduleYPadding;
 		this.screenX = x;
 		this.screenY = screenY;
-		freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, minFreq, maxFreq, minFreq, new String[] {"RATE", " ", " "});
+		freqControl = new Slider(Slider.Type.LOGARITHMIC, x, y, minFreq, maxFreq, maxFreq / 4.0, new String[] {"RATE", " ", " "});
 		x = freqControl.getMaxX();
 		if(fineFreq) {
 			fineFreqControl = new Slider(Slider.Type.LINEAR, x, y, 1.0, 2.0, 1.0, new String[] {"FINE", " ", " "});
 			x = fineFreqControl.getMaxX();
 		}
-		ampControl = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 64.0, 1.0, 0.5, new String[] {"AMT", " ", " "});
+		ampControl = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 64.0, 1.0, 0.25, new String[] {"AMT", " ", " "});
 		maxScreenX = ampControl.getMaxX();
 	}
 	
@@ -319,7 +319,7 @@ public class PlayableLFO implements PlayableModule {
 		int textYOffset = (yPadding - hgt) / 2 + yPadding / 2;
 		int textXOffset = (maxScreenX - screenX - adv) / 2;
 		g2.setColor(new Color(0.5f, 0.0f, 0.0f));
-		g2.fillRect(screenX + 8, screenY, maxScreenX - screenX - 16, yPadding - 4);
+		g2.fillRect(screenX + 4, screenY, maxScreenX - screenX - 4, yPadding - 4);
 		g2.setColor(Color.WHITE);
 		g2.drawString(moduleName, screenX + textXOffset, screenY + textYOffset);
 		g2.setColor(Color.BLUE);

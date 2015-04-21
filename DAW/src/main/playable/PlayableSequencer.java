@@ -20,7 +20,7 @@ public class PlayableSequencer implements PlayableModule {
 	private int screenX;
 	private int screenY;
 	private static final int numKeys = 24;
-	private static final int keyHeight = 10;
+	private static final int keyHeight = 12;
 	private static final int noteWidth = 30;
 	private static final Color[] keyColors = {Color.WHITE, Color.BLACK, Color.WHITE, Color.BLACK, Color.WHITE, Color.WHITE, Color.BLACK, Color.WHITE, Color.BLACK, Color.WHITE, Color.BLACK, Color.WHITE};
 	private static final int[] minorScale = {0, 2, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19, 20, 22};
@@ -45,8 +45,6 @@ public class PlayableSequencer implements PlayableModule {
 	double osc2NoteFreq = baseFreq;
 	double glideVal = 0.0;
 	double deltaGlideVal = 0.0;
-	double accentVal = 1.0;
-	double deltaAccentVal = 1.0;
 	double noteFreq = baseFreq;
 	double restVal = 0.0;
 	
@@ -69,7 +67,7 @@ public class PlayableSequencer implements PlayableModule {
 		int currentNote = 7;
 		for(int index = 0; index < notes.length; index++) {
 			 accent[index] = false; // random.nextBoolean();
-			 tie[index] = random.nextBoolean();
+			 tie[index] = false;
 			 notes[index] = minorScale[currentNote];
 			 int noteStep = random.nextInt(5) - 2;
 			 currentNote += noteStep;
@@ -114,6 +112,7 @@ public class PlayableSequencer implements PlayableModule {
     	ControlBank MIXER = (ControlBank) parent.nameToModule.get("MIXER");
     	PlayableFilter lpFilter = (PlayableFilter) parent.nameToModule.get("LP");
     	PlayableFilter hpFilter = (PlayableFilter) parent.nameToModule.get("HP");
+    	PlayableEnvelope accentENV = new PlayableEnvelope(PlayableEnvelope.EnvelopeType.INVISIBLE);
     	int currentBPM = (int) Math.round(BPM.getSample());
     	if(currentBPM != bpm) {
     		bpm = currentBPM;
@@ -153,6 +152,7 @@ public class PlayableSequencer implements PlayableModule {
 						ringAmp1ENV.noteOn(currentTimeInSamples);
 						ringAmp2ENV.noteOn(currentTimeInSamples);
 						ringAmp3ENV.noteOn(currentTimeInSamples);
+						accentENV.noteOn(currentTimeInSamples);
 					}
 				}
 			}
@@ -164,6 +164,7 @@ public class PlayableSequencer implements PlayableModule {
 						ringAmp1ENV.noteOff(currentTimeInSamples);
 						ringAmp2ENV.noteOff(currentTimeInSamples);
 						ringAmp3ENV.noteOff(currentTimeInSamples);
+						accentENV.noteOff(currentTimeInSamples);
 					}
 					if(tie[noteIndex] && !(notes[(noteIndex + 1) % sequenceLength] == -1)) {
 						glideVal = 1.0;
@@ -197,13 +198,15 @@ public class PlayableSequencer implements PlayableModule {
 			ampMod[3] = ringAmp1ENV.getSample(currentTimeInSamples, true);
 			ampMod[4] = ringAmp2ENV.getSample(currentTimeInSamples, true);
 			ampMod[5] = ringAmp3ENV.getSample(currentTimeInSamples, true);
+			double accentFreqMod = 1.0;
+			if(accent[noteIndex]) accentFreqMod = Math.pow(2.0, accentENV.getSampleR0Accent(currentTimeInSamples, 16.0 / noteFreq));
 			double[] freqMod = new double[6];
 			freqMod[0] = 1;
 			freqMod[1] = osc2CONTROLS.getValue(ControlBank.Name.OSC2FREQ);
 			freqMod[2] = osc3CONTROLS.getValue(ControlBank.Name.OSC3FREQ);
 			freqMod[3] = ringOsc1CONTROLS.getValue(ControlBank.Name.RING1FREQ);
-			freqMod[4] = ringOsc2CONTROLS.getValue(ControlBank.Name.RING2FREQ) * freqMod[1];
-			freqMod[5] = ringOsc3CONTROLS.getValue(ControlBank.Name.RING3FREQ) * freqMod[2];
+			freqMod[4] = ringOsc2CONTROLS.getValue(ControlBank.Name.RING2FREQ);
+			freqMod[5] = ringOsc3CONTROLS.getValue(ControlBank.Name.RING3FREQ);
 			double[] depth = new double[6];
 			depth[0] = 1;
 			depth[1] = 1;
@@ -213,7 +216,7 @@ public class PlayableSequencer implements PlayableModule {
 			depth[5] = ringOsc3CONTROLS.getValue(ControlBank.Name.RING3AMT);
 			double[] osc = new double[6];
 			for(int i = 0; i < osc.length; i++) {
-				osc[i] = waveforms.allSigned(currentPhase * freqMod[i], saw[i], pwm[i]) * depth[i] + (1.0 - depth[i]) * restVal;
+				osc[i] = waveforms.allSigned(currentPhase * freqMod[i] * accentFreqMod, saw[i], pwm[i]) * depth[i] + (1.0 - depth[i]) * restVal;
 				//osc[i] = waveforms.sawtooth(currentPhase * freqMod[i]) * saw[i] * depth[i] + (1.0 - depth[i]);
 				//osc[i] += waveforms.squarewave(currentPhase * freqMod[i], pwm[i]) * (1.0 - saw[i]) * depth[i] + (1.0 - depth[i]);
 				osc[i] *= ampMod[i] * depth[i] + (1.0 - depth[i]) * restVal;
@@ -234,7 +237,12 @@ public class PlayableSequencer implements PlayableModule {
 	    	returnVal[index] = osc[0] * osc1Level + osc[1] * osc2Level + osc[2] * osc3Level;
 	    	returnVal[index] /= 4.0;
 	    	double filterOscVal = filterOSC.getSample();
-			double filter = filterENV.getSample(currentTimeInSamples, true) + filterLFO.allFilter(filterOscVal, 1.0);
+	    	double filter = 1.0;
+	    	if(accent[noteIndex]) {
+	    		filter = filterENV.getSample(currentTimeInSamples, true) + filterLFO.allFilter(filterOscVal, 1.0) + accentENV.getSampleR0Accent(currentTimeInSamples, 16.0 / noteFreq) * 2.0;
+	    	} else {
+	    		filter = filterENV.getSample(currentTimeInSamples, true) + filterLFO.allFilter(filterOscVal, 1.0);
+	    	}
 			filterLFO.newSample();
 			returnVal[index] = lpFilter.getSample(returnVal[index], freqRatio, filter);
 			returnVal[index] = hpFilter.getSample(returnVal[index], 1.0, 1.0);
