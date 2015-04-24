@@ -89,7 +89,7 @@ public class Waveforms {
 	public double sawtooth(double phase) {
 		phase /= Math.PI * 2.0;
 		phase -= Math.floor(phase);
-		return -2.0 + phase * 4.0;
+		return -1.0 + phase * 2.0;
 		/*
 		double dIndex = phase * lookupTableLength;
 		int index = (int) Math.floor(dIndex);

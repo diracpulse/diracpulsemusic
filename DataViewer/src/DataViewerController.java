@@ -1,9 +1,18 @@
 
 import java.awt.event.*;
 
-public class DataViewerController implements MouseListener, MouseMotionListener {
+public class DataViewerController implements MouseListener, MouseMotionListener, ActionListener {
 
-	DataViewerController() {}
+	DataViewer parent;
+	
+	DataViewerController(DataViewer parent) {
+		this.parent = parent;
+	}
+	
+	public void actionPerformed(ActionEvent e) {
+		if ("Open".equals(e.getActionCommand())) parent.open();
+		if ("Save".equals(e.getActionCommand())) parent.save();
+	}
 
 	public void mouseReleased(MouseEvent e) {}
 	public void mouseEntered(MouseEvent e){}
