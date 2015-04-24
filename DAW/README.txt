@@ -13,8 +13,10 @@ OSC1: (Main oscilator)
 	(only has an effect for SHP values >.33 and <1.0)
 OSC2: (Oscillator 2):
 	FREQ: (OSC2 Frequency) / (OSC1 Frequency)
+	LVL: Level relative to OSC1
 OSC3: (Oscillator 3):
 	FREQ: (OSC3 Frequency) / (OSC1 Frequency)
+	LVL: Level relative to OSC1
 RING1 (Ring oscillator 1):
 	FREQ: (RING1 Frequency) / (OSC1 Frequency)
 	AMT: OSC1 Output = OSC1 * RING1 * AMT + OSC1 * (1.0 - AMT)
@@ -58,8 +60,6 @@ HP: High pass filter:
 	FREQ: Frequency at which output is 12dB below max level, 
 	for each octave below another 24 dB of attenuation occurs
 	Mostly there just to remove subsonic frequencies.
-MIXER:
-	OSC(X): OSC(X) output volume
 
 Sequencer (Green below all the sliders):
 	To create a rest click on a note:

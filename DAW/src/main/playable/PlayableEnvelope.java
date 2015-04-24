@@ -57,7 +57,7 @@ public class PlayableEnvelope implements PlayableModule {
 		double defaultAD = 0.001;
 		double defaultR = 0.5;
 		double maxValR = 8.0;
-		double minValADR = 0.0005;
+		double minValADR = 0.001;
 		double maxValAD = 1.0;
 		switch(type) {
 		case ADSR:
@@ -67,7 +67,7 @@ public class PlayableEnvelope implements PlayableModule {
 			x = decay.getMaxX();
 			sustain = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 16.0, 1.0, Math.sqrt(2.0) / 2.0, new String[] {"S", "", " "});
 			x = sustain.getMaxX();
-			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValR, defaultR, new String[]{"R", "s", " "});
+			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValR, 0.1, new String[]{"R", "s", " "});
 			x = release.getMaxX();
 			depth = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 16.0, 1.0, Math.sqrt(2.0) / 2.0, new String[]{"AMT", "", ""});
 			maxScreenX = depth.getMaxX();
@@ -97,7 +97,7 @@ public class PlayableEnvelope implements PlayableModule {
 			maxScreenX = depth.getMaxX();
 			return;
 		case R0:
-			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValR, defaultR, new String[]{"R", "s", " "});
+			release = new Slider(Slider.Type.LOGARITHMIC, x, y, 0.05, maxValR, defaultR, new String[]{"R", "s", " "});
 			maxScreenX = release.getMaxX();
 			return;
 		case INVISIBLE:
@@ -149,7 +149,8 @@ public class PlayableEnvelope implements PlayableModule {
 
 	private double getSampleR0(long absoluteTimeInSamples, boolean absolute) {
 		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
-		return Math.exp(-1.0 * tau * (currentTimeInSamples) / (double) releaseInSamples);
+		if(currentTimeInSamples < 44.1) return currentTimeInSamples / 44.1;
+		return Math.exp(-1.0 * tau * (currentTimeInSamples - 44.1) / (double) releaseInSamples);
 	} 
 	
 	public double getSampleR0Accent(long absoluteTimeInSamples, double duration) {
@@ -254,6 +255,10 @@ public class PlayableEnvelope implements PlayableModule {
 		if(releaseVal > 0.0) return sustainValue * releaseVal;
 		return 0.0;
 	} 
+	
+	public void randomRelease() {
+		release.setRandomValue();
+	}
 	
 	public void draw(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g;

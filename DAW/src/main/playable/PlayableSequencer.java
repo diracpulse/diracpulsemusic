@@ -109,7 +109,6 @@ public class PlayableSequencer implements PlayableModule {
     	PlayableEnvelope filterENV = (PlayableEnvelope) parent.nameToModule.get("FLTR ADSR");
     	PlayableControl filterOSC = (PlayableControl) parent.nameToModule.get("FLTR OSC");
     	PlayableLFO filterLFO = (PlayableLFO) parent.nameToModule.get("FLTR LFO");
-    	ControlBank MIXER = (ControlBank) parent.nameToModule.get("MIXER");
     	PlayableFilter lpFilter = (PlayableFilter) parent.nameToModule.get("LP");
     	PlayableFilter hpFilter = (PlayableFilter) parent.nameToModule.get("HP");
     	PlayableEnvelope accentENV = new PlayableEnvelope(PlayableEnvelope.EnvelopeType.INVISIBLE);
@@ -144,7 +143,9 @@ public class PlayableSequencer implements PlayableModule {
 					if(notes[prevNoteIndex] == -1 || (notes[prevNoteIndex] != notes[noteIndex]) || !tie[prevNoteIndex]) {
 						lpFilter.reset();
 						hpFilter.reset();
-						currentPhase = 0.0;
+						currentPhase /= Math.PI * 2.0;
+						currentPhase -= Math.floor(currentPhase);
+						currentPhase *= Math.PI * 2.0;
 						ampENV.noteOn(currentTimeInSamples);
 						ampLFO.reset();
 						filterENV.noteOn(currentTimeInSamples);
@@ -221,9 +222,9 @@ public class PlayableSequencer implements PlayableModule {
 				//osc[i] += waveforms.squarewave(currentPhase * freqMod[i], pwm[i]) * (1.0 - saw[i]) * depth[i] + (1.0 - depth[i]);
 				osc[i] *= ampMod[i] * depth[i] + (1.0 - depth[i]) * restVal;
 			}
-	    	double osc1Level = MIXER.getValue(ControlBank.Name.OSC1LEVEL);
-	    	double osc2Level = MIXER.getValue(ControlBank.Name.OSC2LEVEL);
-	    	double osc3Level = MIXER.getValue(ControlBank.Name.OSC3LEVEL);
+	    	double osc1Level = 1.0;
+	    	double osc2Level = osc2CONTROLS.getValue(ControlBank.Name.OSC2LEVEL);
+	    	double osc3Level = osc3CONTROLS.getValue(ControlBank.Name.OSC3LEVEL);
 	    	osc[0] = osc[0] * osc[3];
 	    	osc[1] = osc[1] * osc[4];
 	    	osc[2] = osc[2] * osc[5];
@@ -235,7 +236,7 @@ public class PlayableSequencer implements PlayableModule {
 			}
 			ampLFO.newSample();
 	    	returnVal[index] = osc[0] * osc1Level + osc[1] * osc2Level + osc[2] * osc3Level;
-	    	returnVal[index] /= 4.0;
+	    	returnVal[index] /= 3.0;
 	    	double filterOscVal = filterOSC.getSample();
 	    	double filter = 1.0;
 	    	if(accent[noteIndex]) {

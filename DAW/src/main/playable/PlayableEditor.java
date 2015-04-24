@@ -139,6 +139,12 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
        	osc1RingControls.setRandomValues();
       	osc2RingControls.setRandomValues();
       	osc3RingControls.setRandomValues();
+      	PlayableEnvelope re1 = (PlayableEnvelope) nameToModule.get("RE1");
+      	PlayableEnvelope re2 = (PlayableEnvelope) nameToModule.get("RE2");
+      	PlayableEnvelope re3 = (PlayableEnvelope) nameToModule.get("RE3");
+      	re1.randomRelease();
+      	re2.randomRelease();
+      	re3.randomRelease();
       	view.repaint();
     }
 
@@ -155,11 +161,13 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2Shape, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
     	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2PWM, Slider.Type.LINEAR, 0.1, 0.9, 0.5));
     	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2FREQ, Slider.Type.LOGDIV2, 1.0 / 4.0, 4.0, 1.0));
+    	osc2Controls.add(osc2Controls.new Spec(ControlBank.Name.OSC2LEVEL, Slider.Type.LOGARITHMIC_ZERO, 1.0 / 16.0, 1.0, 1.0));
     	addControlBank(osc2Controls);
     	osc3Controls = new ControlBank(this, "OSC3", currentX, currentY);
     	osc3Controls.add(osc3Controls.new Spec(ControlBank.Name.OSC3Shape, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
     	osc3Controls.add(osc3Controls.new Spec(ControlBank.Name.OSC3PWM, Slider.Type.LINEAR, 0.1, 0.9, 0.5));
     	osc3Controls.add(osc3Controls.new Spec(ControlBank.Name.OSC3FREQ, Slider.Type.LOGDIV2, 1.0 / 4.0, 4.0, 1.0));
+    	osc3Controls.add(osc3Controls.new Spec(ControlBank.Name.OSC3LEVEL, Slider.Type.LOGARITHMIC_ZERO, 1.0 / 16.0, 1.0, 1.0));
     	addControlBank(osc3Controls);
     	osc1RingControls = new ControlBank(this, "RING1", currentX, currentY);
     	osc1RingControls.add(osc1RingControls.new Spec(ControlBank.Name.RING1Shape, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
@@ -190,11 +198,6 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     	addSpecifiedLFO("FLTR LFO", 0.5, 32, false);
     	addFilterModule("LP", PlayableFilter.FilterType.LOWPASS);
     	addFilterModule("HP", PlayableFilter.FilterType.HIGHPASS);
-       	ControlBank mixerControls = new ControlBank(this, "MIXER", currentX, currentY);
-    	mixerControls.add(mixerControls.new Spec(ControlBank.Name.OSC1LEVEL, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
-    	mixerControls.add(mixerControls.new Spec(ControlBank.Name.OSC2LEVEL, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
-    	mixerControls.add(mixerControls.new Spec(ControlBank.Name.OSC3LEVEL, Slider.Type.LINEAR, 0.0, 1.0, 1.0));
-    	addControlBank(mixerControls);
     }
     
     public void addModule(String moduleName, PlayableModule.Type type) {
