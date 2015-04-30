@@ -13,6 +13,30 @@ import java.util.TreeSet;
 
 public class Slider {
 	
+	public static enum Serial {
+		FM_TUNE,
+		FM_FINE,
+		FM_ENV,
+		FM_LFO,
+		FM_SH,
+		AMP_ENV,
+		AMP_LFO,
+		AMP_SH,
+		PWM_ENV,
+		PWM_LFO,
+		PWM_SH,
+		PWM_AMT,
+		SH_RATE,
+		SH_NOISE,
+		SH_LFO,
+		LFO_FREQ,
+		LFO_SHAPE,
+		ENV_A,
+		ENV_D,
+		ENV_S,
+		ENV_R;
+	}
+	
 	public static final Double[] ratios = {1.0, 3.0 / 2.0, 4.0 / 3.0, 5.0 / 3.0, 5.0 / 4.0, 7.0 / 4.0, 6.0 / 5.0, 7.0 / 5.0, 8.0 / 5.0, 9.0 / 5.0, Math.sqrt(2.0), Math.sqrt(3.0), Math.sqrt(5.0) / 2.0, Math.sqrt(7.0) / 2.0};
 	TreeSet<Double> sorted = new TreeSet<Double>();
 	ArrayList<Double> sortedArray = new ArrayList<Double>();

@@ -1,4 +1,10 @@
 
+IMPORTANT: DAW IS IN FLUX WHILE IT IS INTEGRATED WITH ARDUINO HARDWARE SYNTH
+
+PLEASE DOWNLOAD THE FOLLOWING FOR THE TIME BEING:
+
+https://github.com/diracpulse/diracpulsemusic/commit/2cce89c196fa125b858050ac91e7513a1b7a9947
+
 How to use the synthesizer:
 
 BPM: Beats per minute (30 - 300)

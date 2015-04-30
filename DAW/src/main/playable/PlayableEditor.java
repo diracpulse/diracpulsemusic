@@ -50,6 +50,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 	public static int currentY = 0;
 	
 	MultiWindow parent;
+	ArduinoComm serial;
 	PlayableSequencer sequencer;
 	PlayableView view;
 	PlayableController controller;
@@ -193,6 +194,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     	addEnvelope("AMP ADSR", PlayableEnvelope.EnvelopeType.ADSR);
     	addModule("AMP OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SIN"});
     	addSpecifiedLFO("AMP LFO", 0.5, 32, false);
+    	addSwitch("FLTR TRCK", "ON", "OFF");
     	addEnvelope("FLTR ADSR", PlayableEnvelope.EnvelopeType.ADSR);
     	addModule("FLTR OSC", PlayableModule.Type.CONTROL, new String[]{"SAW", "SIN"});
     	addSpecifiedLFO("FLTR LFO", 0.5, 32, false);
@@ -224,6 +226,11 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
        	case FILTER:
        		System.out.println("PlayableEditor.Module.addModule: Filter not suppported");
     	}
+    }
+    
+    public void addSwitch(String moduleName, String onVal, String offVal) {
+    	nameToModule.put(moduleName, new Switch(this, currentX, currentY, moduleName, onVal, offVal));
+    	currentX = nameToModule.get(moduleName).getMaxScreenX();
     }
     
     public void addControl(String moduleName, double minValue, double maxValue, double initialValue) {
@@ -288,6 +295,14 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
 		// TODO Auto-generated method stub
+		
+	}
+	
+	public void handleSerialInput(int command, int data) {
+		
+	}
+	
+	public void sendSerialPortData(int command, int data) {
 		
 	}
 	
