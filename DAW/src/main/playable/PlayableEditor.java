@@ -96,6 +96,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     public PlayableEditor(MultiWindow parent) {
 		super(new BorderLayout());
 		this.parent = parent;
+		serial = new ArduinoComm(this);
         view = new PlayableView(this);
         view.setBackground(Color.black);
         controller = new PlayableController(this);
@@ -284,6 +285,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 
 	@Override
 	public synchronized double[] getNextSamples(int numSamples) {
+		sendSerialPortData(new int[]{255, 128 , 1});
 		if(!noAudio) return sequencer.masterGetSamples(numSamples);
 		double[] returnVal = new double[numSamples];
 		for(int index = 0; index < numSamples; index++) {
@@ -298,12 +300,14 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 		
 	}
 	
-	public void handleSerialInput(int command, int data) {
-		
+	public void readSerialPortData(ArrayList<Integer> data) {
+		for(Integer d: data) {
+			System.out.println(d.toString());
+		}
 	}
 	
-	public void sendSerialPortData(int command, int data) {
-		
+	public void sendSerialPortData(int[] data) {
+		serial.sendData(data);
 	}
 	
 	public void save() {

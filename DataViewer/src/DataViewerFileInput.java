@@ -26,7 +26,6 @@ public class DataViewerFileInput {
 				double x= in.readDouble();
 				double y = in.readDouble();
 				double value = in.readDouble();
-				DataViewer.dataPoints.add(new DataViewer.dataPoint2D(x, y, value));
 			}
 		} catch (Exception e) {
 			if(e instanceof EOFException) {
