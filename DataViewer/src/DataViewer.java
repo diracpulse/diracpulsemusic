@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.lang.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -23,6 +24,8 @@ public class DataViewer extends JFrame {
 	public static DataViewerView view;
 	public static DataViewerController controller;
 	JToolBar navigationBar = null;
+	ArduinoComm serial;
+	public boolean paused = false;
 	
 	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);
@@ -32,23 +35,25 @@ public class DataViewer extends JFrame {
 	
 	public JToolBar createNavigationBar() {
 		addNavigationButton("Save");
+		addNavigationButton("Play/Pause");
     	return navigationBar;
 	}
 	
 	public DataViewer() {
-        view = new DataViewerView();
+        view = new DataViewerView(this);
         view.setBackground(Color.black);
         controller = new DataViewerController(this);
         navigationBar = new JToolBar();
         add(createNavigationBar(), BorderLayout.PAGE_START);
         view.addMouseListener(controller);
         view.addMouseMotionListener(controller);
-        view.setPreferredSize(new Dimension(1500, 840));
+        view.setPreferredSize(new Dimension(1500, 800));
         JScrollPane scrollPane = new JScrollPane(view);
         scrollPane.setSize(1500, 840);
         add(scrollPane, BorderLayout.CENTER);
-        add(view);
-        createNavigationBar();
+        add(scrollPane);
+        serial = new ArduinoComm(this);
+        sendSerialPortData(new int[]{0, 0, 0});
         view.repaint();
     }
 	
@@ -72,6 +77,17 @@ public class DataViewer extends JFrame {
 			}
 		});
 	}
+	
+	public void readSerialPortData(ArrayList<Integer> data) {
+		if(paused) return;
+		view.addData(0, data.get(0));
+		view.repaint();
+	}
+	
+	public void sendSerialPortData(int[] data) {
+		serial.sendData(data);
+	}
+	
 	
 	public void save() {
 		String filename = FileUtils.PromptForFileSave(view);

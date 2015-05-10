@@ -12,6 +12,7 @@ public class DataViewerController implements MouseListener, MouseMotionListener,
 	public void actionPerformed(ActionEvent e) {
 		if ("Open".equals(e.getActionCommand())) parent.open();
 		if ("Save".equals(e.getActionCommand())) parent.save();
+		if ("Play/Pause".equals(e.getActionCommand())) parent.paused = !parent.paused;
 	}
 
 	public void mouseReleased(MouseEvent e) {}
