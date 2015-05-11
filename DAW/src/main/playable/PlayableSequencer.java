@@ -7,6 +7,7 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.util.ArrayList;
 import java.util.Random;
 
 import main.SynthTools;
@@ -140,6 +141,16 @@ public class PlayableSequencer implements PlayableModule {
 					noteFreq = Math.pow(2.0, notes[noteIndex] / 12.0) * baseFreq;
 					int prevNoteIndex = (noteIndex - 1) % sequenceLength;
 					if(prevNoteIndex < 0) prevNoteIndex += sequenceLength;
+					int midiNoteFreq = 60;
+					midiNoteFreq += notes[(noteIndex + 1) % sequenceLength];
+					if(baseFreq == 64.0) {
+						midiNoteFreq = 36;
+						midiNoteFreq += notes[(noteIndex + 1) % sequenceLength];
+					}
+					ArrayList<Integer> data = new ArrayList<Integer>();
+					data.add(0b10010000);
+					data.add(midiNoteFreq + 3);
+					parent.sendSerialPortData(data);
 					if(notes[prevNoteIndex] == -1 || (notes[prevNoteIndex] != notes[noteIndex]) || !tie[prevNoteIndex]) {
 						lpFilter.reset();
 						hpFilter.reset();

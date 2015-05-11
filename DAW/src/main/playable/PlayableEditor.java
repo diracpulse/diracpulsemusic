@@ -65,6 +65,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 	public static final int moduleSpacing = 10;
 	public static final int moduleYPadding = 20;
 	public volatile boolean noAudio = false;
+	public volatile boolean muted = false;
 	
 	ControlBank osc1Controls = new ControlBank(this, "OSC1", currentX, currentY);
 	ControlBank osc2Controls = new ControlBank(this, "OSC2", currentX, currentY);
@@ -84,6 +85,7 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 		addNavigationButton("Save");
 		addNavigationButton("Play");
 		addNavigationButton("Pause");
+		addNavigationButton("Mute");
 		addNavigationButton("Stop");
         addNavigationButton("Random Sequence");
         addNavigationButton("Random Patch");
@@ -119,6 +121,10 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
     	 sequencer = new PlayableSequencer(this, 10, 10 + 53 * 8 + 16 * 6);
     	 sequencer.reset();
     	 noAudio = false;
+    }
+    
+    public synchronized void mute() {
+    	muted = !muted;
     }
     
     public synchronized void pause() {
@@ -285,8 +291,11 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 
 	@Override
 	public synchronized double[] getNextSamples(int numSamples) {
-		sendSerialPortData(new int[]{255, 128 , 1});
-		if(!noAudio) return sequencer.masterGetSamples(numSamples);
+		//sendSerialPortData(new int[]{255, 128 , 1});
+		if(!noAudio && !muted) return sequencer.masterGetSamples(numSamples);
+		if(muted) {
+			sequencer.masterGetSamples(numSamples);
+		}
 		double[] returnVal = new double[numSamples];
 		for(int index = 0; index < numSamples; index++) {
 			returnVal[index] = 0.0;
@@ -307,6 +316,12 @@ public class PlayableEditor extends JPanel implements ActionListener, AudioSourc
 	}
 	
 	public void sendSerialPortData(int[] data) {
+		ArrayList<Integer> dataAR = new ArrayList<Integer>();
+		for(int d: data) dataAR.add(d);
+		serial.sendData(dataAR);
+	}
+	
+	public void sendSerialPortData(ArrayList<Integer> data) {
 		serial.sendData(data);
 	}
 	

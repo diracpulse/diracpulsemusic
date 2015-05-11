@@ -26,6 +26,7 @@ public class DataViewer extends JFrame {
 	JToolBar navigationBar = null;
 	ArduinoComm serial;
 	public boolean paused = false;
+	public int dataCount = 0;
 	
 	public void addNavigationButton(String buttonText) {
 		JButton button = new JButton(buttonText);
@@ -82,6 +83,11 @@ public class DataViewer extends JFrame {
 		if(paused) return;
 		view.addData(0, data.get(0));
 		view.repaint();
+		dataCount++;
+		if(dataCount == 255) {
+			dataCount = 0;
+			System.out.println(data.get(0));
+		}
 	}
 	
 	public void sendSerialPortData(int[] data) {

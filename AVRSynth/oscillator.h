@@ -2,10 +2,14 @@
 // Oscillator 1 Variables
 
 // LFO1
-extern unsigned char lfo1up;
+
+extern unsigned char lfo1Up;
 extern unsigned char lfo1PrevValue;
 extern unsigned char lfo1CurrentValue[3];
-extern unsigned char lfo1Delta[2];
+extern unsigned int lfo1DeltaPhaseIndex;
+extern unsigned char lfo1MasterData[63];
+extern unsigned char lfo1MasterData[63];
+
 
 // ADSR1
 extern unsigned char adsr1up;
@@ -34,10 +38,12 @@ extern unsigned char osc1adsrAmt;
 // Oscillator 1 Variables
 // LFO1
 
-unsigned char lfo1up;
+unsigned char lfo1Up;
 unsigned char lfo1PrevValue;
 unsigned char lfo1CurrentValue[3];
-unsigned char lfo1Delta[2];
+unsigned int lfo1DeltaPhaseIndex;
+unsigned char lfo1MasterData[63];
+
 
 // ADSR1
 unsigned char adsr1up;

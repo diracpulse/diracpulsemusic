@@ -135,8 +135,8 @@ void initTimer2() {
 	/* Disable Compare Match A interrupt enable (only want overflow) */
 	TIMSK2 &= ~(1<<OCIE2A);
 	/* Now configure the prescaler to CPU clock divided by 128 */
-	TCCR2B |= (1<<CS22) | (1<<CS20); // Set Bits
-	TCCR2B &= ~(1<<CS21); // Clear Bits
+	TCCR2B |= (1<<CS20) | (1<<CS21); // Set Bits
+	TCCR2B &= ~(1<<CS22); // Clear Bits
 	/* Finally load end enable the timer */
 	//TCNT2 = 255;
 	TCNT2 = 0;
@@ -238,12 +238,14 @@ void updateLFO() {
 
 void updateLFOVal(int lfoVal) {
 	cli();
-	lfo1Delta[0] = lfo1Delta[lfoVal * 2];
-	lfo1Delta[1] = lfo1Delta[lfoVal * 2 + 1];
+	//lfo1Delta[0] = lfo1Delta[lfoVal * 2];
+	//lfo1Delta[1] = lfo1Delta[lfoVal * 2 + 1];
+	lfo1DeltaPhaseIndex = lfoVal * 2;
 	sei();
 }
 
 int blink = 0;
+char timerCount = 0;
 //int testData = 0;
 // This is needed to fool the optimizer
 //int garbage = 0;
@@ -276,12 +278,17 @@ ISR(TIMER2_OVF_vect) {
 	// This is needed to fool the optimizer
 	//garbage += deltaPhase[testData];
 	*/
-	asm("ldi r16, 1\n");
+	asm("push r16");
+	asm("ser r16");
 	asm("sts nextSample, r16\n");
-	TCNT2 = 255;
+	asm("lds r16, timerCount");
+	asm("inc r16");
+	asm("sts timerCount, r16");
+	asm("pop r16");
+	//TCNT2 = 255;
 	//while(!serialWriteReady()){};
 	//serialWrite(portBVal);
-	//TCNT2 = 255;
+	TCNT2 = 255;
 }
 
 void initOscMasterData() {
@@ -316,7 +323,8 @@ int main() {
 	adsr1Sustain = 64;
 	adsr1ReleaseTime = 256;
 	setDeltaPhaseIndex(72, 0);
-	updateLFOVal(128);
+	updateLFOVal(900);
+	lfo1Up = 1;
 	updateEnvelope();
 	sh1NextValue = 64;
 	sh1CurrentValue = 64;
@@ -325,14 +333,15 @@ int main() {
 	initOscMasterData();
 	asm("infinite:");
 			asm("lds r16, nextSample\n");
-			asm("cpi r16, 1\n");
-			asm("brne infinite\n");
+			asm("cpi r16, 0\n");
+			asm("breq infinite\n");
 			/*
 			// START OSC1
 			*/
 			//serialWrite(portBVal);
 			cli();
 			asm("clr r25\n");
+			asm("sts timerCount, r25");
 			//X = &osc1DeltaPhaseIndex;
 			asm("ldi r26, lo8(osc1DeltaPhaseIndex)\n");
 			asm("ldi r27, hi8(osc1DeltaPhaseIndex)\n");
@@ -396,21 +405,101 @@ int main() {
 			asm("brsh skipSetOutput\n");
 			asm("ori r25, 0b00010000\n");
 			asm("skipSetOutput:\n");
-			// store port b in portB
-			asm("ldi r26, lo8(portBVal)\n");
-			asm("ldi r27, hi8(portBVal)\n");
-			asm("st X, r25");
-			//PORTB = r26;
-			// output to port B
-			PORTB = portBVal;
+			/*
+			// START LFO1
+			*/
+			asm("ldi r26, lo8(lfo1DeltaPhaseIndex)\n");
+			asm("ldi r27, hi8(lfo1DeltaPhaseIndex)\n");
+			// lfo1DeltaPhaseIndex in r5:r4
+			asm("ld r4, X+\n");
+			asm("ld r5, X+\n");
+			//Y = lfoMasterData
+			asm("ldi r28, lo8(lfo1MasterData)\n");
+			asm("ldi r29, hi8(lfo1MasterData)\n");
+			// put deltaPhase in Z
+			asm("ldi r30, lo8(lfoDelta)\n");
+			asm("ldi r31, hi8(lfoDelta)\n");
+			// add offset from r5:r4
+			asm("add r30, r4\n");
+			asm("adc r31, r5\n");
+			// finally load lfoPhase from Z
+			asm("lpm r16, Z+\n");
+			asm("lpm r17, Z+\n");
+			// Load lfo1CurrentValue into r21:r20:r19
+			asm("ld r19, Y+\n");
+			asm("ld r20, Y+\n");
+			asm("ld r21, Y+\n");
+			// store current value in r24
+			asm("mov r24, r21");
+			asm("lds r23, lfo1Up");
+			// check if lfoUp
+			asm("cpi r23, 0");
+			// if not go to subtract
+			asm("breq lfo1Subtract");
+			// Add lfoPhase to lfo1CurrentValue
+			asm("ldi r23, 0");
+			asm("add r19, r16\n");
+			asm("adc r20, r17\n");
+			asm("adc r21, r23\n");
+			// store lfo1Currentvalue
+			asm("st -Y, r21\n");
+			asm("st -Y, r20\n");
+			asm("st -Y, r19\n");
+			// FOR DEBUGGING
+			asm("sts lfo1PrevValue, r21");
+			// compare with previous output
+			asm("cp r24, r21\n");
+			asm("brsh lfo1SkipSetOutput\n");
+			// if greater than prev value set output to add pin
+			asm("ori r25, 0b00000010\n");
+			asm("lfo1SkipSetOutput:");
+			// test for max value
+			asm("cpi r21, 127\n");
+			asm("brlo lfo1Finished\n");
+			// if maxValue set lfoUp to 0
+			asm("sts lfo1Up, r2");
+			asm("jmp lfo1Finished");
+			asm("lfo1Subtract:");
+			// Substract lfoPhase from lfo1CurrentValue
+			asm("ldi r23, 0");
+			asm("sub r19, r16\n");
+			asm("sbc r20, r17\n");
+			asm("sbc r21, r23\n");
+			// store lfo1Currentvalue
+			asm("st -Y, r21\n");
+			asm("st -Y, r20\n");
+			asm("st -Y, r19\n");
+			asm("sts lfo1PrevValue, r21");
+			// compare with previous output
+			asm("cp r21, r24\n");
+			asm("brsh lfo1Finished\n");
+			// if less than prev value set output to subtract pin
+			asm("ori r25, 0b00000001\n");
+			// see if were at 0
+			asm("cpi r21, 0\n");
+			asm("brne lfo1Finished");
+			// if so start going up again
+			asm("ldi r16, 1");
+			asm("sts lfo1Up, r16");
+			asm("lfo1Finished:");
+			// output r25 to port B
+			asm("out 0x5, r25");
+			asm("sts portBVal, r25");
 			sei();
 		asm("ldi r16, 0\n");
 		asm("sts nextSample, r16\n");
+		serialWrite(timerCount);
 		while(serialHasData()) {
-			if(serialReadIntoBuffer() == 3) {
+			if(serialReadIntoBuffer() >= 2) {
 				command = serialReadOutOfBuffer();
+				if(!(command && 0b10010000)) continue;
+				serialWrite(command);
 				data1 = serialReadOutOfBuffer();
-				data2 = serialReadOutOfBuffer();
+				//data2 = serialReadOutOfBuffer();
+				//if(command == 0b10010000) {
+					serialWrite(data1);
+					setDeltaPhaseIndex(data1, 0);
+				//}
 				serialDataReady = 3;
 				break;
 			}

@@ -58,7 +58,7 @@ public class ArduinoComm implements Runnable, SerialPortEventListener {
         }
         serialPort.notifyOnDataAvailable(true);
         try {
-            serialPort.setSerialPortParams(9600,
+            serialPort.setSerialPortParams(31500,
                 SerialPort.DATABITS_8,
                 SerialPort.STOPBITS_1,
                 SerialPort.PARITY_NONE);
@@ -101,7 +101,7 @@ public class ArduinoComm implements Runnable, SerialPortEventListener {
         }
     }
     
-    public void sendData(int[] data) {
+    public void sendData(ArrayList<Integer> data) {
     	if(!serialPortActive) return;
         try {
         	for(int d: data) outputStream.write(d);
