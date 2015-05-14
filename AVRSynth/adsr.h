@@ -1,3 +1,46 @@
+
+extern const unsigned char adsrDelta[];
+
+// ADSR1
+extern unsigned char noteOn;
+extern unsigned char adsr1up;
+extern unsigned char adsr1PrevValue;
+extern unsigned char adsr1CurrentValue[3];
+extern unsigned char adsr1DeltaValue[2];
+extern unsigned int  adsr1AttackTime;
+extern unsigned int  adsr1DecayTime;
+extern unsigned char adsr1Sustain;
+extern unsigned int  adsr1ReleaseTime;
+
+unsigned char noteOn;
+unsigned char adsr1up;
+unsigned char adsr1PrevValue;
+unsigned char adsr1CurrentValue[3];
+unsigned char adsr1DeltaValue[2];
+unsigned int  adsr1AttackTime;
+unsigned int  adsr1DecayTime;
+unsigned char adsr1Sustain;
+unsigned int  adsr1ReleaseTime;
+
+void updateEnvelope() {
+	if(!noteOn) {
+		adsr1up = 0;
+		adsr1DeltaValue[0] = adsrDelta[adsr1ReleaseTime * 2];
+		adsr1DeltaValue[1] = adsrDelta[adsr1ReleaseTime * 2 + 1];
+		return;
+	}
+	if(adsr1up) {
+		adsr1up = 0;
+		adsr1DeltaValue[0] = adsrDelta[adsr1DecayTime * 2];
+		adsr1DeltaValue[1] = adsrDelta[adsr1DecayTime * 2 + 1];
+	}
+	if(adsr1PrevValue == 0) {
+		adsr1DeltaValue[0] = 0;
+		adsr1DeltaValue[1] = 0;
+		return;
+	}
+}
+
 extern const unsigned char adsrDelta[] PROGMEM = {255, 255, 69, 254, 142, 252, 218, 250, 40, 249, 122, 247, 207, 245, 38, 244, 129, 242,
 	222, 240, 62, 239, 161, 237, 6, 236, 111, 234, 218, 232, 72, 231, 184, 229,
 	43, 228, 161, 226, 26, 225, 149, 223, 19, 222, 148, 220, 23, 219, 156, 217,

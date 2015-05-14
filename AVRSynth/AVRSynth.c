@@ -18,28 +18,7 @@
 #include "oscillator.h"
 #include "adsr.h"
 #include "lfo.h"
-
-/*
-#include <binary.h>
-#include "Client.h"
-#include "HardwareSerial.h"
-#include "IPAddress.h"
-#include "new.h"
-#include "pins_arduino.h"
-#include "Platform.h"
-#include "Print.h"
-#include "Printable.h"
-#include "Server.h"
-#include "Stream.h"
-#include "Udp.h"
-#include "USBAPI.h"
-#include "USBCore.h"
-#include "USBDesc.h"
-#include "WCharacter.h"
-#include "wiring_private.h"
-#include "WString.h"
-*/
-// INO Starts HERE
+#include "sh.h"
 
 //#include "eeprom.h"
 
@@ -48,17 +27,7 @@
 
 #define minMidiNote 12
 #define maxMidiNote 84
-#define setOsc1ResetOn B00000100
-#define setOsc1ResetOff B11111011
-#define setOsc1On B00001000
-#define setOsc1Off B11110111
 volatile char nextSample = 1;
-char noteOn = 1;
-char loopEnvelope = 0;
-unsigned char sampleCount = 0;
-long currentTimeInMillis = 0;
-
-extern void *sampleGenerator;
 
 unsigned char adcRead() {
 	/*
@@ -124,6 +93,13 @@ void serialWrite(unsigned char DataOut)
 	UDR0 = DataOut;
 }
 
+void serialWriteWithWait(unsigned char DataOut)
+{
+	while(!serialWriteReady());
+	UDR0 = DataOut;
+}
+
+
 void initTimer2() {
 	/* First disable the timer overflow interrupt while we're configuring */
 	TIMSK2 &= ~(1<<TOIE2);
@@ -146,166 +122,41 @@ void initTimer2() {
 int setDeltaPhaseIndex(int note, int oscIndex) {
 	if(note >= minMidiNote && note <= maxMidiNote) {
 		if(oscIndex == 0) {
-			osc1DeltaPhaseIndex = note * 64 * 3 - 9;
+			oscDeltaPhaseIndex[0] = note * 64 * 3 - 9;
+		}
+		if(oscIndex == 1) {
+			oscDeltaPhaseIndex[1] = note * 64 * 3 - 9;
 		}
 	}
-}
-
-void updateEnvelope() {
-	if(!noteOn) {
-		cli();
-		adsr1up = 0;
-		adsr1DeltaValue[0] = adsrDelta[adsr1ReleaseTime * 2];
-		adsr1DeltaValue[1] = adsrDelta[adsr1ReleaseTime * 2 + 1];
-		sei();
-		return;
-	}
-	if(currentTimeInMillis == 0) {
-		cli();
-		adsr1up = 1;
-		adsr1DeltaValue[0] = adsrDelta[adsr1AttackTime * 2];
-		adsr1DeltaValue[1] = adsrDelta[adsr1AttackTime * 2 + 1];
-		adsr1CurrentValue[0] = 0;
-		adsr1CurrentValue[1] = 0;
-		adsr1CurrentValue[2] = 0;
-		sei();
-		return;
-	}
-	if(adsr1up) {
-		cli();
-		adsr1up = 0;
-		adsr1DeltaValue[0] = adsrDelta[adsr1DecayTime * 2];
-		adsr1DeltaValue[1] = adsrDelta[adsr1DecayTime * 2 + 1];
-		sei();
-	}
-	if(adsr1PrevValue == 0) {
-		if(loopEnvelope) {
-			cli();
-			adsr1up = 1;
-			adsr1DeltaValue[0] = adsrDelta[adsr1AttackTime * 2];
-			adsr1DeltaValue[1] = adsrDelta[adsr1AttackTime * 2 + 1];
-			adsr1CurrentValue[0] = 0;
-			adsr1CurrentValue[1] = 0;
-			adsr1CurrentValue[2] = 0;
-			sei();
-			return;
-		} else {
-			cli();
-			adsr1DeltaValue[0] = 0;
-			adsr1DeltaValue[1] = 0;
-			sei();
-			return;
-		}
-	}
-	if(adsr1PrevValue <= adsr1Sustain) {
-		if(loopEnvelope) {
-			cli();
-			adsr1up = 0;
-			adsr1DeltaValue[0] = adsrDelta[adsr1ReleaseTime * 2];
-			adsr1DeltaValue[1] = adsrDelta[adsr1ReleaseTime * 2 + 1];
-			sei();
-		}
-	}
-}
-
-void updateLFO() {
-	/*
-	X = lfoDeltaValue;
-	Y = lfo1currentValue;
-	Z = lfoup;
-	if(lfo1up) {
-		(add) lfo1CurrentValue[0] += lfoDeltaValue[0];
-		(adc) lfo1CurrentValue[1] += lfoDeltaValue[1];
-		(adc) lfo1CurrentValue[2] += r2(0)
-		if(LFOCurrentValue >= 128) {
-			lfoUp = 0;
-		}
-	} else {
-		(sub) lfo1CurrentValue[0] -= lfoDeltaValue[0];
-		(adc) lfo1CurrentValue[1] -= lfoDeltaValue[1];
-		(adc) lfo1CurrentValue[2] -= r2(0)
-		if(LFOCurrentValue == 0) {
-			lfoUp = 1;
-		}
-	}
-	if(LFOCurrentValue[2] == LFOPrevValue) {
-		PORTB |= B0000000;
-		return;
-	}
-	*/
-}
-
-
-void updateLFOVal(int lfoVal) {
-	cli();
-	//lfo1Delta[0] = lfo1Delta[lfoVal * 2];
-	//lfo1Delta[1] = lfo1Delta[lfoVal * 2 + 1];
-	lfo1DeltaPhaseIndex = lfoVal * 2;
-	sei();
 }
 
 int blink = 0;
+// next sample when timerCount = 4
 char timerCount = 0;
-//int testData = 0;
-// This is needed to fool the optimizer
-//int garbage = 0;
+
+extern char portBVal;
+char portBVal;
+extern char portDVal;
+char portDVal;
 
 // Called when timer 2 overflows
 ISR(TIMER2_OVF_vect) {
-	//nextSample = 1;
-	//TCNT2 = 255;
-	//serialWrite(127);
-	/*
-	if(blink < 100) {
-		PORTB = B00111111;
-		blink++;
-	} else {
-		PORTB = B00000000;
-		blink++;
-		if(blink > 200) blink = 0;
-	}
 	nextSample = 1;
-	sampleCount++;
-	if(sampleCount == 128) {
-		currentTimeInMillis++;
-		sampleCount = 0;
-	}
-	while(!serialWriteReady()){};
-	serialWrite(portBVal);
-	//while(!serialWriteReady()){};
-	//serialWrite(oscMasterData[7]);
-	//testData++;
-	// This is needed to fool the optimizer
-	//garbage += deltaPhase[testData];
-	*/
-	asm("push r16");
-	asm("ser r16");
-	asm("sts nextSample, r16\n");
-	asm("lds r16, timerCount");
-	asm("inc r16");
-	asm("sts timerCount, r16");
-	asm("pop r16");
-	//TCNT2 = 255;
-	//while(!serialWriteReady()){};
-	//serialWrite(portBVal);
-	TCNT2 = 255;
 }
 
 void initOscMasterData() {
 	// 0 osc1LFOMod
 	oscMasterData[0] = 64 * 3;
-	// 1 osc1SHMod
-	oscMasterData[1] = 64 * 3;
-	// 2 osc1ENVMod
+	// 2 osc1SHMod
 	oscMasterData[2] = 64 * 3;
-	// 3 - 5 osc1CurrentValue
-	oscMasterData[3] = 0;
-	oscMasterData[4] = 0;
-	oscMasterData[5] = 0;
-	// 6 osc1PrevValue
-	oscMasterData[6] = 128;
-	oscMasterData[7] = 64;
-	oscMasterData[8] = 32;
+	// 4 osc1ENVMod
+	oscMasterData[4] = 64 * 3;
+	// 12 osc1LFOMod
+	oscMasterData[12] = 64 * 3;
+	// 14 osc1SHMod
+	oscMasterData[14] = 64 * 3;
+	// 16 osc1ENVMod
+	oscMasterData[16] = 64 * 3;
 }
 
 int main() {
@@ -323,187 +174,139 @@ int main() {
 	adsr1Sustain = 64;
 	adsr1ReleaseTime = 256;
 	setDeltaPhaseIndex(72, 0);
+	setDeltaPhaseIndex(60, 1);
 	updateLFOVal(900);
 	lfo1Up = 1;
 	updateEnvelope();
 	sh1NextValue = 64;
 	sh1CurrentValue = 64;
-	sh1rate = 10000;
-	sh1currentCount = 0;
+	sh1Rate = 10000;
+	sh1CurrentCount = 0;
 	initOscMasterData();
 	asm("infinite:");
 			asm("lds r16, nextSample\n");
 			asm("cpi r16, 0\n");
 			asm("breq infinite\n");
-			/*
-			// START OSC1
-			*/
-			//serialWrite(portBVal);
-			cli();
-			asm("clr r25\n");
-			asm("sts timerCount, r25");
-			//X = &osc1DeltaPhaseIndex;
-			asm("ldi r26, lo8(osc1DeltaPhaseIndex)\n");
-			asm("ldi r27, hi8(osc1DeltaPhaseIndex)\n");
-			// osc1DeltaPhaseIndex in r5:r4
-			asm("ld r4, X+\n");
-			asm("ld r5, X+\n");
-			//Y = oscMasterData (starting at osc1LFOMod)
-			asm("ldi r28, lo8(oscMasterData)\n");
-			asm("ldi r29, hi8(oscMasterData)\n");
-			// Put 0 in r2
-			asm("clr r2\n");
-			//Y = osc1LFOMod
-			asm("ld r3, Y+\n");
-			//asm("add r4, r3");
-			//asm("adc r5, r2");
-			//Y = osc1SHMod
-			asm("ld r3, Y+\n");
-			//asm("add r4, r3");
-			//asm("adc r5, r2");
-			//Y = osc1ENVMod
-			asm("ld r3, Y+\n");
-			//asm("add r4, r3");
-			//asm("adc r5, r2");
-			// put deltaPhase in Z
-			asm("ldi r30, lo8(deltaPhase)\n");
-			asm("ldi r31, hi8(deltaPhase)\n");
-			// add offset from r5:r4
-			asm("add r30, r4\n");
-			asm("adc r31, r5\n");
-			// finally load deltaPhase from Z
-			asm("lpm r16, Z+\n");
-			asm("lpm r17, Z+\n");
-			asm("lpm r18, Z+\n");
-			// Load osc1CurrentValue into r21:r20:r19
-			asm("ld r19, Y+\n");
-			asm("ld r20, Y+\n");
-			asm("ld r21, Y+\n");
-			// store current value in r25
-			asm("mov r24, r21");
-			// Add deltaPhase to osc1CurrentValue
-			asm("add r19, r16\n");
-			asm("adc r20, r17\n");
-			asm("adc r21, r18\n");
-			// test for max value
-			asm("cpi r21, 128\n");
-			asm("brlo skipReset\n");
-			// if maxValue reset and set integerator reset pin high
-			asm("clr r19\n");
-			asm("clr r20\n");
-			asm("clr r21\n");
-			asm("ori r25, 0b00100000\n");
-			// Update osc1 current value
-			asm("skipReset:\n");
-			asm("st -Y, r21\n");			
-			asm("st -Y, r20\n");
-			asm("st -Y, r19\n");
-			// compare to prev value to currentValue
-			// NOTE use of BRSH (Branch if same or higher)
-			// prevVal will be greater than current val if 128 is reached
-			asm("cp r24, r21\n");
-			asm("brsh skipSetOutput\n");
-			asm("ori r25, 0b00010000\n");
-			asm("skipSetOutput:\n");
-			/*
-			// START LFO1
-			*/
-			asm("ldi r26, lo8(lfo1DeltaPhaseIndex)\n");
-			asm("ldi r27, hi8(lfo1DeltaPhaseIndex)\n");
-			// lfo1DeltaPhaseIndex in r5:r4
-			asm("ld r4, X+\n");
-			asm("ld r5, X+\n");
-			//Y = lfoMasterData
-			asm("ldi r28, lo8(lfo1MasterData)\n");
-			asm("ldi r29, hi8(lfo1MasterData)\n");
-			// put deltaPhase in Z
-			asm("ldi r30, lo8(lfoDelta)\n");
-			asm("ldi r31, hi8(lfoDelta)\n");
-			// add offset from r5:r4
-			asm("add r30, r4\n");
-			asm("adc r31, r5\n");
-			// finally load lfoPhase from Z
-			asm("lpm r16, Z+\n");
-			asm("lpm r17, Z+\n");
-			// Load lfo1CurrentValue into r21:r20:r19
-			asm("ld r19, Y+\n");
-			asm("ld r20, Y+\n");
-			asm("ld r21, Y+\n");
-			// store current value in r24
-			asm("mov r24, r21");
-			asm("lds r23, lfo1Up");
-			// check if lfoUp
-			asm("cpi r23, 0");
-			// if not go to subtract
-			asm("breq lfo1Subtract");
-			// Add lfoPhase to lfo1CurrentValue
-			asm("ldi r23, 0");
-			asm("add r19, r16\n");
-			asm("adc r20, r17\n");
-			asm("adc r21, r23\n");
-			// store lfo1Currentvalue
-			asm("st -Y, r21\n");
-			asm("st -Y, r20\n");
-			asm("st -Y, r19\n");
-			// FOR DEBUGGING
-			asm("sts lfo1PrevValue, r21");
-			// compare with previous output
-			asm("cp r24, r21\n");
-			asm("brsh lfo1SkipSetOutput\n");
-			// if greater than prev value set output to add pin
-			asm("ori r25, 0b00000010\n");
-			asm("lfo1SkipSetOutput:");
-			// test for max value
-			asm("cpi r21, 127\n");
-			asm("brlo lfo1Finished\n");
-			// if maxValue set lfoUp to 0
-			asm("sts lfo1Up, r2");
-			asm("jmp lfo1Finished");
-			asm("lfo1Subtract:");
-			// Substract lfoPhase from lfo1CurrentValue
-			asm("ldi r23, 0");
-			asm("sub r19, r16\n");
-			asm("sbc r20, r17\n");
-			asm("sbc r21, r23\n");
-			// store lfo1Currentvalue
-			asm("st -Y, r21\n");
-			asm("st -Y, r20\n");
-			asm("st -Y, r19\n");
-			asm("sts lfo1PrevValue, r21");
-			// compare with previous output
-			asm("cp r21, r24\n");
-			asm("brsh lfo1Finished\n");
-			// if less than prev value set output to subtract pin
-			asm("ori r25, 0b00000001\n");
-			// see if were at 0
-			asm("cpi r21, 0\n");
-			asm("brne lfo1Finished");
-			// if so start going up again
-			asm("ldi r16, 1");
-			asm("sts lfo1Up, r16");
-			asm("lfo1Finished:");
-			// output r25 to port B
-			asm("out 0x5, r25");
-			asm("sts portBVal, r25");
-			sei();
+				// ***********************
+				// Start OSC1
+				// ***********************
+				// load portBVal into r23
+				asm("lds r23, portBVal");
+				asm("andi r23, 0b11000011"); // clear oscillator bits
+				//Y = oscMasterData
+				asm("ldi r28, lo8(oscMasterData + 6)");
+				asm("ldi r29, hi8(oscMasterData + 6)");
+				// Load osc1DeltaPhase
+				asm("ld r3, Y+\n");
+				asm("ld r4, Y+\n");
+				asm("ld r5, Y+\n");
+				// Load osc1CurrentValue
+				asm("ld r6, Y+\n");
+				asm("ld r7, Y+\n");
+				asm("ld r22, Y+\n");
+				// store current value in r9
+				asm("mov r9, r22");
+				// DEBUGGING
+				asm("sts osc1PrevVal, r22");
+				// Add deltaPhase to osc1CurrentValue
+				asm("add r6, r3\n");
+				asm("adc r7, r4\n");
+				asm("adc r22, r5\n");
+				// test for max value
+				asm("cpi r22, 128\n");
+				asm("brlo skipReset1\n");
+				// if maxValue reset and set integrator reset pin high
+				asm("clr r6\n");
+				asm("clr r7\n");
+				asm("clr r22\n");
+				asm("ori r23, 0b00100000");
+				// compare to prev value to currentValue
+				// NOTE use of BRSH (Branch if same or higher)
+				// prevVal will be greater than current val if 128 is reached
+				// Update osc1 current value
+				asm("skipReset1:\n");
+				asm("cp r9, r22\n");
+				asm("brsh skipSetOutput1\n");
+				asm("ori r23, 0b00010000\n");
+				asm("skipSetOutput1:\n");
+				// Update osc1 current value
+				asm("st -Y, r22\n");
+				asm("st -Y, r7\n");
+				asm("st -Y, r6\n");
+				// ***********************
+				// Start OSC2
+				// ***********************
+				// load portBVal into r23
+				// asm("lds r23, portBVal")
+				//Y = oscMasterData
+				asm("ldi r28, lo8(oscMasterData + 18)\n");
+				asm("ldi r29, hi8(oscMasterData + 18)\n");
+				// Load osc2DeltaPhase
+				asm("ld r3, Y+\n");
+				asm("ld r4, Y+\n");
+				asm("ld r5, Y+\n");
+				// Load osc2CurrentValue
+				asm("ld r6, Y+\n");
+				asm("ld r7, Y+\n");
+				asm("ld r22, Y+\n");
+				// store current value in r9
+				asm("mov r9, r22");
+				// DEBUGGING
+				asm("sts osc2PrevVal, r22");
+				// Add deltaPhase to osc1CurrentValue
+				asm("add r6, r3\n");
+				asm("adc r7, r4\n");
+				asm("adc r22, r5\n");
+				// test for max value
+				asm("cpi r22, 128\n");
+				asm("brlo skipReset2\n");
+				// if maxValue reset and set integrator reset pin high
+				asm("clr r6\n");
+				asm("clr r7\n");
+				asm("clr r22\n");
+				asm("ori r23, 0b00001000");
+				// compare to prev value to currentValue
+				// NOTE use of BRSH (Branch if same or higher)
+				// prevVal will be greater than current val if 128 is reached
+				// Update osc1 current value
+				asm("skipReset2:\n");
+				asm("cp r9, r22\n");
+				asm("brsh skipSetOutput2\n");
+				asm("ori r23, 0b00000100\n");
+				asm("skipSetOutput2:\n");
+				// Update osc1 current value
+				asm("st -Y, r22\n");
+				asm("st -Y, r7\n");
+				asm("st -Y, r6\n");
+				// store port value and send new value out
+				asm("sts portBVal, r23");
+				asm("out 0x5, r23");
+				updateOscillators();
+				updateLFO1();
+			//sei();
 		asm("ldi r16, 0\n");
 		asm("sts nextSample, r16\n");
-		serialWrite(timerCount);
 		while(serialHasData()) {
 			if(serialReadIntoBuffer() >= 2) {
 				command = serialReadOutOfBuffer();
 				if(!(command && 0b10010000)) continue;
-				serialWrite(command);
+				//serialWrite(command);
 				data1 = serialReadOutOfBuffer();
 				//data2 = serialReadOutOfBuffer();
 				//if(command == 0b10010000) {
-					serialWrite(data1);
+					//serialWrite(data1);
 					setDeltaPhaseIndex(data1, 0);
 				//}
 				serialDataReady = 3;
 				break;
 			}
 		}
+		//serialWriteWithWait(128 + 0);
+		serialWriteWithWait(osc2PrevVal);
+		//serialWriteWithWait(128 + 1);
+		//serialWriteWithWait(osc2PrevVal);
+		//serialWriteWithWait(128 + 2);
+		//serialWriteWithWait(lfo1PrevVal);
 	asm("jmp infinite\n");
 	return 0;
 }

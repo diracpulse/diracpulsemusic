@@ -1,80 +1,121 @@
 
-// Oscillator 1 Variables
-
-// LFO1
-
-extern unsigned char lfo1Up;
-extern unsigned char lfo1PrevValue;
-extern unsigned char lfo1CurrentValue[3];
-extern unsigned int lfo1DeltaPhaseIndex;
-extern unsigned char lfo1MasterData[63];
-extern unsigned char lfo1MasterData[63];
-
-
-// ADSR1
-extern unsigned char adsr1up;
-extern unsigned char adsr1PrevValue;
-extern unsigned char adsr1CurrentValue[3];
-extern unsigned char adsr1DeltaValue[2];
-extern unsigned int  adsr1AttackTime;
-extern unsigned int  adsr1DecayTime;
-extern unsigned char adsr1Sustain;
-extern unsigned int  adsr1ReleaseTime;
-
-// Sample and Hold 1
-extern unsigned char sh1CurrentValue;
-extern unsigned int sh1rate;
-extern unsigned int sh1currentCount;
-
 // OSC1
-extern unsigned int osc1DeltaPhaseIndex;
-extern volatile unsigned char portBVal;
-extern unsigned char osc1PrevValue;
-extern unsigned char osc1CurrentValue[3];
+extern unsigned char osc1PrevVal;
 extern unsigned char osc1shAmt;
 extern unsigned char osc1lfoAmt;
 extern unsigned char osc1adsrAmt;
-
-// Oscillator 1 Variables
-// LFO1
-
-unsigned char lfo1Up;
-unsigned char lfo1PrevValue;
-unsigned char lfo1CurrentValue[3];
-unsigned int lfo1DeltaPhaseIndex;
-unsigned char lfo1MasterData[63];
-
-
-// ADSR1
-unsigned char adsr1up;
-unsigned char adsr1PrevValue;
-unsigned char adsr1CurrentValue[3];
-unsigned char adsr1DeltaValue[2];
-unsigned int  adsr1AttackTime;
-unsigned int  adsr1DecayTime;
-unsigned char adsr1Sustain;
-unsigned int  adsr1ReleaseTime;
-
-// Sample and Hold 1
-unsigned char sh1CurrentValue;
-unsigned char sh1NextValue;
-unsigned int sh1rate;
-unsigned int sh1currentCount;
-
-// OSC1
-unsigned int osc1DeltaPhaseIndex;
-unsigned volatile char portBVal;
-unsigned char osc1PrevValue;
-unsigned char osc1CurrentValue[3];
+unsigned char osc1PrevVal;
 unsigned char osc1shAmt;
 unsigned char osc1lfoAmt;
 unsigned char osc1adsrAmt;
 
+// OSC2
+extern unsigned char osc2PrevVal;
+extern unsigned char osc2shAmt;
+extern unsigned char osc2lfoAmt;
+extern unsigned char osc2adsrAmt;
+unsigned char osc2PrevVal;
+unsigned char osc2shAmt;
+unsigned char osc2lfoAmt;
+unsigned char osc2adsrAmt;
+
 // OSC Master Data
+extern unsigned int oscDeltaPhaseIndex[2];
+unsigned int oscDeltaPhaseIndex[2];
 extern unsigned char oscMasterData[63];
 unsigned char oscMasterData[63];
-// 0 osc1LFOMod
-// 1 osc1SHMod
-// 2 osc1ENVMod
-// 3 - 5 osc1CurrentValue
-// 6 osc1PrevValue
+// 0 - 1 osc1LFOMod
+// 2 - 3 osc1SHMod
+// 4 - 5 osc1ENVMod
+// 6 - 8 osc1DeltaPhase
+// 9 - 11 osc1CurrentValue
+// 12 - 13 osc2LFOMod
+// 14 - 15 osc2SHMod
+// 16 - 17 osc2ENVMod
+// 18 - 20 osc2DeltaPhase
+
+extern void updateOscillators() {
+	/*
+	// START OSC1
+	*/
+	//serialWrite(portBVal);
+	//cli();
+	//X = &oscDeltaPhaseIndex;
+	asm("ldi r26, lo8(oscDeltaPhaseIndex)\n");
+	asm("ldi r27, hi8(oscDeltaPhaseIndex)\n");
+	// osc1DeltaPhaseIndex in r5:r4
+	asm("ld r4, X+\n");
+	asm("ld r5, X+\n");
+	//Y = oscMasterData (starting at osc1LFOMod)
+	asm("ldi r28, lo8(oscMasterData)\n");
+	asm("ldi r29, hi8(oscMasterData)\n");
+	//Y = osc1LFOMod
+	asm("ld r3, Y+\n");
+	asm("ld r2, Y+\n");
+	asm("add r4, r3");
+	asm("adc r5, r2");
+	//Y = osc1SHMod
+	asm("ld r3, Y+\n");
+	asm("ld r2, Y+\n");
+	asm("add r4, r3");
+	asm("adc r5, r2");
+	//Y = osc1ENVMod
+	asm("ld r3, Y+\n");
+	asm("ld r2, Y+\n");
+	asm("add r4, r3");
+	asm("adc r5, r2");
+	// put deltaPhase in Z
+	asm("ldi r30, lo8(deltaPhase)\n");
+	asm("ldi r31, hi8(deltaPhase)\n");
+	// add offset from r5:r4
+	asm("add r30, r4\n");
+	asm("adc r31, r5\n");
+	// finally load deltaPhase from Z
+	asm("lpm r16, Z+\n");
+	asm("lpm r17, Z+\n");
+	asm("lpm r18, Z+\n");
+	// load deltaPhase into bytes [6 - 8] of osc1DeltaPhase
+	asm("st Y+, r16");
+	asm("st Y+, r17");
+	asm("st Y+, r18");
+	// skip over osc1CurrentValue
+	asm("adiw r28, 3");
+	/*
+	// START OSC2
+	*/
+	//serialWrite(portBVal);
+	//cli();
+	//X = &oscDeltaPhaseIndex;
+	// osc1DeltaPhaseIndex in r5:r4 (in X from OSC1)
+	asm("ld r4, X+\n");
+	asm("ld r5, X+\n");
+	//Y = oscMasterData (starting at osc2LFOMod) (in Y from OSC1)
+	asm("ld r3, Y+\n");
+	asm("ld r2, Y+\n");
+	asm("add r4, r3");
+	asm("adc r5, r2");
+	//Y = osc1SHMod
+	asm("ld r3, Y+\n");
+	asm("ld r2, Y+\n");
+	asm("add r4, r3");
+	asm("adc r5, r2");
+	//Y = osc1ENVMod
+	asm("ld r3, Y+\n");
+	asm("ld r2, Y+\n");
+	asm("add r4, r3");
+	asm("adc r5, r2");
+	// put deltaPhase in Z (can't reuse Z from OSC1, since it's off by 3)
+	asm("ldi r30, lo8(deltaPhase)\n");
+	asm("ldi r31, hi8(deltaPhase)\n");
+	// add offset from r5:r4
+	asm("add r30, r4\n");
+	asm("adc r31, r5\n");
+	// finally load deltaPhase from Z
+	asm("lpm r16, Z+\n");
+	asm("lpm r17, Z+\n");
+	asm("lpm r18, Z+\n");
+	// load deltaPhase into bytes [15 - 16] of osc1CurrentValue
+	asm("st Y+, r16");
+	asm("st Y+, r17");
+	asm("st Y+, r18");
+}

@@ -1,4 +1,103 @@
 
+// LFO1
+
+extern unsigned char lfo1Up;
+extern unsigned char lfo1PrevVal;
+extern unsigned char lfo1CurrentValue[3];
+extern unsigned int lfo1DeltaPhaseIndex;
+extern unsigned char lfo1MasterData[63];
+unsigned char lfo1Up;
+unsigned char lfo1PrevVal;
+unsigned char lfo1CurrentValue[3];
+unsigned int lfo1DeltaPhaseIndex;
+unsigned char lfo1MasterData[63];
+
+extern void updateLFOVal(int lfoVal) {
+	lfo1DeltaPhaseIndex = lfoVal * 2;
+}
+
+extern void updateLFO1() {
+		// START LFO1
+		asm("clr r2");
+		asm("lds r25, portBVal"); // portVal in r25
+		asm("andi r25, 0b11111100"); // clear lfo bits 
+		asm("ldi r26, lo8(lfo1DeltaPhaseIndex)\n");
+		asm("ldi r27, hi8(lfo1DeltaPhaseIndex)\n");
+		// lfo1DeltaPhaseIndex in r5:r4
+		asm("ld r4, X+\n");
+		asm("ld r5, X+\n");
+		//Y = lfoMasterData
+		asm("ldi r28, lo8(lfo1MasterData)\n");
+		asm("ldi r29, hi8(lfo1MasterData)\n");
+		// put deltaPhase in Z
+		asm("ldi r30, lo8(lfoDelta)\n");
+		asm("ldi r31, hi8(lfoDelta)\n");
+		// add offset from r5:r4
+		asm("add r30, r4\n");
+		asm("adc r31, r5\n");
+		// finally load lfoPhase from Z
+		asm("lpm r16, Z+\n");
+		asm("lpm r17, Z+\n");
+		// Load lfo1CurrentValue into r21:r20:r19
+		asm("ld r19, Y+\n");
+		asm("ld r20, Y+\n");
+		asm("ld r21, Y+\n");
+		// store current value in r24
+		asm("mov r24, r21");
+		asm("lds r23, lfo1Up");
+		// check if lfoUp
+		asm("cpi r23, 0");
+		// if not go to subtract
+		asm("breq lfo1Subtract");
+		// Add lfoPhase to lfo1CurrentValue
+		asm("add r19, r16\n");
+		asm("adc r20, r17\n");
+		asm("adc r21, r2\n");
+		// store lfo1Currentvalue
+		asm("st -Y, r21\n");
+		asm("st -Y, r20\n");
+		asm("st -Y, r19\n");
+		// FOR DEBUGGING
+		asm("sts lfo1PrevVal, r21");
+		// compare with previous output
+		asm("cp r24, r21\n");
+		asm("brsh lfo1SkipSetOutput\n");
+		// if greater than prev value set output to add pin
+		asm("ori r25, 0b00000010\n");
+		asm("lfo1SkipSetOutput:");
+		// test for max value
+		asm("cpi r21, 127\n");
+		asm("brlo lfo1Finished\n");
+		// if maxValue set lfoUp to 0
+		asm("sts lfo1Up, r2");
+		asm("jmp lfo1Finished");
+		asm("lfo1Subtract:");
+		// Substract lfoPhase from lfo1CurrentValue
+		asm("sub r19, r16\n");
+		asm("sbc r20, r17\n");
+		asm("sbc r21, r2\n");
+		// store lfo1Currentvalue
+		asm("st -Y, r21\n");
+		asm("st -Y, r20\n");
+		asm("st -Y, r19\n");
+		// DEBUGGING
+		asm("sts lfo1PrevVal, r21");
+		// compare with previous output
+		asm("cp r21, r24\n");
+		asm("brsh lfo1Finished\n");
+		// if less than prev value set output to subtract pin
+		asm("ori r25, 0b00000001\n");
+		// see if were at 0
+		asm("cpi r21, 0\n");
+		asm("brne lfo1Finished");
+		// if so start going up again
+		asm("ldi r16, 1");
+		asm("sts lfo1Up, r16");
+		asm("lfo1Finished:");
+		// write r25 to portBVal
+		asm("sts portBVal, r25");
+}
+
 extern const unsigned char lfoDelta[] PROGMEM = {8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 9, 0, 9, 0,
 	9, 0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0, 9, 0,
 	9, 0, 9, 0, 9, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0,
