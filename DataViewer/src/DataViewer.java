@@ -81,7 +81,7 @@ public class DataViewer extends JFrame {
 	
 	public void readSerialPortData(ArrayList<Integer> data) {
 		if(paused) return;
-		view.addData(0, data.get(0));
+		view.addData(data.get(0), data.get(1));
 		view.repaint();
 		dataCount++;
 		if(dataCount == 255) {

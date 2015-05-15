@@ -169,10 +169,6 @@ int main() {
 	initTimer2();
 	// Setup ends here
 	sei();
-	adsr1AttackTime = 10;
-	adsr1DecayTime = 10;
-	adsr1Sustain = 64;
-	adsr1ReleaseTime = 256;
 	setDeltaPhaseIndex(72, 0);
 	setDeltaPhaseIndex(60, 1);
 	updateLFOVal(900);

@@ -3,42 +3,190 @@ extern const unsigned char adsrDelta[];
 
 // ADSR1
 extern unsigned char noteOn;
-extern unsigned char adsr1up;
-extern unsigned char adsr1PrevValue;
+extern unsigned char adsr1Up;
+extern unsigned char adsr1PrevVal;
 extern unsigned char adsr1CurrentValue[3];
 extern unsigned char adsr1DeltaValue[2];
-extern unsigned int  adsr1AttackTime;
-extern unsigned int  adsr1DecayTime;
+extern unsigned char adsr1AttackDelta[2];
+extern unsigned char adsr1DecayDelta[2];
 extern unsigned char adsr1Sustain;
-extern unsigned int  adsr1ReleaseTime;
+extern unsigned char adsr1ReleaseDelta[2];
 
 unsigned char noteOn;
-unsigned char adsr1up;
-unsigned char adsr1PrevValue;
+unsigned char adsr1Up;
+unsigned char adsr1PrevVal;
 unsigned char adsr1CurrentValue[3];
 unsigned char adsr1DeltaValue[2];
-unsigned int  adsr1AttackTime;
-unsigned int  adsr1DecayTime;
+unsigned char adsr1AttackDelta[2];
+unsigned char adsr1DecayDelta[2];
 unsigned char adsr1Sustain;
-unsigned int  adsr1ReleaseTime;
+unsigned char adsr1ReleaseDelta[2];
+
+extern void noteTurnedOn() {
+	asm("ldi r16, 1");
+	asm("sts noteOn, r16");
+	asm("sts adsr1Up, r16");
+	asm("lds r16, adsr1AttackDelta");
+	asm("lds r17, adsr1AttackDelta + 1");
+	asm("sts adsrDeltaValue, r16");
+	asm("sts adsrDeltaValue + 1, r17");
+}
+
+extern void noteTurnedOff() {
+	asm("ldi r16, 1");
+	asm("sts noteOn, r16");
+	asm("sts adsr1Up, r16");
+	asm("lds r16, adsr1AttackDelta");
+	asm("lds r17, adsr1AttackDelta + 1");
+	asm("sts adsr1DeltaValue, r16");
+	asm("sts adsr1DeltaValue + 1, r17");
+}
+
+
+
 
 void updateEnvelope() {
-	if(!noteOn) {
-		adsr1up = 0;
-		adsr1DeltaValue[0] = adsrDelta[adsr1ReleaseTime * 2];
-		adsr1DeltaValue[1] = adsrDelta[adsr1ReleaseTime * 2 + 1];
-		return;
-	}
-	if(adsr1up) {
-		adsr1up = 0;
-		adsr1DeltaValue[0] = adsrDelta[adsr1DecayTime * 2];
-		adsr1DeltaValue[1] = adsrDelta[adsr1DecayTime * 2 + 1];
-	}
-	if(adsr1PrevValue == 0) {
-		adsr1DeltaValue[0] = 0;
-		adsr1DeltaValue[1] = 0;
-		return;
-	}
+	// load portDVal in r25
+	asm("lds r25, portDVal");
+	// clear adsr bits
+	asm("andi r25, 0b00111111");
+	asm("lds r16, noteOn");
+	asm("cpi r16, 0");
+	asm("brne noteIsOn");
+	/////////////////////////////////////
+	// RELEASE
+	/////////////////////////////////////
+	asm("lds r16, adsr1CurrentValue + 2");
+	asm("cpi r16, 0");
+	asm("breq releaseFinished");
+	//Y = oscMasterData
+	asm("ldi r28, lo8(adsr1CurrentValue)\n");
+	asm("ldi r29, hi8(adsr1CurrentValue)\n");
+	// Load adsr current value into r18:r17:r16
+	asm("ld r16, Y+");
+	asm("ld r17, Y+");
+	asm("ld r18, Y+");
+	// store current value in r22
+	asm("mov r22, r18");
+	// Load deltaValue into r21:r20:r19
+	asm("lds r19, adsr1DeltaValue");
+	asm("lds r20, adsr1DeltaValue + 1");
+	asm("clr r21");
+	// subtract
+	asm("sub r16, r19");
+	asm("sbc r17, r20");
+	asm("sbc r18, r21");
+	// store new value
+	asm("st -Y, r18");
+	asm("st -Y, r17");
+	asm("st -Y, r16");
+	// FOR DEBUGGING
+	asm("sts adsr1PrevVal, r18");
+	// compare prev value to new value
+	asm("cp r22, r21");
+	asm("breq releaseFinished");
+	// set subtract bit high
+	asm("ori r25, 0b01000000");
+	asm("releaseFinished:");
+	// update portBVal
+	asm("sts portBVal, r25");
+	// release finished
+	asm("jmp updateEnvelopeFinished");
+	asm("noteIsOn:");
+	asm("lds r16, adsr1Up");
+	asm("cpi r16, 0");
+	asm("brne envelopeDecreasing");
+	////////////////////////////////////////
+	// ATTACK
+	////////////////////////////////////////
+	//Y = oscMasterData
+	asm("ldi r28, lo8(adsr1CurrentValue)\n");
+	asm("ldi r29, hi8(adsr1CurrentValue)\n");
+	// Load adsr current value into r18:r17:r16
+	asm("ld r16, Y+");
+	asm("ld r17, Y+");
+	asm("ld r18, Y+");
+	// store current value in r22
+	asm("mov r22, r18");
+	// Load deltaValue into r21:r20:r19
+	asm("lds r19, adsr1DeltaValue");
+	asm("lds r20, adsr1DeltaValue + 1");
+	asm("clr r21");
+	// add
+	asm("add r16, r19");
+	asm("adc r17, r20");
+	asm("adc r18, r21");
+	// store new value
+	asm("st -Y, r18");
+	asm("st -Y, r17");
+	asm("st -Y, r16");
+	// FOR DEBUGGING
+	asm("sts adsr1PrevVal, r18");
+	// compare prev value to new value
+	asm("cp r22, r21");
+	asm("breq checkMaxAttack");
+	// set add bit high
+	asm("ori r25, 0b10000000");
+	asm("checkMaxAttack:");
+	//see if were at max value
+	asm("cpi r18, 127");
+	asm("brlo attackFinished");
+	// if so set adsr1Up to 0
+	asm("clr r2");
+	asm("sts adsr1Up, r2");
+	// load decay delta into envelope delta
+	asm("lds r16, adsr1DecayDelta");
+	asm("lds r17, adsr1DecayDelta + 1");
+	asm("sts adsr1DeltaValue, r16");
+	asm("sts adsr1DeltaValue + 1, r17");
+	asm("attackFinished:");
+	// update portBVal
+	asm("sts portBVal, r25");
+	// release finished
+	asm("jmp updateEnvelopeFinished");
+	asm("envelopeDecreasing:");
+	///////////////////////////////////////
+	// SUSTAIN
+	///////////////////////////////////////
+	asm("lds r16, adsr1CurrentValue + 2");
+	asm("lds r17, adsr1Sustain");
+	// NOTE: we are testing if sustain value is lower than current value
+	asm("cp r17, r16");
+	asm("brlo updateEnvelopeDecay");
+	// update portBVal
+	asm("sts portBVal, r25");
+	// sustain finished
+	asm("jmp updateEnvelopeFinished");
+	///////////////////////////////////////
+	// DECAY
+	///////////////////////////////////////
+	asm("updateEnvelopeDecay:");
+	//Y = oscMasterData
+	asm("ldi r28, lo8(adsr1CurrentValue)\n");
+	asm("ldi r29, hi8(adsr1CurrentValue)\n");
+	// Load adsr current value into r18:r17:r16
+	asm("ld r16, Y+");
+	asm("ld r17, Y+");
+	asm("ld r18, Y+");
+	// store current value in r22
+	asm("mov r22, r18");
+	// Load deltaValue into r21:r20:r19
+	asm("lds r19, adsr1DeltaValue");
+	asm("lds r20, adsr1DeltaValue + 1");
+	asm("clr r21");
+	// subtract
+	asm("sub r16, r19");
+	asm("sbc r17, r20");
+	asm("sbc r18, r21");
+	// store new value
+	asm("st -Y, r18");
+	asm("st -Y, r17");
+	asm("st -Y, r16");
+	// FOR DEBUGGING
+	asm("sts adsr1PrevVal, r18");
+	// update portBVal
+	asm("sts portBVal, r25");
+	asm("updateEnvelopeFinished:");
 }
 
 extern const unsigned char adsrDelta[] PROGMEM = {255, 255, 69, 254, 142, 252, 218, 250, 40, 249, 122, 247, 207, 245, 38, 244, 129, 242,

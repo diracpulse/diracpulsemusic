@@ -48,7 +48,7 @@ public class DataViewerView extends JComponent {
     	if(dataIndex == 0) return Color.red;
     	if(dataIndex == 1) return Color.green;
     	if(dataIndex == 2) return Color.blue;
-    	return Color.white;
+    	return Color.yellow;
     }
     
     public synchronized void addData(int dataIndex, int value) {
@@ -58,7 +58,7 @@ public class DataViewerView extends JComponent {
 			dataValues.put(dataIndex, new ArrayList<Integer>());
 			dataValues.get(dataIndex).add(value);
 		}
-		if(dataValues.get(0).size() > 1500) {
+		if(dataValues.get(dataIndex).size() > 1500) {
 			dataValues.clear();
 		}
     }

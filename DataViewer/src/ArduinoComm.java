@@ -91,8 +91,11 @@ public class ArduinoComm implements Runnable, SerialPortEventListener {
             break;
         case SerialPortEvent.DATA_AVAILABLE:
             try {
+            	//int command = inputStream.read();
+            	//if(command < 128) return;
             	ArrayList<Integer> data = new ArrayList<Integer>();
-                if (inputStream.available() >= 0) {
+            	if(inputStream.available() >= 1) {
+                	data.add(0);
                 	data.add(inputStream.read());
                 	parent.readSerialPortData(data);
                 }
