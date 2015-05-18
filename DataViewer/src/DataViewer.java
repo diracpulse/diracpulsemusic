@@ -142,7 +142,7 @@ public class DataViewer extends JFrame {
 
 	public void saveData(BufferedWriter out) {
 		try {
-			out.write(createLFOArray());
+			out.write(createADSRArray());
 			out.newLine();
 		} catch (Exception e) {
 			System.out.println("DataViewer.loadData: Error saving to file");
@@ -215,12 +215,12 @@ public class DataViewer extends JFrame {
 	
 	public String createLFOArray() {
 		StringBuffer out = new StringBuffer();
-		out.append("extern const uint_8 lfoDelta[] PROGMEM = {");
+		out.append("extern const unsigned char lfoDelta[] PROGMEM = {");
 		int newLine = 0;
-		for(int lfoIndex = 0; lfoIndex < 1024; lfoIndex++) {
-			double exp = lfoIndex / 78.77;
-			double freq = Math.pow(2.0, exp - 3.0);
-			int value = (int) Math.round(freq / 1024.0 * 65535.0);
+		for(int lfoIndex = 127; lfoIndex >= 0; lfoIndex--) {
+			double exp = lfoIndex / (128.0 / 8.0);
+			double freq = Math.pow(2.0, exp + 6);
+			int value = (int) Math.round(128.0 / freq * 65535.0);
 			out.append(new Integer(value % 256).toString() + ", ");
 			out.append(new Integer((value >> 8) % 256).toString() + ", ");
 			if(newLine == 8) {
@@ -239,8 +239,8 @@ public class DataViewer extends JFrame {
 		StringBuffer out = new StringBuffer();
 		out.append("const unsigned long adsrDeltaPhase[] PROGMEM = {");
 		int newLine = 0;
-		for(int attackIndex = 0; attackIndex < 1024; attackIndex++) {
-			double exp = attackIndex / 102.4;
+		for(int attackIndex = 127; attackIndex >= 0; attackIndex--) {
+			double exp = attackIndex / 12.8;
 			double attackValInMillis = Math.pow(2.0, exp);
 			int value = (int) Math.round(1.0 / attackValInMillis * 65535.0);
 			out.append(new Integer(value % 256).toString() + ", ");

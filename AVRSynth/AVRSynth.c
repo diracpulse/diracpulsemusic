@@ -19,14 +19,13 @@
 #include "adsr.h"
 #include "lfo.h"
 #include "sh.h"
+#include "jumpTable.h"
 
 //#include "eeprom.h"
 
 #include "io.h"
 #include "interrupt.h"
 
-#define minMidiNote 12
-#define maxMidiNote 84
 volatile char nextSample = 1;
 
 unsigned char adcRead() {
@@ -110,24 +109,13 @@ void initTimer2() {
 	ASSR &= ~(1<<AS2);
 	/* Disable Compare Match A interrupt enable (only want overflow) */
 	TIMSK2 &= ~(1<<OCIE2A);
-	/* Now configure the prescaler to CPU clock divided by 128 */
-	TCCR2B |= (1<<CS20) | (1<<CS21); // Set Bits
-	TCCR2B &= ~(1<<CS22); // Clear Bits
+	/* Now configure the prescaler to CPU clock divided by 256 */
+	TCCR2B |= (1<<CS22) | (1<<CS21); // Set Bits
+	TCCR2B &= ~(1<<CS20); // Clear Bits
 	/* Finally load end enable the timer */
 	//TCNT2 = 255;
 	TCNT2 = 0;
 	TIMSK2 |= (1<<TOIE2);
-}
-
-int setDeltaPhaseIndex(int note, int oscIndex) {
-	if(note >= minMidiNote && note <= maxMidiNote) {
-		if(oscIndex == 0) {
-			oscDeltaPhaseIndex[0] = note * 64 * 3 - 9;
-		}
-		if(oscIndex == 1) {
-			oscDeltaPhaseIndex[1] = note * 64 * 3 - 9;
-		}
-	}
 }
 
 int blink = 0;
@@ -141,22 +129,11 @@ char portDVal;
 
 // Called when timer 2 overflows
 ISR(TIMER2_OVF_vect) {
+	asm("sts portBVal, r23");
+	asm("out 0x5, r23");
+	asm("sts portDVal, r23");
+	asm("out 0x0B, r23");
 	nextSample = 1;
-}
-
-void initOscMasterData() {
-	// 0 osc1LFOMod
-	oscMasterData[0] = 64 * 3;
-	// 2 osc1SHMod
-	oscMasterData[2] = 64 * 3;
-	// 4 osc1ENVMod
-	oscMasterData[4] = 64 * 3;
-	// 12 osc1LFOMod
-	oscMasterData[12] = 64 * 3;
-	// 14 osc1SHMod
-	oscMasterData[14] = 64 * 3;
-	// 16 osc1ENVMod
-	oscMasterData[16] = 64 * 3;
 }
 
 int main() {
@@ -169,16 +146,11 @@ int main() {
 	initTimer2();
 	// Setup ends here
 	sei();
-	setDeltaPhaseIndex(72, 0);
-	setDeltaPhaseIndex(60, 1);
-	updateLFOVal(900);
-	lfo1Up = 1;
-	updateEnvelope();
-	sh1NextValue = 64;
-	sh1CurrentValue = 64;
-	sh1Rate = 10000;
-	sh1CurrentCount = 0;
-	initOscMasterData();
+	initOSC1();
+	initOSC2();
+	initLFO1();
+	initADSR1();
+	//initSH1();
 	asm("infinite:");
 			asm("lds r16, nextSample\n");
 			asm("cpi r16, 0\n");
