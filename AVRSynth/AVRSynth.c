@@ -109,12 +109,12 @@ void initTimer2() {
 	ASSR &= ~(1<<AS2);
 	/* Disable Compare Match A interrupt enable (only want overflow) */
 	TIMSK2 &= ~(1<<OCIE2A);
-	/* Now configure the prescaler to CPU clock divided by 256 */
-	TCCR2B |= (1<<CS22) | (1<<CS21); // Set Bits
-	TCCR2B &= ~(1<<CS20); // Clear Bits
+	/* Now configure the prescaler to CPU clock divided by 64 */
+	TCCR2B |= (1<<CS22); // Set Bits
+	TCCR2B &=  ~((1<<CS21) | (1<<CS20)); // Clear Bits
 	/* Finally load end enable the timer */
 	//TCNT2 = 255;
-	TCNT2 = 0;
+	TCNT2 = 255;
 	TIMSK2 |= (1<<TOIE2);
 }
 
@@ -129,11 +129,73 @@ char portDVal;
 
 // Called when timer 2 overflows
 ISR(TIMER2_OVF_vect) {
-	asm("sts portBVal, r23");
-	asm("out 0x5, r23");
-	asm("sts portDVal, r23");
-	asm("out 0x0B, r23");
-	nextSample = 1;
+	// ***********************
+	// Start OSC1
+	// ***********************
+	// load portBVal into r23
+	// osc1 currentValue in r15:r14:r13
+	asm("lds r16, portBVal");
+	asm("andi r16, 0b11000011"); // clear oscillator bits
+	//X = oscMasterData
+	asm("ldi r26, lo8(oscMasterData + 6)");
+	asm("ldi r27, hi8(oscMasterData + 6)");
+	// Load osc1DeltaPhase
+	asm("ld r7, X+\n");
+	asm("ld r8, X+\n");
+	asm("ld r9, X+\n");
+	// save OSC1 currentValue in r6
+	asm("mov r6, r15");
+	// Load osc1CurrentValue
+	// add to osc1 currentValue in r15:r14:r13
+	asm("add r13, r7\n");
+	asm("adc r14, r8\n");
+	asm("adc r15, r9\n");
+	// check for overflow
+	asm("brvc skipReset1TM2\n");
+	// if maxValue set integrator reset pin high
+	asm("ori r16, 0b00100000");
+	asm("jmp startOSC2TM2");
+	// compare to prev value to currentValue
+	asm("skipReset1TM2:");
+	asm("cp r6, r15\n");
+	asm("brsh skipSetOutput1TM2\n");
+	asm("ori r16, 0b00010000\n");
+	asm("skipSetOutput1TM2:\n");
+	// ***********************
+	// Start OSC2
+	// ***********************
+	// osc1 currentValue in r12:r11:r10
+	asm("startOSC2TM2:");
+	asm("ldi r26, lo8(oscMasterData + 15)");
+	asm("ldi r27, hi8(oscMasterData + 15)");
+	// Load osc2DeltaPhase
+	asm("ld r7, X+\n");
+	asm("ld r8, X+\n");
+	asm("ld r9, X+\n");
+	// store current value in r6
+	asm("mov r6, r12");
+	// Add deltaPhase to osc1CurrentValue
+	asm("add r10, r7\n");
+	asm("adc r11, r8\n");
+	asm("adc r12, r9\n");
+	// check for overflow
+	asm("brvc skipReset2TM2\n");
+	// if maxValue set integrator reset pin high
+	asm("ori r16, 0b00001000");
+	asm("jmp finishedTM2");
+	asm("skipReset2TM2:\n");
+	// compare to prev value to currentValue
+	asm("cp r6, r12\n");
+	asm("brsh finishedTM2\n");
+	asm("ori r16, 0b00000100\n");
+	// store port value and send new value out
+	asm("finishedTM2:");
+	asm("sts portBVal, r16");
+	asm("out 0x5, r16");
+	//asm("sts portDVal, r16");
+	//asm("out 0x0B, r16");
+	//nextSample = 1;
+	TCNT2 = 255;
 }
 
 int main() {
@@ -143,7 +205,6 @@ int main() {
 	DDRB = DDRB | B00111111;  // sets pins 8 to 13 as outputs
 	//TIMSK0 &= ~_BV(TOIE0); // disable timer0 overflow interrupt
 	initSerial();
-	initTimer2();
 	// Setup ends here
 	sei();
 	initOSC1();
@@ -151,109 +212,19 @@ int main() {
 	initLFO1();
 	initADSR1();
 	//initSH1();
+	updateOscillators();
+	initTimer2();
 	asm("infinite:");
 			asm("lds r16, nextSample\n");
 			asm("cpi r16, 0\n");
 			asm("breq infinite\n");
-				// ***********************
-				// Start OSC1
-				// ***********************
-				// load portBVal into r23
-				asm("lds r23, portBVal");
-				asm("andi r23, 0b11000011"); // clear oscillator bits
-				//Y = oscMasterData
-				asm("ldi r28, lo8(oscMasterData + 6)");
-				asm("ldi r29, hi8(oscMasterData + 6)");
-				// Load osc1DeltaPhase
-				asm("ld r3, Y+\n");
-				asm("ld r4, Y+\n");
-				asm("ld r5, Y+\n");
-				// Load osc1CurrentValue
-				asm("ld r6, Y+\n");
-				asm("ld r7, Y+\n");
-				asm("ld r22, Y+\n");
-				// store current value in r9
-				asm("mov r9, r22");
-				// DEBUGGING
-				asm("sts osc1PrevVal, r22");
-				// Add deltaPhase to osc1CurrentValue
-				asm("add r6, r3\n");
-				asm("adc r7, r4\n");
-				asm("adc r22, r5\n");
-				// test for max value
-				asm("cpi r22, 128\n");
-				asm("brlo skipReset1\n");
-				// if maxValue reset and set integrator reset pin high
-				asm("clr r6\n");
-				asm("clr r7\n");
-				asm("clr r22\n");
-				asm("ori r23, 0b00100000");
-				// compare to prev value to currentValue
-				// NOTE use of BRSH (Branch if same or higher)
-				// prevVal will be greater than current val if 128 is reached
-				// Update osc1 current value
-				asm("skipReset1:\n");
-				asm("cp r9, r22\n");
-				asm("brsh skipSetOutput1\n");
-				asm("ori r23, 0b00010000\n");
-				asm("skipSetOutput1:\n");
-				// Update osc1 current value
-				asm("st -Y, r22\n");
-				asm("st -Y, r7\n");
-				asm("st -Y, r6\n");
-				// ***********************
-				// Start OSC2
-				// ***********************
-				// load portBVal into r23
-				// asm("lds r23, portBVal")
-				//Y = oscMasterData
-				asm("ldi r28, lo8(oscMasterData + 18)\n");
-				asm("ldi r29, hi8(oscMasterData + 18)\n");
-				// Load osc2DeltaPhase
-				asm("ld r3, Y+\n");
-				asm("ld r4, Y+\n");
-				asm("ld r5, Y+\n");
-				// Load osc2CurrentValue
-				asm("ld r6, Y+\n");
-				asm("ld r7, Y+\n");
-				asm("ld r22, Y+\n");
-				// store current value in r9
-				asm("mov r9, r22");
-				// DEBUGGING
-				asm("sts osc2PrevVal, r22");
-				// Add deltaPhase to osc1CurrentValue
-				asm("add r6, r3\n");
-				asm("adc r7, r4\n");
-				asm("adc r22, r5\n");
-				// test for max value
-				asm("cpi r22, 128\n");
-				asm("brlo skipReset2\n");
-				// if maxValue reset and set integrator reset pin high
-				asm("clr r6\n");
-				asm("clr r7\n");
-				asm("clr r22\n");
-				asm("ori r23, 0b00001000");
-				// compare to prev value to currentValue
-				// NOTE use of BRSH (Branch if same or higher)
-				// prevVal will be greater than current val if 128 is reached
-				// Update osc1 current value
-				asm("skipReset2:\n");
-				asm("cp r9, r22\n");
-				asm("brsh skipSetOutput2\n");
-				asm("ori r23, 0b00000100\n");
-				asm("skipSetOutput2:\n");
-				// Update osc1 current value
-				asm("st -Y, r22\n");
-				asm("st -Y, r7\n");
-				asm("st -Y, r6\n");
-				// store port value and send new value out
-				asm("sts portBVal, r23");
-				asm("out 0x5, r23");
-				updateOscillators();
-				updateLFO1();
+
+				//updateOscillators();
+				//updateLFO1();
 			//sei();
 		asm("ldi r16, 0\n");
 		asm("sts nextSample, r16\n");
+		/*
 		while(serialHasData()) {
 			if(serialReadIntoBuffer() >= 2) {
 				command = serialReadOutOfBuffer();
@@ -263,18 +234,19 @@ int main() {
 				//data2 = serialReadOutOfBuffer();
 				//if(command == 0b10010000) {
 					//serialWrite(data1);
-					setDeltaPhaseIndex(data1, 0);
+					//setDeltaPhaseIndex(data1, 0);
 				//}
-				serialDataReady = 3;
+				//serialDataReady = 3;
 				break;
 			}
 		}
 		//serialWriteWithWait(128 + 0);
-		serialWriteWithWait(osc2PrevVal);
+		//serialWriteWithWait(osc2PrevVal);
 		//serialWriteWithWait(128 + 1);
 		//serialWriteWithWait(osc2PrevVal);
 		//serialWriteWithWait(128 + 2);
 		//serialWriteWithWait(lfo1PrevVal);
+		*/
 	asm("jmp infinite\n");
 	return 0;
 }

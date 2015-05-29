@@ -28,18 +28,17 @@ unsigned char oscMasterData[63];
 // 2 - 3 osc1SHMod
 // 4 - 5 osc1ENVMod
 // 6 - 8 osc1DeltaPhase
-// 9 - 11 osc1CurrentValue
-// 12 - 13 osc2LFOMod
-// 14 - 15 osc2SHMod
-// 16 - 17 osc2ENVMod
-// 18 - 20 osc2DeltaPhase
+// 9 - 10 osc2LFOMod
+// 11 - 12 osc2SHMod
+// 13 - 14 osc2ENVMod
+// 15 - 17 osc2DeltaPhase
 extern unsigned char pitchMod[2];
 unsigned char pitchMod[2];
 extern unsigned char maxMidiNote = 84;
 extern unsigned char minMidiNote = 12;
 
 void initOSC1() {
-	asm("ldi r25, 60");
+	asm("ldi r25, 36");
 	asm("ldi r24, 0");
 	asm("call setDeltaPhaseIndex");	
 }
@@ -52,26 +51,25 @@ void initOSC2() {
 
 // note in r25, oscIndex in r24
 void setDeltaPhaseIndex() {
-	asm("lds r16, minMidiNote");
-	asm("cp r25, r16");
+	asm("lds r17, minMidiNote");
+	asm("cp r25, r17");
 	asm("brsh sdpiCheckHigh");
 	asm("ret");
 	asm("sdpiCheckHigh:");
-	asm("lds r16, maxMidiNote");
-	asm("inc r16");
-	asm("cp r25, r16");
+	asm("lds r17, maxMidiNote");
+	asm("inc r17");
+	asm("cp r25, r17");
 	asm("brlo sdpiSetNote");
 	asm("ret");
 	asm("sdpiSetNote:");
+	// check which oscillator
 	asm("cpi r24, 0");
 	asm("breq sdpiSetOsc1");
+	// update osc2
 	asm("ldi r23, 3 * 64");
 	asm("mul r25, r23");
-	//X = &oscDeltaPhaseIndex;
-	asm("ldi r26, lo8(oscDeltaPhaseIndex + 2)\n");
-	asm("ldi r27, hi8(oscDeltaPhaseIndex + 2)\n");
-	asm("st X+, r0");
-	asm("st X, r1");
+	asm("sts oscDeltaPhaseIndex + 2, r0");
+	asm("sts oscDeltaPhaseIndex + 3, r1");
 	asm("ret");
 	asm("sdpiSetOsc1:");
 	asm("ldi r23, 3 * 64");
@@ -79,8 +77,8 @@ void setDeltaPhaseIndex() {
 	//X = &oscDeltaPhaseIndex;
 	asm("ldi r26, lo8(oscDeltaPhaseIndex)\n");
 	asm("ldi r27, hi8(oscDeltaPhaseIndex)\n");
-	asm("st X+, r0");
-	asm("st X, r1");
+	asm("sts oscDeltaPhaseIndex, r0");
+	asm("sts oscDeltaPhaseIndex + 1, r1");
 }
 
 extern void setPitchBend() {
@@ -131,8 +129,8 @@ extern void setOSC2LFOMod() {
 	// 6 = 2 semitones  (6 * 64)
 	asm("ldi r24, 15");
 	asm("muls r25, r24");
-	asm("sts osc1MasterData + 12, r0");
-	asm("sts osc1MasterData + 13, r1");
+	asm("sts osc1MasterData + 9, r0");
+	asm("sts osc1MasterData + 10, r1");
 }
 
 
@@ -142,8 +140,8 @@ extern void setOSC2SHMod() {
 	// 6 = 2 semitones  (6 * 64)
 	asm("ldi r24, 15");
 	asm("muls r25, r24");
-	asm("sts osc1MasterData + 14, r0");
-	asm("sts osc1MasterData + 15, r1");
+	asm("sts osc1MasterData + 11, r0");
+	asm("sts osc1MasterData + 12, r1");
 }
 
 
@@ -153,8 +151,8 @@ extern void setOSC2ENVMod() {
 	// 6 = 2 semitones  (6 * 64)
 	asm("ldi r24, 15");
 	asm("muls r25, r24");
-	asm("sts osc1MasterData + 16, r0");
-	asm("sts osc1MasterData + 17, r1");
+	asm("sts osc1MasterData + 13, r0");
+	asm("sts osc1MasterData + 14, r1");
 }
 
 extern void updateOscillators() {
@@ -163,12 +161,9 @@ extern void updateOscillators() {
 	*/
 	//serialWrite(portBVal);
 	//cli();
-	//X = &oscDeltaPhaseIndex;
-	asm("ldi r26, lo8(oscDeltaPhaseIndex)\n");
-	asm("ldi r27, hi8(oscDeltaPhaseIndex)\n");
 	// osc1DeltaPhaseIndex in r5:r4
-	asm("ld r4, X+\n");
-	asm("ld r5, X+\n");
+	asm("lds r4, oscDeltaPhaseIndex\n");
+	asm("lds r5, oscDeltaPhaseIndex + 1\n");
 	//Y = oscMasterData (starting at osc1LFOMod)
 	asm("ldi r28, lo8(oscMasterData)\n");
 	asm("ldi r29, hi8(oscMasterData)\n");
@@ -199,24 +194,23 @@ extern void updateOscillators() {
 	asm("add r30, r4\n");
 	asm("adc r31, r5\n");
 	// finally load deltaPhase from Z
-	asm("lpm r16, Z+\n");
 	asm("lpm r17, Z+\n");
 	asm("lpm r18, Z+\n");
+	asm("lpm r19, Z+\n");
 	// load deltaPhase into bytes [6 - 8] of osc1DeltaPhase
-	asm("st Y+, r16");
+	asm("cli");
 	asm("st Y+, r17");
 	asm("st Y+, r18");
-	// skip over osc1CurrentValue
-	asm("adiw r28, 3");
+	asm("st Y+, r19");
+	asm("sei");
 	/*
 	// START OSC2
 	*/
 	//serialWrite(portBVal);
-	//cli();
-	//X = &oscDeltaPhaseIndex;
-	// osc1DeltaPhaseIndex in r5:r4 (in X from OSC1)
-	asm("ld r4, X+\n");
-	asm("ld r5, X+\n");
+	//asm("cli");
+	// osc1DeltaPhaseIndex in r5:r4
+	asm("lds r4, oscDeltaPhaseIndex + 2\n");
+	asm("lds r5, oscDeltaPhaseIndex + 3\n");
 	//Y = oscMasterData (starting at osc2LFOMod) (in Y from OSC1)
 	asm("ld r3, Y+\n");
 	asm("ld r2, Y+\n");
@@ -237,18 +231,20 @@ extern void updateOscillators() {
 	// asm("lds r21, pitchMod + 1");
 	asm("add r4, r20");
 	asm("adc r5, r21");
-	// put deltaPhase in Z (can't reuse Z from OSC1, since it's off by 3)
+	// put deltaPhase in Z
 	asm("ldi r30, lo8(deltaPhase)\n");
 	asm("ldi r31, hi8(deltaPhase)\n");
 	// add offset from r5:r4
 	asm("add r30, r4\n");
 	asm("adc r31, r5\n");
 	// finally load deltaPhase from Z
-	asm("lpm r16, Z+\n");
 	asm("lpm r17, Z+\n");
 	asm("lpm r18, Z+\n");
+	asm("lpm r19, Z+\n");
 	// load deltaPhase into bytes [15 - 16] of osc1CurrentValue
-	asm("st Y+, r16");
+	asm("cli");
 	asm("st Y+, r17");
 	asm("st Y+, r18");
+	asm("st Y+, r19");
+	asm("sei");
 }

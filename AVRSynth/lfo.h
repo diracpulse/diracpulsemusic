@@ -11,18 +11,20 @@ unsigned char lfo1DeltaPhaseIndex[2];
 unsigned char lfo1MasterData[63];
 
 extern void initLFO1() {
-	asm("ldi r26, lo8(lfoDelta)\n");
-	asm("ldi r27, hi8(lfoDelta)\n");
-	asm("sts lfo1CurrentValue, r26");
-	asm("sts lfo1CurrentValue + 1, r27");
-	asm("ldi r16, 1");
-	asm("sts lfo1Up, r16");
+	asm("ldi r28, lo8(lfoDelta)\n");
+	asm("ldi r29, hi8(lfoDelta)\n");
+	asm("ld r23, Y+\n");
+	asm("ld r24, Y\n");
+	asm("sts lfo1CurrentValue, r23");
+	asm("sts lfo1CurrentValue + 1, r24");
+	asm("ldi r17, 1");
+	asm("sts lfo1Up, r17");
 }
 
 extern void updateLFO1Val() {
 	// val passed in r25
-	asm("ldi r26, lo8(lfoDelta)\n");
-	asm("ldi r27, hi8(lfoDelta)\n");
+	asm("ldi r28, lo8(lfoDelta)\n");
+	asm("ldi r29, hi8(lfoDelta)\n");
 	asm("lsl r25");
 	asm("clr r2");
 	asm("add r26, r25");
@@ -36,11 +38,9 @@ extern void updateLFO1() {
 		asm("clr r2");
 		asm("lds r25, portBVal"); // portVal in r25
 		asm("andi r25, 0b11111100"); // clear lfo bits 
-		asm("ldi r26, lo8(lfo1DeltaPhaseIndex)\n");
-		asm("ldi r27, hi8(lfo1DeltaPhaseIndex)\n");
 		// lfo1DeltaPhaseIndex in r5:r4
-		asm("ld r4, X+\n");
-		asm("ld r5, X+\n");
+		asm("lds r4, lfo1DeltaPhaseIndex");
+		asm("lds r5, lfo1DeltaPhaseIndex + 1");
 		//Y = lfoMasterData
 		asm("ldi r28, lo8(lfo1MasterData)\n");
 		asm("ldi r29, hi8(lfo1MasterData)\n");
