@@ -16,9 +16,32 @@ public class ControlBank implements PlayableModule {
 
 	public enum Name {
 
-		OSC1Shape ("SHP", "SAW", "SIN"),
-		OSC1PWM ("PWM", "", ""),
-		OSC1RING ("RING", "", ""),
+		OSC1Detune ("DET", "", ""),
+		OSC1PWMFixed ("PWM", "", ""),
+		OSC1PWMModFreq ("FREQ", "", ""),
+		OSC1PWMModAmt ("AMT", "", ""),
+		OSC2Detune ("DET", "", ""),
+		OSC2PWMFixed ("PWM", "", ""),
+		OSC2PWMModFreq ("FREQ", "", ""),
+		OSC2PWMModAmt ("AMT", "", ""),
+		OSC3Detune ("DET", "", ""),
+		OSC3PWMFixed ("PWM", "", ""),
+		OSC3PWMModFreq ("FREQ", "", ""),
+		OSC3PWMModAmt ("AMT", "", ""),
+		OSC4Detune ("DET", "", ""),
+		OSC4PWMFixed ("PWM", "", ""),
+		OSC4PWMModFreq ("FREQ", "", ""),
+		OSC4PWMModAmt ("AMT", "", ""),
+		OSC1Cutoff ("CUT", "", ""),
+		OSC2Cutoff ("CUT", "", ""),
+		OSC3Cutoff ("CUT", "", ""),
+		OSC4Cutoff ("CUT", "", ""),
+		OSC1RES ("RES", "", ""),
+		OSC2RES ("RES", "", ""),
+		OSC3RES ("RES", "", ""),
+		OSC4RES ("RES", "", ""),
+		// Older
+		/*
 		SUBOSCLevel ("SUB", "", ""),
 		NOISE_COLOR ("NOISE", "WHITE", "PINK"),
 		NOISE_LEVEL ("LEVEL", "", ""),
@@ -48,6 +71,7 @@ public class ControlBank implements PlayableModule {
 		RING1AMT ("AMT", "", ""),
 		RING2AMT ("AMT", "", ""),
 		RING3AMT ("AMT", "", ""),
+		*/
 		RINGALL ("RING", "", "");
 		
 		private final String displayName;

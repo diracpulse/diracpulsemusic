@@ -13,6 +13,7 @@ public class PlayableEnvelope implements PlayableModule {
 
 	PlayableEditor parent;
 	Slider attack;
+	Slider hold;
 	Slider decay;
 	Slider sustain;
 	Slider release;
@@ -26,6 +27,7 @@ public class PlayableEnvelope implements PlayableModule {
 	private long stopTimeInSamples = 0;
 	private boolean off = false;
 	int attackInSamples;
+	int holdInSamples;
 	int decayInSamples;
 	double sustainValue;
 	int releaseInSamples;
@@ -43,6 +45,7 @@ public class PlayableEnvelope implements PlayableModule {
 		AR,
 		ASR,
 		ADSR,
+		AHDSR,
 		INVISIBLE;
 	}
 	
@@ -57,9 +60,23 @@ public class PlayableEnvelope implements PlayableModule {
 		double defaultAD = 0.001;
 		double defaultR = 0.5;
 		double maxValR = 8.0;
-		double minValADR = 0.001;
+		double minValADR = 0.0001;
 		double maxValAD = 1.0;
 		switch(type) {
+		case AHDSR:
+			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValAD, defaultAD, new String[]{"A", "s", " "});
+			x = attack.getMaxX();
+			hold = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValAD, defaultAD, new String[]{"H", "s", " "});
+			x = hold.getMaxX();
+			decay = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValAD, defaultAD, new String[]{"D", "s", " "});
+			x = decay.getMaxX();
+			sustain = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 16.0, 1.0, Math.sqrt(2.0) / 2.0, new String[] {"S", "", " "});
+			x = sustain.getMaxX();
+			release = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValR, 0.1, new String[]{"R", "s", " "});
+			x = release.getMaxX();
+			depth = new Slider(Slider.Type.LOGARITHMIC_ZERO, x, y, 1.0 / 16.0, 1.0, Math.sqrt(2.0) / 2.0, new String[]{"AMT", "", ""});
+			maxScreenX = depth.getMaxX();
+			return;
 		case ADSR:
 			attack = new Slider(Slider.Type.LOGARITHMIC, x, y, minValADR, maxValAD, defaultAD, new String[]{"A", "s", " "});
 			x = attack.getMaxX();
@@ -119,10 +136,11 @@ public class PlayableEnvelope implements PlayableModule {
 		saveDecayValue = 0.0;
 		if(this.type == EnvelopeType.INVISIBLE) return;
 		if(type != EnvelopeType.R && type != EnvelopeType.R0) attackInSamples = (int) Math.round(attack.getCurrentValue() * AudioFetcher.sampleRate);
-		if(type == EnvelopeType.ADSR) {
+		if(type == EnvelopeType.ADSR || type == EnvelopeType.AHDSR) {
 			decayInSamples = (int) Math.round(decay.getCurrentValue() * AudioFetcher.sampleRate);
 			sustainValue = sustain.getCurrentValue();
 		}
+		if(type == EnvelopeType.AHDSR) holdInSamples = (int) Math.round(hold.getCurrentValue() * AudioFetcher.sampleRate);
 		releaseInSamples = (int) Math.round(release.getCurrentValue() * AudioFetcher.sampleRate);
 	}
 	
@@ -143,6 +161,8 @@ public class PlayableEnvelope implements PlayableModule {
 			return getSampleASR(absoluteTimeInSamples, absolute);
 		case ADSR:
 			return getSampleADSR(absoluteTimeInSamples, absolute);
+		case AHDSR:
+			return getSampleAHDSR(absoluteTimeInSamples, absolute);
 		}
 		return 0.0;
 	}
@@ -203,6 +223,36 @@ public class PlayableEnvelope implements PlayableModule {
 		if(!off) {
 			if(currentTimeInSamples <= attackInSamples) {
 				saveAttackValue = (1.0 - Math.exp(-1.0 * tau * currentTimeInSamples / attackInSamples));
+				if(absolute) return saveAttackValue * depthVal;
+				return saveAttackValue * depthVal + (1.0 - depthVal);
+			}
+			saveDecayValue = saveAttackValue * Math.exp(-1.0 * tau * (currentTimeInSamples - attackInSamples) / (double) decayInSamples);
+			if(saveDecayValue > sustainValue) { 
+				if(absolute) return saveDecayValue * depthVal;
+				return saveDecayValue * depthVal + (1.0 - depthVal);
+			} else {
+				saveDecayValue = sustainValue;
+			}
+			if(absolute) return saveDecayValue * depthVal;
+			return saveDecayValue * depthVal + (1.0 - depthVal);
+		}
+		if(saveDecayValue == 0) saveDecayValue = saveAttackValue;
+		double returnVal = Math.exp(-1.0 * tau * (absoluteTimeInSamples - stopTimeInSamples) / (double) releaseInSamples) * saveDecayValue * depthVal;
+		if(absolute) return returnVal;
+		return returnVal + (1.0 - depthVal);
+	}
+	
+	private double getSampleAHDSR(long absoluteTimeInSamples, boolean absolute) {
+		double depthVal = depth.getCurrentValue();
+		saveDecayValue = 0;
+		long currentTimeInSamples = absoluteTimeInSamples - startTimeInSamples;
+		if(!off) {
+			if(currentTimeInSamples <= attackInSamples) {
+				saveAttackValue = (1.0 - Math.exp(-1.0 * tau * currentTimeInSamples / attackInSamples));
+				if(absolute) return saveAttackValue * depthVal;
+				return saveAttackValue * depthVal + (1.0 - depthVal);
+			}
+			if(currentTimeInSamples <= attackInSamples + holdInSamples) {
 				if(absolute) return saveAttackValue * depthVal;
 				return saveAttackValue * depthVal + (1.0 - depthVal);
 			}
@@ -283,7 +333,10 @@ public class PlayableEnvelope implements PlayableModule {
 		if(type != EnvelopeType.R) {
 			if(type != EnvelopeType.R0) attack.draw(g2);
 		}
-		if(type == EnvelopeType.ADSR) {
+		if(type == EnvelopeType.AHDSR) {
+			hold.draw(g2);
+		}
+		if(type == EnvelopeType.ADSR || type == EnvelopeType.AHDSR) {
 			sustain.draw(g2);
 			decay.draw(g2);
 		}
@@ -296,9 +349,12 @@ public class PlayableEnvelope implements PlayableModule {
 		if(type != EnvelopeType.R) {
 			if(type != EnvelopeType.R0) attack.pointSelected(x, y, info);
 		}
-		if(type == EnvelopeType.ADSR) {
+		if(type == EnvelopeType.ADSR|| type == EnvelopeType.AHDSR) {
 			decay.pointSelected(x, y, info);
 			sustain.pointSelected(x, y, info);
+		}
+		if(type == EnvelopeType.AHDSR) {
+			hold.pointSelected(x, y, info);
 		}
 		if(type != EnvelopeType.R0) depth.pointSelected(x, y, info);
 		release.pointSelected(x, y, info);
@@ -312,9 +368,13 @@ public class PlayableEnvelope implements PlayableModule {
 				return;
 			}
 			if(type != EnvelopeType.R) attack.setCurrentValue(new Double(in.readLine()));
-			if(type == EnvelopeType.ADSR) {
+			if(type == EnvelopeType.ADSR || type == EnvelopeType.AHDSR) {
 				decay.setCurrentValue(new Double(in.readLine()));
 				sustain.setCurrentValue(new Double(in.readLine()));
+			}
+			if(type == EnvelopeType.AHDSR) {
+				hold.setCurrentValue(new Double(in.readLine()));
+				return;
 			}
 			release.setCurrentValue(new Double(in.readLine()));
 			depth.setCurrentValue(new Double(in.readLine()));
@@ -333,6 +393,14 @@ public class PlayableEnvelope implements PlayableModule {
 			}
 			if(type != EnvelopeType.R) {
 				out.write(new Double(attack.getCurrentValue()).toString());
+				out.newLine();
+			}
+			if(type == EnvelopeType.AHDSR) {
+				out.write(new Double(hold.getCurrentValue()).toString());
+				out.newLine();
+				out.write(new Double(decay.getCurrentValue()).toString());
+				out.newLine();
+				out.write(new Double(sustain.getCurrentValue()).toString());
 				out.newLine();
 			}
 			if(type == EnvelopeType.ADSR) {

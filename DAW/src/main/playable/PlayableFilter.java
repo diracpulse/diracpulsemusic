@@ -27,7 +27,7 @@ public class PlayableFilter implements PlayableModule {
 	PlayableEditor parent;
 	double prevCutoff = 0.0;
 	double maxCutoff = 20000;
-	double minCutoff = 64;
+	double minCutoff = 16.0;
 	double cutoffMod = 8.0;
 	double maxCutoffHP = 1000;
 	double minCutoffHP = 20;
@@ -68,7 +68,7 @@ public class PlayableFilter implements PlayableModule {
 		case LOWPASS:
 			cutoffControl = new Slider(Slider.Type.LOGARITHMIC, x, y, minCutoff, maxCutoff, 256.0, new String[] {"FREQ", "Hz", " "});
 			x = cutoffControl.getMaxX();
-			resControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 0.25, 4.0, Math.sqrt(2.0) / 2.0, new String[] {"RES", " ", " "});
+			resControl = new Slider(Slider.Type.LOGARITHMIC, x, y, 0.25, 256.0, Math.sqrt(2.0) / 2.0, new String[] {"RES", " ", " "});
 			maxScreenX = resControl.getMaxX();
 			initLowpassFIR();
 			return;
@@ -92,21 +92,21 @@ public class PlayableFilter implements PlayableModule {
 		return maxScreenX;
 	}
 
-	public double getSample(double sample, double freqRatio, double input) {
+	public double getSample(double sample, double freqRatio, double resonance) {
 		switch(type) {
 		case LOWPASS:
 			if(sample > 1.0) sample = 1.0;
 			if(sample < -1.0) sample = -1.0;
-			double returnVal = variableQLowpass2(sample, freqRatio, input, 0.0);
-			return variableQLowpass2(returnVal, freqRatio, input, 0.0);
+			//double returnVal = variableQLowpass2(sample, freqRatio, resonance);
+			return variableQLowpass2(sample, freqRatio, resonance);
 			//return lowpassFIR(sample);
 		case HIGHPASS:
-			return butterworthHighpass2(sample, freqRatio, input, 0.0);
+			return butterworthHighpass2(sample, 1.0, 0.0);
 		}
 		return 0.0;
 	}
 	
-	public synchronized double variableQLowpass2(double sample, double freqRatio, double fControl, double qControl) {
+	public synchronized double variableQLowpass2(double sample, double fControl, double qControl) {
 		if(sample > 1.0) sample = 1.0;
 		if(sample < -1.0) sample = -1.0;
 		input2[0] = input2[1];
@@ -117,7 +117,7 @@ public class PlayableFilter implements PlayableModule {
 		double f = cutoffControl.getCurrentValue() * (1.0 + fControl * cutoffMod);
 		if(f > maxCutoff) f = maxCutoff;
 		if(f < minCutoff) f = minCutoff;
-		double q = resControl.getCurrentValue() * (1.0 + qControl);
+		double q = resControl.getCurrentValue() * qControl;
 		double g = Math.tan((Math.PI * f) / AudioFetcher.sampleRate);
 		double D = q * g * g + g + q;
 		double b0 = q * (g * g) / D;
@@ -131,7 +131,7 @@ public class PlayableFilter implements PlayableModule {
 		return y2[2];
 	}
 	
-	private double butterworthHighpass2(double sample, double freqRatio, double fControl, double qControl) {
+	private double butterworthHighpass2(double sample, double fControl, double qControl) {
 		if(sample > 1.0) sample = 1.0;
 		if(sample < -1.0) sample = -1.0;
 		input[0] = input[1];
